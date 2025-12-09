@@ -4,7 +4,7 @@ import OSLog
 /// Uploads processed airport data to GitHub via REST API.
 ///
 /// ``GitHubUploader`` uses the GitHub Contents API to upload compressed airport
-/// data files to the SF50-TOLD-Airports repository. This makes the data available
+/// data files to the Airport-Data repository. This makes the data available
 /// for download by the iOS app.
 ///
 /// ## Authentication
@@ -42,9 +42,9 @@ class GitHubUploader {
   /// Initialize uploader with GitHub credentials
   /// - Parameters:
   ///   - token: GitHub Personal Access Token
-  ///   - repo: Repository name (default: SF50-TOLD-Airports)
-  ///   - owner: Repository owner (default: RISCfuture)
-  init(token: String, repo: String = "SF50-TOLD-Airports", owner: String = "RISCfuture") {
+  ///   - repo: Repository name (default: Airport-Data)
+  ///   - owner: Repository owner (default: SF50-TOLD)
+  init(token: String, repo: String = "Airport-Data", owner: String = "SF50-TOLD") {
     self.token = token
     self.repo = repo
     self.owner = owner

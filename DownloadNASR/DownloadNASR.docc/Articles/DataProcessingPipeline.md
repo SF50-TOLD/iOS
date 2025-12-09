@@ -82,7 +82,7 @@ The output filename follows the pattern: `{cycle}.plist.lzma` (e.g., `2501.plist
 ## Stage 6: GitHub Upload
 
 If a GitHub token is configured, ``GitHubUploader`` pushes the compressed file
-to the SF50-TOLD-Airports repository. The iOS app downloads from this location.
+to the Airport-Data repository. The iOS app downloads from this location.
 
 Upload path: `3.0/{cycle}.plist.lzma`
 

@@ -17,7 +17,7 @@ import SwiftNASR
  * ## Data Source
  *
  * Airport data is pre-processed and hosted at:
- * `github.com/RISCfuture/SF50-TOLD-Airports`
+ * `github.com/SF50-TOLD/Airport-Data`
  *
  * The data combines FAA NASR (National Airspace System Resources) with
  * OurAirports for international coverage.
@@ -51,7 +51,7 @@ actor AirportLoader {
   private var dataURL: URL {
     URL(
       string:
-        "https://github.com/RISCfuture/SF50-TOLD-Airports/blob/main/3.0/\(Cycle.current).plist.lzma?raw=true"
+        "https://github.com/SF50-TOLD/Airport-Data/blob/main/3.0/\(Cycle.current).plist.lzma?raw=true"
     )!
   }
 

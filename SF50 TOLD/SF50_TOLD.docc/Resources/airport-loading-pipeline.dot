@@ -30,7 +30,7 @@ digraph AirportLoadingPipeline {
 
     // Source
     github [
-        label="GitHub Repository\nSF50-TOLD-Airports\n(LZMA compressed)"
+        label="GitHub Repository\nAirport-Data\n(LZMA compressed)"
         fillcolor="#24292e"
         fontcolor="#ffffff"
         color="#24292e"

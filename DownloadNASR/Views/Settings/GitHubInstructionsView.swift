@@ -26,7 +26,7 @@ struct GitHubInstructionsView: View {
           Text("Set repository access to “Only select repositories”")
         }
         InstructionStep(number: 4) {
-          Text("Select “RISCfuture/SF50-TOLD-Airports”")
+          Text("Select “SF50-TOLD/Airport-Data”")
         }
         InstructionStep(number: 5) {
           Text("Under “Repository permissions”, give “Contents” Read and Write access")
