@@ -114,16 +114,33 @@ class DataTable {
       let minVal = self.min(dimension: dim)
       let maxVal = self.max(dimension: dim)
 
+      // Use a relative tolerance for floating-point comparisons based on the magnitude
+      // of the bound value. This handles precision loss proportional to value size
+      // (e.g., 31000.0 has less precision than 1.0). The factor 1e-9 provides ~6 orders
+      // of magnitude margin above Double's ~1e-15 relative precision, accommodating
+      // accumulated rounding from arithmetic operations while remaining far smaller
+      // than any meaningful data resolution.
+      let tolerance = 1e-9 * Swift.max(abs(minVal), abs(maxVal), 1.0)
+
       switch clampingModes[dim] {
         case .none:
-          if input < minVal { return .offscaleLow }
-          if input > maxVal { return .offscaleHigh }
-          clampedInputs.append(input)
+          if input < minVal - tolerance {
+            return .offscaleLow
+          }
+          if input > maxVal + tolerance {
+            return .offscaleHigh
+          }
+          // Clamp to bounds if within tolerance (handles floating-point precision)
+          clampedInputs.append(Swift.min(Swift.max(input, minVal), maxVal))
         case .clampLow:
-          if input > maxVal { return .offscaleHigh }
+          if input > maxVal + tolerance {
+            return .offscaleHigh
+          }
           clampedInputs.append(Swift.max(input, minVal))
         case .clampHigh:
-          if input < minVal { return .offscaleLow }
+          if input < minVal - tolerance {
+            return .offscaleLow
+          }
           clampedInputs.append(Swift.min(input, maxVal))
         case .clampBoth:
           clampedInputs.append(Swift.min(Swift.max(input, minVal), maxVal))
