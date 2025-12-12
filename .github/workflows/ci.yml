@@ -31,6 +31,16 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode }}
       - uses: actions/checkout@v4
+      - name: Generate NOTAM API config
+        env:
+          NOTAM_API_TOKEN: ${{ secrets.NOTAM_API_TOKEN }}
+          NOTAM_API_BASE_URL: ${{ secrets.NOTAM_API_BASE_URL }}
+        run: |
+          mkdir -p "SF50 TOLD/NOTAM"
+          cat > "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig" << EOF
+          NOTAM_API_TOKEN = ${NOTAM_API_TOKEN}
+          NOTAM_API_BASE_URL = https:/\$()/notams.fly.dev
+          EOF
       - name: Enable macros
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
       - name: Run unit tests
@@ -56,6 +66,16 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode }}
       - uses: actions/checkout@v4
+      - name: Generate NOTAM API config
+        env:
+          NOTAM_API_TOKEN: ${{ secrets.NOTAM_API_TOKEN }}
+          NOTAM_API_BASE_URL: ${{ secrets.NOTAM_API_BASE_URL }}
+        run: |
+          mkdir -p "SF50 TOLD/NOTAM"
+          cat > "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig" << EOF
+          NOTAM_API_TOKEN = ${NOTAM_API_TOKEN}
+          NOTAM_API_BASE_URL = https:/\$()/notams.fly.dev
+          EOF
       - name: Enable macros
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
       - name: Configure simulator
