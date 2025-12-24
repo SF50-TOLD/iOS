@@ -132,7 +132,6 @@ class ProcessorViewModel {
     statusMessage = ""
     errorMessage = nil
     uploadError = nil
-    logEntries = []
   }
 
   /// Cancels the current processing task and resets state.
