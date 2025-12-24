@@ -158,6 +158,13 @@
 			);
 			target = 016945982EB30848001602E6 /* DownloadNASR */;
 		};
+		016EACAA2EF4DDFB00F1DE66 /* Exceptions for "SF50 TOLD" folder in "SF50 TOLD" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				NOTAM/NOTAMAPIConfig.xcconfig,
+			);
+			target = 0163BC692DDEE9D3008FEE8F /* SF50 TOLD */;
+		};
 		01A506A22E55A8BA00F8EC4F /* Exceptions for "SF50 Shared" folder in "SF50 Shared" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -210,6 +217,7 @@
 		0163BC6C2DDEE9D3008FEE8F /* SF50 TOLD */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				016EACAA2EF4DDFB00F1DE66 /* Exceptions for "SF50 TOLD" folder in "SF50 TOLD" target */,
 				01162DCE2EB3414600E40422 /* Exceptions for "SF50 TOLD" folder in "DownloadNASR" target */,
 			);
 			path = "SF50 TOLD";
@@ -575,7 +583,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2610;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					012837492E5B8BB8002195A0 = {
 						CreatedOnToolsVersion = 16.4;

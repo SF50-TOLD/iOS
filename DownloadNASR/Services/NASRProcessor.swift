@@ -3,6 +3,18 @@ import Logging
 import SwiftNASR
 import SwiftTimeZoneLookup
 
+/// Errors that can occur during NASR processing.
+enum NASRProcessorError: LocalizedError {
+  case failedToCreateNASR
+
+  var errorDescription: String? {
+    switch self {
+      case .failedToCreateNASR:
+        String(localized: "Failed to create NASR downloader for the specified cycle.")
+    }
+  }
+}
+
 /// Processes FAA NASR and OurAirports data into compressed format for app distribution.
 ///
 /// ``NASRProcessor`` is the core component of the DownloadNASR tool. It orchestrates
@@ -144,7 +156,9 @@ struct NASRProcessor {
   {
     progress.totalUnitCount = 2
 
-    let nasr = NASR(loader: ArchiveFileDownloader(cycle: cycle))
+    guard let nasr = NASR.fromInternetToMemory(activeAt: cycle.date) else {
+      throw NASRProcessorError.failedToCreateNASR
+    }
     logger.notice("Loading NASR archive…")
     progress.localizedDescription = "Loading NASR archive…"
     try await nasr.load()
@@ -181,25 +195,27 @@ struct NASRProcessor {
     var codableAirports = [AirportDataCodable.AirportCodable]()
 
     for airport in airports {
-      guard let elevationFt = airport.referencePoint.elevation else { continue }
+      guard let elevationFt = airport.referencePoint.elevationFtMSL else { continue }
 
-      let latitudeSec = airport.referencePoint.latitude
-      let longitudeSec = airport.referencePoint.longitude
+      // Use SwiftNASR's Measurement-based coordinates and convert to degrees
+      let latitude = airport.referencePoint.latitude.converted(to: .degrees)
+      let longitude = airport.referencePoint.longitude.converted(to: .degrees)
+
       let variationDeg =
-        airport.magneticVariation.map { Double($0) }
-        ?? calculateMagneticVariation(Double(latitudeSec), Double(longitudeSec))
+        airport.magneticVariationDeg.map { Double($0) }
+        ?? calculateMagneticVariation(latitude.value, longitude.value)
 
       var runways = [AirportDataCodable.RunwayCodable]()
 
       for runway in airport.runways {
         if runway.materials.contains(.water) { continue }
-        guard let length = runway.length, length >= 500 else { continue }
+        guard let length = runway.length, length.converted(to: .feet).value >= 500 else { continue }
 
         // Process base end
         if let baseRunway = makeRunwayCodable(
           runway: runway,
           end: runway.baseEnd,
-          reciprocalName: runway.reciprocalEnd?.ID
+          reciprocalName: runway.reciprocalEnd?.id
         ) {
           runways.append(baseRunway)
         }
@@ -209,7 +225,7 @@ struct NASRProcessor {
           let reciprocalRunway = makeRunwayCodable(
             runway: runway,
             end: reciprocalEnd,
-            reciprocalName: runway.baseEnd.ID
+            reciprocalName: runway.baseEnd.id
           )
         {
           runways.append(reciprocalRunway)
@@ -219,11 +235,9 @@ struct NASRProcessor {
       if runways.isEmpty { continue }
 
       // Lookup timezone for this airport
-      let latitudeDeg = Double(latitudeSec) / 3600.0
-      let longitudeDeg = Double(longitudeSec) / 3600.0
       let timeZone = timezoneLookup.simple(
-        latitude: Float(latitudeDeg),
-        longitude: Float(longitudeDeg)
+        latitude: Float(latitude.value),
+        longitude: Float(longitude.value)
       )
 
       let codableAirport = AirportDataCodable.AirportCodable(
@@ -233,8 +247,8 @@ struct NASRProcessor {
         name: airport.name,
         city: airport.city,
         dataSource: "nasr",
-        latitude: latitudeDeg,  // Convert arcseconds to degrees
-        longitude: longitudeDeg,
+        latitude: latitude.value,
+        longitude: longitude.value,
         elevation: Double(elevationFt) * 0.3048,  // Convert feet to meters
         variation: variationDeg,
         timeZone: timeZone,
@@ -257,15 +271,15 @@ struct NASRProcessor {
 
     // Calculate true heading
     let trueHeading: Double
-    if let existingHeading = end.trueHeading {
+    if let existingHeading = end.heading?.asTrueBearing().value {
       trueHeading = Double(existingHeading)
-    } else if let baseEndLat = runway.baseEnd.threshold?.latitude,
-      let baseEndLon = runway.baseEnd.threshold?.longitude,
-      let recipEndLat = runway.reciprocalEnd?.threshold?.latitude,
-      let recipEndLon = runway.reciprocalEnd?.threshold?.longitude
+    } else if let baseEndLat = runway.baseEnd.threshold?.latitudeArcsec,
+      let baseEndLon = runway.baseEnd.threshold?.longitudeArcsec,
+      let recipEndLat = runway.reciprocalEnd?.threshold?.latitudeArcsec,
+      let recipEndLon = runway.reciprocalEnd?.threshold?.longitudeArcsec
     {
       // Calculate bearing for the current runway end
-      if end.ID == runway.baseEnd.ID {
+      if end.id == runway.baseEnd.id {
         trueHeading = Double(
           calculateBearing(from: (baseEndLat, baseEndLon), to: (recipEndLat, recipEndLon))
         )
@@ -275,7 +289,7 @@ struct NASRProcessor {
         )
       }
     } else if let reciprocal = runway.reciprocalEnd,
-      let reciprocalHeading = reciprocal.trueHeading
+      let reciprocalHeading = reciprocal.heading?.asTrueBearing().value
     {
       let heading = (Int(reciprocalHeading) + 180) % 360
       trueHeading = Double(heading)
@@ -283,17 +297,17 @@ struct NASRProcessor {
       return nil
     }
 
-    let elevationMeters = end.touchdownZoneElevation.map { Double($0) * 0.3048 }
+    let elevationMeters = end.touchdownZoneElevation?.converted(to: .meters).value
 
     return AirportDataCodable.RunwayCodable(
-      name: end.ID,
+      name: end.id,
       elevation: elevationMeters,
       trueHeading: trueHeading,
-      gradient: end.gradient.map { $0 / 100 },
-      length: Double(length) * 0.3048,  // Convert feet to meters
-      takeoffRun: end.TORA.map { Double($0) * 0.3048 },
-      takeoffDistance: end.TODA.map { Double($0) * 0.3048 },
-      landingDistance: end.LDA.map { Double($0) * 0.3048 },
+      gradient: end.gradient.map { Float($0.value / 100) },
+      length: length.converted(to: .meters).value,
+      takeoffRun: end.TORA?.converted(to: .meters).value,
+      takeoffDistance: end.TODA?.converted(to: .meters).value,
+      landingDistance: end.LDA?.converted(to: .meters).value,
       isTurf: !runway.isPaved,
       reciprocalName: reciprocalName
     )
