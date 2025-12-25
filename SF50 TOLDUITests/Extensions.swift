@@ -3,7 +3,9 @@ import XCTest
 extension XCUIElement {
   var isVisible: Bool {
     guard self.exists && !self.frame.isEmpty else { return false }
-    return XCUIApplication().windows.element(boundBy: 0).frame.contains(self.frame)
+    let app = XCUIApplication()
+    guard let firstWindow = app.windows.allElementsBoundByIndex.first else { return false }
+    return firstWindow.frame.contains(self.frame)
   }
 
   func toggleOn() {
@@ -76,9 +78,6 @@ extension XCUIElement {
   func clearAndType(_ text: String, app: XCUIApplication) {
     tap()
 
-    // Wait a moment for field to be focused and keyboard/popover to appear
-    Thread.sleep(forTimeInterval: 0.2)
-
     // Dismiss keyboard popover on iPad if present
     if app.otherElements["PopoverDismissRegion"].exists {
       app.otherElements["PopoverDismissRegion"].tap()
@@ -87,17 +86,14 @@ extension XCUIElement {
     // Triple tap to select all
     tap(withNumberOfTaps: 3, numberOfTouches: 1)
 
-    // Small delay for selection
-    Thread.sleep(forTimeInterval: 0.1)
-
     // Type new text (will replace selection)
     typeText(text)
   }
 }
 
-// Helper for waiting
+// No-op placeholder for navigation timing - rely on waitForExistence instead
 func waitForNavigation() {
-  Thread.sleep(forTimeInterval: 0.5)
+  // Intentionally empty - navigation timing is handled by waitForExistence calls
 }
 
 // Helper to tap element and ensure navigation occurred

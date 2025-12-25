@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Disable Xcode macro fingerprint validation for CI builds
+# Required for Swift packages that use macros (e.g., StreamingCSV)
+defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
 # Generate NOTAMAPIConfig.xcconfig from environment variables
 # This script runs after Xcode Cloud clones the repository
 
