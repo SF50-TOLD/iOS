@@ -49,10 +49,17 @@ struct ContentView: View {
               )
           }
 
-          Button(buttonTitle, action: downloadAndProcess)
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(viewModel.isProcessing || cycle == nil)
+          if viewModel.isProcessing {
+            Button(String(localized: "Stop"), action: viewModel.cancel)
+              .buttonStyle(.borderedProminent)
+              .controlSize(.large)
+              .tint(.red)
+          } else {
+            Button(buttonTitle, action: downloadAndProcess)
+              .buttonStyle(.borderedProminent)
+              .controlSize(.large)
+              .disabled(cycle == nil)
+          }
         }
       }
       if let cycle, let date = cycle.date, let endDate = cycle.endDate {

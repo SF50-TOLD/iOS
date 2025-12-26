@@ -137,6 +137,14 @@ class ProcessorViewModel {
   /// Cancels the current processing task and resets state.
   func cancel() {
     processingTask?.cancel()
+    addLogEntry(
+      LogEntry(
+        timestamp: Date(),
+        level: .warning,
+        message: String(localized: "Processing cancelled by user"),
+        metadata: nil
+      )
+    )
     reset()
   }
 
