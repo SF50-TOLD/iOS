@@ -67,13 +67,13 @@ struct NASRProcessor {
 
     // Initialize timezone lookup database
     logger.notice("Initializing timezone lookup database…")
-    progress.localizedDescription = "Initializing timezone lookup database…"
+    progress.localizedDescription = String(localized: "Initializing timezone lookup database…")
     let timezoneLookup = try SwiftTimeZoneLookup()
     progress.completedUnitCount = 1
 
     // Load NASR data
     logger.notice("Loading NASR data for cycle \(cycle)…")
-    progress.localizedDescription = "Loading NASR data…"
+    progress.localizedDescription = String(localized: "Loading NASR data…")
     let nasrProgress = Progress(totalUnitCount: 100, parent: progress, pendingUnitCount: 1)
     let NASRAirports = try await loadNASRData(
       timezoneLookup: timezoneLookup,
@@ -82,14 +82,14 @@ struct NASRProcessor {
 
     // Load OurAirports data
     logger.notice("Loading OurAirports data…")
-    progress.localizedDescription = "Loading OurAirports data…"
+    progress.localizedDescription = String(localized: "Loading OurAirports data…")
     let ourAirportsProgress = Progress(totalUnitCount: 100, parent: progress, pendingUnitCount: 1)
     let ourAirportsLoader = OurAirportsLoader(logger: logger, progress: ourAirportsProgress)
     let (ourAirports, ourAirportsLastUpdated) = try await ourAirportsLoader.loadAirports()
 
     // Merge and de-duplicate
     logger.notice("Merging and de-duplicating airport data…")
-    progress.localizedDescription = "Merging and de-duplicating airport data…"
+    progress.localizedDescription = String(localized: "Merging and de-duplicating airport data…")
     let mergedAirports = mergeAirports(
       NASRAirports: NASRAirports,
       ourAirports: ourAirports,
@@ -105,7 +105,7 @@ struct NASRProcessor {
     )
 
     logger.notice("Writing to file…")
-    progress.localizedDescription = "Writing to file…"
+    progress.localizedDescription = String(localized: "Writing to file…")
     let encoder = PropertyListEncoder()
     encoder.outputFormat = .binary
     let data = try encoder.encode(codableData)
@@ -113,7 +113,7 @@ struct NASRProcessor {
     progress.completedUnitCount = 5
 
     logger.notice("Compressing…")
-    progress.localizedDescription = "Compressing…"
+    progress.localizedDescription = String(localized: "Compressing…")
     // swiftlint:disable:next legacy_objc_type
     let compressedData = try NSData(data: data).compressed(using: .lzma)
     let lzmaFile = outputLocation.appendingPathComponent("\(cycle).plist.lzma")
@@ -123,7 +123,7 @@ struct NASRProcessor {
     // Upload to GitHub if token is configured
     if let token = try? KeychainManager.shared.getToken(), !token.isEmpty {
       logger.notice("Uploading to GitHub…")
-      progress.localizedDescription = "Uploading to GitHub…"
+      progress.localizedDescription = String(localized: "Uploading to GitHub…")
 
       do {
         let uploader = GitHubUploader(token: token)
@@ -147,7 +147,7 @@ struct NASRProcessor {
     progress.completedUnitCount = 7
 
     logger.notice("Complete - processed \(mergedAirports.count) airports")
-    progress.localizedDescription = "Complete!"
+    progress.localizedDescription = String(localized: "Complete!")
   }
 
   /// Downloads and parses FAA NASR airport data.
@@ -160,12 +160,12 @@ struct NASRProcessor {
       throw NASRProcessorError.failedToCreateNASR
     }
     logger.notice("Loading NASR archive…")
-    progress.localizedDescription = "Loading NASR archive…"
+    progress.localizedDescription = String(localized: "Loading NASR archive…")
     try await nasr.load()
     progress.completedUnitCount = 1
 
     logger.notice("Parsing NASR airports…")
-    progress.localizedDescription = "Parsing NASR airports…"
+    progress.localizedDescription = String(localized: "Parsing NASR airports…")
     try await nasr.parse(.airports) { error in
       var metadata: Logger.Metadata = ["error": "\(error.localizedDescription)"]
 

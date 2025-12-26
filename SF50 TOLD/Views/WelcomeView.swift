@@ -36,7 +36,7 @@ struct WelcomeView: View {
           .multilineTextAlignment(.center)
           .padding(.bottom)
         if showForm {
-          Text("Let's start by getting some information about your Vision Jet.")
+          Text("Let’s start by getting some information about your Vision Jet.")
             .multilineTextAlignment(.leading)
             .opacity(formOpacity)
         }

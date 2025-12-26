@@ -56,7 +56,7 @@ class ProcessorViewModel {
     // Reset state
     isProcessing = true
     progress = 0.0
-    statusMessage = "Starting…"
+    statusMessage = String(localized: "Starting…", comment: "Status message when processing begins")
     errorMessage = nil
     uploadError = nil
     logEntries = []
@@ -105,7 +105,10 @@ class ProcessorViewModel {
         }.value
 
         // Update UI on main actor (we're already on MainActor here)
-        statusMessage = "Complete!"
+        statusMessage = String(
+          localized: "Complete!",
+          comment: "Status message when processing finishes successfully"
+        )
         progress = 1.0
 
         // Reset after a brief delay
@@ -113,7 +116,10 @@ class ProcessorViewModel {
         if !Task.isCancelled { reset() }
       } catch {
         errorMessage = error.localizedDescription
-        statusMessage = "Error occurred"
+        statusMessage = String(
+          localized: "Error occurred",
+          comment: "Status message when processing fails"
+        )
         isProcessing = false
       }
     }

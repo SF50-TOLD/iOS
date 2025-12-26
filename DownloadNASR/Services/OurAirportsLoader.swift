@@ -46,7 +46,7 @@ struct OurAirportsLoader {
     progress.totalUnitCount = 2
 
     logger.notice("Downloading OurAirports data…")
-    progress.localizedDescription = "Downloading OurAirports data…"
+    progress.localizedDescription = String(localized: "Downloading OurAirports data…")
 
     // Download CSV files
     let (airportsData, _) = try await URLSession.shared.data(from: airportsURL)
@@ -54,7 +54,7 @@ struct OurAirportsLoader {
     progress.completedUnitCount = 1
 
     logger.notice("Parsing OurAirports CSVs…")
-    progress.localizedDescription = "Parsing OurAirports CSVs…"
+    progress.localizedDescription = String(localized: "Parsing OurAirports CSVs…")
 
     // Parse and process data on background thread to avoid blocking UI
     let airports = try await Task.detached {
