@@ -67,13 +67,11 @@ class ProcessorViewModel {
         let progressObject = Progress(totalUnitCount: 100)
 
         // Observe progress changes
-        await MainActor.run {
-          self.progressObservation = progressObject.observe(\.fractionCompleted, options: [.new]) {
-            [weak self] progress, _ in
-            Task { @MainActor in
-              self?.progress = progress.fractionCompleted
-              self?.statusMessage = progress.localizedDescription ?? ""
-            }
+        self.progressObservation = progressObject.observe(\.fractionCompleted, options: [.new]) {
+          [weak self] progress, _ in
+          Task { @MainActor in
+            self?.progress = progress.fractionCompleted
+            self?.statusMessage = progress.localizedDescription ?? ""
           }
         }
 
@@ -87,40 +85,36 @@ class ProcessorViewModel {
           return handler
         }
 
-        var processor = NASRProcessor(
-          cycle: cycle,
-          outputLocation: outputURL,
-          logger: logger,
-          progress: progressObject
-        )
-
-        // Set upload error handler
-        processor.onUploadError = { @MainActor [weak self] error in
+        // Capture values for the upload error handler
+        let onUploadError: @MainActor @Sendable (_ error: Error) -> Void = { [weak self] error in
           self?.uploadError = error
         }
 
-        // Process on background thread
-        try await processor.process()
+        // Run processing on a background thread using Task.detached
+        try await Task.detached(priority: .userInitiated) {
+          var processor = NASRProcessor(
+            cycle: cycle,
+            outputLocation: outputURL,
+            logger: logger,
+            progress: progressObject
+          )
 
-        // Update UI on main actor
-        await MainActor.run {
-          statusMessage = "Complete!"
-          progress = 1.0
-        }
+          processor.onUploadError = onUploadError
+
+          try await processor.process()
+        }.value
+
+        // Update UI on main actor (we're already on MainActor here)
+        statusMessage = "Complete!"
+        progress = 1.0
 
         // Reset after a brief delay
         try? await Task.sleep(for: .seconds(2))
-        if !Task.isCancelled {
-          await MainActor.run {
-            reset()
-          }
-        }
+        if !Task.isCancelled { reset() }
       } catch {
-        await MainActor.run {
-          errorMessage = error.localizedDescription
-          statusMessage = "Error occurred"
-          isProcessing = false
-        }
+        errorMessage = error.localizedDescription
+        statusMessage = "Error occurred"
+        isProcessing = false
       }
     }
   }
