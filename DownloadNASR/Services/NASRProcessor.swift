@@ -109,7 +109,11 @@ struct NASRProcessor {
     let encoder = PropertyListEncoder()
     encoder.outputFormat = .binary
     let data = try encoder.encode(codableData)
-    try data.write(to: outputLocation.appendingPathComponent("\(cycle).plist"))
+    let plistFile = outputLocation.appendingPathComponent("\(cycle).plist")
+    if FileManager.default.fileExists(atPath: plistFile.path) {
+      logger.warning("Overwriting existing file: \(plistFile.lastPathComponent)")
+    }
+    try data.write(to: plistFile)
     progress.completedUnitCount = 5
 
     logger.notice("Compressing…")
@@ -117,6 +121,9 @@ struct NASRProcessor {
     // swiftlint:disable:next legacy_objc_type
     let compressedData = try NSData(data: data).compressed(using: .lzma)
     let lzmaFile = outputLocation.appendingPathComponent("\(cycle).plist.lzma")
+    if FileManager.default.fileExists(atPath: lzmaFile.path) {
+      logger.warning("Overwriting existing file: \(lzmaFile.lastPathComponent)")
+    }
     try compressedData.write(to: lzmaFile)
     progress.completedUnitCount = 6
 
@@ -126,7 +133,7 @@ struct NASRProcessor {
       progress.localizedDescription = String(localized: "Uploading to GitHub…")
 
       do {
-        let uploader = GitHubUploader(token: token)
+        let uploader = GitHubUploader(token: token, logger: logger)
         let targetPath = "3.0/\(cycle).plist.lzma"
         try await uploader.uploadFile(
           filePath: lzmaFile,

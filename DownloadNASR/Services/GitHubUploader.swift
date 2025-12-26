@@ -1,5 +1,5 @@
 import Foundation
-import OSLog
+import Logging
 
 /// Uploads processed airport data to GitHub via REST API.
 ///
@@ -15,7 +15,7 @@ import OSLog
 /// ## Usage
 ///
 /// ```swift
-/// let uploader = GitHubUploader(token: token)
+/// let uploader = GitHubUploader(token: token, logger: logger)
 /// try await uploader.uploadFile(
 ///     filePath: localFile,
 ///     targetPath: "3.0/2501.plist.lzma",
@@ -34,18 +34,17 @@ class GitHubUploader {
   private let repo: String
   private let owner: String
   private let baseURL = "https://api.github.com"
-  private let logger = Logger(
-    subsystem: "codes.tim.SF50-TOLD.DownloadNASR",
-    category: "GitHubUploader"
-  )
+  private let logger: Logger
 
   /// Initialize uploader with GitHub credentials
   /// - Parameters:
   ///   - token: GitHub Personal Access Token
+  ///   - logger: Logger for status messages
   ///   - repo: Repository name (default: Airport-Data)
   ///   - owner: Repository owner (default: SF50-TOLD)
-  init(token: String, repo: String = "Airport-Data", owner: String = "SF50-TOLD") {
+  init(token: String, logger: Logger, repo: String = "Airport-Data", owner: String = "SF50-TOLD") {
     self.token = token
+    self.logger = logger
     self.repo = repo
     self.owner = owner
   }
@@ -97,7 +96,7 @@ class GitHubUploader {
     let existingSHA = try? await getFileSHA(path: targetPath, branch: branch)
 
     if let existingSHA {
-      logger.info("File exists, will update (\(existingSHA.prefix(7)))")
+      logger.warning("Overwriting existing remote file: \(targetPath) (\(existingSHA.prefix(7)))")
     } else {
       logger.info("File does not exist, will create new")
     }

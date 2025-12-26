@@ -5,6 +5,7 @@
 //  GitHub token configuration interface
 //
 
+import Logging
 import SwiftUI
 
 struct SettingsView: View {
@@ -117,7 +118,10 @@ struct SettingsView: View {
 
     Task {
       do {
-        let uploader = GitHubUploader(token: token)
+        let uploader = GitHubUploader(
+          token: token,
+          logger: Logger(label: "codes.tim.SF50-TOLD.DownloadNASR.Settings")
+        )
         let isValid = try await uploader.validateToken()
 
         if isValid {
