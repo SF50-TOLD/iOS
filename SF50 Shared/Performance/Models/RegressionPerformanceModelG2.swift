@@ -30,6 +30,14 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
   private let takeoffClimbGradientEquation: RegressionEquation
   private let takeoffClimbRateEquation: RegressionEquation
 
+  // En Route Climb Equations
+  private let enrouteClimbGradientNormalEquation: RegressionEquation
+  private let enrouteClimbRateNormalEquation: RegressionEquation
+  private let enrouteClimbSpeedNormalEquation: RegressionEquation
+  private let enrouteClimbGradientIceEquation: RegressionEquation
+  private let enrouteClimbRateIceEquation: RegressionEquation
+  private let enrouteClimbSpeedIceEquation: RegressionEquation
+
   // Landing Equations
   private let landingRunFlaps100Equation: RegressionEquation
   private let landingRunFlaps50Equation: RegressionEquation
@@ -37,6 +45,25 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
   private let landingDistanceFlaps100Equation: RegressionEquation
   private let landingDistanceFlaps50Equation: RegressionEquation
   private let landingDistanceFlaps50IceEquation: RegressionEquation
+
+  // MARK: - VREF
+
+  override var VrefKts: Value<Double> {
+    let value =
+      switch configuration.flapSetting {
+        case .flapsUp:
+          1.000000e-02 * weight + 4.900000e+01
+        case .flapsUpIce:
+          1.250000e-02 * weight + 6.500000e+01
+        case .flaps50:
+          9.000000e-03 * weight + 4.600000e+01
+        case .flaps50Ice:
+          1.100000e-02 * weight + 5.400000e+01
+        case .flaps100:
+          9.000000e-03 * weight + 3.500000e+01
+      }
+    return .value(value)
+  }
 
   // MARK: - Takeoff
 
@@ -63,6 +90,32 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
 
   override var takeoffClimbRateFtMin: Value<Double> {
     evaluate(takeoffClimbRateEquation)
+  }
+
+  // MARK: - En Route Climb
+
+  override var enrouteClimbGradientFtNmi_normal: Value<Double> {
+    evaluate(enrouteClimbGradientNormalEquation)
+  }
+
+  override var enrouteClimbRateFtMin_normal: Value<Double> {
+    evaluate(enrouteClimbRateNormalEquation)
+  }
+
+  override var enrouteClimbSpeedKIAS_normal: Value<Double> {
+    evaluate(enrouteClimbSpeedNormalEquation)
+  }
+
+  override var enrouteClimbGradientFtNmi_iceContaminated: Value<Double> {
+    evaluate(enrouteClimbGradientIceEquation)
+  }
+
+  override var enrouteClimbRateFtMin_iceContaminated: Value<Double> {
+    evaluate(enrouteClimbRateIceEquation)
+  }
+
+  override var enrouteClimbSpeedKIAS_iceContaminated: Value<Double> {
+    evaluate(enrouteClimbSpeedIceEquation)
   }
 
   private var takeoffRunBaseFt: Value<Double> {
@@ -222,6 +275,39 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
     evaluate(landingDistanceFlaps50IceEquation)
   }
 
+  override var landingRun_headwindAdjustment: Double {
+    let factor =
+      switch configuration.flapSetting {
+        case .flaps100: 0.08
+        default: 0.07
+      }
+    return PerformanceAdjustments.landingRunHeadwindAdjustment(factor: factor, headwind: headwind)
+  }
+
+  override var landingDistance_headwindAdjustment: Double {
+    let factor =
+      switch configuration.flapSetting {
+        case .flaps50, .flapsUp:
+          max(0.112857 + -9.523810e-06 * weight, 0.01)  // Ensure positive, min 0.01
+        case .flaps50Ice, .flapsUpIce: 0.06
+        case .flaps100: 0.07
+      }
+    return PerformanceAdjustments.landingDistanceHeadwindAdjustment(
+      factor: factor,
+      headwind: headwind
+    )
+  }
+
+  override var landingRun_tailwindAdjustment: Double {
+    let factor =
+      switch configuration.flapSetting {
+        case .flaps100: 0.49
+        case .flaps50Ice, .flapsUpIce: 0.37
+        case .flaps50, .flapsUp: 0.42
+      }
+    return PerformanceAdjustments.landingRunTailwindAdjustment(factor: factor, tailwind: tailwind)
+  }
+
   override var landingDistance_tailwindAdjustment: Double {
     let factor =
       switch configuration.flapSetting {
@@ -236,6 +322,25 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
       factor: factor,
       tailwind: tailwind
     )
+  }
+
+  override var landingRun_uphillAdjustment: Double {
+    let factor =
+      switch configuration.flapSetting {
+        case .flaps50Ice, .flapsUpIce: 0.06
+        default: 0.05
+      }
+    return PerformanceAdjustments.landingRunUphillAdjustment(factor: factor, uphill: uphill)
+  }
+
+  override var landingRun_downhillAdjustment: Double {
+    let factor = 0.06
+    return PerformanceAdjustments.landingRunDownhillAdjustment(factor: factor, downhill: downhill)
+  }
+
+  override var landingDistance_unpavedAdjustment: Double {
+    let factor = 0.2
+    return PerformanceAdjustments.landingDistanceUnpavedAdjustment(factor: factor)
   }
 
   // MARK: - Initializer
@@ -255,6 +360,22 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
     takeoffDistanceEquation = try! loader.loadTakeoffDistanceEquation()
     takeoffClimbGradientEquation = try! loader.loadTakeoffClimbGradientEquation()
     takeoffClimbRateEquation = try! loader.loadTakeoffClimbRateEquation()
+
+    // Load en route climb equations
+    enrouteClimbGradientNormalEquation = try! loader.loadEnrouteClimbGradientEquation(
+      iceContaminated: false
+    )
+    enrouteClimbRateNormalEquation = try! loader.loadEnrouteClimbRateEquation(
+      iceContaminated: false
+    )
+    enrouteClimbSpeedNormalEquation = try! loader.loadEnrouteClimbSpeedEquation(
+      iceContaminated: false
+    )
+    enrouteClimbGradientIceEquation = try! loader.loadEnrouteClimbGradientEquation(
+      iceContaminated: true
+    )
+    enrouteClimbRateIceEquation = try! loader.loadEnrouteClimbRateEquation(iceContaminated: true)
+    enrouteClimbSpeedIceEquation = try! loader.loadEnrouteClimbSpeedEquation(iceContaminated: true)
 
     // Load landing equations
     landingRunFlaps100Equation = try! loader.loadLandingRunEquation(flapSetting: .flaps100)
