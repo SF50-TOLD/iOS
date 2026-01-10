@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import SwiftData
 
@@ -62,6 +63,10 @@ public final class Runway {
   /// Whether the runway surface is turf (grass) rather than paved
   public var isTurf: Bool
 
+  private var _thresholdLatitude: Double?  // decimal degrees
+  private var _thresholdLongitude: Double?  // decimal degrees
+  private var _width: Double?  // meters
+
   /// The airport this runway belongs to
   @Relationship(deleteRule: .nullify, inverse: \Airport.runways)
   public var airport: Airport
@@ -92,6 +97,12 @@ public final class Runway {
   public var length: Measurement<UnitLength> {
     get { .init(value: _length, unit: .meters) }
     set { _length = newValue.converted(to: .meters).value }
+  }
+
+  /// Runway width (nil if not available)
+  public var width: Measurement<UnitLength>? {
+    get { _width.map { .init(value: $0, unit: .meters) } }
+    set { _width = newValue?.converted(to: .meters).value }
   }
 
   /// Declared takeoff run available (TORA)
@@ -137,6 +148,15 @@ public final class Runway {
 
   /// Runway magnetic heading, calculated from true heading and airport magnetic variation
   public var magneticHeading: Measurement<UnitAngle> { trueHeading + airport.variation }
+
+  /// Threshold coordinate if available, or `nil` if coordinates are not known
+  public var thresholdCoordinate: CLLocationCoordinate2D? {
+    guard let lat = _thresholdLatitude, let lon = _thresholdLongitude else { return nil }
+    return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+  }
+
+  /// Whether threshold coordinates are available for this runway
+  public var hasThresholdCoordinates: Bool { thresholdCoordinate != nil }
 
   /// Takeoff distance available adjusted for any active NOTAM restrictions
   public var notamedTakeoffDistance: Measurement<UnitLength> {
@@ -184,6 +204,7 @@ public final class Runway {
    *   - takeoffDistance: Declared TODA, or `nil` to use full length.
    *   - landingDistance: Declared LDA, or `nil` to use full length.
    *   - isTurf: Whether the runway is unpaved (grass/turf).
+   *   - thresholdCoordinate: Threshold location, or `nil` if not available.
    *   - airport: The airport this runway belongs to.
    */
   public init(
@@ -192,10 +213,12 @@ public final class Runway {
     trueHeading: Measurement<UnitAngle>,
     gradient: Float?,
     length: Measurement<UnitLength>,
+    width: Measurement<UnitLength>? = nil,
     takeoffRun: Measurement<UnitLength>?,
     takeoffDistance: Measurement<UnitLength>?,
     landingDistance: Measurement<UnitLength>?,
     isTurf: Bool,
+    thresholdCoordinate: CLLocationCoordinate2D? = nil,
     airport: Airport
   ) {
     self.name = name
@@ -203,10 +226,13 @@ public final class Runway {
     _trueHeading = trueHeading.converted(to: .degrees).value
     self.gradient = gradient
     _length = length.converted(to: .meters).value
+    _width = width?.converted(to: .meters).value
     _takeoffRun = takeoffRun?.converted(to: .meters).value
     _takeoffDistance = takeoffDistance?.converted(to: .meters).value
     _landingDistance = landingDistance?.converted(to: .meters).value
     self.isTurf = isTurf
+    _thresholdLatitude = thresholdCoordinate?.latitude
+    _thresholdLongitude = thresholdCoordinate?.longitude
     self.airport = airport
     reciprocal = nil
     notam = nil

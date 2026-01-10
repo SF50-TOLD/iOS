@@ -138,11 +138,16 @@ struct OurAirportsLoader {
         continue
       }
 
+      // Parse width (shared between both ends)
+      let widthFt = row["width_ft", Int.self].map { Double($0) }
+
       // Process low end (base end)
       if let lowIdent = row["le_ident", String.self] {
         let lowElevation = row["le_elevation_ft", Int.self].map { Double($0) }
         let lowHeading = row["le_heading_degT", Double.self] ?? calculateHeadingFromIdent(lowIdent)
         let lowDisplaced = Double(row["le_displaced_threshold_ft", Int.self] ?? 0)
+        let lowLatitude = row["le_latitude_deg", Double.self]
+        let lowLongitude = row["le_longitude_deg", Double.self]
 
         let runway = OurRunwayData(
           name: lowIdent,
@@ -151,7 +156,10 @@ struct OurAirportsLoader {
           lengthFt: Double(length),
           displacedThresholdFt: lowDisplaced,
           isTurf: isTurf,
-          reciprocalName: row["he_ident", String.self]
+          reciprocalName: row["he_ident", String.self],
+          thresholdLatitude: lowLatitude,
+          thresholdLongitude: lowLongitude,
+          widthFt: widthFt
         )
 
         if runwaysByAirport[airportIdent] == nil {
@@ -166,6 +174,8 @@ struct OurAirportsLoader {
         let highHeading =
           row["he_heading_degT", Double.self] ?? calculateHeadingFromIdent(highIdent)
         let highDisplaced = Double(row["he_displaced_threshold_ft", Int.self] ?? 0)
+        let highLatitude = row["he_latitude_deg", Double.self]
+        let highLongitude = row["he_longitude_deg", Double.self]
 
         let runway = OurRunwayData(
           name: highIdent,
@@ -174,7 +184,10 @@ struct OurAirportsLoader {
           lengthFt: Double(length),
           displacedThresholdFt: highDisplaced,
           isTurf: isTurf,
-          reciprocalName: row["le_ident", String.self]
+          reciprocalName: row["le_ident", String.self],
+          thresholdLatitude: highLatitude,
+          thresholdLongitude: highLongitude,
+          widthFt: widthFt
         )
 
         if runwaysByAirport[airportIdent] == nil {
@@ -269,4 +282,13 @@ struct OurRunwayData {
 
   /// Name of the reciprocal runway end.
   let reciprocalName: String?
+
+  /// Threshold latitude in decimal degrees.
+  let thresholdLatitude: Double?
+
+  /// Threshold longitude in decimal degrees.
+  let thresholdLongitude: Double?
+
+  /// Runway width in feet.
+  let widthFt: Double?
 }

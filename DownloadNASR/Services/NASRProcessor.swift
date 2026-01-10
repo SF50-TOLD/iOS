@@ -306,6 +306,13 @@ struct NASRProcessor {
 
     let elevationMeters = end.touchdownZoneElevation?.converted(to: .meters).value
 
+    // Convert threshold coordinates from arcseconds to decimal degrees
+    let thresholdLatitude = end.threshold.map { Double($0.latitudeArcsec) / 3600.0 }
+    let thresholdLongitude = end.threshold.map { Double($0.longitudeArcsec) / 3600.0 }
+
+    // Convert width from feet to meters
+    let widthMeters = runway.widthFt.map { Double($0) * 0.3048 }
+
     return AirportDataCodable.RunwayCodable(
       name: end.id,
       elevation: elevationMeters,
@@ -316,7 +323,10 @@ struct NASRProcessor {
       takeoffDistance: end.TODA?.converted(to: .meters).value,
       landingDistance: end.LDA?.converted(to: .meters).value,
       isTurf: !runway.isPaved,
-      reciprocalName: reciprocalName
+      reciprocalName: reciprocalName,
+      thresholdLatitude: thresholdLatitude,
+      thresholdLongitude: thresholdLongitude,
+      width: widthMeters
     )
   }
 
@@ -359,7 +369,10 @@ struct NASRProcessor {
             takeoffDistance: nil,  // Not available in OurAirports
             landingDistance: nil,  // Not available in OurAirports
             isTurf: runway.isTurf,
-            reciprocalName: runway.reciprocalName
+            reciprocalName: runway.reciprocalName,
+            thresholdLatitude: runway.thresholdLatitude,
+            thresholdLongitude: runway.thresholdLongitude,
+            width: runway.widthFt.map { $0 * 0.3048 }  // Convert feet to meters
           )
         )
       }

@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import Observation
 import SF50_Shared
@@ -161,16 +162,26 @@ actor AirportLoader {
     var runwayMap = [String: SF50_Shared.Runway]()
 
     for runwayData in airport.runways {
+      // Create threshold coordinate if both lat/lon are available
+      var thresholdCoordinate: CLLocationCoordinate2D?
+      if let lat = runwayData.thresholdLatitude,
+        let lon = runwayData.thresholdLongitude
+      {
+        thresholdCoordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+      }
+
       let runway = SF50_Shared.Runway(
         name: runwayData.name,
         elevation: runwayData.elevation.map { .init(value: $0, unit: .meters) },
         trueHeading: .init(value: runwayData.trueHeading, unit: .degrees),
         gradient: runwayData.gradient,
         length: .init(value: runwayData.length, unit: .meters),
+        width: runwayData.width.map { .init(value: $0, unit: .meters) },
         takeoffRun: runwayData.takeoffRun.map { .init(value: $0, unit: .meters) },
         takeoffDistance: runwayData.takeoffDistance.map { .init(value: $0, unit: .meters) },
         landingDistance: runwayData.landingDistance.map { .init(value: $0, unit: .meters) },
         isTurf: runwayData.isTurf,
+        thresholdCoordinate: thresholdCoordinate,
         airport: record
       )
       runwayMap[runwayData.name] = runway

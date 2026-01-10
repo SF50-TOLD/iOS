@@ -107,9 +107,10 @@ public final class PreviewHelper: Sendable {
   }
 
   @MainActor
-  public func insert(airport: AirportBuilder) throws {
-    mainContext.insert(airport.airport)
-    for runway in airport.runways {
+  public func insert(airport builder: AirportBuilder) throws {
+    let (airport, runways) = builder.build()
+    mainContext.insert(airport)
+    for runway in runways {
       mainContext.insert(runway)
     }
     try mainContext.save()
@@ -245,16 +246,26 @@ public final class PreviewHelper: Sendable {
 
 @MainActor
 public struct AirportBuilder {
-  let airport: Airport
-  let runways: [Runway]
+  private let makeAirport: @MainActor () -> Airport
+  private let makeRunways: @MainActor (Airport) -> [Runway]
 
-  init(airport: Airport, runways: (Airport) -> [Runway]) {
-    self.airport = airport
-    self.runways = runways(airport)
+  public init(
+    airport: @escaping @MainActor @autoclosure () -> Airport,
+    runways: @escaping @MainActor (Airport) -> [Runway]
+  ) {
+    self.makeAirport = airport
+    self.makeRunways = runways
+  }
+
+  /// Creates fresh Airport and Runway instances (not yet inserted into any context).
+  public func build() -> (airport: Airport, runways: [Runway]) {
+    let airport = makeAirport()
+    let runways = makeRunways(airport)
+    airport.runways = runways
+    return (airport, runways)
   }
 
   public func unsaved() -> Airport {
-    airport.runways = runways
-    return airport
+    build().airport
   }
 }

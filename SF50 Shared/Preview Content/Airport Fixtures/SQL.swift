@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftData
 
 extension AirportBuilder {
@@ -22,10 +23,15 @@ extension AirportBuilder {
           trueHeading: .init(value: 318, unit: .degrees),
           gradient: nil,
           length: .init(value: 2621, unit: .feet),
+          width: .init(value: 75, unit: .feet),
           takeoffRun: nil,
           takeoffDistance: nil,
           landingDistance: nil,
           isTurf: false,
+          thresholdCoordinate: CLLocationCoordinate2D(
+            latitude: 37.50918836805555,
+            longitude: -122.2465104166667
+          ),
           airport: airport
         ),
         .init(
@@ -34,10 +40,15 @@ extension AirportBuilder {
           trueHeading: .init(value: 138, unit: .degrees),
           gradient: nil,
           length: .init(value: 2621, unit: .feet),
+          width: .init(value: 75, unit: .feet),
           takeoffRun: nil,
           takeoffDistance: nil,
           landingDistance: nil,
           isTurf: false,
+          thresholdCoordinate: CLLocationCoordinate2D(
+            latitude: 37.51453559027778,
+            longitude: -122.2525520833333
+          ),
           airport: airport
         )
       ]

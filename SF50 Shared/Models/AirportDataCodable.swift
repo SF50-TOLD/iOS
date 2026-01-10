@@ -112,5 +112,14 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// Name of the reciprocal runway (e.g., "10R" for runway "28L")
     public let reciprocalName: String?
+
+    /// Threshold latitude in decimal degrees (nil if not available)
+    public let thresholdLatitude: Double?
+
+    /// Threshold longitude in decimal degrees (nil if not available)
+    public let thresholdLongitude: Double?
+
+    /// Runway width in meters (nil if not available)
+    public let width: Double?
   }
 }
