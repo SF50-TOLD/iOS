@@ -293,6 +293,29 @@ final class Generate_Screenshots: XCTestCase {
 
     snapshot("08-landing-results")
 
+    // Show landing map view
+    let showLandingMapButton = collectionView.makeVisible(
+      element: app.buttons["showLandingMapButton"]
+    )
+    XCTAssertNotNil(showLandingMapButton, "Show landing map button should be accessible")
+    XCTAssertTrue(
+      showLandingMapButton!.isEnabled,
+      "Show landing map button should be enabled (runway must have threshold coordinates)"
+    )
+    showLandingMapButton!.tap()
+    waitForNavigation()
+
+    // Wait for map to render
+    Thread.sleep(forTimeInterval: 2.0)
+
+    snapshot("08a-landing-map")
+
+    // Go back from map view
+    let mapBackButton = app.navigationBars.buttons.element(boundBy: 0)
+    XCTAssertTrue(mapBackButton.waitForExistence(timeout: 5), "Map view back button should exist")
+    mapBackButton.tap()
+    waitForNavigation()
+
     // Generate landing report
     let landingReportButton = collectionView.makeVisible(
       element: app.buttons["generateLandingReportButton"]

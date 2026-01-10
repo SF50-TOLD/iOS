@@ -11,6 +11,10 @@ extension Measurement {
     .init(value: -val.value, unit: val.unit)
   }
 
+  public static func += (lhs: inout Measurement, rhs: Measurement) {
+    lhs = lhs + rhs
+  }
+
   public static func / <U: Dimension>(lhs: Measurement<U>, rhs: Measurement<U>) -> Double {
     lhs.converted(to: .baseUnit()).value / rhs.converted(to: .baseUnit()).value
   }

@@ -20,6 +20,7 @@ struct TakeoffView: View {
           TakeoffPerformanceView()
           TakeoffResultsView()
           TakeoffReportButton()
+          TakeoffMapLink()
         }.navigationTitle("Takeoff")
       } else {
         ProgressView()

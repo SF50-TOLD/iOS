@@ -21,6 +21,7 @@ struct LandingView: View {
           LandingPerformanceView()
           LandingResultsView()
           LandingReportButton()
+          LandingMapLink()
         }.navigationTitle("Landing")
       } else {
         ProgressView()
