@@ -154,7 +154,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Bootstrap.swift,
-				Models/AirportDataCodable.swift,
+				Models/Codable/AirportDataCodable.swift,
 			);
 			target = 016945982EB30848001602E6 /* DownloadNASR */;
 		};
