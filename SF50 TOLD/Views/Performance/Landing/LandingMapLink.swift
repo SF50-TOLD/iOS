@@ -46,7 +46,8 @@ struct LandingMapLink: View {
           runway: runway,
           groundRun: groundRun,
           operation: SF50_Shared.Operation.landing,
-          notamOffset: performance.notam?.landingDistanceShortening ?? .init(value: 0, unit: .feet)
+          notamOffset: performance.notam?.landingDistanceShortening ?? .init(value: 0, unit: .feet),
+          shorteningLocation: performance.notam?.landingShorteningLocation ?? .departureEnd
         )
       } label: {
         Text("Show Landing…")

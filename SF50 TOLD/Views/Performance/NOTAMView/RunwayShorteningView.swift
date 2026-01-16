@@ -11,6 +11,10 @@ struct RunwayShorteningView: View {
   @Default(.runwayLengthUnit)
   private var runwayLengthUnit
 
+  private var runwayName: String {
+    notam.runway.name
+  }
+
   private var shortenPrompt: String {
     switch operation {
       case .takeoff: return String(localized: "Shorten takeoff distance by:")
@@ -25,8 +29,27 @@ struct RunwayShorteningView: View {
     }
   }
 
+  private var locationBinding: Binding<ShorteningLocation> {
+    switch operation {
+      case .takeoff: return $notam.takeoffShorteningLocation
+      case .landing: return $notam.landingShorteningLocation
+    }
+  }
+
+  private var thresholdLabel: String {
+    String(localized: "Runway \(runwayName) Threshold")
+  }
+
+  private var DERLabel: String {
+    if let reciprocalName = notam.runway.reciprocal?.name {
+      String(localized: "Runway \(reciprocalName) Threshold")
+    } else {
+      String(localized: "Runway \(runwayName) DER")
+    }
+  }
+
   var body: some View {
-    Section("Runway Shortening") {
+    Section("Runway \(runwayName) Shortening") {
       HStack {
         Text(shortenPrompt)
         Spacer()
@@ -38,6 +61,12 @@ struct RunwayShorteningView: View {
         )
         .accessibilityIdentifier("distanceField")
       }
+
+      Picker("Shorten from:", selection: locationBinding) {
+        Text(DERLabel).tag(ShorteningLocation.departureEnd)
+        Text(thresholdLabel).tag(ShorteningLocation.thresholdEnd)
+      }
+      .accessibilityIdentifier("shorteningLocationPicker")
     }
   }
 }

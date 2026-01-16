@@ -1,6 +1,24 @@
 import Foundation
 import SwiftData
 
+/// Location of runway shortening relative to the operation direction.
+///
+/// When a portion of a runway is closed, the closure can be at either end.
+/// This affects visualization but not the available distance calculation.
+public enum ShorteningLocation: String, Codable, CaseIterable, Sendable {
+  /// Shortening at the threshold/approach end of the runway.
+  ///
+  /// For takeoff: The start of the takeoff roll is pushed further down the runway.
+  /// For landing: The touchdown zone is pushed further down the runway.
+  case thresholdEnd = "threshold_end"
+
+  /// Shortening at the departure end of the runway (DER).
+  ///
+  /// For takeoff: The start point is unchanged, but the runway ends earlier.
+  /// For landing: The touchdown zone is unchanged, but the runway ends earlier.
+  case departureEnd = "departure_end"
+}
+
 /// Notice to Airmen (NOTAM) affecting runway performance.
 ///
 /// ``NOTAM`` represents temporary conditions that affect runway performance calculations,
@@ -30,9 +48,11 @@ public final class NOTAM {
   private var _landingDistanceShortening: Double  // meters
   private var _obstacleHeight: Double  // meters
   private var _obstacleDistance: Double  // meters
+  private var _takeoffShorteningLocation: String?
+  private var _landingShorteningLocation: String?
 
   @Relationship(deleteRule: .nullify)
-  var runway: Runway
+  public var runway: Runway
 
   /// Runway surface contamination (ice, snow, slush, water)
   public var contamination: Contamination? {
@@ -67,6 +87,26 @@ public final class NOTAM {
     set { _obstacleDistance = newValue.converted(to: .meters).value }
   }
 
+  /// Location of takeoff distance shortening (threshold end or departure end).
+  ///
+  /// Defaults to `.departureEnd` for existing NOTAMs without this value set.
+  public var takeoffShorteningLocation: ShorteningLocation {
+    get {
+      _takeoffShorteningLocation.flatMap { ShorteningLocation(rawValue: $0) } ?? .departureEnd
+    }
+    set { _takeoffShorteningLocation = newValue.rawValue }
+  }
+
+  /// Location of landing distance shortening (threshold end or departure end).
+  ///
+  /// Defaults to `.departureEnd` for existing NOTAMs without this value set.
+  public var landingShorteningLocation: ShorteningLocation {
+    get {
+      _landingShorteningLocation.flatMap { ShorteningLocation(rawValue: $0) } ?? .departureEnd
+    }
+    set { _landingShorteningLocation = newValue.rawValue }
+  }
+
   /// Returns true if the NOTAM has no restrictions set.
   public var isEmpty: Bool {
     return contamination == nil
@@ -81,7 +121,9 @@ public final class NOTAM {
     runway: Runway,
     contamination: Contamination? = nil,
     takeoffDistanceShortening: Measurement<UnitLength>? = nil,
+    takeoffShorteningLocation: ShorteningLocation = .departureEnd,
     landingDistanceShortening: Measurement<UnitLength>? = nil,
+    landingShorteningLocation: ShorteningLocation = .departureEnd,
     obstacleHeight: Measurement<UnitLength>? = nil,
     obstacleDistance: Measurement<UnitLength>? = nil
   ) {
@@ -89,7 +131,9 @@ public final class NOTAM {
     _contaminationType = contamination?.type
     _contaminationDepth = contamination?.depth ?? 0
     _takeoffDistanceShortening = takeoffDistanceShortening?.converted(to: .meters).value ?? 0
+    _takeoffShorteningLocation = takeoffShorteningLocation.rawValue
     _landingDistanceShortening = landingDistanceShortening?.converted(to: .meters).value ?? 0
+    _landingShorteningLocation = landingShorteningLocation.rawValue
     _obstacleHeight = obstacleHeight?.converted(to: .meters).value ?? 0
     _obstacleDistance = obstacleDistance?.converted(to: .meters).value ?? 0
   }
@@ -99,10 +143,12 @@ public final class NOTAM {
     switch operation {
       case .takeoff:
         takeoffDistanceShortening = .init(value: 0, unit: .feet)
+        takeoffShorteningLocation = .departureEnd
         obstacleHeight = .init(value: 0, unit: .feet)
         obstacleDistance = .init(value: 0, unit: .nauticalMiles)
       case .landing:
         landingDistanceShortening = .init(value: 0, unit: .feet)
+        landingShorteningLocation = .departureEnd
         contamination = nil
     }
   }

@@ -66,6 +66,9 @@ public final class Runway {
   private var _thresholdLatitude: Double?  // decimal degrees
   private var _thresholdLongitude: Double?  // decimal degrees
   private var _width: Double?  // meters
+  private var _thresholdCrossingHeight: Double?  // meters
+  private var _glidepathAngle: Double?  // degrees
+  private var _displacedThresholdDistance: Double?  // meters
 
   /// The airport this runway belongs to
   @Relationship(deleteRule: .nullify, inverse: \Airport.runways)
@@ -107,6 +110,24 @@ public final class Runway {
   public var width: Measurement<UnitLength>? {
     get { _width.map { .init(value: $0, unit: .meters) } }
     set { _width = newValue?.converted(to: .meters).value }
+  }
+
+  /// Threshold crossing height for approach (nil if not available)
+  public var thresholdCrossingHeight: Measurement<UnitLength>? {
+    get { _thresholdCrossingHeight.map { .init(value: $0, unit: .meters) } }
+    set { _thresholdCrossingHeight = newValue?.converted(to: .meters).value }
+  }
+
+  /// Glidepath angle from ILS glideslope or visual approach indicator (nil if not available)
+  public var glidepathAngle: Measurement<UnitAngle>? {
+    get { _glidepathAngle.map { .init(value: $0, unit: .degrees) } }
+    set { _glidepathAngle = newValue?.converted(to: .degrees).value }
+  }
+
+  /// Displaced threshold distance from runway end (nil if threshold is at runway end)
+  public var displacedThresholdDistance: Measurement<UnitLength>? {
+    get { _displacedThresholdDistance.map { .init(value: $0, unit: .meters) } }
+    set { _displacedThresholdDistance = newValue?.converted(to: .meters).value }
   }
 
   /// Declared takeoff run available (TORA)
@@ -162,6 +183,53 @@ public final class Runway {
   /// Whether threshold coordinates are available for this runway
   public var hasThresholdCoordinates: Bool { thresholdCoordinate != nil }
 
+  /// Coordinate at the physical start of the runway for takeoff operations.
+  ///
+  /// Displaced thresholds only affect landing; takeoff can use the full runway
+  /// from its physical start. This returns the coordinate at the start of the
+  /// runway surface, calculated by moving backwards from the landing threshold
+  /// by the displaced threshold distance if present.
+  ///
+  /// Returns `nil` if threshold coordinates are not available.
+  public var takeoffStartCoordinate: CLLocationCoordinate2D? {
+    guard let threshold = thresholdCoordinate else { return nil }
+
+    // If there's no displacement, takeoff starts at the threshold
+    guard let displacement = displacedThresholdDistance, displacement.value > 0 else {
+      return threshold
+    }
+
+    // Calculate backwards from threshold (opposite of runway heading)
+    let reciprocalHeading = (trueHeading.converted(to: .degrees).value + 180)
+      .truncatingRemainder(dividingBy: 360)
+    let bearingRadians = reciprocalHeading * .pi / 180
+
+    let distanceMeters = displacement.converted(to: .meters).value
+    let earthRadius: Double = 6371000
+
+    let lat1 = threshold.latitude * .pi / 180
+    let lon1 = threshold.longitude * .pi / 180
+
+    let angularDistance = distanceMeters / earthRadius
+
+    let lat2 = asin(
+      sin(lat1) * cos(angularDistance)
+        + cos(lat1) * sin(angularDistance) * cos(bearingRadians)
+    )
+
+    let lon2 =
+      lon1
+      + atan2(
+        sin(bearingRadians) * sin(angularDistance) * cos(lat1),
+        cos(angularDistance) - sin(lat1) * sin(lat2)
+      )
+
+    return CLLocationCoordinate2D(
+      latitude: lat2 * 180 / .pi,
+      longitude: lon2 * 180 / .pi
+    )
+  }
+
   /// Takeoff distance available adjusted for any active NOTAM restrictions
   public var notamedTakeoffDistance: Measurement<UnitLength> {
     if let shortening = notam?.takeoffDistanceShortening {
@@ -209,6 +277,9 @@ public final class Runway {
    *   - landingDistance: Declared LDA, or `nil` to use full length.
    *   - isTurf: Whether the runway is unpaved (grass/turf).
    *   - thresholdCoordinate: Threshold location, or `nil` if not available.
+   *   - thresholdCrossingHeight: TCH for approach, or `nil` if not available.
+   *   - glidepathAngle: Glidepath angle from ILS or PAPI/VASI, or `nil` if not available.
+   *   - displacedThresholdDistance: Distance from runway end to threshold, or `nil` if not displaced.
    *   - airport: The airport this runway belongs to.
    */
   public init(
@@ -223,6 +294,9 @@ public final class Runway {
     landingDistance: Measurement<UnitLength>?,
     isTurf: Bool,
     thresholdCoordinate: CLLocationCoordinate2D? = nil,
+    thresholdCrossingHeight: Measurement<UnitLength>? = nil,
+    glidepathAngle: Measurement<UnitAngle>? = nil,
+    displacedThresholdDistance: Measurement<UnitLength>? = nil,
     airport: Airport
   ) {
     self.name = name
@@ -237,6 +311,9 @@ public final class Runway {
     self.isTurf = isTurf
     _thresholdLatitude = thresholdCoordinate?.latitude
     _thresholdLongitude = thresholdCoordinate?.longitude
+    _thresholdCrossingHeight = thresholdCrossingHeight?.converted(to: .meters).value
+    _glidepathAngle = glidepathAngle?.converted(to: .degrees).value
+    _displacedThresholdDistance = displacedThresholdDistance?.converted(to: .meters).value
     self.airport = airport
     reciprocalName = nil
     notam = nil

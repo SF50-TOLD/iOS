@@ -121,5 +121,14 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// Runway width in meters (nil if not available)
     public let width: Double?
+
+    /// Threshold crossing height in meters AGL (nil if not available)
+    public let thresholdCrossingHeight: Double?
+
+    /// Glidepath angle in degrees from ILS glideslope or visual approach indicator (nil if not available)
+    public let glidepathAngle: Double?
+
+    /// Displaced threshold distance from runway end in meters (nil if threshold is at runway end)
+    public let displacedThresholdDistance: Double?
   }
 }

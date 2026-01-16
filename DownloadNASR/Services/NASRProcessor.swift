@@ -192,12 +192,28 @@ struct NASRProcessor {
       logger.error("Parse error", metadata: metadata)
       return true
     }
+
+    logger.notice("Parsing NASR ILS data…")
+    progress.localizedDescription = String(localized: "Parsing NASR ILS data…")
+    try await nasr.parse(.ILSes) { error in
+      logger.warning("ILS parse error: \(error.localizedDescription)")
+      return true
+    }
     progress.completedUnitCount = 2
 
     let NASRData = await nasr.data
     guard let airports = await NASRData.airports else {
       return []
     }
+
+    // Build ILS lookup dictionary keyed by (airportSiteNumber, runwayEndId)
+    let ilsRecords = await NASRData.ILSFacilities ?? []
+    var ilsLookup = [String: ILS]()
+    for ils in ilsRecords {
+      let key = "\(ils.airportSiteNumber)_\(ils.runwayEndId)"
+      ilsLookup[key] = ils
+    }
+    logger.notice("Loaded \(ilsRecords.count) ILS records")
 
     var codableAirports = [AirportDataCodable.AirportCodable]()
 
@@ -222,7 +238,9 @@ struct NASRProcessor {
         if let baseRunway = makeRunwayCodable(
           runway: runway,
           end: runway.baseEnd,
-          reciprocalName: runway.reciprocalEnd?.id
+          reciprocalName: runway.reciprocalEnd?.id,
+          airportSiteNumber: airport.id,
+          ilsLookup: ilsLookup
         ) {
           runways.append(baseRunway)
         }
@@ -232,7 +250,9 @@ struct NASRProcessor {
           let reciprocalRunway = makeRunwayCodable(
             runway: runway,
             end: reciprocalEnd,
-            reciprocalName: runway.baseEnd.id
+            reciprocalName: runway.baseEnd.id,
+            airportSiteNumber: airport.id,
+            ilsLookup: ilsLookup
           )
         {
           runways.append(reciprocalRunway)
@@ -272,7 +292,9 @@ struct NASRProcessor {
   private func makeRunwayCodable(
     runway: SwiftNASR.Runway,
     end: RunwayEnd,
-    reciprocalName: String?
+    reciprocalName: String?,
+    airportSiteNumber: String,
+    ilsLookup: [String: ILS]
   ) -> AirportDataCodable.RunwayCodable? {
     guard let length = runway.length else { return nil }
 
@@ -307,11 +329,31 @@ struct NASRProcessor {
     let elevationMeters = end.touchdownZoneElevation?.converted(to: .meters).value
 
     // Convert threshold coordinates from arcseconds to decimal degrees
-    let thresholdLatitude = end.threshold.map { Double($0.latitudeArcsec) / 3600.0 }
-    let thresholdLongitude = end.threshold.map { Double($0.longitudeArcsec) / 3600.0 }
+    // Use displaced threshold if available, otherwise use the runway end threshold
+    let thresholdLocation = end.displacedThreshold ?? end.threshold
+    let thresholdLatitude = thresholdLocation.map { Double($0.latitudeArcsec) / 3600.0 }
+    let thresholdLongitude = thresholdLocation.map { Double($0.longitudeArcsec) / 3600.0 }
 
     // Convert width from feet to meters
     let widthMeters = runway.widthFt.map { Double($0) * 0.3048 }
+
+    // Extract threshold crossing height (convert feet to meters)
+    let thresholdCrossingHeight = end.thresholdCrossingHeightFtAGL.map { Double($0) * 0.3048 }
+
+    // Calculate glidepath gradient from ILS or visual approach indicator
+    // ILS glideslope takes priority over visual glidepath (PAPI/VASI)
+    let ilsKey = "\(airportSiteNumber)_\(end.id)"
+    let ils = ilsLookup[ilsKey]
+    let ilsGlideslopeAngleDeg = ils?.glideSlope?.angleDeg
+
+    // Visual glidepath angle in degrees
+    let visualGlidepathAngleDeg = end.visualGlidepathDeg
+
+    // Use ILS glideslope if available, otherwise visual glidepath
+    let glidepathAngle = (ilsGlideslopeAngleDeg ?? visualGlidepathAngleDeg).map { Double($0) }
+
+    // Extract displaced threshold distance (convert feet to meters)
+    let displacedThresholdDistance = end.thresholdDisplacementFt.map { Double($0) * 0.3048 }
 
     return AirportDataCodable.RunwayCodable(
       name: end.id,
@@ -326,7 +368,10 @@ struct NASRProcessor {
       reciprocalName: reciprocalName,
       thresholdLatitude: thresholdLatitude,
       thresholdLongitude: thresholdLongitude,
-      width: widthMeters
+      width: widthMeters,
+      thresholdCrossingHeight: thresholdCrossingHeight,
+      glidepathAngle: glidepathAngle,
+      displacedThresholdDistance: displacedThresholdDistance
     )
   }
 
@@ -372,7 +417,11 @@ struct NASRProcessor {
             reciprocalName: runway.reciprocalName,
             thresholdLatitude: runway.thresholdLatitude,
             thresholdLongitude: runway.thresholdLongitude,
-            width: runway.widthFt.map { $0 * 0.3048 }  // Convert feet to meters
+            width: runway.widthFt.map { $0 * 0.3048 },  // Convert feet to meters
+            thresholdCrossingHeight: nil,  // Not available in OurAirports
+            glidepathAngle: nil,  // Not available in OurAirports
+            displacedThresholdDistance: runway.displacedThresholdFt > 0
+              ? runway.displacedThresholdFt * 0.3048 : nil
           )
         )
       }

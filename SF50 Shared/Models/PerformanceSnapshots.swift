@@ -137,6 +137,15 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
   /// Magnetic variation at the airport
   public let airportVariation: Measurement<UnitAngle>
 
+  /// Threshold crossing height for approach (nil if not available)
+  public let thresholdCrossingHeight: Measurement<UnitLength>?
+
+  /// Glidepath angle from ILS or PAPI/VASI (nil if not available)
+  public let glidepathAngle: Measurement<UnitAngle>?
+
+  /// Displaced threshold distance from runway end (nil if not displaced)
+  public let displacedThresholdDistance: Measurement<UnitLength>?
+
   /// Runway designator (alias for id)
   public var name: String { id }
 
@@ -158,6 +167,9 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     self.isTurf = runway.isTurf
     self.notam = runway.notam.map { NOTAMInput(from: $0) }
     self.airportVariation = airport.variation
+    self.thresholdCrossingHeight = runway.thresholdCrossingHeight
+    self.glidepathAngle = runway.glidepathAngle
+    self.displacedThresholdDistance = runway.displacedThresholdDistance
   }
 
   public init(
@@ -171,7 +183,10 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     landingDistance: Measurement<UnitLength>?,
     isTurf: Bool,
     notam: NOTAMInput?,
-    airportVariation: Measurement<UnitAngle>
+    airportVariation: Measurement<UnitAngle>,
+    thresholdCrossingHeight: Measurement<UnitLength>? = nil,
+    glidepathAngle: Measurement<UnitAngle>? = nil,
+    displacedThresholdDistance: Measurement<UnitLength>? = nil
   ) {
     self.id = id
     self.elevation = elevation
@@ -184,6 +199,9 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     self.isTurf = isTurf
     self.notam = notam
     self.airportVariation = airportVariation
+    self.thresholdCrossingHeight = thresholdCrossingHeight
+    self.glidepathAngle = glidepathAngle
+    self.displacedThresholdDistance = displacedThresholdDistance
   }
 
   // MARK: - Type Methods
@@ -273,7 +291,10 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
       landingDistance: landingDistance,
       isTurf: isTurf,
       notam: newNotam,
-      airportVariation: airportVariation
+      airportVariation: airportVariation,
+      thresholdCrossingHeight: thresholdCrossingHeight,
+      glidepathAngle: glidepathAngle,
+      displacedThresholdDistance: displacedThresholdDistance
     )
   }
 }

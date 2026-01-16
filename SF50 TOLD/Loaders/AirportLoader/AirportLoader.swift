@@ -182,6 +182,13 @@ actor AirportLoader {
         landingDistance: runwayData.landingDistance.map { .init(value: $0, unit: .meters) },
         isTurf: runwayData.isTurf,
         thresholdCoordinate: thresholdCoordinate,
+        thresholdCrossingHeight: runwayData.thresholdCrossingHeight.map {
+          .init(value: $0, unit: .meters)
+        },
+        glidepathAngle: runwayData.glidepathAngle.map { .init(value: $0, unit: .degrees) },
+        displacedThresholdDistance: runwayData.displacedThresholdDistance.map {
+          .init(value: $0, unit: .meters)
+        },
         airport: record
       )
       runwayMap[runwayData.name] = runway

@@ -46,7 +46,8 @@ struct TakeoffMapLink: View {
           runway: runway,
           groundRun: groundRun,
           operation: SF50_Shared.Operation.takeoff,
-          notamOffset: performance.notam?.takeoffDistanceShortening ?? .init(value: 0, unit: .feet)
+          notamOffset: performance.notam?.takeoffDistanceShortening ?? .init(value: 0, unit: .feet),
+          shorteningLocation: performance.notam?.takeoffShorteningLocation ?? .departureEnd
         )
       } label: {
         Text("Show Takeoff…")

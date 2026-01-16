@@ -21,36 +21,78 @@ struct RunwayMapView: View {
   /// Distance offset from threshold due to NOTAM restrictions.
   let notamOffset: Measurement<UnitLength>
 
+  /// Location of the NOTAM shortening (threshold end or departure end).
+  let shorteningLocation: ShorteningLocation
+
   @State private var cameraPosition: MapCameraPosition = .automatic
 
-  private var runwayColor: Color {
-    Color.gray.opacity(0.4)
-  }
+  private var runwayColor: Color { .gray.opacity(0.4) }
 
   /// Runway width, defaulting to 100 feet if not available.
   private var runwayWidth: Measurement<UnitLength> {
     runway.width ?? .init(value: 100, unit: .feet)
   }
 
+  /// Runway heading calculated from threshold coordinates for precise alignment.
+  ///
+  /// When both runway ends have threshold coordinates, calculates the actual bearing
+  /// between them for accurate polygon alignment with satellite imagery. Falls back
+  /// to the NASR-provided heading (which is integer precision) if coordinates are unavailable.
+  private var runwayHeading: Measurement<UnitAngle> {
+    guard let startCoord = runway.takeoffStartCoordinate,
+      let endCoord = runway.reciprocal?.thresholdCoordinate
+    else { return runway.trueHeading }
+
+    return bearing(from: startCoord, to: endCoord)
+  }
+
   /// The starting point of the ground run, accounting for operation type and NOTAM offset.
+  ///
+  /// For takeoff, uses the physical runway start (displaced thresholds don't affect takeoff).
+  /// For landing, uses the landing threshold plus touchdown zone offset.
+  ///
+  /// NOTAM offsets are only applied to the start point when the shortening is at the threshold end.
+  /// For departure end shortening, the start point remains unchanged (but the runway is shorter).
   private var groundRunStartPoint: CLLocationCoordinate2D? {
-    guard let threshold = runway.thresholdCoordinate else { return nil }
+    switch operation {
+      case .takeoff:
+        // Use physical runway start (takeoff can use displaced threshold area)
+        guard let startPoint = runway.takeoffStartCoordinate else { return nil }
 
-    var offset = notamOffset
+        // Only offset start if shortening is at threshold end
+        if shorteningLocation == .thresholdEnd && notamOffset.value > 0 {
+          return destination(
+            from: startPoint,
+            distance: notamOffset,
+            bearing: runwayHeading
+          )
+        }
+        return startPoint
 
-    if operation == .landing {
-      // Add touchdown zone offset for landing
-      offset += touchdownZoneOffset(runwayLength: runway.length)
+      case .landing:
+        // Use landing threshold plus touchdown zone offset
+        guard let threshold = runway.thresholdCoordinate else { return nil }
+
+        var offset = touchdownZoneOffset(
+          runwayLength: runway.length,
+          thresholdCrossingHeight: runway.thresholdCrossingHeight,
+          glidepathAngle: runway.glidepathAngle
+        )
+
+        // Only add NOTAM offset if shortening is at threshold end
+        if shorteningLocation == .thresholdEnd {
+          offset += notamOffset
+        }
+
+        if offset.value > 0 {
+          return destination(
+            from: threshold,
+            distance: offset,
+            bearing: runwayHeading
+          )
+        }
+        return threshold
     }
-
-    if offset.value > 0 {
-      return destination(
-        from: threshold,
-        distance: offset,
-        bearing: runway.trueHeading
-      )
-    }
-    return threshold
   }
 
   /// The end point of the ground run.
@@ -59,19 +101,75 @@ struct RunwayMapView: View {
     return destination(
       from: startPoint,
       distance: groundRun,
-      bearing: runway.trueHeading
+      bearing: runwayHeading
     )
   }
 
-  /// The four corners of the runway polygon.
+  /// The four corners of the usable runway polygon, accounting for NOTAM shortening.
   private var runwayPolygon: [CLLocationCoordinate2D]? {
-    guard let threshold = runway.thresholdCoordinate else { return nil }
+    guard let physicalStart = runway.takeoffStartCoordinate else { return nil }
+
+    let usableStart: CLLocationCoordinate2D
+    var usableLength = runway.length
+
+    switch (shorteningLocation, notamOffset.value > 0) {
+      case (.thresholdEnd, true):
+        // Threshold end shortened: start further down, reduce length
+        usableStart = destination(
+          from: physicalStart,
+          distance: notamOffset,
+          bearing: runwayHeading
+        )
+        usableLength = runway.length - notamOffset
+
+      case (.departureEnd, true):
+        // Departure end shortened: start at physical start, reduce length
+        usableStart = physicalStart
+        usableLength = runway.length - notamOffset
+
+      case (_, false):
+        // No shortening
+        usableStart = physicalStart
+    }
+
     return runwayCorners(
-      threshold: threshold,
-      heading: runway.trueHeading,
-      length: runway.length,
+      threshold: usableStart,
+      heading: runwayHeading,
+      length: usableLength,
       width: runwayWidth
     )
+  }
+
+  /// The four corners of the closed/unusable portion of the runway due to NOTAM shortening.
+  private var closedRunwayPolygon: [CLLocationCoordinate2D]? {
+    guard notamOffset.value > 0,
+      let physicalStart = runway.takeoffStartCoordinate
+    else { return nil }
+
+    switch shorteningLocation {
+      case .thresholdEnd:
+        // Closed portion is at the start of the runway
+        return runwayCorners(
+          threshold: physicalStart,
+          heading: runwayHeading,
+          length: notamOffset,
+          width: runwayWidth
+        )
+
+      case .departureEnd:
+        // Closed portion is at the end of the runway
+        let closedStart = destination(
+          from: physicalStart,
+          distance: runway.length - notamOffset,
+          bearing: runwayHeading
+        )
+        return runwayCorners(
+          threshold: closedStart,
+          heading: runwayHeading,
+          length: notamOffset,
+          width: runwayWidth
+        )
+    }
   }
 
   /// The status level for the current ground run.
@@ -86,7 +184,11 @@ struct RunwayMapView: View {
 
     // Landing
     let availableDistance = runway.landingDistanceOrLength - notamOffset
-    let tdzOffset = touchdownZoneOffset(runwayLength: runway.length)
+    let tdzOffset = touchdownZoneOffset(
+      runwayLength: runway.length,
+      thresholdCrossingHeight: runway.thresholdCrossingHeight,
+      glidepathAngle: runway.glidepathAngle
+    )
     let availableFromTouchdown = availableDistance - tdzOffset
 
     if groundRun > availableDistance {
@@ -100,7 +202,14 @@ struct RunwayMapView: View {
 
   var body: some View {
     Map(position: $cameraPosition) {
-      // Runway outline
+      // Closed/unusable runway portion (shown in red)
+      if let closedPolygon = closedRunwayPolygon {
+        MapPolygon(coordinates: closedPolygon)
+          .foregroundStyle(Color.red.opacity(0.3))
+          .stroke(Color.red.opacity(0.6), lineWidth: 2)
+      }
+
+      // Usable runway outline
       if let polygon = runwayPolygon {
         MapPolygon(coordinates: polygon)
           .foregroundStyle(runwayColor)
@@ -111,7 +220,7 @@ struct RunwayMapView: View {
       if let startPoint = groundRunStartPoint {
         ChevronOverlay(
           startPoint: startPoint,
-          heading: runway.trueHeading,
+          heading: runwayHeading,
           distance: groundRun,
           width: runwayWidth,
           color: groundRunStatus.color,
@@ -130,17 +239,17 @@ struct RunwayMapView: View {
   }
 
   private func setupCamera() {
-    guard let threshold = runway.thresholdCoordinate else { return }
+    guard let runwayStart = runway.takeoffStartCoordinate else { return }
 
-    // Calculate the center of the runway
+    // Calculate the center of the runway using the physical start
     let runwayEnd = destination(
-      from: threshold,
+      from: runwayStart,
       distance: runway.length,
-      bearing: runway.trueHeading
+      bearing: runwayHeading
     )
 
-    let centerLat = (threshold.latitude + runwayEnd.latitude) / 2
-    let centerLon = (threshold.longitude + runwayEnd.longitude) / 2
+    let centerLat = (runwayStart.latitude + runwayEnd.latitude) / 2
+    let centerLon = (runwayStart.longitude + runwayEnd.longitude) / 2
     let center = CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon)
 
     // Calculate appropriate distance based on runway length
@@ -151,7 +260,7 @@ struct RunwayMapView: View {
       MapCamera(
         centerCoordinate: center,
         distance: distance,
-        heading: runway.trueHeading.converted(to: .degrees).value,
+        heading: runwayHeading.converted(to: .degrees).value,
         pitch: 45
       )
     )
@@ -202,7 +311,8 @@ struct RunwayMapView: View {
         runway: runway,
         groundRun: .init(value: 2500, unit: .feet),
         operation: .takeoff,
-        notamOffset: .init(value: 0, unit: .feet)
+        notamOffset: .init(value: 0, unit: .feet),
+        shorteningLocation: .departureEnd
       )
     }
   }
@@ -219,7 +329,8 @@ struct RunwayMapView: View {
         runway: runway,
         groundRun: .init(value: 6000, unit: .feet),
         operation: .takeoff,
-        notamOffset: .init(value: 0, unit: .feet)
+        notamOffset: .init(value: 0, unit: .feet),
+        shorteningLocation: .departureEnd
       )
     }
   }
@@ -236,7 +347,8 @@ struct RunwayMapView: View {
         runway: runway,
         groundRun: .init(value: 1500, unit: .feet),
         operation: .landing,
-        notamOffset: .init(value: 0, unit: .feet)
+        notamOffset: .init(value: 0, unit: .feet),
+        shorteningLocation: .departureEnd
       )
     }
   }
@@ -253,7 +365,8 @@ struct RunwayMapView: View {
         runway: runway,
         groundRun: .init(value: 2300, unit: .feet),
         operation: .landing,
-        notamOffset: .init(value: 0, unit: .feet)
+        notamOffset: .init(value: 0, unit: .feet),
+        shorteningLocation: .departureEnd
       )
     }
   }
@@ -270,13 +383,14 @@ struct RunwayMapView: View {
         runway: runway,
         groundRun: .init(value: 2800, unit: .feet),
         operation: .landing,
-        notamOffset: .init(value: 0, unit: .feet)
+        notamOffset: .init(value: 0, unit: .feet),
+        shorteningLocation: .departureEnd
       )
     }
   }
 }
 
-#Preview("With NOTAM Offset") {
+#Preview("NOTAM - DER Shortening") {
   PreviewView(insert: .KOAK) { helper in
     let runway = try helper.load(airportID: "OAK", runway: "30")!
 
@@ -285,7 +399,24 @@ struct RunwayMapView: View {
         runway: runway,
         groundRun: .init(value: 3000, unit: .feet),
         operation: .takeoff,
-        notamOffset: .init(value: 500, unit: .feet)
+        notamOffset: .init(value: 500, unit: .feet),
+        shorteningLocation: .departureEnd
+      )
+    }
+  }
+}
+
+#Preview("NOTAM - Threshold Shortening") {
+  PreviewView(insert: .KOAK) { helper in
+    let runway = try helper.load(airportID: "OAK", runway: "30")!
+
+    return NavigationStack {
+      RunwayMapView(
+        runway: runway,
+        groundRun: .init(value: 3000, unit: .feet),
+        operation: .takeoff,
+        notamOffset: .init(value: 500, unit: .feet),
+        shorteningLocation: .thresholdEnd
       )
     }
   }

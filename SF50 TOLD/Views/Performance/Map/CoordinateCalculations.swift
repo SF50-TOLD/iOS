@@ -1,8 +1,34 @@
 import CoreLocation
 import Foundation
+import SF50_Shared
 
 /// Earth's radius in meters for geodetic calculations.
 private let earthRadius: Double = 6371000
+
+/// Calculates the initial bearing from one coordinate to another.
+///
+/// Uses the forward azimuth formula to compute the bearing on a spherical Earth.
+///
+/// - Parameters:
+///   - from: Starting coordinate.
+///   - to: Destination coordinate.
+/// - Returns: The initial bearing as a Measurement in degrees (0-360).
+public func bearing(
+  from start: CLLocationCoordinate2D,
+  to end: CLLocationCoordinate2D
+) -> Measurement<UnitAngle> {
+  let lat1 = start.latitude * .pi / 180
+  let lat2 = end.latitude * .pi / 180
+  let deltaLon = (end.longitude - start.longitude) * .pi / 180
+
+  let x = sin(deltaLon) * cos(lat2)
+  let y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon)
+
+  let bearingRadians = atan2(x, y)
+  let bearingDegrees = (bearingRadians * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+
+  return .init(value: bearingDegrees, unit: .degrees)
+}
 
 /// Calculates a destination coordinate given a starting point, distance, and bearing.
 ///
@@ -46,12 +72,32 @@ public func destination(
 
 /// Calculates the touchdown zone offset for landing calculations.
 ///
-/// Returns the distance from the runway threshold to the expected touchdown point,
-/// which is the lesser of 2000 feet or the middle of the first third of the runway.
+/// If threshold crossing height (TCH) and glidepath angle are available, calculates
+/// the actual touchdown point using `distance = TCH / tan(angle)`. Otherwise falls back
+/// to the lesser of 2000 feet or the middle of the first third of the runway.
 ///
-/// - Parameter runwayLength: Total runway length.
+/// - Parameters:
+///   - runwayLength: Total runway length.
+///   - thresholdCrossingHeight: TCH for approach (nil to use fallback).
+///   - glidepathAngle: Glidepath angle from ILS or PAPI/VASI (nil to use fallback).
 /// - Returns: Distance from threshold to touchdown zone.
-public func touchdownZoneOffset(runwayLength: Measurement<UnitLength>) -> Measurement<UnitLength> {
+public func touchdownZoneOffset(
+  runwayLength: Measurement<UnitLength>,
+  thresholdCrossingHeight: Measurement<UnitLength>? = nil,
+  glidepathAngle: Measurement<UnitAngle>? = nil
+) -> Measurement<UnitLength> {
+  // If we have TCH and glidepath angle, calculate actual touchdown point
+  // Formula: distance = TCH / tan(angle) (since gradient = rise/run = TCH/distance)
+  if let thresholdCrossingHeight, let glidepathAngle,
+    glidepathAngle.converted(to: .degrees).value > 0
+  {
+    let angleRadians = glidepathAngle.converted(to: .radians).value
+    let gradient = tan(angleRadians)
+    let tchMeters = thresholdCrossingHeight.converted(to: .meters).value
+    return .init(value: tchMeters / gradient, unit: .meters)
+  }
+
+  // Fall back to current approximation
   let standardTouchdown = Measurement<UnitLength>(value: 2000, unit: .feet)
   let middleOfFirstThird = runwayLength / 6.0  // First third / 2 = 1/6
 
