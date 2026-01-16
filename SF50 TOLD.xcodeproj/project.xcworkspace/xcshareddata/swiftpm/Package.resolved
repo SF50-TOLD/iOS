@@ -1,5 +1,5 @@
 {
-  "originHash" : "d51904b0647e352c3a85dcc86d3a711697d744cb39de2e337cb70a3d815bd701",
+  "originHash" : "982d4e88547a114a987a418e4e62d8091249d2b5b3f8fcdcba59b0616d006f26",
   "pins" : [
     {
       "identity" : "defaults",
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",
       "state" : {
-        "revision" : "7ee16e465622412764b0ff0c1301801dc71b8f61",
-        "version" : "1.9.0"
+        "revision" : "2778fd4e5a12a8aaa30a3ee8285f4ce54c5f3181",
+        "version" : "1.9.1"
       }
     },
     {
@@ -110,12 +110,30 @@
       }
     },
     {
+      "identity" : "swiftcifp",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RISCfuture/SwiftCIFP.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "28d8722b5cf06aca35d789782a3d2222ae10a3a3"
+      }
+    },
+    {
+      "identity" : "swiftdof",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RISCfuture/SwiftDOF.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "25aee4b0f736ac330b7ad87f4dec09c1f3ae34c2"
+      }
+    },
+    {
       "identity" : "swiftnasr",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftNASR",
       "state" : {
         "branch" : "master",
-        "revision" : "6d17691b5bf1e6f7b474553c8445b33b40157df1"
+        "revision" : "4571c7c8d16679e123c95ab1541419243a8d1497"
       }
     },
     {

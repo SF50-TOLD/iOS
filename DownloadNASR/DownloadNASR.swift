@@ -14,12 +14,22 @@ struct DownloadNASRApp: App {
     }
   }
 
-  init() {
+  nonisolated init() {
     // Configure default log level
     LoggingSystem.bootstrap { label in
       var handler = StreamLogHandler.standardOutput(label: label)
       handler.logLevel = .notice
       return handler
+    }
+
+    // Check for headless mode
+    if HeadlessProcessor.shouldRunHeadless() {
+      Task {
+        let exitCode = await HeadlessProcessor.run()
+        exit(exitCode)
+      }
+      // Keep run loop alive during async processing
+      RunLoop.main.run()
     }
   }
 }

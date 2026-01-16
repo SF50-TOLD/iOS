@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0112FFA72F2094E3009CFBBA /* SwiftDOF in Frameworks */ = {isa = PBXBuildFile; productRef = 0112FFA62F2094E3009CFBBA /* SwiftDOF */; };
+		0112FFAA2F209508009CFBBA /* SwiftCIFP in Frameworks */ = {isa = PBXBuildFile; productRef = 0112FFA92F209508009CFBBA /* SwiftCIFP */; };
 		0128374C2E5B8BB8002195A0 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128374B2E5B8BB8002195A0 /* WidgetKit.framework */; };
 		0128374E2E5B8BB8002195A0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128374D2E5B8BB8002195A0 /* SwiftUI.framework */; };
 		0128375F2E5B8BB9002195A0 /* SF50 RunwaysExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0128374A2E5B8BB8002195A0 /* SF50 RunwaysExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -305,8 +307,10 @@
 			files = (
 				01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */,
 				0169495C2EB314C9001602E6 /* SwiftUI.framework in Frameworks */,
+				0112FFA72F2094E3009CFBBA /* SwiftDOF in Frameworks */,
 				016945C22EB30889001602E6 /* SwiftTimeZoneLookup in Frameworks */,
 				016945BE2EB30889001602E6 /* Logging in Frameworks */,
+				0112FFAA2F209508009CFBBA /* SwiftCIFP in Frameworks */,
 				016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */,
 			);
 		};
@@ -549,6 +553,8 @@
 				016945BB2EB30889001602E6 /* SwiftNASR */,
 				016945BD2EB30889001602E6 /* Logging */,
 				016945C12EB30889001602E6 /* SwiftTimeZoneLookup */,
+				0112FFA62F2094E3009CFBBA /* SwiftDOF */,
+				0112FFA92F209508009CFBBA /* SwiftCIFP */,
 			);
 			productName = DownloadNASR;
 			productReference = 016945992EB30848001602E6 /* DownloadNASR.app */;
@@ -634,6 +640,8 @@
 				01A1509E2E93B93900D3180A /* XCRemoteSwiftPackageReference "SwiftTimeZoneLookup" */,
 				01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */,
 				A0265BD12B874F4A917707F3 /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
+				0112FFA52F2094E3009CFBBA /* XCRemoteSwiftPackageReference "SwiftDOF" */,
+				0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 0163BC6B2DDEE9D3008FEE8F /* Products */;
@@ -1305,7 +1313,6 @@
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 			};
@@ -1352,7 +1359,6 @@
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 			};
@@ -1476,6 +1482,22 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		0112FFA52F2094E3009CFBBA /* XCRemoteSwiftPackageReference "SwiftDOF" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RISCfuture/SwiftDOF.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RISCfuture/SwiftCIFP.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-numerics.git";
@@ -1551,6 +1573,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0112FFA62F2094E3009CFBBA /* SwiftDOF */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0112FFA52F2094E3009CFBBA /* XCRemoteSwiftPackageReference "SwiftDOF" */;
+			productName = SwiftDOF;
+		};
+		0112FFA92F209508009CFBBA /* SwiftCIFP */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */;
+			productName = SwiftCIFP;
+		};
 		012B1E672DE2F463000D9ADC /* SwiftNASR */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0163BCA72DDEF40D008FEE8F /* XCRemoteSwiftPackageReference "SwiftNASR" */;

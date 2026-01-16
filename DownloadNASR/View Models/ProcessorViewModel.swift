@@ -2,10 +2,90 @@ import Foundation
 import Logging
 import SwiftNASR
 
+/// Actor that collects log entries from any thread and provides them to the UI.
+actor LogCollector {
+  private var entries: [LogEntry] = []
+  private var continuation: AsyncStream<LogEntry>.Continuation?
+
+  /// Stream of log entries for UI consumption.
+  var stream: AsyncStream<LogEntry> {
+    AsyncStream { continuation in
+      self.continuation = continuation
+      continuation.onTermination = { _ in
+        Task { await self.clearContinuation() }
+      }
+    }
+  }
+
+  private func clearContinuation() {
+    continuation = nil
+  }
+
+  /// Add a log entry (called from LogHandler on any thread).
+  func add(_ entry: LogEntry) {
+    entries.append(entry)
+    continuation?.yield(entry)
+  }
+
+  /// Get all collected entries.
+  func allEntries() -> [LogEntry] {
+    entries
+  }
+
+  /// Clear all entries.
+  func clear() {
+    entries.removeAll()
+  }
+}
+
+/// LogHandler that sends entries to a LogCollector actor.
+private struct ActorLogHandler: LogHandler {
+  let collector: LogCollector
+  var logLevel: Logger.Level = .notice
+  var metadata: Logger.Metadata = [:]
+
+  func log(
+    level: Logger.Level,
+    message: Logger.Message,
+    metadata: Logger.Metadata?,
+    source _: String,
+    file _: String,
+    function _: String,
+    line _: UInt
+  ) {
+    guard level >= logLevel else { return }
+
+    var mergedMetadata = self.metadata
+    if let metadata {
+      mergedMetadata.merge(metadata) { _, new in new }
+    }
+
+    // Convert Logger.Metadata to [String: String] for Sendable conformance
+    let sendableMetadata: [String: String]? =
+      mergedMetadata.isEmpty ? nil : mergedMetadata.mapValues { "\($0)" }
+
+    let entry = LogEntry(
+      timestamp: Date(),
+      level: level,
+      message: message.description,
+      metadata: sendableMetadata
+    )
+
+    Task {
+      await collector.add(entry)
+    }
+  }
+
+  subscript(metadataKey key: String) -> Logger.Metadata.Value? {
+    get { metadata[key] }
+    set { metadata[key] = newValue }
+  }
+}
+
 /// View model coordinating the airport data processing UI.
 ///
 /// ``ProcessorViewModel`` manages the state for the DownloadNASR tool's main
-/// interface. It coordinates ``NASRProcessor`` execution and provides observable
+/// interface. It coordinates ``DataProcessor`` execution and provides observable
 /// properties for progress display.
 ///
 /// ## Usage
@@ -34,10 +114,16 @@ class ProcessorViewModel {
   var logEntries: [LogEntry] = []
 
   /// Error that occurred during GitHub upload, if any.
-  var uploadError: Error?
+  var uploadError: NSError?
+
+  /// Whether cancellation has been requested but not yet completed.
+  var isCancelling = false
 
   /// Task handle for cancellation support.
   private var processingTask: Task<Void, Never>?
+
+  /// Progress object stays on MainActor - never crosses boundaries.
+  private var progressObject: Progress?
 
   /// Observation for progress updates.
   private var progressObservation: NSKeyValueObservation?
@@ -61,66 +147,97 @@ class ProcessorViewModel {
     uploadError = nil
     logEntries = []
 
-    processingTask = Task {
+    // Create Progress on MainActor - it stays here
+    let progressObj = Progress(totalUnitCount: 100)
+    self.progressObject = progressObj
+
+    // Observe progress changes (KVO callbacks hop to MainActor)
+    self.progressObservation = progressObj.observe(\.fractionCompleted, options: [.new]) {
+      [weak self] progress, _ in
+      let fraction = progress.fractionCompleted
+      let description = progress.localizedDescription ?? ""
+      Task { @MainActor [weak self] in
+        self?.progress = fraction
+        self?.statusMessage = description
+      }
+    }
+
+    // Create log collector actor
+    let logCollector = LogCollector()
+
+    // Subscribe to log entries
+    Task { [weak self] in
+      for await entry in await logCollector.stream {
+        self?.logEntries.append(entry)
+      }
+    }
+
+    // Create logger with actor-based handler
+    let logger = Logger(label: "codes.tim.SF50-TOLD.DownloadNASR") { _ in
+      var handler = ActorLogHandler(collector: logCollector)
+      handler.logLevel = .notice
+      return handler
+    }
+
+    // Callbacks for progress updates - these update the MainActor Progress object
+    let onProgress: @MainActor @Sendable (Int64, String) -> Void = {
+      [weak self] completed, description in
+      self?.progressObject?.completedUnitCount = completed
+      self?.progressObject?.localizedDescription = description
+    }
+
+    let onUploadError: @MainActor @Sendable (NSError) -> Void = { [weak self] error in
+      self?.uploadError = error
+    }
+
+    processingTask = Task.detached {
       do {
-        // Create progress object
-        let progressObject = Progress(totalUnitCount: 100)
-
-        // Observe progress changes
-        self.progressObservation = progressObject.observe(\.fractionCompleted, options: [.new]) {
-          [weak self] progress, _ in
-          Task { @MainActor in
-            self?.progress = progress.fractionCompleted
-            self?.statusMessage = progress.localizedDescription ?? ""
-          }
-        }
-
-        // Create custom log handler that captures logs for UI
-        let uiHandler = UILogHandler(viewModel: self)
-
-        // Create logger with custom handler
-        let logger = Logger(label: "codes.tim.SF50-TOLD.DownloadNASR") { _ in
-          var handler = uiHandler
-          handler.logLevel = .notice
-          return handler
-        }
-
-        // Capture values for the upload error handler
-        let onUploadError: @MainActor @Sendable (_ error: Error) -> Void = { [weak self] error in
-          self?.uploadError = error
-        }
-
-        // Run processing on a background thread using Task.detached
-        try await Task.detached(priority: .userInitiated) {
-          var processor = NASRProcessor(
-            cycle: cycle,
-            outputLocation: outputURL,
-            logger: logger,
-            progress: progressObject
-          )
-
-          processor.onUploadError = onUploadError
-
-          try await processor.process()
-        }.value
-
-        // Update UI on main actor (we're already on MainActor here)
-        statusMessage = String(
-          localized: "Complete!",
-          comment: "Status message when processing finishes successfully"
+        var processor = DataProcessor(
+          cycle: cycle,
+          outputLocation: outputURL,
+          logger: logger
         )
-        progress = 1.0
+        processor.onProgress = onProgress
+        processor.onUploadError = onUploadError
+
+        try await processor.process()
+
+        await MainActor.run { [weak self] in
+          self?.statusMessage = String(
+            localized: "Complete!",
+            comment: "Status message when processing finishes successfully"
+          )
+          self?.progress = 1.0
+        }
 
         // Reset after a brief delay
         try? await Task.sleep(for: .seconds(2))
-        if !Task.isCancelled { reset() }
-      } catch {
-        errorMessage = error.localizedDescription
-        statusMessage = String(
-          localized: "Error occurred",
-          comment: "Status message when processing fails"
+
+        await MainActor.run { [weak self] in
+          if !Task.isCancelled { self?.reset() }
+        }
+      } catch is CancellationError {
+        // Task was cancelled - log and reset
+        await logCollector.add(
+          LogEntry(
+            timestamp: Date(),
+            level: .warning,
+            message: String(localized: "Processing cancelled by user"),
+            metadata: nil
+          )
         )
-        isProcessing = false
+        await MainActor.run { [weak self] in
+          self?.reset()
+        }
+      } catch {
+        await MainActor.run { [weak self] in
+          self?.errorMessage = error.localizedDescription
+          self?.statusMessage = String(
+            localized: "Error occurred",
+            comment: "Status message when processing fails"
+          )
+          self?.isProcessing = false
+        }
       }
     }
   }
@@ -128,70 +245,21 @@ class ProcessorViewModel {
   /// Resets all state to initial values.
   func reset() {
     isProcessing = false
+    isCancelling = false
     progress = 0.0
     statusMessage = ""
     errorMessage = nil
     uploadError = nil
   }
 
-  /// Cancels the current processing task and resets state.
+  /// Cancels the current processing task.
   func cancel() {
+    isCancelling = true
     processingTask?.cancel()
-    addLogEntry(
-      LogEntry(
-        timestamp: Date(),
-        level: .warning,
-        message: String(localized: "Processing cancelled by user"),
-        metadata: nil
-      )
-    )
-    reset()
   }
 
   /// Adds a log entry to the display list.
   func addLogEntry(_ entry: LogEntry) {
     logEntries.append(entry)
-  }
-}
-
-// Custom log handler that updates the view model
-private struct UILogHandler: LogHandler {
-  weak var viewModel: ProcessorViewModel?
-
-  var logLevel: Logger.Level = .notice
-  var metadata: Logger.Metadata = [:]
-
-  func log(
-    level: Logger.Level,
-    message: Logger.Message,
-    metadata: Logger.Metadata?,
-    source _: String,
-    file _: String,
-    function _: String,
-    line _: UInt
-  ) {
-    guard level >= logLevel else { return }
-
-    // Merge instance metadata with log-specific metadata
-    var mergedMetadata = self.metadata
-    if let metadata {
-      mergedMetadata.merge(metadata) { _, new in new }
-    }
-
-    let entry = LogEntry(
-      timestamp: Date(),
-      level: level,
-      message: message.description,
-      metadata: mergedMetadata.isEmpty ? nil : mergedMetadata
-    )
-
-    Task { @MainActor in
-      viewModel?.addLogEntry(entry)
-    }
-  }
-
-  subscript(metadataKey key: String) -> Logger.Metadata.Value? {
-    get { metadata[key] }
-    set { metadata[key] = newValue }
   }
 }

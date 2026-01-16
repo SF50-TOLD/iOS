@@ -8,6 +8,10 @@ enum NASRProcessorError: LocalizedError {
   case failedToCreateNASR
 
   var errorDescription: String? {
+    String(localized: "FAA NASR data could not be processed.")
+  }
+
+  var failureReason: String? {
     switch self {
       case .failedToCreateNASR:
         String(localized: "Failed to create NASR downloader for the specified cycle.")
@@ -15,191 +19,136 @@ enum NASRProcessorError: LocalizedError {
   }
 }
 
-/// Processes FAA NASR and OurAirports data into compressed format for app distribution.
+/// Holds KVO observations to keep them alive during async operations.
+/// Thread-safe singleton for storing progress observations.
+final class ProgressObservationHolder: @unchecked Sendable {
+  static let shared = ProgressObservationHolder()
+
+  private let lock = NSLock()
+  private var observations: [NSKeyValueObservation] = []
+
+  init() {}
+
+  func add(_ observation: NSKeyValueObservation) {
+    lock.lock()
+    defer { lock.unlock() }
+    observations.append(observation)
+  }
+
+  func clearAll() {
+    lock.lock()
+    defer { lock.unlock() }
+    for observation in observations {
+      observation.invalidate()
+    }
+    observations.removeAll()
+  }
+}
+
+/// Processes FAA NASR (National Airspace System Resources) airport data.
 ///
-/// ``NASRProcessor`` is the core component of the DownloadNASR tool. It orchestrates
-/// the complete data pipeline:
-///
-/// 1. Initialize timezone lookup database
-/// 2. Download and parse FAA NASR data using SwiftNASR
-/// 3. Download and parse OurAirports CSV data
-/// 4. Merge datasets (NASR takes priority)
-/// 5. Write to property list format
-/// 6. Compress using LZMA
-/// 7. Upload to GitHub (if token configured)
-///
-/// ## Progress Tracking
-///
-/// The processor reports progress through the ``progress`` property, with
-/// 7 total units representing each major step. Subscribe to KVO on
-/// `fractionCompleted` for UI updates.
-///
-/// ## Data Sources
-///
-/// - **FAA NASR**: Authoritative US airport data with precise runway info
-/// - **OurAirports**: Community database for international coverage
+/// ``NASRProcessor`` handles downloading and parsing FAA NASR data using SwiftNASR,
+/// converting it to the application's codable format.
 ///
 /// ## See Also
 ///
-/// - ``OurAirportsLoader``
-/// - ``GitHubUploader``
+/// - ``DataProcessor`` - The orchestrator that uses this processor
+/// - ``CIFPProcessor`` - Processes CIFP departure procedure data
+/// - ``DOFProcessor`` - Processes DOF obstacle data
 struct NASRProcessor {
-  /// The NASR cycle to download (e.g., 2501 for January 2025).
-  let cycle: Cycle
-
-  /// Directory where output files will be written.
-  let outputLocation: URL
+  // Progress allocation within NASR processing (out of 100):
+  // - Download: 0-35
+  // - Parse airports: 35-90
+  // - Parse ILS: 90-100
+  private static let downloadProgressEnd = 35
+  private static let airportsProgressEnd = 90
+  private static let ilsProgressEnd = 100
 
   /// Logger for status messages and errors.
   let logger: Logger
 
-  /// Progress object for tracking completion (7 total units).
-  let progress: Progress
-
-  /// Callback invoked when GitHub upload fails (does not stop processing).
-  var onUploadError: (@MainActor @Sendable (_ error: Error) -> Void)?
-
-  /// Executes the complete data processing pipeline.
-  func process() async throws {
-    // Create child progress objects for each major step
-    // Total: 7 steps (timezone init, NASR load, OurAirports load, merge, write, compress, upload)
-    progress.totalUnitCount = 7
-
-    // Initialize timezone lookup database
-    logger.notice("Initializing timezone lookup database…")
-    progress.localizedDescription = String(localized: "Initializing timezone lookup database…")
-    let timezoneLookup = try SwiftTimeZoneLookup()
-    progress.completedUnitCount = 1
-
-    // Load NASR data
-    logger.notice("Loading NASR data for cycle \(cycle)…")
-    progress.localizedDescription = String(localized: "Loading NASR data…")
-    let nasrProgress = Progress(totalUnitCount: 100, parent: progress, pendingUnitCount: 1)
-    let NASRAirports = try await loadNASRData(
-      timezoneLookup: timezoneLookup,
-      progress: nasrProgress
-    )
-
-    // Load OurAirports data
-    logger.notice("Loading OurAirports data…")
-    progress.localizedDescription = String(localized: "Loading OurAirports data…")
-    let ourAirportsProgress = Progress(totalUnitCount: 100, parent: progress, pendingUnitCount: 1)
-    let ourAirportsLoader = OurAirportsLoader(logger: logger, progress: ourAirportsProgress)
-    let (ourAirports, ourAirportsLastUpdated) = try await ourAirportsLoader.loadAirports()
-
-    // Merge and de-duplicate
-    logger.notice("Merging and de-duplicating airport data…")
-    progress.localizedDescription = String(localized: "Merging and de-duplicating airport data…")
-    let mergedAirports = mergeAirports(
-      NASRAirports: NASRAirports,
-      ourAirports: ourAirports,
-      timezoneLookup: timezoneLookup
-    )
-    progress.completedUnitCount = 4
-
-    // Create codable data structure
-    let codableData = AirportDataCodable(
-      nasrCycle: cycle,
-      ourAirportsLastUpdated: ourAirportsLastUpdated,
-      airports: mergedAirports
-    )
-
-    logger.notice("Writing to file…")
-    progress.localizedDescription = String(localized: "Writing to file…")
-    let encoder = PropertyListEncoder()
-    encoder.outputFormat = .binary
-    let data = try encoder.encode(codableData)
-    let plistFile = outputLocation.appendingPathComponent("\(cycle).plist")
-    if FileManager.default.fileExists(atPath: plistFile.path) {
-      logger.warning("Overwriting existing file: \(plistFile.lastPathComponent)")
-    }
-    try data.write(to: plistFile)
-    progress.completedUnitCount = 5
-
-    logger.notice("Compressing…")
-    progress.localizedDescription = String(localized: "Compressing…")
-    // swiftlint:disable:next legacy_objc_type
-    let compressedData = try NSData(data: data).compressed(using: .lzma)
-    let lzmaFile = outputLocation.appendingPathComponent("\(cycle).plist.lzma")
-    if FileManager.default.fileExists(atPath: lzmaFile.path) {
-      logger.warning("Overwriting existing file: \(lzmaFile.lastPathComponent)")
-    }
-    try compressedData.write(to: lzmaFile)
-    progress.completedUnitCount = 6
-
-    // Upload to GitHub if token is configured
-    if let token = try? KeychainManager.shared.getToken(), !token.isEmpty {
-      logger.notice("Uploading to GitHub…")
-      progress.localizedDescription = String(localized: "Uploading to GitHub…")
-
-      do {
-        let uploader = GitHubUploader(token: token, logger: logger)
-        let targetPath = "3.0/\(cycle).plist.lzma"
-        try await uploader.uploadFile(
-          filePath: lzmaFile,
-          targetPath: targetPath,
-          commitMessage: "Update airport data for cycle \(cycle)"
-        )
-        logger.notice("Successfully uploaded to GitHub")
-      } catch {
-        // Don't fail the entire process if upload fails
-        logger.warning("GitHub upload failed: \(error.localizedDescription)")
-        if let onUploadError, let error = error as? Error {
-          onUploadError(error)
-        }
-      }
-    } else {
-      logger.info("GitHub token not configured, skipping upload")
-    }
-    progress.completedUnitCount = 7
-
-    logger.notice("Complete - processed \(mergedAirports.count) airports")
-    progress.localizedDescription = String(localized: "Complete!")
-  }
-
   /// Downloads and parses FAA NASR airport data.
-  private func loadNASRData(timezoneLookup: SwiftTimeZoneLookup, progress: Progress) async throws
-    -> [AirportDataCodable.AirportCodable]
-  {
-    progress.totalUnitCount = 2
+  /// - Parameters:
+  ///   - cycle: The NASR cycle to download.
+  ///   - timezoneLookup: Timezone lookup database for airport locations.
+  ///   - onProgress: Callback for progress updates (completed, total).
+  /// - Returns: Array of parsed airports in codable format.
+  func loadNASRData(
+    cycle: SwiftNASR.Cycle,
+    timezoneLookup: SwiftTimeZoneLookup,
+    onProgress: (@Sendable (Int, Int) async -> Void)? = nil
+  ) async throws -> [AirportDataCodable.AirportCodable] {
+    await onProgress?(0, 100)
 
     guard let nasr = NASR.fromInternetToMemory(activeAt: cycle.date) else {
       throw NASRProcessorError.failedToCreateNASR
     }
+
     logger.notice("Loading NASR archive…")
-    progress.localizedDescription = String(localized: "Loading NASR archive…")
-    try await nasr.load()
-    progress.completedUnitCount = 1
+    try await nasr.load { progress in
+      // Observe progress from SwiftNASR's load operation
+      self.observeProgress(
+        progress,
+        mappingTo: 0..<Self.downloadProgressEnd,
+        onProgress: onProgress
+      )
+    }
+    await onProgress?(Self.downloadProgressEnd, 100)
+
+    try Task.checkCancellation()
 
     logger.notice("Parsing NASR airports…")
-    progress.localizedDescription = String(localized: "Parsing NASR airports…")
-    try await nasr.parse(.airports) { error in
-      var metadata: Logger.Metadata = ["error": "\(error.localizedDescription)"]
-
-      // Add additional localized error information if available
-      if let localizedError = error as? LocalizedError {
-        if let errorDescription = localizedError.errorDescription {
-          metadata["errorDescription"] = "\(errorDescription)"
+    try await nasr.parse(
+      .airports,
+      withProgress: { progress in
+        // Observe progress from SwiftNASR's airport parsing
+        self.observeProgress(
+          progress,
+          mappingTo: Self.downloadProgressEnd..<Self.airportsProgressEnd,
+          onProgress: onProgress
+        )
+      },
+      errorHandler: { error in
+        var metadata: Logger.Metadata = ["error": "\(String(describing: error))"]
+        if let localizedError = error as? LocalizedError {
+          if let reason = localizedError.failureReason {
+            metadata["reason"] = "\(reason)"
+          }
         }
-        if let failureReason = localizedError.failureReason {
-          metadata["failureReason"] = "\(failureReason)"
-        }
-        if let recoverySuggestion = localizedError.recoverySuggestion {
-          metadata["recoverySuggestion"] = "\(recoverySuggestion)"
-        }
+        self.logger.error("Parse error", metadata: metadata)
+        return true
       }
+    )
+    await onProgress?(Self.airportsProgressEnd, 100)
 
-      logger.error("Parse error", metadata: metadata)
-      return true
-    }
+    try Task.checkCancellation()
 
     logger.notice("Parsing NASR ILS data…")
-    progress.localizedDescription = String(localized: "Parsing NASR ILS data…")
-    try await nasr.parse(.ILSes) { error in
-      logger.warning("ILS parse error: \(error.localizedDescription)")
-      return true
-    }
-    progress.completedUnitCount = 2
+    try await nasr.parse(
+      .ILSes,
+      withProgress: { progress in
+        // Observe progress from SwiftNASR's ILS parsing
+        self.observeProgress(
+          progress,
+          mappingTo: Self.airportsProgressEnd..<Self.ilsProgressEnd,
+          onProgress: onProgress
+        )
+      },
+      errorHandler: { error in
+        var metadata: Logger.Metadata = ["error": "\(String(describing: error))"]
+        if let localizedError = error as? LocalizedError {
+          if let reason = localizedError.failureReason {
+            metadata["reason"] = "\(reason)"
+          }
+        }
+        self.logger.warning("ILS parse error", metadata: metadata)
+        return true
+      }
+    )
+    await onProgress?(Self.ilsProgressEnd, 100)
+
+    // Clean up progress observations now that loading/parsing is complete
+    ProgressObservationHolder.shared.clearAll()
 
     let NASRData = await nasr.data
     guard let airports = await NASRData.airports else {
@@ -226,7 +175,7 @@ struct NASRProcessor {
 
       let variationDeg =
         airport.magneticVariationDeg.map { Double($0) }
-        ?? calculateMagneticVariation(latitude.value, longitude.value)
+        ?? GeoCalculations.calculateMagneticVariation(latitude.value, longitude.value)
 
       var runways = [AirportDataCodable.RunwayCodable]()
 
@@ -279,13 +228,43 @@ struct NASRProcessor {
         elevation: Double(elevationFt) * 0.3048,  // Convert feet to meters
         variation: variationDeg,
         timeZone: timeZone,
-        runways: runways
+        runways: runways,
+        departureProcedures: nil  // Added in DataProcessor from CIFP data
       )
 
       codableAirports.append(codableAirport)
     }
 
     return codableAirports
+  }
+
+  /// Sets up KVO observation on a Progress object and maps updates to the target range.
+  /// - Parameters:
+  ///   - progress: The Progress object from SwiftNASR to observe.
+  ///   - range: The range to map progress to (e.g., 0..<35 means 0-35%).
+  ///   - onProgress: Callback to report progress.
+  private func observeProgress(
+    _ progress: Progress,
+    mappingTo range: Range<Int>,
+    onProgress: (@Sendable (Int, Int) async -> Void)?
+  ) {
+    guard let onProgress else { return }
+
+    let rangeSize = range.upperBound - range.lowerBound
+
+    // Set up KVO observation on the progress
+    // The observation is stored in the ProgressObservationHolder to keep it alive
+    // Note: Don't use .initial option to avoid synchronous callback during setup
+    let observation = progress.observe(\.fractionCompleted, options: [.new]) { progress, _ in
+      let fraction = progress.fractionCompleted
+      let mapped = range.lowerBound + Int(Double(rangeSize) * fraction)
+      Task.detached {
+        await onProgress(mapped, 100)
+      }
+    }
+
+    // Store observation to keep it alive for the duration of the async operation
+    ProgressObservationHolder.shared.add(observation)
   }
 
   /// Converts a NASR runway end to the codable format.
@@ -310,11 +289,17 @@ struct NASRProcessor {
       // Calculate bearing for the current runway end
       if end.id == runway.baseEnd.id {
         trueHeading = Double(
-          calculateBearing(from: (baseEndLat, baseEndLon), to: (recipEndLat, recipEndLon))
+          GeoCalculations.calculateBearing(
+            from: (baseEndLat, baseEndLon),
+            to: (recipEndLat, recipEndLon)
+          )
         )
       } else {
         trueHeading = Double(
-          calculateBearing(from: (recipEndLat, recipEndLon), to: (baseEndLat, baseEndLon))
+          GeoCalculations.calculateBearing(
+            from: (recipEndLat, recipEndLon),
+            to: (baseEndLat, baseEndLon)
+          )
         )
       }
     } else if let reciprocal = runway.reciprocalEnd,
@@ -330,9 +315,9 @@ struct NASRProcessor {
 
     // Convert threshold coordinates from arcseconds to decimal degrees
     // Use displaced threshold if available, otherwise use the runway end threshold
-    let thresholdLocation = end.displacedThreshold ?? end.threshold
-    let thresholdLatitude = thresholdLocation.map { Double($0.latitudeArcsec) / 3600.0 }
-    let thresholdLongitude = thresholdLocation.map { Double($0.longitudeArcsec) / 3600.0 }
+    let thresholdLocation = end.displacedThreshold ?? end.threshold,
+      thresholdLatitude = thresholdLocation.map { Double($0.latitudeArcsec) / 3600.0 },
+      thresholdLongitude = thresholdLocation.map { Double($0.longitudeArcsec) / 3600.0 }
 
     // Convert width from feet to meters
     let widthMeters = runway.widthFt.map { Double($0) * 0.3048 }
@@ -373,111 +358,5 @@ struct NASRProcessor {
       glidepathAngle: glidepathAngle,
       displacedThresholdDistance: displacedThresholdDistance
     )
-  }
-
-  /// Merges NASR and OurAirports data, deduplicating by location ID.
-  private func mergeAirports(
-    NASRAirports: [AirportDataCodable.AirportCodable],
-    ourAirports: [OurAirportData],
-    timezoneLookup: SwiftTimeZoneLookup
-  ) -> [AirportDataCodable.AirportCodable] {
-    var mergedAirports = [AirportDataCodable.AirportCodable]()
-    var NASRLocationIds = Set<String>()
-
-    // Add all NASR airports first (they have priority)
-    for airport in NASRAirports {
-      mergedAirports.append(airport)
-      NASRLocationIds.insert(airport.locationID)
-    }
-
-    // Add OurAirports data that doesn't exist in NASR
-    var ourAirportsAdded = 0
-    for ourAirport in ourAirports {
-      // Skip if this airport's local_id matches a NASR locationID
-      if !ourAirport.localId.isEmpty && NASRLocationIds.contains(ourAirport.localId) {
-        continue
-      }
-
-      // Convert OurAirports data to our codable format
-      var runways = [AirportDataCodable.RunwayCodable]()
-      for runway in ourAirport.runways {
-        let takeoffRun = runway.lengthFt - runway.displacedThresholdFt
-
-        runways.append(
-          AirportDataCodable.RunwayCodable(
-            name: runway.name,
-            elevation: runway.elevationFt.map { $0 * 0.3048 },  // Convert feet to meters
-            trueHeading: runway.trueHeading,
-            gradient: nil,  // OurAirports doesn't provide gradient
-            length: runway.lengthFt * 0.3048,  // Convert feet to meters
-            takeoffRun: takeoffRun > 0 ? takeoffRun * 0.3048 : nil,
-            takeoffDistance: nil,  // Not available in OurAirports
-            landingDistance: nil,  // Not available in OurAirports
-            isTurf: runway.isTurf,
-            reciprocalName: runway.reciprocalName,
-            thresholdLatitude: runway.thresholdLatitude,
-            thresholdLongitude: runway.thresholdLongitude,
-            width: runway.widthFt.map { $0 * 0.3048 },  // Convert feet to meters
-            thresholdCrossingHeight: nil,  // Not available in OurAirports
-            glidepathAngle: nil,  // Not available in OurAirports
-            displacedThresholdDistance: runway.displacedThresholdFt > 0
-              ? runway.displacedThresholdFt * 0.3048 : nil
-          )
-        )
-      }
-
-      if runways.isEmpty { continue }
-
-      // Calculate magnetic variation for this location
-      let variation = calculateMagneticVariation(ourAirport.latitude, ourAirport.longitude)
-
-      // Lookup timezone for this airport
-      let timeZone = timezoneLookup.simple(
-        latitude: Float(ourAirport.latitude),
-        longitude: Float(ourAirport.longitude)
-      )
-
-      let codableAirport = AirportDataCodable.AirportCodable(
-        recordID: ourAirport.id,
-        locationID: ourAirport.localId,
-        ICAO_ID: ourAirport.ICAO_ID,
-        name: ourAirport.name,
-        city: ourAirport.municipality,
-        dataSource: "ourAirports",
-        latitude: ourAirport.latitude,
-        longitude: ourAirport.longitude,
-        elevation: ourAirport.elevationFt * 0.3048,  // Convert feet to meters
-        variation: variation,
-        timeZone: timeZone,
-        runways: runways
-      )
-
-      mergedAirports.append(codableAirport)
-      ourAirportsAdded += 1
-    }
-
-    logger.notice("Added \(ourAirportsAdded) airports from OurAirports (non-duplicates)")
-    logger.notice("Total airports after merge: \(mergedAirports.count)")
-
-    return mergedAirports
-  }
-
-  /// Calculates bearing between two points in arcseconds.
-  private func calculateBearing(from: (Float, Float), to: (Float, Float)) -> Float {
-    let lat1 = from.0 / 3600 * .pi / 180
-    let lat2 = to.0 / 3600 * .pi / 180
-    let deltaLon = (to.1 / 3600 - from.1 / 3600) * .pi / 180
-
-    let x = sin(deltaLon) * cos(lat2)
-    let y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon)
-
-    let bearing = atan2(x, y) * 180 / .pi
-    return (bearing + 360).truncatingRemainder(dividingBy: 360)
-  }
-
-  /// Calculates magnetic variation using the WMM model.
-  private func calculateMagneticVariation(_ latitudeDeg: Double, _ longitudeDeg: Double) -> Double {
-    let geomagnetism = Geomagnetism(longitude: longitudeDeg, latitude: latitudeDeg)
-    return geomagnetism.declination
   }
 }

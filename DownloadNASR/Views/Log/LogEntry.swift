@@ -1,12 +1,13 @@
 import Foundation
 import Logging
 
-struct LogEntry: Identifiable {
+struct LogEntry: Identifiable, Sendable {
   let id = UUID()
   let timestamp: Date
   let level: Logger.Level
   let message: String
-  let metadata: Logger.Metadata?
+  /// Metadata converted to [String: String] for Sendable conformance.
+  let metadata: [String: String]?
 
   var formattedTimestamp: String {
     let formatter = DateFormatter()

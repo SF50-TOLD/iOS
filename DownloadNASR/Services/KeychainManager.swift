@@ -8,8 +8,9 @@
 import Foundation
 import Security
 
-/// Manages secure storage of GitHub authentication tokens in the macOS Keychain
-class KeychainManager {
+/// Manages secure storage of GitHub authentication tokens in the macOS Keychain.
+/// This class is Sendable because the Security framework APIs are thread-safe.
+final class KeychainManager: Sendable {
   static let shared = KeychainManager()
 
   private let service = "codes.tim.SF50-TOLD.DownloadNASR"
@@ -98,7 +99,7 @@ class KeychainManager {
 }
 
 /// Errors that can occur during Keychain operations
-enum KeychainError: LocalizedError {
+enum KeychainError: LocalizedError, Sendable {
   case saveFailed(OSStatus)
   case retrievalFailed(OSStatus)
   case deletionFailed(OSStatus)

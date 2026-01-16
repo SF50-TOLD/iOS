@@ -50,10 +50,16 @@ struct ContentView: View {
           }
 
           if viewModel.isProcessing {
-            Button(String(localized: "Stop"), action: viewModel.cancel)
-              .buttonStyle(.borderedProminent)
-              .controlSize(.large)
-              .tint(.red)
+            Button(
+              viewModel.isCancelling
+                ? String(localized: "Stopping…")
+                : String(localized: "Stop"),
+              action: viewModel.cancel
+            )
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .tint(.red)
+            .disabled(viewModel.isCancelling)
           } else {
             Button(buttonTitle, action: downloadAndProcess)
               .buttonStyle(.borderedProminent)
@@ -110,13 +116,13 @@ struct ContentView: View {
       }
     } message: { error in
       VStack(alignment: .leading, spacing: 8) {
-        Text(error.localizedDescription)
-        if let failureReason = error.failureReason {
+        Text(error?.localizedDescription ?? "Unknown error")
+        if let failureReason = error?.localizedFailureReason {
           Text(failureReason)
             .font(.caption)
         }
 
-        if let recoverySuggestion = error.recoverySuggestion {
+        if let recoverySuggestion = error?.localizedRecoverySuggestion {
           Text(recoverySuggestion)
             .font(.caption)
         }
