@@ -80,7 +80,7 @@ struct NASRProcessor {
   ) async throws -> [AirportDataCodable.AirportCodable] {
     await onProgress?(0, 100)
 
-    guard let nasr = NASR.fromInternetToMemory(activeAt: cycle.date) else {
+    guard let nasr = NASR.fromInternetToMemory(activeAt: cycle.effectiveDate) else {
       throw NASRProcessorError.failedToCreateNASR
     }
 

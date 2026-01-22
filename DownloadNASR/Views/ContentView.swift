@@ -12,8 +12,8 @@ struct ContentView: View {
 
   private var cycle: Cycle? {
     switch selectedCycleOption {
-      case .current: Cycle.current
-      case .next: Cycle.current.next
+      case .current: Cycle.effective
+      case .next: Cycle.effective.next
       case .custom: stringToCycle(customCycleText)
     }
   }
@@ -68,7 +68,7 @@ struct ContentView: View {
           }
         }
       }
-      if let cycle, let date = cycle.date, let endDate = cycle.endDate {
+      if let cycle, let date = cycle.effectiveDate, let endDate = cycle.expirationDate {
         Text(date..<endDate, format: .interval.year().month().day())
           .foregroundStyle(.secondary)
           .font(.system(size: 12))

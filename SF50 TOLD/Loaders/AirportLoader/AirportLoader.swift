@@ -52,19 +52,17 @@ actor AirportLoader {
   private var dataURL: URL {
     URL(
       string:
-        "https://github.com/SF50-TOLD/Airport-Data/blob/main/3.0/\(Cycle.current).plist.lzma?raw=true"
+        "https://github.com/SF50-TOLD/Airport-Data/blob/main/3.0/\(Cycle.effective).plist.lzma?raw=true"
     )!
   }
 
-  func load() async throws -> (cycle: Cycle?, lastUpdated: Date?) {
+  func load() async throws -> LoadResult {
     state = .idle
     defer { state = .finished }
 
     let data = try await download()
     let nasr = try decompress(data: data)
-    let (cycle, lastUpdated) = try await loadAirports(nasr: nasr)
-
-    return (cycle, lastUpdated)
+    return try await loadAirports(nasr: nasr)
   }
 
   private func download() async throws -> Data {
@@ -98,9 +96,7 @@ actor AirportLoader {
     return try decoder.decode(AirportDataCodable.self, from: data as Data)
   }
 
-  private func loadAirports(nasr: AirportDataCodable) async throws -> (
-    cycle: Cycle?, lastUpdated: Date?
-  ) {
+  private func loadAirports(nasr: AirportDataCodable) async throws -> LoadResult {
     state = .loading(progress: 0)
 
     try resetData()
@@ -130,7 +126,10 @@ actor AirportLoader {
       await Task.yield()
     }
 
-    return (nasr.nasrCycle, nasr.ourAirportsLastUpdated)
+    return LoadResult(
+      cycles: nasr.cycles,
+      ourAirportsLastUpdated: nasr.ourAirportsLastUpdated
+    )
   }
 
   private func resetData() throws {
@@ -234,5 +233,13 @@ actor AirportLoader {
 
     /// The server returned an unexpected response.
     case badResponse(_ response: URLResponse)
+  }
+
+  /// Loaded data including cycle information and OurAirports update date.
+  struct LoadResult {
+    /// Cycle information for all data sources.
+    let cycles: AirportDataCodable.DataCycles
+    /// Date when OurAirports data was last updated.
+    let ourAirportsLastUpdated: Date?
   }
 }

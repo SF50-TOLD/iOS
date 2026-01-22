@@ -1,7 +1,4 @@
 import Foundation
-import SwiftCIFP
-import SwiftDOF
-import SwiftNASR
 
 /// Codable container for the airport database distributed with the app.
 ///
@@ -25,14 +22,8 @@ import SwiftNASR
 /// - ``AirportCodable``
 /// - ``RunwayCodable``
 public struct AirportDataCodable: Codable, Sendable {
-  /// NASR AIRAC cycle identifier (e.g., 2501 for January 2025)
-  public let nasrCycle: SwiftNASR.Cycle?
-
-  /// CIFP AIRAC cycle identifier
-  public let cifpCycle: SwiftCIFP.Cycle?
-
-  /// DOF (Digital Obstacle File) cycle identifier
-  public let dofCycle: DOFCycleCodable?
+  /// Data source cycle information with effective and expiration dates.
+  public let cycles: DataCycles
 
   /// Date when OurAirports data was last updated
   public let ourAirportsLastUpdated: Date?
@@ -242,28 +233,43 @@ public struct AirportDataCodable: Codable, Sendable {
     }
   }
 
+  // MARK: - Cycle Information
+
   /**
-   * Codable representation of a DOF cycle.
+   * Container for all data source cycle information.
    *
-   * This wrapper ensures the cycle encodes as a dictionary with year/month/day
-   * rather than as a raw string value.
+   * ``DataCycles`` provides structured information about each data source's
+   * cycle, including human-readable names and effective/expiration dates.
    */
-  public struct DOFCycleCodable: Codable, Sendable {
-    /// The year of the cycle
-    public let year: UInt
+  public struct DataCycles: Codable, Sendable {
+    /// NASR (National Airspace System Resources) cycle information
+    public let nasr: CycleInfo?
 
-    /// The month of the cycle
-    public let month: UInt8
+    /// CIFP (Coded Instrument Flight Procedures) cycle information
+    public let cifp: CycleInfo?
 
-    /// The day of the cycle
-    public let day: UInt8
+    /// DOF (Digital Obstacle File) cycle information
+    public let dof: CycleInfo?
+  }
 
-    /// Creates a DOFCycleCodable from a SwiftDOF.Cycle
-    public init(_ cycle: SwiftDOF.Cycle) {
-      self.year = cycle.year
-      self.month = cycle.month
-      self.day = cycle.day
-    }
+  /**
+   * Information about a single data source cycle.
+   *
+   * ``CycleInfo`` contains all the information needed to display cycle
+   * information to users and determine if the data is still current.
+   */
+  public struct CycleInfo: Codable, Sendable {
+    /// Human-readable cycle identifier (e.g., "2501" for AIRAC cycle)
+    public let name: String
+
+    /// Date when this cycle became effective
+    public let effective: Date
+
+    /// Date when this cycle expires and should be replaced
+    public let expires: Date
+
+    /// Whether this cycle is currently effective (not yet expired)
+    public var isEffective: Bool { (effective..<expires).contains(Date()) }
   }
 
   /**

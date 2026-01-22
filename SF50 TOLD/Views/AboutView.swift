@@ -1,22 +1,34 @@
 import Defaults
-import SwiftNASR
+import SF50_Shared
+import SwiftData
 import SwiftUI
 
 struct AboutView: View {
   private static let ourAirportsTimeout: TimeInterval = 60 * 60 * 24 * 28
 
-  @Default(.lastCycleLoaded)
-  private var lastCycleLoaded
+  @Query private var cycles: [Cycle]
 
   @Default(.ourAirportsLastUpdated)
   private var ourAirportsLastUpdated
 
+  private var nasrCycle: Cycle? {
+    cycles.first { $0.dataSource == .nasr }
+  }
+
+  private var cifpCycle: Cycle? {
+    cycles.first { $0.dataSource == .cifp }
+  }
+
+  private var dofCycle: Cycle? {
+    cycles.first { $0.dataSource == .dof }
+  }
+
   private var releaseVersionNumber: String {
-    return Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
+    Bundle.main.infoDictionary!["CFBundleShortVersionString"] as! String
   }
 
   private var buildVersionNumber: String {
-    return Bundle.main.infoDictionary!["CFBundleVersion"] as! String
+    Bundle.main.infoDictionary!["CFBundleVersion"] as! String
   }
 
   private var ourAirportsDataIsOld: Bool {
@@ -42,20 +54,12 @@ struct AboutView: View {
           }
         }
 
-        Section("Nav Data Sources") {
-          LabeledContent("FAA") {
-            if let lastCycleLoaded {
-              Text("Cycle \(lastCycleLoaded.id)")
-                .bold()
-                .foregroundStyle(lastCycleLoaded.isEffective ? Color.primary : Color.red)
-            } else {
-              Text("None loaded")
-                .bold()
-                .foregroundStyle(.secondary)
-            }
-          }
+        Section("Navigation Data") {
+          CycleRow(label: "NASR Cycle", cycle: nasrCycle)
+          CycleRow(label: "CIFP Cycle", cycle: cifpCycle)
+          CycleRow(label: "DOF Cycle", cycle: dofCycle)
 
-          LabeledContent("OurAirports") {
+          LabeledContent("OurAirports Data") {
             if let ourAirportsLastUpdated {
               Text(ourAirportsLastUpdated, format: .dateTime.day().month().year())
                 .bold()
@@ -137,6 +141,68 @@ struct AboutView: View {
   }
 }
 
+private struct CycleRow: View {
+  let label: String
+  let cycle: Cycle?
+
+  private var state: State {
+    guard let cycle else { return .expired }
+    if cycle.isNotYetActive {
+      return .notYetActive
+    }
+    if cycle.isExpired {
+      return .expired
+    }
+    return .active
+  }
+
+  var body: some View {
+    LabeledContent(label) {
+      if let cycle {
+        VStack(alignment: .trailing) {
+          Text(cycle.name)
+            .bold()
+          switch state {
+            case .active:
+              Text("expires \(cycle.expires, format: .dateTime.year().month().day())")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            case .expired:
+              Text("expired \(cycle.expires, format: .dateTime.year().month().day())")
+                .font(.caption)
+            case .notYetActive:
+              Text("effective \(cycle.effective, format: .dateTime.year().month().day())")
+                .font(.caption)
+          }
+        }
+        .foregroundStyle(state.color)
+      } else {
+        Text("None loaded")
+          .bold()
+          .foregroundStyle(.secondary)
+      }
+    }
+  }
+
+  private enum State {
+    case active, expired, notYetActive
+
+    var color: Color {
+      switch self {
+        case .active: .primary
+        case .expired: .red
+        case .notYetActive: .yellow
+      }
+    }
+  }
+}
+
 #Preview {
-  AboutView()
+  PreviewView { helper in
+    helper.insertCurrentCycle(.nasr, name: "2026-01-22")
+    helper.insertExpiredCycle(.cifp, name: "AIRAC 2513")
+    helper.insertFutureCycle(.dof, name: "20260215")
+    Defaults[.ourAirportsLastUpdated] = nil
+    return AboutView()
+  }
 }

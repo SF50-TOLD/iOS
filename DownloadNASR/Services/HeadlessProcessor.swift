@@ -38,9 +38,9 @@ enum HeadlessProcessor {
     let cycle: Cycle
     switch cycleString.lowercased() {
       case "current":
-        cycle = .current
+        cycle = .effective
       case "next":
-        guard let nextCycle = Cycle.current.next else {
+        guard let nextCycle = Cycle.effective.next else {
           logger.error("Could not determine next cycle")
           return 1
         }

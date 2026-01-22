@@ -43,7 +43,8 @@ struct SF50_TOLDApp: App {
       Airport.self,
       Runway.self,
       NOTAM.self,
-      Scenario.self
+      Scenario.self,
+      Cycle.self
     ])
 
     // Use in-memory storage for screenshot generation to avoid file access issues

@@ -1,7 +1,6 @@
 import Defaults
 import Foundation
 import SwiftData
-import SwiftNASR
 
 // MARK: - Defaults
 
@@ -112,12 +111,8 @@ extension Defaults.Keys {
     suite: groupDefaults
   )
 
-  public static let lastCycleLoaded = Key<Cycle?>(
-    "TOLD/3/lastCycleLoaded",
-    suite: groupDefaults
-  )
   public static let ourAirportsLastUpdated = Key<Date?>(
-    "TOLD/3/ourAirportsLastUpdated",
+    "TOLD/4/ourAirportsLastUpdated",
     suite: groupDefaults
   )
   public static let schemaVersion = Key<Int>(
@@ -391,34 +386,6 @@ extension UnitTemperature: Defaults.Serializable {
 
 extension UnitPressure: Defaults.Serializable {
   public static let bridge = UnitPressureBridge()
-}
-
-// MARK: - Cycle
-
-public struct CycleBridge: Defaults.Bridge, Sendable {
-  public typealias Value = Cycle
-  public typealias Serializable = String
-
-  public func serialize(_ value: SwiftNASR.Cycle?) -> String? {
-    value.map { String(format: "%04d-%02d-%02d", $0.year, $0.month, $0.day) }
-  }
-
-  public func deserialize(_ object: String?) -> SwiftNASR.Cycle? {
-    guard let object else { return nil }
-
-    let parts = object.components(separatedBy: "-")
-    guard parts.count == 3,
-      let year = UInt(parts[0]),
-      let mon = UInt8(parts[1]),
-      let day = UInt8(parts[2])
-    else { return nil }
-
-    return Cycle(year: year, month: mon, day: day)
-  }
-}
-
-extension Cycle: Defaults.Serializable {
-  public static let bridge = CycleBridge()
 }
 
 // MARK: - SwiftData

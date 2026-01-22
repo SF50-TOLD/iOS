@@ -1,7 +1,6 @@
 import Defaults
 import Foundation
 import SwiftData
-import SwiftNASR
 import WeatherKit
 
 public final class PreviewHelper: Sendable {
@@ -83,6 +82,7 @@ public final class PreviewHelper: Sendable {
       Runway.self,
       NOTAM.self,
       Scenario.self,
+      Cycle.self,
       configurations: .init(isStoredInMemoryOnly: true)
     )
   }
@@ -95,6 +95,7 @@ public final class PreviewHelper: Sendable {
     try mainContext.delete(model: Airport.self)
     try mainContext.delete(model: NOTAM.self)
     try mainContext.delete(model: Scenario.self)
+    try mainContext.delete(model: Cycle.self)
     try mainContext.save()
   }
 
@@ -217,14 +218,87 @@ public final class PreviewHelper: Sendable {
     return notam
   }
 
-  public func setUpToDate() {
-    Defaults[.schemaVersion] = latestSchemaVersion
-    Defaults[.lastCycleLoaded] = Cycle.current
+  @MainActor
+  public func insertCycle(
+    _ dataSource: CycleDataSource,
+    name: String,
+    effective: Date = Date().addingTimeInterval(-7 * 24 * 60 * 60),
+    expires: Date = Date().addingTimeInterval(21 * 24 * 60 * 60)
+  ) {
+    mainContext.insert(
+      Cycle(
+        dataSource: dataSource,
+        name: name,
+        effective: effective,
+        expires: expires
+      )
+    )
   }
 
+  @MainActor
+  public func insertCurrentCycle(_ dataSource: CycleDataSource, name: String) {
+    insertCycle(
+      dataSource,
+      name: name,
+      effective: Date().addingTimeInterval(-7 * 24 * 60 * 60),
+      expires: Date().addingTimeInterval(21 * 24 * 60 * 60)
+    )
+  }
+
+  @MainActor
+  public func insertExpiredCycle(_ dataSource: CycleDataSource, name: String) {
+    insertCycle(
+      dataSource,
+      name: name,
+      effective: Date().addingTimeInterval(-35 * 24 * 60 * 60),
+      expires: Date().addingTimeInterval(-7 * 24 * 60 * 60)
+    )
+  }
+
+  @MainActor
+  public func insertFutureCycle(_ dataSource: CycleDataSource, name: String) {
+    insertCycle(
+      dataSource,
+      name: name,
+      effective: Date().addingTimeInterval(14 * 24 * 60 * 60),
+      expires: Date().addingTimeInterval(70 * 24 * 60 * 60)
+    )
+  }
+
+  @MainActor
+  public func setUpToDate() {
+    Defaults[.schemaVersion] = latestSchemaVersion
+    // Set expiration date 28 days in the future
+    let effectiveDate = Date()
+    let expirationDate = effectiveDate.addingTimeInterval(28 * 24 * 60 * 60)
+    try? mainContext.delete(model: Cycle.self)
+    mainContext.insert(
+      Cycle(
+        dataSource: .nasr,
+        name: "Preview",
+        effective: effectiveDate,
+        expires: expirationDate
+      )
+    )
+    try? mainContext.save()
+  }
+
+  @MainActor
   public func setOutOfDate() {
     Defaults[.schemaVersion] = latestSchemaVersion
-    Defaults[.lastCycleLoaded] = .current.previous
+    // Set expiration date in the past
+    let effectiveDate = Date().addingTimeInterval(-29 * 24 * 60 * 60)
+    let expirationDate = Date().addingTimeInterval(-1)
+    try? mainContext.delete(model: Cycle.self)
+    mainContext.insert(
+      Cycle(
+        dataSource: .nasr,
+        name: "Expired",
+        effective: effectiveDate,
+        expires: expirationDate
+      )
+    )
+    try? mainContext.save()
   }
 
   public func setTakeoff(runway: Runway) {

@@ -2,7 +2,6 @@ import Defaults
 import Foundation
 import SF50_Shared
 import SwiftData
-import SwiftNASR
 
 enum UITestingHelper {
   static func setupUITestingEnvironment(container: ModelContainer) {
@@ -18,8 +17,6 @@ enum UITestingHelper {
 
     // Only seed test data for regular UI tests, not screenshot generation
     if !isGeneratingScreenshots {
-      Defaults[.lastCycleLoaded] = Cycle.current  // Prevent database loader from appearing
-
       // Seed test data for airports used in UI tests
       Task { @MainActor in
         seedTestData(container: container)
@@ -36,11 +33,24 @@ enum UITestingHelper {
     try? context.delete(model: Airport.self)
     try? context.delete(model: NOTAM.self)
     try? context.delete(model: Scenario.self)
+    try? context.delete(model: Cycle.self)
 
     // Insert test airports
     try? insertAirport(.KOAK, context: context)
     try? insertAirport(.KSQL, context: context)
     try? insertAirport(.K1C9, context: context)
+
+    // Set expiration date 28 days in the future to prevent database loader from appearing
+    let effectiveDate = Date()
+    let expirationDate = effectiveDate.addingTimeInterval(28 * 24 * 60 * 60)
+    context.insert(
+      Cycle(
+        dataSource: .nasr,
+        name: "UITest",
+        effective: effectiveDate,
+        expires: expirationDate
+      )
+    )
 
     try? context.save()
   }

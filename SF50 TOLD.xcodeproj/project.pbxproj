@@ -15,7 +15,6 @@
 		012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E512DE2F272000D9ADC /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		012B1E682DE2F463000D9ADC /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
 		012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6B2DE2F463000D9ADC /* Logging */; };
 		012B1E6E2DE2F463000D9ADC /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6D2DE2F463000D9ADC /* AsyncAlgorithms */; };
 		01442FC62E1D901900A0BD40 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 01442FC52E1D901900A0BD40 /* InfoPlist.xcstrings */; };
@@ -29,7 +28,6 @@
 		0179DFC02DE3CDD3002EC77C /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 0179DFBF2DE3CDD3002EC77C /* Defaults */; };
 		018B8F0C2E331989003A0DAF /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 018B8F0B2E331989003A0DAF /* RealModule */; };
 		0198B44C2E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		0198B44D2E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		0198B44E2E986226003CB126 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 		0198B4502E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		0198B4512E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
@@ -265,7 +263,6 @@
 				012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */,
 				018B8F0C2E331989003A0DAF /* RealModule in Frameworks */,
 				01A1014F2E93C12E0032AB29 /* Gzip in Frameworks */,
-				012B1E682DE2F463000D9ADC /* SwiftNASR in Frameworks */,
 				012B1E6E2DE2F463000D9ADC /* AsyncAlgorithms in Frameworks */,
 				0179DFC02DE3CDD3002EC77C /* Defaults in Frameworks */,
 				AB352BDD14B44A2CA78F9D44 /* Sentry in Frameworks */,
@@ -287,7 +284,6 @@
 				0179DF3E2DE2F7A9002EC77C /* SwiftNASR in Frameworks */,
 				012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */,
 				01BEBCB82E8A401100631DE6 /* SwiftHtml in Frameworks */,
-				0198B44D2E986226003CB126 /* (null) in Frameworks */,
 			);
 		};
 		0163BC762DDEE9D4008FEE8F /* Frameworks */ = {

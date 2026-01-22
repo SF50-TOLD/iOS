@@ -115,7 +115,7 @@
       "location" : "https://github.com/RISCfuture/SwiftCIFP.git",
       "state" : {
         "branch" : "main",
-        "revision" : "28d8722b5cf06aca35d789782a3d2222ae10a3a3"
+        "revision" : "8ef2536de16dd51b37998854c00cd84a99cfb9fe"
       }
     },
     {
@@ -124,7 +124,7 @@
       "location" : "https://github.com/RISCfuture/SwiftDOF.git",
       "state" : {
         "branch" : "main",
-        "revision" : "25aee4b0f736ac330b7ad87f4dec09c1f3ae34c2"
+        "revision" : "6badc67dbfd36d24c80262ebb1a9a2c4d202de1e"
       }
     },
     {
@@ -133,7 +133,7 @@
       "location" : "https://github.com/RISCfuture/SwiftNASR",
       "state" : {
         "branch" : "master",
-        "revision" : "4571c7c8d16679e123c95ab1541419243a8d1497"
+        "revision" : "fdbaa63a5192b5ae088f2f793b500240286593a2"
       }
     },
     {

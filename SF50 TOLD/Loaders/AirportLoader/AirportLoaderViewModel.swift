@@ -3,7 +3,6 @@ import Observation
 import SF50_Shared
 import Sentry
 import SwiftData
-import SwiftNASR
 
 /// View model coordinating airport data loading and UI state.
 ///
@@ -59,8 +58,8 @@ final class AirportLoaderViewModel: WithIdentifiableError {
   private func setupObservation() {
     addTask(
       Task {
-        for await _ in Defaults.updates([.schemaVersion, .lastCycleLoaded]) where !Task.isCancelled
-        {
+        for await _ in Defaults.updates(.schemaVersion)
+        where !Task.isCancelled {
           do {
             try recalculate()
           } catch {
@@ -99,13 +98,44 @@ final class AirportLoaderViewModel: WithIdentifiableError {
       Task {
         do {
           error = nil
-          Defaults[.lastCycleLoaded] = nil
-          Defaults[.ourAirportsLastUpdated] = nil
-          let (cycle, lastUpdated) = try await loader.load()
+          try clearCycles()
+          let result = try await loader.load()
 
           await MainActor.run {
-            Defaults[.lastCycleLoaded] = cycle
-            Defaults[.ourAirportsLastUpdated] = lastUpdated
+            let context = container.mainContext
+            if let nasr = result.cycles.nasr {
+              context.insert(
+                Cycle(
+                  dataSource: .nasr,
+                  name: nasr.name,
+                  effective: nasr.effective,
+                  expires: nasr.expires
+                )
+              )
+            }
+            if let cifp = result.cycles.cifp {
+              context.insert(
+                Cycle(
+                  dataSource: .cifp,
+                  name: cifp.name,
+                  effective: cifp.effective,
+                  expires: cifp.expires
+                )
+              )
+            }
+            if let dof = result.cycles.dof {
+              context.insert(
+                Cycle(
+                  dataSource: .dof,
+                  name: dof.name,
+                  effective: dof.effective,
+                  expires: dof.expires
+                )
+              )
+            }
+            try? context.save()
+            try? self.recalculate()
+            Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
             Defaults[.schemaVersion] = latestSchemaVersion
           }
         } catch {
@@ -130,9 +160,16 @@ final class AirportLoaderViewModel: WithIdentifiableError {
     if canSkip { deferred = true }
   }
 
-  private func outOfDate(cycle: Cycle?) -> Bool {
-    if let cycle, cycle.isEffective { return false }
-    return true
+  private func clearCycles() throws {
+    let context = ModelContext(container)
+    try context.delete(model: Cycle.self)
+    try context.save()
+    Defaults[.ourAirportsLastUpdated] = nil
+  }
+
+  private func outOfDate(expirationDate: Date?) -> Bool {
+    guard let expirationDate else { return true }
+    return Date() > expirationDate
   }
 
   private func outOfDate(schemaVersion: Int) -> Bool {
@@ -141,9 +178,20 @@ final class AirportLoaderViewModel: WithIdentifiableError {
 
   private func recalculate() throws {
     let schemaOutOfDate = outOfDate(schemaVersion: Defaults[.schemaVersion])
-    let cycleOutOfDate = outOfDate(cycle: Defaults[.lastCycleLoaded])
-    needsLoad = schemaOutOfDate || cycleOutOfDate
+    let nasrExpiration = try fetchNASRExpiration()
+    let dataOutOfDate = outOfDate(expirationDate: nasrExpiration)
+    needsLoad = schemaOutOfDate || dataOutOfDate
     canSkip = !noData && !schemaOutOfDate
+  }
+
+  private func fetchNASRExpiration() throws -> Date? {
+    let context = ModelContext(container)
+    let nasrRawValue = CycleDataSource.nasr.rawValue
+    var descriptor = FetchDescriptor<Cycle>(
+      predicate: #Predicate { $0._dataSource == nasrRawValue }
+    )
+    descriptor.fetchLimit = 1
+    return try context.fetch(descriptor).first?.expires
   }
 
   private func setAnyAirports(context: ModelContext) throws {

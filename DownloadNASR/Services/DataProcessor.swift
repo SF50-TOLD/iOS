@@ -5,6 +5,18 @@ import SwiftDOF
 import SwiftNASR
 import SwiftTimeZoneLookup
 
+/// Errors that can occur during data processing.
+enum DataProcessorError: LocalizedError {
+  case missingCycleDates(source: String)
+
+  var errorDescription: String? {
+    switch self {
+      case .missingCycleDates(let source):
+        "Failed to determine cycle dates for \(source) data."
+    }
+  }
+}
+
 /// Orchestrates the complete airport and obstacle data processing pipeline.
 ///
 /// ``DataProcessor`` coordinates the loading, merging, and output of data from multiple sources:
@@ -57,11 +69,54 @@ struct DataProcessor {
     // Load and merge all data (72 units)
     let loadedData = try await loadAndMergeAllData()
 
+    // Build cycle information with effective/expiration dates
+    guard let nasrEffective = cycle.effectiveDate,
+      let nasrExpires = cycle.expirationDate
+    else {
+      throw DataProcessorError.missingCycleDates(source: "NASR")
+    }
+
+    var cifpInfo: AirportDataCodable.CycleInfo?
+    if let cifpCycle = loadedData.cifpCycle {
+      guard let effective = cifpCycle.effectiveDate,
+        let expires = cifpCycle.expirationDate
+      else {
+        throw DataProcessorError.missingCycleDates(source: "CIFP")
+      }
+      cifpInfo = AirportDataCodable.CycleInfo(
+        name: "\(cifpCycle)",
+        effective: effective,
+        expires: expires
+      )
+    }
+
+    var dofInfo: AirportDataCodable.CycleInfo?
+    if let dofCycle = loadedData.dofCycle {
+      guard let effective = dofCycle.effectiveDate,
+        let expires = dofCycle.expirationDate
+      else {
+        throw DataProcessorError.missingCycleDates(source: "DOF")
+      }
+      dofInfo = AirportDataCodable.CycleInfo(
+        name: "\(dofCycle)",
+        effective: effective,
+        expires: expires
+      )
+    }
+
+    let cycles = AirportDataCodable.DataCycles(
+      nasr: AirportDataCodable.CycleInfo(
+        name: "\(cycle)",
+        effective: nasrEffective,
+        expires: nasrExpires
+      ),
+      cifp: cifpInfo,
+      dof: dofInfo
+    )
+
     // Create combined codable data structure with airports and obstacles
     let codableData = AirportDataCodable(
-      nasrCycle: cycle,
-      cifpCycle: loadedData.cifpCycle,
-      dofCycle: loadedData.dofCycle.map { AirportDataCodable.DOFCycleCodable($0) },
+      cycles: cycles,
       ourAirportsLastUpdated: loadedData.ourAirportsLastUpdated,
       airports: loadedData.airports,
       obstacles: loadedData.obstacles
