@@ -49,5 +49,5 @@ struct LocationErrorView: View {
 }
 
 #Preview {
-  LocationErrorView(error: AirportLoader.Errors.cycleNotAvailable)
+  LocationErrorView(error: DataLoader.Errors.cycleNotAvailable)
 }

@@ -45,8 +45,8 @@ The app follows a layered architecture:
 - ``LandingRunwayPerformance``
 - ``ReportOutput``
 
-### Airport Data Loading
+### Navigation Data Loading
 
-- <doc:AirportDataLoading>
-- ``AirportLoader``
-- ``AirportLoaderViewModel``
+- <doc:DataLoading>
+- ``DataLoader``
+- ``DataLoaderViewModel``

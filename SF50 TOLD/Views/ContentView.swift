@@ -11,7 +11,7 @@ struct ContentView: View {
   private var aircraftTypeSetting
 
   @State private var tab = 1
-  @State private var loader: AirportLoaderViewModel?
+  @State private var loader: DataLoaderViewModel?
 
   @Environment(\.modelContext)
   private var context

@@ -74,6 +74,10 @@ public final class Airport {
   @Relationship(deleteRule: .cascade)
   public var runways: [Runway]
 
+  /// Departure procedures available at this airport
+  @Relationship(deleteRule: .cascade)
+  public var departureProcedures: [DepartureProcedure]
+
   /// Airport latitude in degrees
   public var latitude: Measurement<UnitAngle> {
     get { .init(value: _latitude, unit: .degrees) }
@@ -172,5 +176,6 @@ public final class Airport {
     _variation = variation.converted(to: .degrees).value
     _timeZone = timeZone?.identifier
     self.runways = []
+    self.departureProcedures = []
   }
 }

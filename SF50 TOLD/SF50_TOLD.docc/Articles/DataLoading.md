@@ -1,12 +1,12 @@
-# Airport Data Loading
+# Data Loading
 
-Downloading and importing airport data from GitHub.
+Downloading and importing navigation data from GitHub.
 
 ## Overview
 
 SF50 TOLD requires airport and runway data to calculate performance. This data
 is pre-processed from FAA NASR and OurAirports sources, compressed, and hosted
-on GitHub. The ``AirportLoader`` actor downloads and imports this data into
+on GitHub. The ``DataLoader`` actor downloads and imports this data into
 SwiftData on first launch and when updates are available.
 
 ## Data Pipeline
@@ -15,7 +15,7 @@ SwiftData on first launch and when updates are available.
 
 ## Update Decision Logic
 
-``AirportLoaderViewModel`` determines when to show the loading UI based on:
+``DataLoaderViewModel`` determines when to show the loading UI based on:
 
 ### Required Load (Cannot Skip)
 
@@ -52,20 +52,22 @@ private func outOfDate(cycle: Cycle?) -> Bool {
 ```
 
 New cycle data is typically uploaded to GitHub a few days before the cycle
-becomes effective. If data isn't available yet, ``AirportLoader`` throws
-``AirportLoader/Errors/cycleNotAvailable``.
+becomes effective. If data isn't available yet, ``DataLoader`` throws
+``DataLoader/Errors/cycleNotAvailable``.
 
 ## Loading Progress
 
-The loader reports progress through the ``AirportLoader/State`` enum:
+The loader reports progress through the ``DataLoader/State`` enum:
 
 | State | Description |
 |-------|-------------|
-| `.idle` | Not started |
 | `.downloading(progress:)` | Downloading from GitHub (0.0-1.0) |
 | `.extracting(progress:)` | Decompressing LZMA |
-| `.loading(progress:)` | Importing to SwiftData (0.0-1.0) |
+| `.loading(progress:)` | Importing airports and obstacles (0.0-1.0) |
 | `.finished` | Complete |
+
+The `.loading` phase combines both airport and obstacle imports into a single
+unified progress value, calculated from the total item count across both phases.
 
 The view model polls the loader state every 250ms to update the UI:
 
@@ -81,23 +83,24 @@ Task { [weak self] in
 
 ## Batch Import
 
-To avoid blocking the main actor, airport import uses batch processing:
+To avoid blocking the main actor, data import uses batch processing:
 
 1. Airports are processed in batches of 100
-2. Each batch runs concurrently using `withThrowingDiscardingTaskGroup`
+2. Obstacles are processed in batches of 1000
 3. SwiftData is saved after each batch
-4. `Task.yield()` allows UI updates between batches
+4. Sub-functions report raw item counts via closures
+5. The orchestrator (`load()`) calculates unified progress
 
 ```swift
-for (batchIndex, batch) in batches.enumerated() {
-    try await withThrowingDiscardingTaskGroup { group in
-        for airport in batch {
-            group.addTask { await self.addAirport(airport) }
-        }
-    }
-    try modelContext.save()
-    state = .loading(progress: Float(completed) / Float(total))
-    await Task.yield()
+let totalItems = nasr.airports.count + nasr.obstacles.count
+
+try loadAirports(nasr.airports) { airportsProcessed in
+    self.state = .loading(progress: Float(airportsProcessed) / Float(totalItems))
+}
+
+let airportCount = nasr.airports.count
+try loadObstacles(nasr.obstacles) { obstaclesProcessed in
+    self.state = .loading(progress: Float(airportCount + obstaclesProcessed) / Float(totalItems))
 }
 ```
 
@@ -122,5 +125,5 @@ Community-maintained database supplements NASR with:
 
 ## See Also
 
-- ``AirportLoader``
-- ``AirportLoaderViewModel``
+- ``DataLoader``
+- ``DataLoaderViewModel``

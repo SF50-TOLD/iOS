@@ -1,3 +1,4 @@
+import Algorithms
 import CoreLocation
 import Foundation
 import Observation
@@ -5,46 +6,73 @@ import SF50_Shared
 import SwiftData
 import SwiftNASR
 
-/**
- * Downloads and imports airport data from the GitHub repository.
- *
- * ``AirportLoader`` is a `@ModelActor` that handles the complete airport data
- * update pipeline:
- *
- * 1. **Download**: Fetches compressed airport data from GitHub
- * 2. **Decompress**: Extracts LZMA-compressed property list
- * 3. **Import**: Populates SwiftData with `Airport` and `Runway` models
- *
- * ## Data Source
- *
- * Airport data is pre-processed and hosted at:
- * `github.com/SF50-TOLD/Airport-Data`
- *
- * The data combines FAA NASR (National Airspace System Resources) with
- * OurAirports for international coverage.
- *
- * ## Progress Tracking
- *
- * Monitor the ``state`` property to track loading progress:
- *
- * ```swift
- * let loader = AirportLoader(modelContainer: container)
- * Task {
- *     while true {
- *         print(await loader.state)
- *         try? await Task.sleep(for: .seconds(0.25))
- *     }
- * }
- * let (cycle, lastUpdated) = try await loader.load()
- * ```
- *
- * ## See Also
- *
- * - ``AirportLoaderViewModel``
- * - ``State``
- */
+/// Downloads and imports navigation data from the GitHub repository.
+///
+/// `DataLoader` is a `@ModelActor` that handles the complete navigation data
+/// update pipeline:
+///
+/// 1. **Download**: Fetches compressed data from GitHub
+/// 2. **Decompress**: Extracts LZMA-compressed property list
+/// 3. **Import**: Populates SwiftData with `Airport`, `Runway`, `DepartureProcedure`,
+///    `Fix`, and `Obstacle` models
+///
+/// ## Data Source
+///
+/// Navigation data is pre-processed and hosted at:
+/// `github.com/SF50-TOLD/Airport-Data`
+///
+/// The data combines FAA NASR (National Airspace System Resources) with
+/// OurAirports for international coverage, CIFP for departure procedures,
+/// and DOF for obstacles.
+///
+/// ## Data Format
+///
+/// Navigation data is stored as an LZMA-compressed property list containing:
+///
+/// - Airport records (location ID, name, coordinates, elevation, etc.)
+/// - Runway records (heading, length, distances, gradient)
+/// - Departure procedures (SIDs with fixes and altitude restrictions)
+/// - Obstacles (from FAA Digital Obstacle File)
+/// - NASR, CIFP, and DOF cycle information
+/// - OurAirports last update timestamp
+///
+/// ## Usage
+///
+/// Create a loader with the model container and call ``load()``:
+///
+/// ```swift
+/// let loader = DataLoader(modelContainer: container)
+/// let result = try await loader.load()
+/// ```
+///
+/// ## Progress Tracking
+///
+/// Poll the ``state`` property to track loading progress:
+///
+/// ```swift
+/// let loader = DataLoader(modelContainer: container)
+/// Task {
+///     while true {
+///         switch await loader.state {
+///         case .downloading(let progress):
+///             print("Downloading: \(progress ?? 0)")
+///         case .loading(let progress):
+///             print("Importing: \(progress ?? 0)")
+///         default:
+///             break
+///         }
+///         try? await Task.sleep(for: .seconds(0.25))
+///     }
+/// }
+/// let result = try await loader.load()
+/// ```
+///
+/// ## See Also
+///
+/// - ``DataLoaderViewModel``
+/// - ``State``
 @ModelActor
-actor AirportLoader {
+actor DataLoader {
   var state: State = .idle
 
   private let decoder = PropertyListDecoder()
@@ -57,18 +85,33 @@ actor AirportLoader {
   }
 
   func load() async throws -> LoadResult {
-    state = .idle
-    defer { state = .finished }
+    state = .downloading(progress: 0)
+    let data = try await download { self.state = .downloading(progress: $0) }
 
-    let data = try await download()
+    state = .extracting(progress: nil)
     let nasr = try decompress(data: data)
-    return try await loadAirports(nasr: nasr)
+
+    // Combined progress tracking across both loading phases
+    state = .loading(progress: 0)
+    let totalItems = nasr.airports.count + nasr.obstacles.count
+
+    try await loadAirports(nasr.airports) { airportsProcessed in
+      self.state = .loading(progress: Float(airportsProcessed) / Float(totalItems))
+    }
+
+    let airportCount = nasr.airports.count
+    try await loadObstacles(nasr.obstacles) { obstaclesProcessed in
+      self.state = .loading(progress: Float(airportCount + obstaclesProcessed) / Float(totalItems))
+    }
+
+    state = .finished
+    return LoadResult(
+      cycles: nasr.cycles,
+      ourAirportsLastUpdated: nasr.ourAirportsLastUpdated
+    )
   }
 
-  private func download() async throws -> Data {
-    state = .downloading(progress: 0)
-    defer { state = .downloading(progress: 1) }
-
+  private func download(progress: (Float) -> Void) async throws -> Data {
     let session = URLSession(configuration: .ephemeral)
     let (bytes, response) = try await session.bytes(from: self.dataURL)
     guard let response = response as? HTTPURLResponse else { throw Errors.badResponse(response) }
@@ -80,8 +123,8 @@ actor AirportLoader {
       compressedData.append(byte)
       let completed = compressedData.count
       if completed.isMultiple(of: 8192) {
-        let progress = Double(completed) / Double(response.expectedContentLength)
-        state = .downloading(progress: Float(progress))
+        let downloadProgress = Double(completed) / Double(response.expectedContentLength)
+        progress(Float(downloadProgress))
       }
     }
 
@@ -89,52 +132,61 @@ actor AirportLoader {
   }
 
   private func decompress(data: Data) throws -> AirportDataCodable {
-    state = .extracting(progress: nil)
-    defer { state = .extracting(progress: 1) }
-
     let data = try (data as NSData).decompressed(using: .lzma)  // swiftlint:disable:this legacy_objc_type
     return try decoder.decode(AirportDataCodable.self, from: data as Data)
   }
 
-  private func loadAirports(nasr: AirportDataCodable) async throws -> LoadResult {
-    state = .loading(progress: 0)
-
+  private func loadAirports(
+    _ airports: [AirportDataCodable.AirportCodable],
+    progress: (Int) -> Void
+  ) async throws {
     try resetData()
 
-    let totalAirports = nasr.airports.count
-    let batchSize = 100
-    let batches = stride(from: 0, to: totalAirports, by: batchSize).map { start in
-      Array(nasr.airports[start..<min(start + batchSize, totalAirports)])
-    }
+    var processed = 0
 
-    for (batchIndex, batch) in batches.enumerated() {
-      try await withThrowingDiscardingTaskGroup { group in
-        for airport in batch {
-          let airportCopy = airport
-          group.addTask {
-            await self.addAirport(airportCopy)
-          }
-        }
+    for batch in airports.chunks(ofCount: 100) {
+      for airport in batch {
+        addAirport(airport)
       }
 
       try modelContext.save()
 
-      let completed = (batchIndex + 1) * batchSize
-      let progress = Float(min(completed, totalAirports)) / Float(totalAirports)
-      state = .loading(progress: progress)
-
+      processed += batch.count
+      progress(processed)
       await Task.yield()
     }
+  }
 
-    return LoadResult(
-      cycles: nasr.cycles,
-      ourAirportsLastUpdated: nasr.ourAirportsLastUpdated
-    )
+  private func loadObstacles(
+    _ obstacles: [AirportDataCodable.ObstacleCodable],
+    progress: (Int) -> Void
+  ) async throws {
+    var processed = 0
+
+    for batch in obstacles.chunks(ofCount: 1000) {
+      for obstacleData in batch {
+        let obstacle = Obstacle(
+          heightMSL: .init(value: Double(obstacleData.heightFtMSL), unit: .feet),
+          latitude: .init(value: obstacleData.latitude, unit: .degrees),
+          longitude: .init(value: obstacleData.longitude, unit: .degrees)
+        )
+        modelContext.insert(obstacle)
+      }
+
+      try modelContext.save()
+
+      processed += batch.count
+      progress(processed)
+      await Task.yield()
+    }
   }
 
   private func resetData() throws {
     try modelContext.delete(model: SF50_Shared.Airport.self)
     try modelContext.delete(model: SF50_Shared.Runway.self)
+    try modelContext.delete(model: SF50_Shared.DepartureProcedure.self)
+    try modelContext.delete(model: SF50_Shared.Fix.self)
+    try modelContext.delete(model: SF50_Shared.Obstacle.self)
     try modelContext.delete(model: NOTAM.self)
     try modelContext.save()
   }
@@ -207,6 +259,33 @@ actor AirportLoader {
         runway.reciprocalName = runwayData.reciprocalName
       }
     }
+
+    // Load departure procedures
+    for procedureData in airport.departureProcedures ?? [] {
+      let procedure = DepartureProcedure(
+        identifier: procedureData.identifier,
+        runwayNames: procedureData.runwayNames,
+        requiredClimbGradientFtPerNM: procedureData.requiredClimbGradientFtPerNM,
+        airport: record
+      )
+      modelContext.insert(procedure)
+
+      // Load fixes for this procedure
+      for (index, fixData) in (procedureData.fixes ?? []).enumerated() {
+        let altitudeRestriction = fixData.altitudeRestriction.map {
+          AltitudeRestriction(from: $0)
+        }
+        let fix = Fix(
+          identifier: fixData.identifier,
+          latitude: .init(value: fixData.latitude, unit: .degrees),
+          longitude: .init(value: fixData.longitude, unit: .degrees),
+          altitudeRestriction: altitudeRestriction,
+          sequenceIndex: index,
+          departureProcedure: procedure
+        )
+        modelContext.insert(fix)
+      }
+    }
   }
 
   /// Current state of the loading process.
@@ -226,7 +305,7 @@ actor AirportLoader {
     case finished
   }
 
-  /// Errors that can occur during airport data loading.
+  /// Errors that can occur during data loading.
   enum Errors: Swift.Error {
     /// The current AIRAC cycle data is not yet available on GitHub.
     case cycleNotAvailable

@@ -68,6 +68,39 @@ class BaseSF50RegressionPerformanceModel: BaseRegressionPerformanceModel {
     fatalError("Subclasses must implement enrouteClimbSpeedKIAS_iceContaminated")
   }
 
+  // MARK: - En Route Obstacle Climb
+
+  var enrouteObstacleClimbGradientFtNmi: Value<Double> {
+    let iceContaminated = configuration.iceProtection
+    return iceContaminated
+      ? enrouteObstacleClimbGradientFtNmi_iceContaminated
+      : enrouteObstacleClimbGradientFtNmi_normal
+  }
+
+  var enrouteObstacleClimbRateFtMin: Value<Double> {
+    let iceContaminated = configuration.iceProtection
+    return iceContaminated
+      ? enrouteObstacleClimbRateFtMin_iceContaminated
+      : enrouteObstacleClimbRateFtMin_normal
+  }
+
+  // Abstract properties - subclasses must override
+  var enrouteObstacleClimbGradientFtNmi_normal: Value<Double> {
+    fatalError("Subclasses must implement enrouteObstacleClimbGradientFtNmi_normal")
+  }
+
+  var enrouteObstacleClimbRateFtMin_normal: Value<Double> {
+    fatalError("Subclasses must implement enrouteObstacleClimbRateFtMin_normal")
+  }
+
+  var enrouteObstacleClimbGradientFtNmi_iceContaminated: Value<Double> {
+    fatalError("Subclasses must implement enrouteObstacleClimbGradientFtNmi_iceContaminated")
+  }
+
+  var enrouteObstacleClimbRateFtMin_iceContaminated: Value<Double> {
+    fatalError("Subclasses must implement enrouteObstacleClimbRateFtMin_iceContaminated")
+  }
+
   // MARK: Landing
 
   override var landingDistanceFt: Value<Double> {

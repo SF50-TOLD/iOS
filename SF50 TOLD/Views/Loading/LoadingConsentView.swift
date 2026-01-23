@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct LoadingConsentView: View {
-  @Environment(AirportLoaderViewModel.self)
+  @Environment(DataLoaderViewModel.self)
   private var loader
 
   @Environment(\.modelContext)
@@ -13,7 +13,7 @@ struct LoadingConsentView: View {
     if loader.canSkip {
       return String(localized: "Your airport database is out of date. Would you like to update it?")
     }
-    return String(localized: "You need to download airport data before you can use this app.")
+    return String(localized: "You need to download navigation data before you can use this app.")
   }
 
   var body: some View {
@@ -43,7 +43,7 @@ struct LoadingConsentView: View {
       }
 
       HStack(spacing: 20) {
-        Button("Download Airport Data") {
+        Button("Download Navigation Data") {
           Task { loader.load() }
         }.accessibilityIdentifier("downloadDataButton")
         if loader.canSkip {
@@ -59,7 +59,7 @@ struct LoadingConsentView: View {
 #Preview("No data") {
   PreviewView { preview in
     return LoadingConsentView()
-      .environment(AirportLoaderViewModel(container: preview.container))
+      .environment(DataLoaderViewModel(container: preview.container))
   }
 }
 
@@ -68,6 +68,6 @@ struct LoadingConsentView: View {
     preview.setOutOfDate()
 
     return LoadingConsentView()
-      .environment(AirportLoaderViewModel(container: preview.container))
+      .environment(DataLoaderViewModel(container: preview.container))
   }
 }

@@ -1,9 +1,9 @@
 import Foundation
 import SF50_Shared
 
-extension AirportLoader.Errors: LocalizedError {
+extension DataLoader.Errors: LocalizedError {
   var errorDescription: String? {
-    String(localized: "Airport data couldn’t be downloaded")
+    String(localized: "Navigation data couldn't be downloaded")
   }
 
   var failureReason: String? {
@@ -15,13 +15,13 @@ extension AirportLoader.Errors: LocalizedError {
           String(localized: "Received bad HTTP response.")
         }
       case .cycleNotAvailable:
-        String(localized: "Airport data for the current cycle is not yet available.")
+        String(localized: "Navigation data for the current cycle is not yet available.")
     }
   }
 
   var recoverySuggestion: String? {
     String(
-      localized: "Try re-downloading airport data later, or continue with out-of-date airport data."
+      localized: "Try re-downloading data later, or continue with out-of-date data."
     )
   }
 }

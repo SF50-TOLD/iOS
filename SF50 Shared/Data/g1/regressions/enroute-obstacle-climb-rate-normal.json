@@ -1,0 +1,169 @@
+{
+  "version": "1.0",
+  "name": "enroute-obstacle-climb-rate-normal",
+  "description": "En route obstacle climb rate - anti-ice OFF",
+  "type": "polynomial",
+  "variables": [
+    "weight",
+    "altitude",
+    "temperature"
+  ],
+  "uncertainty_key": "g1/enroute obstacle climb/normal/rate",
+  "equation": {
+    "intercept": 5903.046893082954,
+    "terms": [
+      {
+        "coefficient": -0.002040179269048878,
+        "powers": [
+          1,
+          0,
+          0
+        ]
+      },
+      {
+        "coefficient": 0.0004965641651619407,
+        "powers": [
+          0,
+          1,
+          0
+        ]
+      },
+      {
+        "coefficient": -0.002974424714636615,
+        "powers": [
+          0,
+          0,
+          1
+        ]
+      },
+      {
+        "coefficient": -0.0002371591294184998,
+        "powers": [
+          2,
+          0,
+          0
+        ]
+      },
+      {
+        "coefficient": 7.677277644812144e-07,
+        "powers": [
+          1,
+          1,
+          0
+        ]
+      },
+      {
+        "coefficient": -0.012024230606183375,
+        "powers": [
+          1,
+          0,
+          1
+        ]
+      },
+      {
+        "coefficient": -1.407379839415355e-05,
+        "powers": [
+          0,
+          2,
+          0
+        ]
+      },
+      {
+        "coefficient": -0.0018933945224007649,
+        "powers": [
+          0,
+          1,
+          1
+        ]
+      },
+      {
+        "coefficient": -0.472361775147777,
+        "powers": [
+          0,
+          0,
+          2
+        ]
+      },
+      {
+        "coefficient": 2.206485541116001e-08,
+        "powers": [
+          3,
+          0,
+          0
+        ]
+      },
+      {
+        "coefficient": 1.3101706556754732e-10,
+        "powers": [
+          2,
+          1,
+          0
+        ]
+      },
+      {
+        "coefficient": 1.5560905338751395e-06,
+        "powers": [
+          2,
+          0,
+          1
+        ]
+      },
+      {
+        "coefficient": 8.198006911020225e-10,
+        "powers": [
+          1,
+          2,
+          0
+        ]
+      },
+      {
+        "coefficient": 1.223913727619669e-07,
+        "powers": [
+          1,
+          1,
+          1
+        ]
+      },
+      {
+        "coefficient": 3.5573435157816797e-05,
+        "powers": [
+          1,
+          0,
+          2
+        ]
+      },
+      {
+        "coefficient": 2.6138231943931607e-10,
+        "powers": [
+          0,
+          3,
+          0
+        ]
+      },
+      {
+        "coefficient": 1.620427579308409e-08,
+        "powers": [
+          0,
+          2,
+          1
+        ]
+      },
+      {
+        "coefficient": -1.1315524895564648e-05,
+        "powers": [
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "coefficient": -0.0009860097183309487,
+        "powers": [
+          0,
+          0,
+          3
+        ]
+      }
+    ]
+  }
+}

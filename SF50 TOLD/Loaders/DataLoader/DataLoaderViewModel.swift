@@ -4,10 +4,10 @@ import SF50_Shared
 import Sentry
 import SwiftData
 
-/// View model coordinating airport data loading and UI state.
+/// View model coordinating navigation data loading and UI state.
 ///
-/// ``AirportLoaderViewModel`` manages the decision logic for when to show the
-/// airport loader UI and coordinates the actual loading process via ``AirportLoader``.
+/// ``DataLoaderViewModel`` manages the decision logic for when to show the
+/// data loader UI and coordinates the actual loading process via ``DataLoader``.
 ///
 /// ## Loading Decision
 ///
@@ -18,16 +18,16 @@ import SwiftData
 /// ## Usage
 ///
 /// ```swift
-/// @State private var loaderVM = AirportLoaderViewModel(container: container)
+/// @State private var loaderVM = DataLoaderViewModel(container: container)
 ///
 /// if loaderVM.showLoader {
-///     AirportLoaderView(viewModel: loaderVM)
+///     DataLoaderView(viewModel: loaderVM)
 /// }
 /// ```
 @Observable
 @MainActor
-final class AirportLoaderViewModel: WithIdentifiableError {
-  private(set) var state: AirportLoader.State = .idle
+final class DataLoaderViewModel: WithIdentifiableError {
+  private(set) var state: DataLoader.State = .idle
   var error: Swift.Error?
 
   private(set) var noData = false
@@ -92,7 +92,7 @@ final class AirportLoaderViewModel: WithIdentifiableError {
   }
 
   func load() {
-    let loader = AirportLoader(modelContainer: container)
+    let loader = DataLoader(modelContainer: container)
 
     addTask(
       Task {

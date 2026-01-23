@@ -39,6 +39,12 @@ final class RegressionPerformanceModelG2Plus: BaseSF50RegressionPerformanceModel
   private let enrouteClimbRateIceEquation: RegressionEquation
   private let enrouteClimbSpeedIceEquation: RegressionEquation
 
+  // En Route Obstacle Climb Equations
+  private let enrouteObstacleClimbGradientNormalEquation: RegressionEquation
+  private let enrouteObstacleClimbRateNormalEquation: RegressionEquation
+  private let enrouteObstacleClimbGradientIceEquation: RegressionEquation
+  private let enrouteObstacleClimbRateIceEquation: RegressionEquation
+
   // Landing Equations
   private let landingRunFlaps100Equation: RegressionEquation
   private let landingRunFlaps50Equation: RegressionEquation
@@ -119,6 +125,24 @@ final class RegressionPerformanceModelG2Plus: BaseSF50RegressionPerformanceModel
 
   override var enrouteClimbSpeedKIAS_iceContaminated: Value<Double> {
     evaluate(enrouteClimbSpeedIceEquation)
+  }
+
+  // MARK: - En Route Obstacle Climb
+
+  override var enrouteObstacleClimbGradientFtNmi_normal: Value<Double> {
+    evaluate(enrouteObstacleClimbGradientNormalEquation)
+  }
+
+  override var enrouteObstacleClimbRateFtMin_normal: Value<Double> {
+    evaluate(enrouteObstacleClimbRateNormalEquation)
+  }
+
+  override var enrouteObstacleClimbGradientFtNmi_iceContaminated: Value<Double> {
+    evaluate(enrouteObstacleClimbGradientIceEquation)
+  }
+
+  override var enrouteObstacleClimbRateFtMin_iceContaminated: Value<Double> {
+    evaluate(enrouteObstacleClimbRateIceEquation)
   }
 
   private var takeoffRunBaseFt: Value<Double> {
@@ -379,6 +403,21 @@ final class RegressionPerformanceModelG2Plus: BaseSF50RegressionPerformanceModel
     )
     enrouteClimbRateIceEquation = try! loader.loadEnrouteClimbRateEquation(iceContaminated: true)
     enrouteClimbSpeedIceEquation = try! loader.loadEnrouteClimbSpeedEquation(iceContaminated: true)
+
+    // Load en route obstacle climb equations
+    enrouteObstacleClimbGradientNormalEquation =
+      try! loader.loadEnrouteObstacleClimbGradientEquation(
+        iceContaminated: false
+      )
+    enrouteObstacleClimbRateNormalEquation = try! loader.loadEnrouteObstacleClimbRateEquation(
+      iceContaminated: false
+    )
+    enrouteObstacleClimbGradientIceEquation = try! loader.loadEnrouteObstacleClimbGradientEquation(
+      iceContaminated: true
+    )
+    enrouteObstacleClimbRateIceEquation = try! loader.loadEnrouteObstacleClimbRateEquation(
+      iceContaminated: true
+    )
 
     // Load landing equations
     landingRunFlaps100Equation = try! loader.loadLandingRunEquation(flapSetting: .flaps100)

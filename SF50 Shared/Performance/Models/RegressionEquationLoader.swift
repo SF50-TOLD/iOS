@@ -168,6 +168,19 @@ struct RegressionEquationLoader {
     return try loadEquation(filename: "enroute-climb-speed-\(suffix).json")
   }
 
+  // MARK: - En Route Obstacle Climb Equations
+
+  func loadEnrouteObstacleClimbGradientEquation(iceContaminated: Bool) throws -> RegressionEquation
+  {
+    let suffix = iceContaminated ? "ice" : "normal"
+    return try loadEquation(filename: "enroute-obstacle-climb-gradient-\(suffix).json")
+  }
+
+  func loadEnrouteObstacleClimbRateEquation(iceContaminated: Bool) throws -> RegressionEquation {
+    let suffix = iceContaminated ? "ice" : "normal"
+    return try loadEquation(filename: "enroute-obstacle-climb-rate-\(suffix).json")
+  }
+
   // MARK: - Private Helpers
 
   private func loadEquation(filename: String) throws -> RegressionEquation {

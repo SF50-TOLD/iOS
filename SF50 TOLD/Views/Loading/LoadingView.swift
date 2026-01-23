@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct LoadingView: View {
-  @Environment(AirportLoaderViewModel.self)
+  @Environment(DataLoaderViewModel.self)
   private var loader
 
   @State private var errorSheetIsPresented = false
@@ -26,6 +26,6 @@ struct LoadingView: View {
 #Preview {
   PreviewView { preview in
     return LoadingView()
-      .environment(AirportLoaderViewModel(container: preview.container))
+      .environment(DataLoaderViewModel(container: preview.container))
   }
 }
