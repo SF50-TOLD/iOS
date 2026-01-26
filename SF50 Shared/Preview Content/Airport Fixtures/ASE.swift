@@ -52,8 +52,8 @@ extension AirportBuilder {
         airport: airport
       )
 
-      rwy15.reciprocal = rwy33
-      rwy33.reciprocal = rwy15
+      rwy15.reciprocalName = "33"
+      rwy33.reciprocalName = "15"
 
       return [rwy15, rwy33]
     }

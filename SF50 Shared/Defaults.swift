@@ -6,7 +6,7 @@ import SwiftNASR
 // MARK: - Defaults
 
 nonisolated(unsafe) private let groupDefaults = UserDefaults(suiteName: "group.codes.tim.TOLD")!
-public let latestSchemaVersion = 4
+public let latestSchemaVersion = 5
 
 extension Defaults.Keys {
   public static let emptyWeight = Key<Measurement<UnitMass>>(

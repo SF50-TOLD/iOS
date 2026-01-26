@@ -75,9 +75,13 @@ public final class Runway {
   @Relationship(deleteRule: .cascade, inverse: \NOTAM.runway)
   public var notam: NOTAM?
 
+  /// Name of the reciprocal runway (e.g., "10R" for runway "28L")
+  public var reciprocalName: String?
+
   /// The reciprocal runway (opposite direction on same surface)
-  @Relationship(deleteRule: .nullify)
-  public var reciprocal: Runway?
+  public var reciprocal: Runway? {
+    airport.runways.first { $0.name == reciprocalName }
+  }
 
   #Unique<Runway>([\.airport, \.name])
 
@@ -234,7 +238,7 @@ public final class Runway {
     _thresholdLatitude = thresholdCoordinate?.latitude
     _thresholdLongitude = thresholdCoordinate?.longitude
     self.airport = airport
-    reciprocal = nil
+    reciprocalName = nil
     notam = nil
   }
 

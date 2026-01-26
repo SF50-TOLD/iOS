@@ -195,13 +195,10 @@ actor AirportLoader {
       modelContext.insert(runway)
     }
 
-    // Link reciprocal runways
+    // Set reciprocal runway names
     for runwayData in airport.runways {
-      if let reciprocalName = runwayData.reciprocalName,
-        let runway = runwayMap[runwayData.name],
-        let reciprocal = runwayMap[reciprocalName]
-      {
-        runway.reciprocal = reciprocal
+      if let runway = runwayMap[runwayData.name] {
+        runway.reciprocalName = runwayData.reciprocalName
       }
     }
   }
