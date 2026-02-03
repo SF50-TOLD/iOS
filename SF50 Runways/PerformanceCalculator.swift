@@ -61,7 +61,12 @@ class PerformanceCalculator {
     let schema = Schema([
       Airport.self,
       Runway.self,
-      NOTAM.self
+      NOTAM.self,
+      Scenario.self,
+      Cycle.self,
+      Obstacle.self,
+      DepartureProcedure.self,
+      Fix.self
     ])
     let modelConfiguration = ModelConfiguration(
       schema: schema,

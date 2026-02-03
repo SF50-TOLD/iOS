@@ -9,6 +9,7 @@ public enum TerrainPhase: Sendable {
   case downloading
   case parsing
   case compressing
+  case uploading
 }
 
 /// Represents a terrain region/continent for SRTM data.
@@ -35,16 +36,55 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   // MARK: - Progress Weight Constants
 
   /// Phase time multipliers based on measured per-tile processing times.
-  /// Derived from actual timing data across 40,616 tiles.
-  private static let downloadMultiplier = 0.1113
-  private static let combineMultiplier = 0.2611
-  private static let compressMultiplier = 0.6276
+  /// Derived from actual timing data across 40,624 tiles (11 regions, ~12 hours total).
+  private static let downloadMultiplier = 0.1395
+  private static let combineMultiplier = 0.2219
+  private static let compressMultiplier = 0.5468
+  private static let uploadMultiplier = 0.0918
 
-  /// Each phase's share of a single region's processing time, scaled to 10 000.
-  /// Values derived from the multipliers above: download 11.13%, parse 26.11%, compress 62.76%.
-  public static let downloadPhaseRatio: Int64 = 1113
-  public static let parsePhaseRatio: Int64 = 2611
-  public static let compressPhaseRatio: Int64 = 6276
+  /// Each processing phase's share of region processing time, scaled to 10 000.
+  /// Values derived from the multipliers above: download 15.4%, parse 24.4%, compress 60.2%.
+  /// Upload (9.2% of overall) is tracked separately in the progress tree.
+  public static let downloadPhaseRatio: Int64 = 1536
+  public static let parsePhaseRatio: Int64 = 2444
+  public static let compressPhaseRatio: Int64 = 6020
+  public static let uploadPhaseRatio: Int64 = 918
+
+  /// Returns the terrain region to prefetch based on the device's locale.
+  ///
+  /// Uses `Locale.current.region?.continent` (UN M49 codes) as a proxy for the
+  /// user's geographic region. Defaults to North America when the locale cannot
+  /// be determined.
+  public static var localePrefetchRegion: Self {
+    guard let region = Locale.current.region,
+      let continent = region.continent
+    else {
+      return .northAmerica
+    }
+    switch continent.identifier {
+      case "150": return .europe
+      case "002": return .africa
+      case "009": return .australia
+      case "142":
+        // Western Asia → Middle East
+        let middleEast: Set<String> = [
+          "SA", "AE", "QA", "BH", "KW", "OM", "YE",
+          "IQ", "IR", "JO", "LB", "SY", "IL", "PS", "TR", "CY"
+        ]
+        return middleEast.contains(region.identifier) ? .middleEast : .asia
+      case "019":
+        // South America
+        let southAmerica: Set<String> = [
+          "BR", "AR", "CL", "CO", "PE", "VE", "EC",
+          "BO", "PY", "UY", "GY", "SR"
+        ]
+        return southAmerica.contains(region.identifier) ? .southAmerica : .northAmerica
+      default:
+        return .northAmerica
+    }
+  }
+
+  // MARK: - Instance Properties
 
   /// Actual number of successfully downloaded tiles (based on measured data).
   /// This differs from hgtTileNames.count as not all requested tiles exist.
@@ -52,11 +92,11 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
     switch self {
       case .indianOcean: 123
       case .midAtlantic: 68
-      case .antarctica: 7040
+      case .antarctica: 7042
       case .oceania: 1581
       case .middleEast: 996
       case .australia: 1914
-      case .southAmerica: 3056
+      case .southAmerica: 3062
       case .europe: 3513
       case .africa: 5110
       case .asia: 10509
@@ -276,12 +316,11 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
 
   /// Returns the weighted progress contribution for each phase of processing this region.
   ///
-  /// The weights are based on measured per-tile processing times across 40,616 tiles.
-  /// Download is fastest (~11%), parsing/combining is moderate (~26%), and
-  /// compression is slowest (~63%).
+  /// The weights are based on measured per-tile processing times across 40,624 tiles.
+  /// Download (~14%), parsing/combining (~22%), compression (~55%), upload (~9%).
   ///
   /// - Parameters:
-  ///   - phase: The processing phase (downloading, parsing, or compressing)
+  ///   - phase: The processing phase
   ///   - totalTiles: Sum of numTiles for all regions being processed
   /// - Returns: The fraction of total progress this phase contributes (0.0-1.0)
   public func phaseWeight(for phase: TerrainPhase, totalTiles: Int) -> Double {
@@ -290,6 +329,7 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
       case .downloading: return tileWeight * Self.downloadMultiplier
       case .parsing: return tileWeight * Self.combineMultiplier
       case .compressing: return tileWeight * Self.compressMultiplier
+      case .uploading: return tileWeight * Self.uploadMultiplier
     }
   }
 }

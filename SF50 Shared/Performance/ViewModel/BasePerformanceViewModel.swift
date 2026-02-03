@@ -134,7 +134,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared,
     defaultFlapSetting: FlapSetting
   ) {
-    context = .init(container)
+    context = container.mainContext
     self.calculationService = calculationService
 
     // temporary values, overwritten by recalculate()

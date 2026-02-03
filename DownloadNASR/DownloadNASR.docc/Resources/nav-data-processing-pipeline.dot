@@ -1,4 +1,4 @@
-digraph DataProcessingPipeline {
+digraph NavDataProcessingPipeline {
     // Graph settings
     rankdir=TB
     splines=ortho

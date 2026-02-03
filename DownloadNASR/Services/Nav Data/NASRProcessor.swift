@@ -1,5 +1,6 @@
 import Foundation
 import Logging
+import SF50_Shared
 import SwiftNASR
 import SwiftTimeZoneLookup
 
@@ -21,23 +22,16 @@ enum NASRProcessorError: LocalizedError {
 
 /// Holds KVO observations to keep them alive during async operations.
 /// Thread-safe singleton for storing progress observations.
-final class ProgressObservationHolder: @unchecked Sendable {
+actor ProgressObservationHolder {
   static let shared = ProgressObservationHolder()
 
-  private let lock = NSLock()
   private var observations: [NSKeyValueObservation] = []
 
-  init() {}
-
   func add(_ observation: NSKeyValueObservation) {
-    lock.lock()
-    defer { lock.unlock() }
     observations.append(observation)
   }
 
   func clearAll() {
-    lock.lock()
-    defer { lock.unlock() }
     for observation in observations {
       observation.invalidate()
     }
@@ -148,7 +142,7 @@ struct NASRProcessor {
     await onProgress?(Self.ilsProgressEnd, 100)
 
     // Clean up progress observations now that loading/parsing is complete
-    ProgressObservationHolder.shared.clearAll()
+    await ProgressObservationHolder.shared.clearAll()
 
     let NASRData = await nasr.data
     guard let airports = await NASRData.airports else {
@@ -264,7 +258,7 @@ struct NASRProcessor {
     }
 
     // Store observation to keep it alive for the duration of the async operation
-    ProgressObservationHolder.shared.add(observation)
+    Task { await ProgressObservationHolder.shared.add(observation) }
   }
 
   /// Converts a NASR runway end to the codable format.

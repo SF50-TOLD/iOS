@@ -97,7 +97,7 @@ private struct ActorLogHandler: LogHandler {
 /// ```
 @Observable
 @MainActor
-class ProcessorViewModel {
+class NavDataProcessorViewModel {
   /// Whether processing is currently running.
   var isProcessing = false
 
@@ -192,7 +192,7 @@ class ProcessorViewModel {
 
     processingTask = Task.detached {
       do {
-        var processor = DataProcessor(
+        var processor = NavDataProcessor(
           cycle: cycle,
           outputLocation: outputURL,
           logger: logger

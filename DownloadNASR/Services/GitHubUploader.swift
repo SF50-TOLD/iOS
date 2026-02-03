@@ -49,6 +49,12 @@ class GitHubUploader {
     self.owner = owner
   }
 
+  /// Convenience initializer using credentials from xcconfig.
+  /// - Parameter logger: Logger for status messages
+  convenience init(logger: Logger) {
+    self.init(token: CredentialsConfig[.githubToken] ?? "", logger: logger)
+  }
+
   /// Validate that the token is valid and has necessary permissions
   /// - Returns: true if token is valid
   /// - Throws: GitHubAPIError if validation fails

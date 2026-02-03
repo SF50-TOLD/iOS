@@ -7,9 +7,10 @@ import SwiftNASR
 /// Environment variables:
 /// - `NASR_HEADLESS`: Set to "1" to enable headless mode
 /// - `NASR_CYCLE`: Cycle to download ("current", "next", or "YYYY-MM-DD")
-/// - `NASR_OUTPUT`: Output directory path
 /// - `NASR_SKIP_UPLOAD`: Set to "1" to skip GitHub upload
-enum HeadlessProcessor {
+///
+/// Output is written to the app's Documents directory.
+enum NavDataHeadlessProcessor {
   private static let env = ProcessInfo.processInfo.environment
 
   /// Returns true if headless mode is enabled via environment variable.
@@ -25,12 +26,6 @@ enum HeadlessProcessor {
     // Parse and validate NASR_CYCLE
     guard let cycleString = env["NASR_CYCLE"] else {
       logger.error("NASR_CYCLE environment variable is required")
-      return 1
-    }
-
-    // Parse and validate NASR_OUTPUT
-    guard let outputPath = env["NASR_OUTPUT"] else {
-      logger.error("NASR_OUTPUT environment variable is required")
       return 1
     }
 
@@ -61,20 +56,29 @@ enum HeadlessProcessor {
         cycle = Cycle(year: year, month: month, day: day)
     }
 
-    // Validate output directory exists
-    let outputURL = URL(fileURLWithPath: outputPath)
-    var isDirectory: ObjCBool = false
-    guard FileManager.default.fileExists(atPath: outputPath, isDirectory: &isDirectory),
-      isDirectory.boolValue
+    // Use app's Documents directory
+    guard
+      let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        .first
     else {
-      logger.error("Output path does not exist or is not a directory: \(outputPath)")
+      logger.error("Could not locate Documents directory")
       return 1
     }
 
-    logger.info("Starting headless processing for cycle \(cycle) to \(outputPath)")
+    let outputURL = documentsURL.appendingPathComponent("NavData", isDirectory: true)
+
+    // Create output directory if needed
+    do {
+      try FileManager.default.createDirectory(at: outputURL, withIntermediateDirectories: true)
+    } catch {
+      logger.error("Failed to create output directory: \(error.localizedDescription)")
+      return 1
+    }
+
+    logger.notice("Starting headless processing for cycle \(cycle) to \(outputURL.path)")
 
     // Run processor
-    var processor = DataProcessor(
+    var processor = NavDataProcessor(
       cycle: cycle,
       outputLocation: outputURL,
       logger: logger
@@ -88,7 +92,7 @@ enum HeadlessProcessor {
 
     do {
       try await processor.process()
-      logger.info("Processing complete. Output saved to: \(outputPath)")
+      logger.notice("Processing complete. Output saved to: \(outputURL.path)")
       return 0
     } catch {
       logger.error("Processing failed: \(error)")

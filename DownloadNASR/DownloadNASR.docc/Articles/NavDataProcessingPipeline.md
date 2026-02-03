@@ -1,6 +1,6 @@
-# Data Processing Pipeline
+# Navigation Data Processing Pipeline
 
-Understanding how airport data flows through DownloadNASR.
+Understanding how navigation data (airports and runways) flows through DownloadNASR.
 
 ## Overview
 
@@ -10,7 +10,7 @@ article explains each stage of the pipeline and the data transformations applied
 
 ## Pipeline Architecture
 
-![Data Processing Pipeline](data-processing-pipeline)
+![Navigation Data Processing Pipeline](nav-data-processing-pipeline)
 
 ## Stage 1: FAA NASR Download
 

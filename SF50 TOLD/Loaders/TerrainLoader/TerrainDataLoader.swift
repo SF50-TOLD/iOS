@@ -161,19 +161,37 @@ final class TerrainDataLoader: ObservableObject {
   }
 
   /// Refreshes the list of available regions by scanning the terrain directory.
+  ///
+  /// Also detects compressed `.srtm.lzma` files left by the Background Assets
+  /// extension and triggers async decompression for them.
   func refreshAvailableRegions() {
     var available = Set<TerrainRegion>()
+    var pendingDecompression = [TerrainRegion]()
 
     for region in TerrainRegion.allCases {
       if let url = decompressedFileURL(for: region),
         FileManager.default.fileExists(atPath: url.path)
       {
         available.insert(region)
+      } else if let compressed = compressedFileURL(for: region),
+        FileManager.default.fileExists(atPath: compressed.path)
+      {
+        logger.info(
+          "Found BA-downloaded compressed file for \(region.rawValue), queuing decompression"
+        )
+        pendingDecompression.append(region)
       }
     }
 
     availableRegions = available
     logger.info("Available terrain regions: \(available.map(\.rawValue))")
+
+    // Decompress any files left by the Background Assets extension
+    for region in pendingDecompression {
+      Task {
+        await decompressPendingDownload(for: region)
+      }
+    }
   }
 
   /// Downloads terrain data for a region.

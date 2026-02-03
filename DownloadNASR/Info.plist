@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>R2_ACCOUNT_ID</key>
+	<string>$(R2_ACCOUNT_ID)</string>
+	<key>R2_ACCESS_KEY_ID</key>
+	<string>$(R2_ACCESS_KEY_ID)</string>
+	<key>R2_SECRET_ACCESS_KEY</key>
+	<string>$(R2_SECRET_ACCESS_KEY)</string>
+	<key>R2_BUCKET_NAME</key>
+	<string>$(R2_BUCKET_NAME)</string>
+	<key>R2_PUBLIC_URL</key>
+	<string>$(R2_PUBLIC_URL)</string>
+	<key>GITHUB_TOKEN</key>
+	<string>$(GITHUB_TOKEN)</string>
+	<key>EARTHDATA_USERNAME</key>
+	<string>$(EARTHDATA_USERNAME)</string>
+	<key>EARTHDATA_PASSWORD</key>
+	<string>$(EARTHDATA_PASSWORD)</string>
+</dict>
+</plist>

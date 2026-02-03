@@ -1,5 +1,6 @@
 import Foundation
 import Logging
+import SF50_Shared
 import SwiftCIFP
 import SwiftNASR
 import ZIPFoundation
@@ -130,7 +131,7 @@ struct CIFPProcessor {
     }
 
     // Store observation to keep it alive for the duration of the async operation
-    ProgressObservationHolder.shared.add(observation)
+    Task { await ProgressObservationHolder.shared.add(observation) }
   }
 
   /// Extracts the CIFP file from the downloaded ZIP archive.

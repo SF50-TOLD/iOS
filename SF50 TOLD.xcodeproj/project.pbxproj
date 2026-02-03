@@ -9,23 +9,28 @@
 /* Begin PBXBuildFile section */
 		0112FFA72F2094E3009CFBBA /* SwiftDOF in Frameworks */ = {isa = PBXBuildFile; productRef = 0112FFA62F2094E3009CFBBA /* SwiftDOF */; };
 		0112FFAA2F209508009CFBBA /* SwiftCIFP in Frameworks */ = {isa = PBXBuildFile; productRef = 0112FFA92F209508009CFBBA /* SwiftCIFP */; };
+		0119A4F92F35778A0035FB76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 0119A4F82F35778A0035FB76 /* StreamingLZMA */; };
+		0119A4FB2F3577930035FB76 /* StreamingLZMAXZ in Frameworks */ = {isa = PBXBuildFile; productRef = 0119A4FA2F3577930035FB76 /* StreamingLZMAXZ */; };
 		0128374C2E5B8BB8002195A0 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128374B2E5B8BB8002195A0 /* WidgetKit.framework */; };
 		0128374E2E5B8BB8002195A0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128374D2E5B8BB8002195A0 /* SwiftUI.framework */; };
 		0128375F2E5B8BB9002195A0 /* SF50 RunwaysExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0128374A2E5B8BB8002195A0 /* SF50 RunwaysExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E512DE2F272000D9ADC /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
 		012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6B2DE2F463000D9ADC /* Logging */; };
 		012B1E6E2DE2F463000D9ADC /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6D2DE2F463000D9ADC /* AsyncAlgorithms */; };
+		0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
+		01442FC62E1D901900A0BD40 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 01442FC52E1D901900A0BD40 /* InfoPlist.xcstrings */; };
 		014457DA2F3125DB003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457D92F3125DB003ADBCD /* RealModule */; };
 		014457DC2F3125E1003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457DB2F3125E1003ADBCD /* RealModule */; };
-		01442FC62E1D901900A0BD40 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 01442FC52E1D901900A0BD40 /* InfoPlist.xcstrings */; };
 		016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BB2EB30889001602E6 /* SwiftNASR */; };
 		016945BE2EB30889001602E6 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BD2EB30889001602E6 /* Logging */; };
 		016945C22EB30889001602E6 /* SwiftTimeZoneLookup in Frameworks */ = {isa = PBXBuildFile; productRef = 016945C12EB30889001602E6 /* SwiftTimeZoneLookup */; };
 		0169495C2EB314C9001602E6 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0169495B2EB314C9001602E6 /* SwiftUI.framework */; };
 		01714C802F234A7E003DADCF /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 01714C7F2F234A7E003DADCF /* Algorithms */; };
+		01714CAD2F2451D9003DADCF /* TerrainAssets.appex in Embed ExtensionKit Extensions */ = {isa = PBXBuildFile; fileRef = 01714CA52F2451D9003DADCF /* TerrainAssets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		01714CB52F24587D003DADCF /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 01714CB42F24587D003DADCF /* ZIPFoundation */; };
+		01758ED72F2A9D13001D218C /* TIFF in Frameworks */ = {isa = PBXBuildFile; productRef = 01758ED62F2A9D13001D218C /* TIFF */; };
 		0179DF3E2DE2F7A9002EC77C /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 0163BCA82DDEF40D008FEE8F /* SwiftNASR */; };
 		0179DF402DE2F7A9002EC77C /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 01D1E3122DDF890100C1CAC8 /* Logging */; };
 		0179DF412DE2F7A9002EC77C /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 0163BDEF2DE05260008FEE8F /* AsyncAlgorithms */; };
@@ -38,8 +43,14 @@
 		0198B4522E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		0198B4532E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		01A1014F2E93C12E0032AB29 /* Gzip in Frameworks */ = {isa = PBXBuildFile; productRef = 01A1014E2E93C12E0032AB29 /* Gzip */; };
+		01AA52322F2DDF110085F4C6 /* SwiftR2 in Frameworks */ = {isa = PBXBuildFile; productRef = 01AA52312F2DDF110085F4C6 /* SwiftR2 */; };
 		01BEA32B2E986B10005ABCD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 01BEA32A2E986B10005ABCD8 /* PrivacyInfo.xcprivacy */; };
 		01BEBCB82E8A401100631DE6 /* SwiftHtml in Frameworks */ = {isa = PBXBuildFile; productRef = 01BEBCB72E8A401100631DE6 /* SwiftHtml */; };
+		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
+		01D0DEBA2F27377800856DB4 /* Gzip in Frameworks */ = {isa = PBXBuildFile; productRef = 01D0DEB92F27377800856DB4 /* Gzip */; };
+		01D0DEBE2F27504500856DB4 /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
+		01D0DEBF2F27504600856DB4 /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		01D0ECD92F29399700856DB4 /* SotoS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 01D0ECD82F29399700856DB4 /* SotoS3 */; };
 		01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01EA44382EB327D7008FEB64 /* Security.framework */; };
 		AB352BDD14B44A2CA78F9D44 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 /* End PBXBuildFile section */
@@ -94,6 +105,13 @@
 			remoteGlobalIDString = 0163BC692DDEE9D3008FEE8F;
 			remoteInfo = "SF50 TOLD";
 		};
+		01714CAB2F2451D9003DADCF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0163BC622DDEE9D3008FEE8F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 01714CA42F2451D9003DADCF;
+			remoteInfo = TerrainAssets;
+		};
 		0191DC122E9322C20099FB0E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0163BC622DDEE9D3008FEE8F /* Project object */;
@@ -122,6 +140,24 @@
 			);
 			name = "Embed Frameworks";
 		};
+		01714CB22F2451D9003DADCF /* Embed ExtensionKit Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "$(EXTENSIONS_FOLDER_PATH)";
+			dstSubfolder = Product;
+			files = (
+				01714CAD2F2451D9003DADCF /* TerrainAssets.appex in Embed ExtensionKit Extensions */,
+			);
+			name = "Embed ExtensionKit Extensions";
+		};
+		01D0DEC02F27504700856DB4 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = Frameworks;
+			files = (
+				01D0DEBF2F27504600856DB4 /* SF50_Shared.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -136,6 +172,7 @@
 		0163BC832DDEE9D4008FEE8F /* SF50 TOLDUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF50 TOLDUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		016945992EB30848001602E6 /* DownloadNASR.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DownloadNASR.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0169495B2EB314C9001602E6 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
+		01714CA52F2451D9003DADCF /* TerrainAssets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = TerrainAssets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Generate Screenshots.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0191DC1B2E93232C0099FB0E /* Generate Screenshots.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "Generate Screenshots.xctestplan"; path = "Generate Screenshots/Generate Screenshots.xctestplan"; sourceTree = "<group>"; };
 		0191DC1E2E9323590099FB0E /* SF50 Shared Unit Tests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "SF50 Shared Unit Tests.xctestplan"; path = "SF50 SharedTests/SF50 Shared Unit Tests.xctestplan"; sourceTree = "<group>"; };
@@ -144,6 +181,7 @@
 		01BEA32A2E986B10005ABCD8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		01EA44382EB327D7008FEB64 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		01NOTAM01NOTAM01NOTAM /* NOTAMAPIConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = NOTAMAPIConfig.xcconfig; path = "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig"; sourceTree = SOURCE_ROOT; };
+		01R2CFG01R2CFG01R2CFG /* Credentials.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Credentials.xcconfig; path = DownloadNASR/Credentials.xcconfig; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -154,10 +192,10 @@
 			);
 			target = 016945982EB30848001602E6 /* DownloadNASR */;
 		};
-		016945C42EB308A2001602E6 /* Exceptions for "SF50 Shared" folder in "DownloadNASR" target */ = {
+		0169459B2EB30848001602E6 /* Exceptions for "DownloadNASR" folder in "DownloadNASR" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Models/Codable/AirportDataCodable.swift,
+				Info.plist,
 			);
 			target = 016945982EB30848001602E6 /* DownloadNASR */;
 		};
@@ -167,6 +205,13 @@
 				NOTAM/NOTAMAPIConfig.xcconfig,
 			);
 			target = 0163BC692DDEE9D3008FEE8F /* SF50 TOLD */;
+		};
+		01714CB12F2451D9003DADCF /* Exceptions for "TerrainAssets" folder in "TerrainAssets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 01714CA42F2451D9003DADCF /* TerrainAssets */;
 		};
 		01B887122E5E2C3500702E95 /* Exceptions for "SF50 Runways" folder in "SF50 RunwaysExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -195,9 +240,6 @@
 		};
 		012B1E3C2DE2F272000D9ADC /* SF50 Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				016945C42EB308A2001602E6 /* Exceptions for "SF50 Shared" folder in "DownloadNASR" target */,
-			);
 			explicitFolders = (
 				Data,
 			);
@@ -233,7 +275,18 @@
 		};
 		0169459A2EB30848001602E6 /* DownloadNASR */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0169459B2EB30848001602E6 /* Exceptions for "DownloadNASR" folder in "DownloadNASR" target */,
+			);
 			path = DownloadNASR;
+			sourceTree = "<group>";
+		};
+		01714CA62F2451D9003DADCF /* TerrainAssets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				01714CB12F2451D9003DADCF /* Exceptions for "TerrainAssets" folder in "TerrainAssets" target */,
+			);
+			path = TerrainAssets;
 			sourceTree = "<group>";
 		};
 		0191DC0D2E9322C20099FB0E /* Generate Screenshots */ = {
@@ -300,13 +353,27 @@
 		016945962EB30848001602E6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01D0DEBE2F27504500856DB4 /* SF50_Shared.framework in Frameworks */,
 				01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */,
 				0169495C2EB314C9001602E6 /* SwiftUI.framework in Frameworks */,
+				0119A4FB2F3577930035FB76 /* StreamingLZMAXZ in Frameworks */,
+				01D0DEBA2F27377800856DB4 /* Gzip in Frameworks */,
 				0112FFA72F2094E3009CFBBA /* SwiftDOF in Frameworks */,
 				016945C22EB30889001602E6 /* SwiftTimeZoneLookup in Frameworks */,
 				016945BE2EB30889001602E6 /* Logging in Frameworks */,
 				0112FFAA2F209508009CFBBA /* SwiftCIFP in Frameworks */,
+				01D0ECD92F29399700856DB4 /* SotoS3 in Frameworks */,
 				016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */,
+				01714CB52F24587D003DADCF /* ZIPFoundation in Frameworks */,
+				01758ED72F2A9D13001D218C /* TIFF in Frameworks */,
+				01AA52322F2DDF110085F4C6 /* SwiftR2 in Frameworks */,
+			);
+		};
+		01714CA22F2451D9003DADCF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */,
+				0119A4F92F35778A0035FB76 /* StreamingLZMA in Frameworks */,
 			);
 		};
 		0191DC092E9322C20099FB0E /* Frameworks */ = {
@@ -322,6 +389,7 @@
 			isa = PBXGroup;
 			children = (
 				01NOTAM01NOTAM01NOTAM /* NOTAMAPIConfig.xcconfig */,
+				01R2CFG01R2CFG01R2CFG /* Credentials.xcconfig */,
 			);
 			name = "Recovered References";
 			sourceTree = "<group>";
@@ -343,6 +411,7 @@
 				0128374F2E5B8BB8002195A0 /* SF50 Runways */,
 				0191DC0D2E9322C20099FB0E /* Generate Screenshots */,
 				0169459A2EB30848001602E6 /* DownloadNASR */,
+				01714CA62F2451D9003DADCF /* TerrainAssets */,
 				01D1E30E2DDF865100C1CAC8 /* Frameworks */,
 				0163BC6B2DDEE9D3008FEE8F /* Products */,
 				012B12E62EDEB740005DAF4A /* Recovered References */,
@@ -360,6 +429,7 @@
 				0128374A2E5B8BB8002195A0 /* SF50 RunwaysExtension.appex */,
 				0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */,
 				016945992EB30848001602E6 /* DownloadNASR.app */,
+				01714CA52F2451D9003DADCF /* TerrainAssets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -469,12 +539,14 @@
 				012B1E552DE2F272000D9ADC /* Embed Frameworks */,
 				012837602E5B8BB9002195A0 /* Embed Foundation Extensions */,
 				CC70812E05EB4C6A9C28744E /* Upload Debug Symbols to Sentry */,
+				01714CB22F2451D9003DADCF /* Embed ExtensionKit Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				012B1E4F2DE2F272000D9ADC /* PBXTargetDependency */,
 				0128375E2E5B8BB9002195A0 /* PBXTargetDependency */,
+				01714CAC2F2451D9003DADCF /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				0163BC6C2DDEE9D3008FEE8F /* SF50 TOLD */,
@@ -544,6 +616,7 @@
 				016945952EB30848001602E6 /* Sources */,
 				016945962EB30848001602E6 /* Frameworks */,
 				016945972EB30848001602E6 /* Resources */,
+				01D0DEC02F27504700856DB4 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -557,10 +630,37 @@
 				016945C12EB30889001602E6 /* SwiftTimeZoneLookup */,
 				0112FFA62F2094E3009CFBBA /* SwiftDOF */,
 				0112FFA92F209508009CFBBA /* SwiftCIFP */,
+				01714CB42F24587D003DADCF /* ZIPFoundation */,
+				01D0DEB92F27377800856DB4 /* Gzip */,
+				01D0ECD82F29399700856DB4 /* SotoS3 */,
+				01758ED62F2A9D13001D218C /* TIFF */,
+				01AA52312F2DDF110085F4C6 /* SwiftR2 */,
+				0119A4FA2F3577930035FB76 /* StreamingLZMAXZ */,
 			);
 			productName = DownloadNASR;
 			productReference = 016945992EB30848001602E6 /* DownloadNASR.app */;
 			productType = "com.apple.product-type.application";
+		};
+		01714CA42F2451D9003DADCF /* TerrainAssets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 01714CAE2F2451D9003DADCF /* Build configuration list for PBXNativeTarget "TerrainAssets" */;
+			buildPhases = (
+				01714CA12F2451D9003DADCF /* Sources */,
+				01714CA22F2451D9003DADCF /* Frameworks */,
+				01714CA32F2451D9003DADCF /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				01714CA62F2451D9003DADCF /* TerrainAssets */,
+			);
+			name = TerrainAssets;
+			packageProductDependencies = (
+				0119A4F82F35778A0035FB76 /* StreamingLZMA */,
+			);
+			productName = TerrainAssets;
+			productReference = 01714CA52F2451D9003DADCF /* TerrainAssets.appex */;
+			productType = "com.apple.product-type.extensionkit-extension";
 		};
 		0191DC0B2E9322C20099FB0E /* Generate Screenshots */ = {
 			isa = PBXNativeTarget;
@@ -590,7 +690,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2600;
+				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					012837492E5B8BB8002195A0 = {
@@ -616,6 +716,9 @@
 					};
 					016945982EB30848001602E6 = {
 						CreatedOnToolsVersion = 26.0.1;
+					};
+					01714CA42F2451D9003DADCF = {
+						CreatedOnToolsVersion = 26.2;
 					};
 					0191DC0B2E9322C20099FB0E = {
 						CreatedOnToolsVersion = 26.0.1;
@@ -645,6 +748,11 @@
 				0112FFA52F2094E3009CFBBA /* XCRemoteSwiftPackageReference "SwiftDOF" */,
 				0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */,
 				01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */,
+				01714CB32F24587D003DADCF /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				01D0ECD72F29399700856DB4 /* XCRemoteSwiftPackageReference "soto" */,
+				01758ED52F2A9D13001D218C /* XCRemoteSwiftPackageReference "tiff-ios" */,
+				0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */,
+				01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 0163BC6B2DDEE9D3008FEE8F /* Products */;
@@ -659,6 +767,7 @@
 				012837492E5B8BB8002195A0 /* SF50 RunwaysExtension */,
 				0191DC0B2E9322C20099FB0E /* Generate Screenshots */,
 				016945982EB30848001602E6 /* DownloadNASR */,
+				01714CA42F2451D9003DADCF /* TerrainAssets */,
 			);
 		};
 /* End PBXProject section */
@@ -697,6 +806,11 @@
 			);
 		};
 		016945972EB30848001602E6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		01714CA32F2451D9003DADCF /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -793,6 +907,11 @@
 			files = (
 			);
 		};
+		01714CA12F2451D9003DADCF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 		0191DC082E9322C20099FB0E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
@@ -836,6 +955,11 @@
 			target = 0163BC692DDEE9D3008FEE8F /* SF50 TOLD */;
 			targetProxy = 0163BC842DDEE9D4008FEE8F /* PBXContainerItemProxy */;
 		};
+		01714CAC2F2451D9003DADCF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 01714CA42F2451D9003DADCF /* TerrainAssets */;
+			targetProxy = 01714CAB2F2451D9003DADCF /* PBXContainerItemProxy */;
+		};
 		0191DC132E9322C20099FB0E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 0163BC692DDEE9D3008FEE8F /* SF50 TOLD */;
@@ -857,7 +981,7 @@
 				INFOPLIST_FILE = "SF50 Runways/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "SF50 Runways";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -885,7 +1009,7 @@
 				INFOPLIST_FILE = "SF50 Runways/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "SF50 Runways";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -919,7 +1043,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -956,10 +1080,11 @@
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -990,7 +1115,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-SharedTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1007,7 +1132,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-SharedTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1169,7 +1294,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1205,7 +1330,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1226,7 +1351,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLDTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1244,7 +1369,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLDTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1261,7 +1386,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLDUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1278,7 +1403,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLDUITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1290,6 +1415,7 @@
 		};
 		016945A22EB30848001602E6 /* Debug configuration for PBXNativeTarget "DownloadNASR" */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 01R2CFG01R2CFG01R2CFG /* Credentials.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = Icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -1316,6 +1442,8 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DownloadNASR/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1336,6 +1464,7 @@
 		};
 		016945A32EB30848001602E6 /* Release configuration for PBXNativeTarget "DownloadNASR" */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 01R2CFG01R2CFG01R2CFG /* Credentials.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = Icon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -1361,7 +1490,10 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
+				EXCLUDED_ARCHS = x86_64;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DownloadNASR/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1369,6 +1501,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 3.3.4;
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.DownloadNASR";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -1377,6 +1510,68 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+			};
+			name = Release;
+		};
+		01714CAF2F2451D9003DADCF /* Debug configuration for PBXNativeTarget "TerrainAssets" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TerrainAssets/TerrainAssets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 40;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TerrainAssets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TerrainAssets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 3.3.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.TerrainAssets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		01714CB02F2451D9003DADCF /* Release configuration for PBXNativeTarget "TerrainAssets" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TerrainAssets/TerrainAssets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 40;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TerrainAssets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TerrainAssets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 3.3.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.TerrainAssets";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -1487,6 +1682,14 @@
 			);
 			defaultConfigurationName = Release;
 		};
+		01714CAE2F2451D9003DADCF /* Build configuration list for PBXNativeTarget "TerrainAssets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				01714CAF2F2451D9003DADCF /* Debug configuration for PBXNativeTarget "TerrainAssets" */,
+				01714CB02F2451D9003DADCF /* Release configuration for PBXNativeTarget "TerrainAssets" */,
+			);
+			defaultConfigurationName = Release;
+		};
 		0191DC162E9322C20099FB0E /* Build configuration list for PBXNativeTarget "Generate Screenshots" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1546,6 +1749,30 @@
 				minimumVersion = 1.2.1;
 			};
 		};
+		01714CB32F24587D003DADCF /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/weichsel/ZIPFoundation";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.20;
+			};
+		};
+		0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RISCfuture/StreamingLZMA";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		01758ED52F2A9D13001D218C /* XCRemoteSwiftPackageReference "tiff-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ngageoint/tiff-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 		0179DFBE2DE3CDD3002EC77C /* XCRemoteSwiftPackageReference "Defaults" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/sindresorhus/Defaults.git";
@@ -1570,12 +1797,28 @@
 				minimumVersion = 1.0.7;
 			};
 		};
+		01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/riscfuture/swiftr2";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/BinaryBirds/swift-html";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.7.0;
+			};
+		};
+		01D0ECD72F29399700856DB4 /* XCRemoteSwiftPackageReference "soto" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/soto-project/soto";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.12.0;
 			};
 		};
 		01D1E3112DDF890100C1CAC8 /* XCRemoteSwiftPackageReference "swift-log" */ = {
@@ -1606,6 +1849,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */;
 			productName = SwiftCIFP;
+		};
+		0119A4F82F35778A0035FB76 /* StreamingLZMA */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */;
+			productName = StreamingLZMA;
+		};
+		0119A4FA2F3577930035FB76 /* StreamingLZMAXZ */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */;
+			productName = StreamingLZMAXZ;
 		};
 		012B1E672DE2F463000D9ADC /* SwiftNASR */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1662,6 +1915,16 @@
 			package = 01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */;
 			productName = Algorithms;
 		};
+		01714CB42F24587D003DADCF /* ZIPFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01714CB32F24587D003DADCF /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			productName = ZIPFoundation;
+		};
+		01758ED62F2A9D13001D218C /* TIFF */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01758ED52F2A9D13001D218C /* XCRemoteSwiftPackageReference "tiff-ios" */;
+			productName = TIFF;
+		};
 		0179DFBF2DE3CDD3002EC77C /* Defaults */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0179DFBE2DE3CDD3002EC77C /* XCRemoteSwiftPackageReference "Defaults" */;
@@ -1677,10 +1940,25 @@
 			package = 01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */;
 			productName = Gzip;
 		};
+		01AA52312F2DDF110085F4C6 /* SwiftR2 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */;
+			productName = SwiftR2;
+		};
 		01BEBCB72E8A401100631DE6 /* SwiftHtml */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */;
 			productName = SwiftHtml;
+		};
+		01D0DEB92F27377800856DB4 /* Gzip */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */;
+			productName = Gzip;
+		};
+		01D0ECD82F29399700856DB4 /* SotoS3 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01D0ECD72F29399700856DB4 /* XCRemoteSwiftPackageReference "soto" */;
+			productName = SotoS3;
 		};
 		01D1E3122DDF890100C1CAC8 /* Logging */ = {
 			isa = XCSwiftPackageProductDependency;

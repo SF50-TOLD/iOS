@@ -1,47 +1,50 @@
 # ``DownloadNASR``
 
-macOS tool for processing FAA NASR and OurAirports data into app-ready format.
+macOS tool for processing navigation and terrain data into app-ready format.
 
 ## Overview
 
-DownloadNASR is a macOS utility that processes airport and runway data from
-multiple sources into a compressed format used by SF50 TOLD. The tool downloads
-raw data, merges and deduplicates it, and optionally uploads to GitHub for
-distribution.
+DownloadNASR is a macOS utility that processes data from multiple sources into
+compressed formats used by SF50 TOLD:
 
-## Data Pipeline
+- **Navigation data**: Airport, runway, obstacle, and instrument procedure records from FAA NASR and OurAirports
+- **Terrain data**: SRTM and Copernicus elevation tiles combined into regional binary files
 
-The tool processes data through several stages:
-
-1. **Download FAA NASR**: Retrieve current cycle data from FAA
-2. **Download OurAirports**: Retrieve international airport CSV data
-3. **Parse and Filter**: Extract relevant airport/runway records
-4. **Merge**: Combine datasets with NASR taking priority
-5. **Compress**: Create LZMA-compressed property list
-6. **Upload**: Push to GitHub repository (optional)
-
-## Output Format
-
-The compressed `.plist.lzma` file contains:
-- Airport records (ID, name, coordinates, elevation, timezone)
-- Runway records (heading, length, distances, surface type)
-- NASR cycle identifier
-- OurAirports last update timestamp
+Processed data is optionally uploaded to GitHub (nav data) or CloudFlare R2
+(terrain data) for distribution.
 
 ## Topics
 
-### Data Processing
+### Getting Started
 
-- <doc:DataProcessingPipeline>
+- <doc:GettingStarted>
+
+### Navigation Data Processing
+
+- <doc:NavDataProcessingPipeline>
+- ``NavDataProcessor``
 - ``NASRProcessor``
 - ``OurAirportsLoader``
 - ``OurAirportData``
 - ``OurRunwayData``
-- ``ProcessorViewModel``
+- ``NavDataProcessorViewModel``
 
-### GitHub Upload
+### Terrain Processing
 
+- <doc:TerrainProcessingPipeline>
+- ``SRTMProcessor``
+- ``HGTParser``
+- ``GeoTIFFParser``
+- ``TileProcessing``
+- ``BinaryFileWriter``
+- ``TerrainProcessorViewModel``
+
+### Upload Services
+
+- ``R2Uploader``
 - ``GitHubUploader``
 - ``GitHubAPIError``
-- ``KeychainManager``
-- ``KeychainError``
+
+### Configuration
+
+- ``CredentialsConfig``

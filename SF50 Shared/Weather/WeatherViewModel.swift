@@ -132,7 +132,7 @@ public final class WeatherViewModel: WithIdentifiableError {
 
   private func setupObservation(container: ModelContainer) {
     defaultsTask = Task {
-      let context = ModelContext(container)
+      let context = container.mainContext
 
       for await (airportID) in Defaults.updates(airportKey) where !Task.isCancelled {
         do {

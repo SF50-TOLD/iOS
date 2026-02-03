@@ -73,7 +73,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     addTask(
       Task {
         do {
-          let context = ModelContext(container)
+          let context = container.mainContext
           try setAnyAirports(context: context)
           while !Task.isCancelled {
             try setAnyAirports(context: context)
@@ -161,7 +161,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   private func clearCycles() throws {
-    let context = ModelContext(container)
+    let context = container.mainContext
     try context.delete(model: Cycle.self)
     try context.save()
     Defaults[.ourAirportsLastUpdated] = nil
@@ -185,7 +185,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   private func fetchNASRExpiration() throws -> Date? {
-    let context = ModelContext(container)
+    let context = container.mainContext
     let nasrRawValue = CycleDataSource.nasr.rawValue
     var descriptor = FetchDescriptor<Cycle>(
       predicate: #Predicate { $0._dataSource == nasrRawValue }

@@ -1,18 +1,23 @@
 import Foundation
 import Logging
+import SF50_Shared
 import SwiftCIFP
 import SwiftDOF
 import SwiftNASR
 import SwiftTimeZoneLookup
 
 /// Errors that can occur during data processing.
-enum DataProcessorError: LocalizedError {
+enum NavDataProcessorError: LocalizedError {
   case missingCycleDates(source: String)
 
   var errorDescription: String? {
+    String(localized: "Missing cycle dates")
+  }
+
+  var failureReason: String? {
     switch self {
       case .missingCycleDates(let source):
-        "Failed to determine cycle dates for \(source) data."
+        String(localized: "Failed to determine cycle dates for \(source) data.")
     }
   }
 }
@@ -43,7 +48,7 @@ enum DataProcessorError: LocalizedError {
 /// - ``DOFProcessor``
 /// - ``OurAirportsLoader``
 /// - ``GitHubUploader``
-struct DataProcessor {
+struct NavDataProcessor {
   /// The NASR cycle to download (e.g., 2501 for January 2025).
   let cycle: SwiftNASR.Cycle
 
@@ -73,7 +78,7 @@ struct DataProcessor {
     guard let nasrEffective = cycle.effectiveDate,
       let nasrExpires = cycle.expirationDate
     else {
-      throw DataProcessorError.missingCycleDates(source: "NASR")
+      throw NavDataProcessorError.missingCycleDates(source: "NASR")
     }
 
     var cifpInfo: AirportDataCodable.CycleInfo?
@@ -81,7 +86,7 @@ struct DataProcessor {
       guard let effective = cifpCycle.effectiveDate,
         let expires = cifpCycle.expirationDate
       else {
-        throw DataProcessorError.missingCycleDates(source: "CIFP")
+        throw NavDataProcessorError.missingCycleDates(source: "CIFP")
       }
       cifpInfo = AirportDataCodable.CycleInfo(
         name: "\(cifpCycle)",
@@ -95,7 +100,7 @@ struct DataProcessor {
       guard let effective = dofCycle.effectiveDate,
         let expires = dofCycle.expirationDate
       else {
-        throw DataProcessorError.missingCycleDates(source: "DOF")
+        throw NavDataProcessorError.missingCycleDates(source: "DOF")
       }
       dofInfo = AirportDataCodable.CycleInfo(
         name: "\(dofCycle)",
@@ -280,7 +285,7 @@ struct DataProcessor {
       return
     }
 
-    guard let token = try? KeychainManager.shared.getToken(), !token.isEmpty else {
+    guard CredentialsConfig[.githubToken] != nil else {
       logger.info("GitHub token not configured, skipping upload")
       return
     }
@@ -289,7 +294,7 @@ struct DataProcessor {
     await reportProgress(91, String(localized: "Uploading to GitHub…"))
 
     do {
-      let uploader = GitHubUploader(token: token, logger: logger)
+      let uploader = GitHubUploader(logger: logger)
 
       // Upload combined data file
       try await uploader.uploadFile(

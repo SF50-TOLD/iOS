@@ -1,5 +1,6 @@
 import Foundation
 import Logging
+import SF50_Shared
 import SwiftDOF
 import ZIPFoundation
 
@@ -110,7 +111,7 @@ struct DOFProcessor {
     }
 
     // Store observation to keep it alive for the duration of the async operation
-    ProgressObservationHolder.shared.add(observation)
+    Task { await ProgressObservationHolder.shared.add(observation) }
   }
 
   /// Extracts the DOF.DAT file from the downloaded ZIP archive.
@@ -152,7 +153,7 @@ enum DOFProcessorError: LocalizedError {
   var failureReason: String? {
     switch self {
       case .invalidURL(let url):
-        String(localized: "The url “\(url)” is invalid.")
+        String(localized: "The URL “\(url)” is invalid.")
       case .downloadFailed(let statusCode):
         String(localized: "Download failed with HTTP status \(statusCode).")
       case .dofFileNotFound:

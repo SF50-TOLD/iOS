@@ -10,3 +10,6 @@ SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig
 
 # Generated regression analysis plots
 scripts/regression_plots/
+
+# Credentials Configuration (contains API tokens)
+DownloadNASR/Credentials.xcconfig
