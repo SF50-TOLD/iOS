@@ -1,21 +1,30 @@
 # Data Loading
 
-Downloading and importing navigation data from GitHub.
+Downloading and importing navigation and terrain data.
 
 ## Overview
 
-SF50 TOLD requires airport and runway data to calculate performance. This data
-is pre-processed from FAA NASR and OurAirports sources, compressed, and hosted
-on GitHub. The ``DataLoader`` actor downloads and imports this data into
-SwiftData on first launch and when updates are available.
+SF50 TOLD requires two categories of data to calculate performance:
 
-## Data Pipeline
+1. **Navigation Data**: Airport and runway information from FAA NASR and OurAirports
+2. **Terrain Data**: SRTM elevation data for departure climb analysis
+
+Navigation data is required and loaded on first launch. Terrain data is optional
+and downloaded on-demand by region.
+
+## Navigation Data
+
+Navigation data is pre-processed from FAA NASR and OurAirports sources, compressed,
+and hosted on GitHub. The ``NavDataLoader`` actor downloads and imports this data
+into SwiftData on first launch and when updates are available.
+
+### Data Pipeline
 
 ![Airport Loading Pipeline](airport-loading-pipeline)
 
-## Update Decision Logic
+### Update Decision Logic
 
-``DataLoaderViewModel`` determines when to show the loading UI based on:
+``NavDataLoaderViewModel`` determines when to show the loading UI based on:
 
 ### Required Load (Cannot Skip)
 
@@ -52,12 +61,12 @@ private func outOfDate(cycle: Cycle?) -> Bool {
 ```
 
 New cycle data is typically uploaded to GitHub a few days before the cycle
-becomes effective. If data isn't available yet, ``DataLoader`` throws
-``DataLoader/Errors/cycleNotAvailable``.
+becomes effective. If data isn't available yet, ``NavDataLoader`` throws
+``NavDataLoader/Errors/cycleNotAvailable``.
 
 ## Loading Progress
 
-The loader reports progress through the ``DataLoader/State`` enum:
+The loader reports progress through the ``NavDataLoader/State`` enum:
 
 | State | Description |
 |-------|-------------|
@@ -123,7 +132,63 @@ Community-maintained database supplements NASR with:
 - Time zone information
 - Additional airports not in NASR
 
+## Terrain Data
+
+Terrain data enables departure climb analysis by providing ground elevation along
+the departure path. This data is based on SRTM (Shuttle Radar Topography Mission)
+elevation data at 3 arc-second (~90m) resolution.
+
+### On-Demand Downloads
+
+Unlike navigation data, terrain data is downloaded on-demand by geographic region.
+This approach keeps the initial app download small while allowing users to download
+terrain for regions they fly in.
+
+``TerrainDataLoader`` manages terrain downloads:
+
+```swift
+let loader = TerrainDataLoader()
+
+// Check if a region is available
+if !loader.isRegionAvailable(.northAmerica) {
+    // Request download
+    try await loader.downloadRegion(.northAmerica)
+}
+```
+
+### Download Progress
+
+``TerrainDataLoader`` reports download state through the ``TerrainDataLoader/State`` enum:
+
+| State | Description |
+|-------|-------------|
+| `.idle` | No active download |
+| `.downloading(region:progress:)` | Downloading from Cloudflare R2 |
+| `.decompressing(region:)` | Decompressing LZMA-compressed data |
+| `.completed(region:)` | Download finished successfully |
+| `.failed(region:message:)` | Download failed |
+
+### Storage
+
+Terrain files are stored in the app group container (`group.codes.tim.TOLD`)
+to enable sharing with the Background Assets extension. Each region is stored as
+a decompressed `.srtm` file after download.
+
+### Regions
+
+Terrain data is organized into geographic regions:
+
+- **North America**: Continental US, Canada, and Mexico
+- **Europe**: Western and Central Europe
+- **Additional regions**: As needed for coverage
+
+The ``TerrainRegion`` enum defines available regions and their geographic bounds.
+Use ``TerrainDataLoader/regionStatus(for:)`` to determine which region covers a
+specific coordinate.
+
 ## See Also
 
-- ``DataLoader``
-- ``DataLoaderViewModel``
+- ``NavDataLoader``
+- ``NavDataLoaderViewModel``
+- ``TerrainDataLoader``
+- ``TerrainDataLoaderViewModel``

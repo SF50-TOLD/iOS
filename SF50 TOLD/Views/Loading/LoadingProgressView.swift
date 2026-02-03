@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct LoadingProgressView: View {
-  @Environment(DataLoaderViewModel.self)
+  @Environment(NavDataLoaderViewModel.self)
   private var loader
 
   var downloadProgress: StepProgress {
@@ -72,6 +72,6 @@ struct LoadingProgressView: View {
 #Preview {
   PreviewView { preview in
     return LoadingProgressView()
-      .environment(DataLoaderViewModel(container: preview.container))
+      .environment(NavDataLoaderViewModel(container: preview.container))
   }
 }

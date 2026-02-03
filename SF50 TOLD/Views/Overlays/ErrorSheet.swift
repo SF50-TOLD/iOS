@@ -42,7 +42,7 @@ struct ErrorSheet: View {
 }
 
 #Preview("Localized error") {
-  ErrorSheet(error: DataLoader.Errors.cycleNotAvailable)
+  ErrorSheet(error: NavDataLoader.Errors.cycleNotAvailable)
 }
 
 #Preview("Non-localized error") {

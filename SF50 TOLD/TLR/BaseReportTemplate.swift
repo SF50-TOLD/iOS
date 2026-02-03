@@ -88,12 +88,12 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
   // MARK: - Instance Methods
 
   func reportDateFormat(for airport: AirportInput?) -> Date.FormatStyle {
-    let displayTimeZone: TimeZone
-    if useAirportLocalTime {
-      displayTimeZone = airport?.timeZone ?? .current
-    } else {
-      displayTimeZone = TimeZone(identifier: "UTC") ?? .current
-    }
+    let displayTimeZone =
+      if useAirportLocalTime {
+        airport?.timeZone ?? .current
+      } else {
+        TimeZone(identifier: "UTC") ?? .current
+      }
     return Date.FormatStyle(
       date: .omitted,
       time: .shortened,

@@ -31,12 +31,7 @@ struct NOTAMTimeBadge: View {
     Text(timeRelevance.label)
       .font(.caption)
       .fontWeight(.medium)
-      .padding(.horizontal, 8)
-      .padding(.vertical, 4)
-      .background(
-        Capsule()
-          .fill(timeRelevance.backgroundColor)
-      )
+      .pill(fill: timeRelevance.backgroundColor)
       .foregroundStyle(timeRelevance.foregroundColor)
   }
 
@@ -94,7 +89,7 @@ struct NOTAMTimeBadge: View {
     let plannedTime = Date()
     let notams = preview.generateNOTAMs(count: 5, icaoLocation: "NZNR", baseTime: plannedTime)
 
-    return VStack(spacing: 12) {
+    return VStack {
       ForEach(notams) { notam in
         NOTAMTimeBadge(
           notam: notam,

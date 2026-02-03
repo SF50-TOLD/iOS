@@ -20,7 +20,7 @@ struct NOTAMBadge: View {
   let hasAttemptedFetch: Bool
 
   var body: some View {
-    HStack(spacing: 4) {
+    HStack {
       if isLoading {
         ProgressView()
           .controlSize(.mini)
@@ -42,12 +42,7 @@ struct NOTAMBadge: View {
     .font(.caption2)
     .fontWeight(.medium)
     .foregroundStyle(textColor)
-    .padding(.horizontal, 8)
-    .padding(.vertical, 4)
-    .background(
-      Capsule()
-        .fill(Color.secondary.opacity(0.1))
-    )
+    .pill(fill: Color.secondary.opacity(0.1))
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(accessibilityLabel)
   }

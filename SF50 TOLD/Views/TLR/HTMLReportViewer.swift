@@ -81,18 +81,18 @@ struct HTMLReportViewer: View {
 
     UIGraphicsEndPDFContext()
 
-    let result: Result<Data, Error>
-    if pdfData.length > 0 {
-      result = .success(pdfData as Data)
-    } else {
-      result = .failure(
-        NSError(
-          domain: "PDFGeneration",
-          code: -1,
-          userInfo: [NSLocalizedDescriptionKey: "Failed to generate PDF"]
+    let result: Result<Data, Error> =
+      if pdfData.length > 0 {
+        .success(pdfData as Data)
+      } else {
+        .failure(
+          NSError(
+            domain: "PDFGeneration",
+            code: -1,
+            userInfo: [NSLocalizedDescriptionKey: "Failed to generate PDF"]
+          )
         )
-      )
-    }
+      }
 
     DispatchQueue.main.async {
       switch result {

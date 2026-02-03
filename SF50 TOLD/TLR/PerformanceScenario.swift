@@ -83,9 +83,9 @@ struct PerformanceScenario: Sendable {
     baseConfiguration: Configuration,
     runway: RunwayInput
   ) -> (Conditions, Configuration, RunwayInput) {
-    let adjustedTemp = baseConditions.temperature.map { $0 + deltaTemperature }
-    let adjustedWeight = baseConfiguration.weight + deltaWeight
-    let adjustedFlaps = flapSettingOverride ?? baseConfiguration.flapSetting
+    let adjustedTemp = baseConditions.temperature.map { $0 + deltaTemperature },
+      adjustedWeight = baseConfiguration.weight + deltaWeight,
+      adjustedFlaps = flapSettingOverride ?? baseConfiguration.flapSetting
 
     var adjustedWindDirection = baseConditions.windDirection
     var adjustedWindSpeed = baseConditions.windSpeed.map { $0 + deltaWindSpeed }

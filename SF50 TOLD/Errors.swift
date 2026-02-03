@@ -1,9 +1,9 @@
 import Foundation
 import SF50_Shared
 
-extension DataLoader.Errors: LocalizedError {
+extension NavDataLoader.Errors: LocalizedError {
   var errorDescription: String? {
-    String(localized: "Navigation data couldn't be downloaded")
+    String(localized: "Navigation data couldn’t be downloaded")
   }
 
   var failureReason: String? {

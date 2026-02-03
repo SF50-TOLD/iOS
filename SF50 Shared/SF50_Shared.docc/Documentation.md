@@ -92,6 +92,13 @@ Types for managing asynchronous loading state:
 - ``Loadable``
 - ``ViewState``
 
+### Terrain Data
+
+- <doc:DigitalElevationModel>
+- ``TerrainService``
+- ``TerrainRegion``
+- ``TerrainProfile``
+
 ### Error Handling
 
 - ``IdentifiableError``

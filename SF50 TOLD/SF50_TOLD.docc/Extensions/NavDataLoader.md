@@ -1,4 +1,4 @@
-# ``SF50_TOLD/DataLoader``
+# ``SF50_TOLD/NavDataLoader``
 
 @Metadata {
   @DocumentationExtension(mergeBehavior: append)

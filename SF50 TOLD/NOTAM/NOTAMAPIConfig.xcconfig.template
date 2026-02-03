@@ -1,0 +1,14 @@
+//
+// NOTAMAPIConfig.xcconfig
+// SF50-TOLD
+//
+// NOTAM API Configuration
+// Copy this file to NOTAMAPIConfig.xcconfig and fill in your values
+// See SF50_TOLD.docc/Articles/GettingStarted.md for setup instructions
+//
+
+// NOTAM API Token for https://notams.fly.dev
+NOTAM_API_TOKEN =
+
+// NOTAM API Base URL
+NOTAM_API_BASE_URL = https:/$()/notams.fly.dev

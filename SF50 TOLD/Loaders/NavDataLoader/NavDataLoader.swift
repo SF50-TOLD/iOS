@@ -2,13 +2,14 @@ import Algorithms
 import CoreLocation
 import Foundation
 import Observation
+import os
 import SF50_Shared
 import SwiftData
 import SwiftNASR
 
 /// Downloads and imports navigation data from the GitHub repository.
 ///
-/// `DataLoader` is a `@ModelActor` that handles the complete navigation data
+/// `NavDataLoader` is a `@ModelActor` that handles the complete navigation data
 /// update pipeline:
 ///
 /// 1. **Download**: Fetches compressed data from GitHub
@@ -41,7 +42,7 @@ import SwiftNASR
 /// Create a loader with the model container and call ``load()``:
 ///
 /// ```swift
-/// let loader = DataLoader(modelContainer: container)
+/// let loader = NavDataLoader(modelContainer: container)
 /// let result = try await loader.load()
 /// ```
 ///
@@ -50,7 +51,7 @@ import SwiftNASR
 /// Poll the ``state`` property to track loading progress:
 ///
 /// ```swift
-/// let loader = DataLoader(modelContainer: container)
+/// let loader = NavDataLoader(modelContainer: container)
 /// Task {
 ///     while true {
 ///         switch await loader.state {
@@ -69,13 +70,18 @@ import SwiftNASR
 ///
 /// ## See Also
 ///
-/// - ``DataLoaderViewModel``
+/// - ``NavDataLoaderViewModel``
 /// - ``State``
 @ModelActor
-actor DataLoader {
+actor NavDataLoader {
   var state: State = .idle
 
   private let decoder = PropertyListDecoder()
+
+  private let logger = Logger(
+    subsystem: "codes.tim.SF50-TOLD",
+    category: "NavDataLoader"
+  )
 
   private var dataURL: URL {
     URL(
@@ -112,23 +118,25 @@ actor DataLoader {
   }
 
   private func download(progress: (Float) -> Void) async throws -> Data {
-    let session = URLSession(configuration: .ephemeral)
-    let (bytes, response) = try await session.bytes(from: self.dataURL)
-    guard let response = response as? HTTPURLResponse else { throw Errors.badResponse(response) }
-    if response.statusCode == 404 { throw Errors.cycleNotAvailable }
-    guard response.statusCode == 200 else { throw Errors.badResponse(response) }
+    try await withRetry(logger: logger, label: "nav data") {
+      let session = URLSession(configuration: .ephemeral)
+      let (bytes, response) = try await session.bytes(from: self.dataURL)
+      guard let response = response as? HTTPURLResponse else { throw Errors.badResponse(response) }
+      if response.statusCode == 404 { throw Errors.cycleNotAvailable }
+      guard response.statusCode == 200 else { throw Errors.badResponse(response) }
 
-    var compressedData = Data(capacity: Int(response.expectedContentLength))
-    for try await byte in bytes {
-      compressedData.append(byte)
-      let completed = compressedData.count
-      if completed.isMultiple(of: 8192) {
-        let downloadProgress = Double(completed) / Double(response.expectedContentLength)
-        progress(Float(downloadProgress))
+      var compressedData = Data(capacity: Int(response.expectedContentLength))
+      for try await byte in bytes {
+        compressedData.append(byte)
+        let completed = compressedData.count
+        if completed.isMultiple(of: 8192) {
+          let downloadProgress = Double(completed) / Double(response.expectedContentLength)
+          progress(Float(downloadProgress))
+        }
       }
-    }
 
-    return compressedData
+      return compressedData
+    }
   }
 
   private func decompress(data: Data) throws -> AirportDataCodable {
@@ -144,7 +152,7 @@ actor DataLoader {
 
     var processed = 0
 
-    for batch in airports.chunks(ofCount: 100) {
+    for batch in airports.chunks(ofCount: 500) {
       for airport in batch {
         addAirport(airport)
       }
@@ -153,7 +161,7 @@ actor DataLoader {
 
       processed += batch.count
       progress(processed)
-      await Task.yield()
+      try await Task.sleep(for: .milliseconds(50))
     }
   }
 
@@ -163,7 +171,7 @@ actor DataLoader {
   ) async throws {
     var processed = 0
 
-    for batch in obstacles.chunks(ofCount: 1000) {
+    for batch in obstacles.chunks(ofCount: 5000) {
       for obstacleData in batch {
         let obstacle = Obstacle(
           heightMSL: .init(value: Double(obstacleData.heightFtMSL), unit: .feet),
@@ -177,7 +185,7 @@ actor DataLoader {
 
       processed += batch.count
       progress(processed)
-      await Task.yield()
+      try await Task.sleep(for: .milliseconds(50))
     }
   }
 

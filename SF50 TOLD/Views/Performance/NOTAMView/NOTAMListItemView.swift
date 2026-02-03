@@ -6,7 +6,7 @@ struct NOTAMListItemView: View {
   let plannedTime: Date
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
+    VStack(alignment: .leading) {
       // NOTAM ID and badges
       HStack {
         Text(notam.notamId)

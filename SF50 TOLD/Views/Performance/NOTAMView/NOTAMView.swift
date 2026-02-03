@@ -102,7 +102,7 @@ struct NOTAMView: View {
         Section(
           "Downloaded NOTAMs (\(currentNOTAMIndex + 1, format: .number) of \(sortedNOTAMs.count, format: .number))"
         ) {
-          VStack(spacing: 12) {
+          VStack {
             // Carousel with card styling
             CarouselView(
               data: sortedNOTAMs,

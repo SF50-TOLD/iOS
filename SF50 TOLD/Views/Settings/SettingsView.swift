@@ -33,31 +33,7 @@ struct SettingsView: View {
   var body: some View {
     NavigationView {
       Form {
-        Section {
-          ModelToggleView()
-          LabeledContent("Safety Factor (Dry)") {
-            NumberField(
-              "Factor",
-              value: $safetyFactorDry,
-              format: .number.rounded(increment: 0.1),
-              minimum: 1.0
-            )
-            .multilineTextAlignment(.trailing)
-            .accessibilityIdentifier("safetyFactorDryField")
-          }
-          LabeledContent("Safety Factor (Wet)") {
-            NumberField(
-              "Factor",
-              value: $safetyFactorWet,
-              format: .number.rounded(increment: 0.1),
-              minimum: 1.0
-            )
-            .multilineTextAlignment(.trailing)
-            .accessibilityIdentifier("safetyFactorWetField")
-          }
-        }
-
-        Section {
+        Section("Aircraft") {
           Picker("Aircraft Model", selection: aircraftTypeSettingBinding) {
             Text("G1").tag(AircraftTypeSetting.g1)
             Text("G2").tag(AircraftTypeSetting.g2)
@@ -99,7 +75,34 @@ struct SettingsView: View {
           }
         }
 
-        Section {
+        Section("Performance") {
+          ModelToggleView()
+          LabeledContent("Safety Factor (Dry)") {
+            NumberField(
+              "Factor",
+              value: $safetyFactorDry,
+              format: .number.rounded(increment: 0.1),
+              minimum: 1.0
+            )
+            .multilineTextAlignment(.trailing)
+            .accessibilityIdentifier("safetyFactorDryField")
+          }
+          LabeledContent("Safety Factor (Wet)") {
+            NumberField(
+              "Factor",
+              value: $safetyFactorWet,
+              format: .number.rounded(increment: 0.1),
+              minimum: 1.0
+            )
+            .multilineTextAlignment(.trailing)
+            .accessibilityIdentifier("safetyFactorWetField")
+          }
+
+          NavigationLink("Takeoff/Landing Scenarios…", destination: ScenariosSettingsView())
+            .accessibilityIdentifier("scenariosNavigationLink")
+        }
+
+        Section("Display") {
           NavigationLink("Units…", destination: UnitsSettingsView())
             .accessibilityIdentifier("unitsNavigationLink")
           Picker("Time Zone Display", selection: $useAirportLocalTime) {
@@ -109,9 +112,9 @@ struct SettingsView: View {
           .accessibilityIdentifier("timeZoneDisplayPicker")
         }
 
-        Section {
-          NavigationLink("Takeoff/Landing Scenarios…", destination: ScenariosSettingsView())
-            .accessibilityIdentifier("scenariosNavigationLink")
+        Section("Data") {
+          NavigationLink("Terrain Data…", destination: TerrainSettingsView())
+            .accessibilityIdentifier("terrainNavigationLink")
         }
       }.navigationTitle("Settings")
     }.navigationViewStyle(navigationStyle)

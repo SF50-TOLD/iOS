@@ -36,6 +36,10 @@ struct AboutView: View {
     return ourAirportsLastUpdated.timeIntervalSinceNow < -Self.ourAirportsTimeout
   }
 
+  private var terrainGeneratedAt: Date {
+    TerrainManifest.bundled.generatedAt
+  }
+
   var body: some View {
     NavigationView {
       Form {
@@ -69,6 +73,11 @@ struct AboutView: View {
                 .bold()
                 .foregroundStyle(.secondary)
             }
+          }
+
+          LabeledContent("Terrain Data") {
+            Text(terrainGeneratedAt, format: .dateTime.day().month().year())
+              .bold()
           }
         }
 

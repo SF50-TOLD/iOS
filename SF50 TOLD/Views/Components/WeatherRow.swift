@@ -19,7 +19,7 @@ struct WeatherRow: View {
 
   var body: some View {
     if weather.isLoading {
-      HStack(spacing: 10) {
+      HStack {
         ProgressView().progressViewStyle(CircularProgressViewStyle())
         Text("Loading weather…").foregroundStyle(.secondary)
           .accessibilityIdentifier("loadingWeatherLabel")
@@ -79,47 +79,39 @@ private struct LoadedWeatherRow: View {
 
   var body: some View {
     HStack(spacing: 20) {
-      IconWithLabel {
+      Label {
         WindText(conditions: conditions)
       } icon: {
-        Image(systemName: "wind").accessibilityLabel("Wind")
+        Image(systemName: "wind")
       }
+      .accessibilityLabel("Wind")
       .foregroundStyle(windColor)
 
-      IconWithLabel {
+      Label {
         Text(
           conditions.temperature(at: elevation).converted(to: temperatureUnit),
           format: .temperature
         )
       } icon: {
-        Image(systemName: "thermometer").accessibilityLabel("Temperature")
+        Image(systemName: "thermometer")
       }
+      .accessibilityLabel("Temperature")
       .foregroundStyle(tempColor)
 
-      IconWithLabel {
+      Label {
         Text(
           conditions.densityAltitude(elevation: elevation).converted(to: heightUnit),
           format: .height
         )
       } icon: {
-        Image(systemName: "mountain.2").accessibilityLabel("Density Altitude")
+        Image(systemName: "mountain.2")
       }
+      .accessibilityLabel("Density Altitude")
       .foregroundStyle(DAColor)
     }
+    .labelStyle(CompactLabelStyle())
     .font(.system(size: 14))
     .accessibilityIdentifier("weatherSummary")
-  }
-}
-
-private struct IconWithLabel<VI: View, VL: View>: View {
-  var label: () -> VL
-  var icon: () -> VI
-
-  var body: some View {
-    HStack(spacing: 8) {
-      icon()
-      label()
-    }
   }
 }
 
@@ -155,6 +147,23 @@ private struct WindText: View {
       headerFields: [:]
     )!
     let badResponse = WeatherLoader.Errors.badResponse(httpResponse)
+
+    let runway = try preview.load(airportID: "SQL", runway: "30")!
+    preview.setTakeoff(runway: runway)
+
+    let loadingLoader = MockWeatherLoader(mockConditions: .loading)
+    let loadingWeather = WeatherViewModel(
+      operation: .takeoff,
+      container: preview.container,
+      loader: loadingLoader
+    )
+
+    let errorLoader = MockWeatherLoader(mockConditions: .error(badResponse))
+    let errorWeather = WeatherViewModel(
+      operation: .takeoff,
+      container: preview.container,
+      loader: errorLoader
+    )
 
     return List {
       Section("Weather") {
@@ -213,30 +222,12 @@ private struct WindText: View {
           .onAppear { weather.conditions = preview.ISA }
       }
       Section("Loading") {
-        let mockLoader = MockWeatherLoader()
-        let weather = WeatherViewModel(
-          operation: .takeoff,
-          container: preview.container,
-          loader: mockLoader
-        )
         WeatherRow(elevation: .init(value: 0.0, unit: .feet))
-          .environment(weather)
-          .task {
-            await mockLoader.setMockConditions(.loading)
-          }
+          .environment(loadingWeather)
       }
       Section("Error") {
-        let mockLoader = MockWeatherLoader()
-        let weather = WeatherViewModel(
-          operation: .takeoff,
-          container: preview.container,
-          loader: mockLoader
-        )
         WeatherRow(elevation: .init(value: 0.0, unit: .feet))
-          .environment(weather)
-          .task {
-            await mockLoader.setMockError(badResponse)
-          }
+          .environment(errorWeather)
       }
     }
   }

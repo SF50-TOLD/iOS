@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 
 struct LoadingConsentView: View {
-  @Environment(DataLoaderViewModel.self)
+  @Environment(NavDataLoaderViewModel.self)
   private var loader
 
   @Environment(\.modelContext)
@@ -59,7 +59,7 @@ struct LoadingConsentView: View {
 #Preview("No data") {
   PreviewView { preview in
     return LoadingConsentView()
-      .environment(DataLoaderViewModel(container: preview.container))
+      .environment(NavDataLoaderViewModel(container: preview.container))
   }
 }
 
@@ -68,6 +68,6 @@ struct LoadingConsentView: View {
     preview.setOutOfDate()
 
     return LoadingConsentView()
-      .environment(DataLoaderViewModel(container: preview.container))
+      .environment(NavDataLoaderViewModel(container: preview.container))
   }
 }

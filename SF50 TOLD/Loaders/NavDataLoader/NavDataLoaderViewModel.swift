@@ -6,8 +6,8 @@ import SwiftData
 
 /// View model coordinating navigation data loading and UI state.
 ///
-/// ``DataLoaderViewModel`` manages the decision logic for when to show the
-/// data loader UI and coordinates the actual loading process via ``DataLoader``.
+/// ``NavDataLoaderViewModel`` manages the decision logic for when to show the
+/// data loader UI and coordinates the actual loading process via ``NavDataLoader``.
 ///
 /// ## Loading Decision
 ///
@@ -18,7 +18,7 @@ import SwiftData
 /// ## Usage
 ///
 /// ```swift
-/// @State private var loaderVM = DataLoaderViewModel(container: container)
+/// @State private var loaderVM = NavDataLoaderViewModel(container: container)
 ///
 /// if loaderVM.showLoader {
 ///     DataLoaderView(viewModel: loaderVM)
@@ -26,8 +26,8 @@ import SwiftData
 /// ```
 @Observable
 @MainActor
-final class DataLoaderViewModel: WithIdentifiableError {
-  private(set) var state: DataLoader.State = .idle
+final class NavDataLoaderViewModel: WithIdentifiableError {
+  private(set) var state: NavDataLoader.State = .idle
   var error: Swift.Error?
 
   private(set) var noData = false
@@ -92,7 +92,7 @@ final class DataLoaderViewModel: WithIdentifiableError {
   }
 
   func load() {
-    let loader = DataLoader(modelContainer: container)
+    let loader = NavDataLoader(modelContainer: container)
 
     addTask(
       Task {

@@ -49,5 +49,5 @@ struct LocationErrorView: View {
 }
 
 #Preview {
-  LocationErrorView(error: DataLoader.Errors.cycleNotAvailable)
+  LocationErrorView(error: NavDataLoader.Errors.cycleNotAvailable)
 }
