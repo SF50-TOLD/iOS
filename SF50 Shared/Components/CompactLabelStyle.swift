@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct CompactLabelStyle: LabelStyle {
+public struct CompactLabelStyle: LabelStyle {
   #if canImport(UIKit)
     @Environment(\.horizontalSizeClass)
     private var sizeClass
@@ -8,13 +8,13 @@ struct CompactLabelStyle: LabelStyle {
 
   let compact: String?
 
-  init(compact: String? = nil) {
+  public init(compact: String? = nil) {
     self.compact = compact
   }
 
   @ViewBuilder
-  func makeBody(configuration: Configuration) -> some View {
-    HStack(spacing: 2) {
+  public func makeBody(configuration: LabelStyleConfiguration) -> some View {
+    HStack(spacing: 8) {
       configuration.icon
 
       #if canImport(UIKit)

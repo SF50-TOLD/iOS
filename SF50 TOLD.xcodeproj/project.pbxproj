@@ -15,8 +15,11 @@
 		012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E512DE2F272000D9ADC /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
 		012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6B2DE2F463000D9ADC /* Logging */; };
 		012B1E6E2DE2F463000D9ADC /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6D2DE2F463000D9ADC /* AsyncAlgorithms */; };
+		014457DA2F3125DB003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457D92F3125DB003ADBCD /* RealModule */; };
+		014457DC2F3125E1003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457DB2F3125E1003ADBCD /* RealModule */; };
 		01442FC62E1D901900A0BD40 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 01442FC52E1D901900A0BD40 /* InfoPlist.xcstrings */; };
 		016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BB2EB30889001602E6 /* SwiftNASR */; };
 		016945BE2EB30889001602E6 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BD2EB30889001602E6 /* Logging */; };
@@ -154,7 +157,6 @@
 		016945C42EB308A2001602E6 /* Exceptions for "SF50 Shared" folder in "DownloadNASR" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Bootstrap.swift,
 				Models/Codable/AirportDataCodable.swift,
 			);
 			target = 016945982EB30848001602E6 /* DownloadNASR */;
@@ -165,13 +167,6 @@
 				NOTAM/NOTAMAPIConfig.xcconfig,
 			);
 			target = 0163BC692DDEE9D3008FEE8F /* SF50 TOLD */;
-		};
-		01A506A22E55A8BA00F8EC4F /* Exceptions for "SF50 Shared" folder in "SF50 Shared" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Bootstrap.swift,
-			);
-			target = 012B1E3A2DE2F272000D9ADC /* SF50 Shared */;
 		};
 		01B887122E5E2C3500702E95 /* Exceptions for "SF50 Runways" folder in "SF50 RunwaysExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -201,7 +196,6 @@
 		012B1E3C2DE2F272000D9ADC /* SF50 Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				01A506A22E55A8BA00F8EC4F /* Exceptions for "SF50 Shared" folder in "SF50 Shared" target */,
 				016945C42EB308A2001602E6 /* Exceptions for "SF50 Shared" folder in "DownloadNASR" target */,
 			);
 			explicitFolders = (
@@ -261,6 +255,7 @@
 		012B1E382DE2F272000D9ADC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */,
 				012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */,
 				018B8F0C2E331989003A0DAF /* RealModule in Frameworks */,
 				01A1014F2E93C12E0032AB29 /* Gzip in Frameworks */,
@@ -274,6 +269,7 @@
 			files = (
 				012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */,
 				0198B4532E986226003CB126 /* (null) in Frameworks */,
+				014457DA2F3125DB003ADBCD /* RealModule in Frameworks */,
 			);
 		};
 		0163BC672DDEE9D3008FEE8F /* Frameworks */ = {
@@ -291,6 +287,7 @@
 		0163BC762DDEE9D4008FEE8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				014457DC2F3125E1003ADBCD /* RealModule in Frameworks */,
 				0198B4512E986226003CB126 /* (null) in Frameworks */,
 			);
 		};
@@ -455,6 +452,9 @@
 				012B1E4B2DE2F272000D9ADC /* SF50 SharedTests */,
 			);
 			name = "SF50 SharedTests";
+			packageProductDependencies = (
+				014457D92F3125DB003ADBCD /* RealModule */,
+			);
 			productName = "SF50 SharedTests";
 			productReference = 012B1E452DE2F272000D9ADC /* SF50 SharedTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -509,6 +509,9 @@
 				0163BC7C2DDEE9D4008FEE8F /* SF50 TOLDTests */,
 			);
 			name = "SF50 TOLDTests";
+			packageProductDependencies = (
+				014457DB2F3125E1003ADBCD /* RealModule */,
+			);
 			productName = "SF50 TOLDTests";
 			productReference = 0163BC792DDEE9D4008FEE8F /* SF50 TOLDTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -902,13 +905,17 @@
 			buildSettings = {
 				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_MODULE_VERIFIER = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
@@ -918,12 +925,16 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-Shared";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				REGISTER_APP_GROUPS = YES;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_INSTALL_MODULE = YES;
 				SWIFT_INSTALL_OBJC_HEADER = NO;
@@ -938,13 +949,13 @@
 			buildSettings = {
 				BUILD_LIBRARY_FOR_DISTRIBUTION = NO;
 				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				ENABLE_MODULE_VERIFIER = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
@@ -954,12 +965,15 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-Shared";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_INSTALL_MODULE = YES;
 				SWIFT_INSTALL_OBJC_HEADER = NO;
@@ -1064,6 +1078,7 @@
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
@@ -1123,6 +1138,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
@@ -1605,6 +1621,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0163BDEE2DE05260008FEE8F /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
 			productName = AsyncAlgorithms;
+		};
+		014457D92F3125DB003ADBCD /* RealModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = RealModule;
+		};
+		014457DB2F3125E1003ADBCD /* RealModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = RealModule;
 		};
 		0163BCA82DDEF40D008FEE8F /* SwiftNASR */ = {
 			isa = XCSwiftPackageProductDependency;

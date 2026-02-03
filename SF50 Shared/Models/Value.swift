@@ -195,10 +195,10 @@ extension Value where T: FloatingPoint, T: Comparable {
   ) -> T {
     // For multiplication, relative uncertainties add in quadrature
     // uncertainty = sqrt((lu/lv)^2 + (ru/rv)^2) * (lv * rv)
-    let leftRelative = leftUncertainty / leftValue
-    let rightRelative = rightUncertainty / rightValue
-    let relativeUncertainty = (leftRelative * leftRelative + rightRelative * rightRelative)
-      .squareRoot()
+    let leftRelative = leftUncertainty / leftValue,
+      rightRelative = rightUncertainty / rightValue,
+      relativeUncertainty = (leftRelative * leftRelative + rightRelative * rightRelative)
+        .squareRoot()
     return relativeUncertainty * leftValue * rightValue
   }
 }
@@ -216,19 +216,19 @@ extension Value where T == Double {
       case .valueWithUncertainty(let centerValue, let uncertainty):
         // For normal distribution, confidence intervals are:
         // 68% ≈ 1.0σ, 95% ≈ 1.96σ, 99% ≈ 2.58σ
-        let multiplier: Double
-        if confidenceLevel <= 0.68 {
-          multiplier = uncertainty  // 1σ
-        } else if confidenceLevel <= 0.95 {
-          // For 95% confidence, use 1.96σ
-          multiplier = uncertainty * 1.96
-        } else {
-          // For 99% confidence, use 2.58σ
-          multiplier = uncertainty * 2.58
-        }
+        let multiplier =
+          if confidenceLevel <= 0.68 {
+            uncertainty  // 1σ
+          } else if confidenceLevel <= 0.95 {
+            // For 95% confidence, use 1.96σ
+            uncertainty * 1.96
+          } else {
+            // For 99% confidence, use 2.58σ
+            uncertainty * 2.58
+          }
 
-        let lowerBound = centerValue - multiplier
-        let upperBound = centerValue + multiplier
+        let lowerBound = centerValue - multiplier,
+          upperBound = centerValue + multiplier
         return value >= lowerBound && value <= upperBound
       case .invalid: return false
       case .notAvailable: return false

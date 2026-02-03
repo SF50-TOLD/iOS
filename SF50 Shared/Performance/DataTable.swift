@@ -540,9 +540,20 @@ class DataTable {
   }
 
   /// Errors that can occur during data table operations.
-  enum Errors: Error {
+  enum Errors: LocalizedError {
     /// The file data could not be decoded as UTF-8.
     case badEncoding
+
+    var errorDescription: String? {
+      String(localized: "Data table couldn’t be loaded.")
+    }
+
+    var failureReason: String? {
+      switch self {
+        case .badEncoding:
+          String(localized: "The file data could not be decoded as UTF-8.")
+      }
+    }
   }
 
   /// Clamping modes for input dimensions during interpolation.

@@ -14,7 +14,7 @@ public struct PreviewView<Content: View>: View {
           view
         }
       case .failure(let error):
-        VStack(spacing: 8) {
+        VStack {
           Label("Preview Failed", systemImage: "exclamationmark.triangle")
             .font(.title2)
             .foregroundColor(.red)

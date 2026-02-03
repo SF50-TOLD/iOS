@@ -27,7 +27,7 @@ extension FloatingPoint {
 /// http://www.ngdc.noaa.gov/geomag/WMM/DoDWMM.shtml
 ///
 /// © Deep Pradhan, 2017
-class Geomagnetism {
+public class Geomagnetism {
 
   /**    The input string array which contains each line of input for the wmm.cof input file.
    *    The columns in this file are as follows:    n,    m,    gnm,    hnm,    dgnm,    dhnm*/
@@ -138,25 +138,25 @@ class Geomagnetism {
   private static let MAX_DEG: Int = 12
 
   /** Geomagnetic declination (decimal degrees) [opposite of variation, positive Eastward/negative Westward]*/
-  private(set) var declination = Double.nan
+  public private(set) var declination = Double.nan
 
   /** Geomagnetic inclination/dip angle (degrees) [positive downward]*/
-  private(set) var inclination = Double.nan
+  public private(set) var inclination = Double.nan
 
   /** Geomagnetic field intensity/strength (nano Teslas)*/
-  private(set) var intensity = Double.nan
+  public private(set) var intensity = Double.nan
 
   /** Geomagnetic horizontal field intensity/strength (nano Teslas)*/
-  private(set) var horizontalIntensity = Double.nan
+  public private(set) var horizontalIntensity = Double.nan
 
   /** Geomagnetic vertical field intensity/strength (nano Teslas) [positive downward]*/
-  private(set) var verticalIntensity = Double.nan
+  public private(set) var verticalIntensity = Double.nan
 
   /** Geomagnetic North South (northerly component) field intensity/strength (nano Tesla)*/
-  private(set) var northIntensity = Double.nan
+  public private(set) var northIntensity = Double.nan
 
   /** Geomagnetic East West (easterly component) field intensity/strength (nano Teslas)*/
-  private(set) var eastIntensity = Double.nan
+  public private(set) var eastIntensity = Double.nan
 
   /** The maximum order of spherical harmonic model*/
   private var maxord: Int
@@ -202,7 +202,7 @@ class Geomagnetism {
     sa = Double.nan, ct = Double.nan, st = Double.nan
 
   /** Initializes the instance without calculations*/
-  init() {
+  public init() {
     // Initialize constants
     maxord = Self.MAX_DEG
     sp[0] = 0
@@ -282,8 +282,12 @@ class Geomagnetism {
    - latitude: Latitude in decimal degrees
    - altitude: Altitude in metres (with respect to WGS-1984 ellipsoid)
    - date: Date of the calculation*/
-  convenience init(longitude: Double, latitude: Double, altitude: Double? = 0, date: Date? = Date())
-  {
+  public convenience init(
+    longitude: Double,
+    latitude: Double,
+    altitude: Double? = 0,
+    date: Date? = Date()
+  ) {
     self.init()
     calculate(longitude: longitude, latitude: latitude, altitude: altitude!, date: date!)
   }
@@ -294,7 +298,12 @@ class Geomagnetism {
    - latitude: Latitude in decimal degrees
    - altitude: Altitude in metres (with respect to WGS-1984 ellipsoid)
    - date: Date of the calculation*/
-  func calculate(longitude: Double, latitude: Double, altitude: Double? = 0, date: Date? = Date()) {
+  public func calculate(
+    longitude: Double,
+    latitude: Double,
+    altitude: Double? = 0,
+    date: Date? = Date()
+  ) {
     let rlon: Double = longitude.toRadians
     let rlat: Double = latitude.toRadians
     let altitudeKm: Double = altitude!.isNaN ? 0 : altitude! / 1000
@@ -363,7 +372,7 @@ class Geomagnetism {
     for n in (1...maxord) {
       ar *= aor
       var m: Int = 0
-      let d3 = 1
+      let d3: Int = 1
       var d4: Int = (n + m + d3) / d3
       while d4 > 0 {
 

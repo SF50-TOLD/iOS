@@ -247,17 +247,17 @@ final class RegressionEquation {
         return nil
       }
 
-      let conditionMet: Bool
-      switch breakpoint.condition.operator {
-        case .lessThan:
-          conditionMet = inputValue < breakpoint.condition.value
-        case .lessThanOrEqual:
-          conditionMet = inputValue <= breakpoint.condition.value
-        case .greaterThan:
-          conditionMet = inputValue > breakpoint.condition.value
-        case .greaterThanOrEqual:
-          conditionMet = inputValue >= breakpoint.condition.value
-      }
+      let conditionMet =
+        switch breakpoint.condition.operator {
+          case .lessThan:
+            inputValue < breakpoint.condition.value
+          case .lessThanOrEqual:
+            inputValue <= breakpoint.condition.value
+          case .greaterThan:
+            inputValue > breakpoint.condition.value
+          case .greaterThanOrEqual:
+            inputValue >= breakpoint.condition.value
+        }
 
       if conditionMet {
         switch breakpoint.result {
@@ -297,7 +297,7 @@ final class RegressionEquation {
   }
 
   /// Errors that can occur during equation loading or evaluation.
-  enum Errors: Error {
+  enum Errors: LocalizedError {
     /// The file data could not be decoded.
     case badEncoding
     /// The JSON schema is invalid.
@@ -308,6 +308,27 @@ final class RegressionEquation {
     case missingVariable(String)
     /// The equation type doesn't match the expected type.
     case typeMismatch(expected: EquationType, got: EquationType)
+
+    var errorDescription: String? {
+      String(localized: "Regression equation couldn’t be loaded.")
+    }
+
+    var failureReason: String? {
+      switch self {
+        case .badEncoding:
+          String(localized: "The file data could not be decoded.")
+        case .invalidSchema(let detail):
+          String(localized: "The JSON schema is invalid: \(detail)")
+        case .unsupportedVersion(let version):
+          String(localized: "Schema version “\(version)” is not supported.")
+        case .missingVariable(let name):
+          String(localized: "Required input variable “\(name)” is missing.")
+        case .typeMismatch(let expected, let got):
+          String(
+            localized: "Equation type mismatch: expected \(expected.rawValue), got \(got.rawValue)."
+          )
+      }
+    }
   }
 }
 

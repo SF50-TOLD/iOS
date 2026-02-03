@@ -116,9 +116,7 @@ public struct LandingResults {
 /// ### Calculating Performance
 /// - ``calculateTakeoff(for:safetyFactor:)``
 /// - ``calculateLanding(for:safetyFactor:)``
-public final class DefaultPerformanceCalculationService: PerformanceCalculationService,
-  @unchecked Sendable
-{
+public final class DefaultPerformanceCalculationService: PerformanceCalculationService {
   /// Shared singleton instance.
   public static let shared = DefaultPerformanceCalculationService()
 
@@ -221,12 +219,12 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
   public func calculateTakeoff(for model: PerformanceModel, safetyFactor: Double) throws
     -> TakeoffResults
   {
-    let takeoffRun = (model.takeoffRunFt * safetyFactor).toMeasurement(UnitLength.feet)
-    let takeoffDistance = (model.takeoffDistanceFt * safetyFactor).toMeasurement(UnitLength.feet)
-    let takeoffClimbGradient = model.takeoffClimbGradientFtNmi.toMeasurement(
-      UnitSlope.feetPerNauticalMile
-    )
-    let takeoffClimbRate = model.takeoffClimbRateFtMin.toMeasurement(UnitSpeed.feetPerMinute)
+    let takeoffRun = (model.takeoffRunFt * safetyFactor).toMeasurement(UnitLength.feet),
+      takeoffDistance = (model.takeoffDistanceFt * safetyFactor).toMeasurement(UnitLength.feet),
+      takeoffClimbGradient = model.takeoffClimbGradientFtNmi.toMeasurement(
+        UnitSlope.feetPerNauticalMile
+      ),
+      takeoffClimbRate = model.takeoffClimbRateFtMin.toMeasurement(UnitSpeed.feetPerMinute)
 
     return TakeoffResults(
       takeoffRun: takeoffRun,
@@ -239,12 +237,12 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
   public func calculateLanding(for model: PerformanceModel, safetyFactor: Double) throws
     -> LandingResults
   {
-    let landingRun = (model.landingRunFt * safetyFactor).toMeasurement(UnitLength.feet)
-    let landingDistance = (model.landingDistanceFt * safetyFactor).toMeasurement(
-      UnitLength.feet
-    )
-    let Vref = model.VrefKts.toMeasurement(UnitSpeed.knots)
-    let meetsGoAroundClimbGradient = model.meetsGoAroundClimbGradient
+    let landingRun = (model.landingRunFt * safetyFactor).toMeasurement(UnitLength.feet),
+      landingDistance = (model.landingDistanceFt * safetyFactor).toMeasurement(
+        UnitLength.feet
+      ),
+      Vref = model.VrefKts.toMeasurement(UnitSpeed.knots),
+      meetsGoAroundClimbGradient = model.meetsGoAroundClimbGradient
 
     return LandingResults(
       Vref: Vref,

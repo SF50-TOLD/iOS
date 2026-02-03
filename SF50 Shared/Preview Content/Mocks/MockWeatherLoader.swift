@@ -3,10 +3,20 @@ import Foundation
 
 public actor MockWeatherLoader: WeatherLoaderProtocol {
 
-  private var mockConditions: Loadable<Conditions> = .notLoaded
-  private var mockMETAR: Loadable<String?> = .notLoaded
-  private var mockTAF: Loadable<String?> = .notLoaded
+  private var mockConditions: Loadable<Conditions> = .notLoaded {
+    didSet { notifyConditionsSubscribers() }
+  }
+  private var mockMETAR: Loadable<String?> = .notLoaded {
+    didSet { notifyMETARSubscribers() }
+  }
+  private var mockTAF: Loadable<String?> = .notLoaded {
+    didSet { notifyTAFSubscribers() }
+  }
   private var mockError: Error?
+
+  private var conditionsSubscribers = [UUID: AsyncStream<Loadable<Conditions>>.Continuation]()
+  private var metarSubscribers = [UUID: AsyncStream<Loadable<String?>>.Continuation]()
+  private var tafSubscribers = [UUID: AsyncStream<Loadable<String?>>.Continuation]()
 
   public init(
     mockConditions: Loadable<Conditions> = .notLoaded,
@@ -45,35 +55,74 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
   }
 
   public func streamConditions(for _: WeatherLoader.Key) -> AsyncStream<Loadable<Conditions>> {
-    AsyncStream { continuation in
-      continuation.yield(mockConditions)
+    let id = UUID()
+    let (stream, continuation) = AsyncStream.makeStream(of: Loadable<Conditions>.self)
 
-      // Keep the stream alive until cancelled
-      continuation.onTermination = { _ in
-        // Stream terminated
-      }
+    conditionsSubscribers[id] = continuation
+    continuation.yield(mockConditions)
+
+    continuation.onTermination = { @Sendable [weak self] _ in
+      Task { await self?.removeConditionsSubscriber(id: id) }
     }
+
+    return stream
   }
 
   public func streamMETAR(for _: WeatherLoader.Key) -> AsyncStream<Loadable<String?>> {
-    AsyncStream { continuation in
-      continuation.yield(mockMETAR)
+    let id = UUID()
+    let (stream, continuation) = AsyncStream.makeStream(of: Loadable<String?>.self)
 
-      // Keep the stream alive until cancelled
-      continuation.onTermination = { _ in
-        // Stream terminated
-      }
+    metarSubscribers[id] = continuation
+    continuation.yield(mockMETAR)
+
+    continuation.onTermination = { @Sendable [weak self] _ in
+      Task { await self?.removeMETARSubscriber(id: id) }
     }
+
+    return stream
   }
 
   public func streamTAF(for _: WeatherLoader.Key) -> AsyncStream<Loadable<String?>> {
-    AsyncStream { continuation in
-      continuation.yield(mockTAF)
+    let id = UUID()
+    let (stream, continuation) = AsyncStream.makeStream(of: Loadable<String?>.self)
 
-      // Keep the stream alive until cancelled
-      continuation.onTermination = { _ in
-        // Stream terminated
-      }
+    tafSubscribers[id] = continuation
+    continuation.yield(mockTAF)
+
+    continuation.onTermination = { @Sendable [weak self] _ in
+      Task { await self?.removeTAFSubscriber(id: id) }
+    }
+
+    return stream
+  }
+
+  private func removeConditionsSubscriber(id: UUID) {
+    conditionsSubscribers.removeValue(forKey: id)
+  }
+
+  private func removeMETARSubscriber(id: UUID) {
+    metarSubscribers.removeValue(forKey: id)
+  }
+
+  private func removeTAFSubscriber(id: UUID) {
+    tafSubscribers.removeValue(forKey: id)
+  }
+
+  private func notifyConditionsSubscribers() {
+    for continuation in conditionsSubscribers.values {
+      continuation.yield(mockConditions)
+    }
+  }
+
+  private func notifyMETARSubscribers() {
+    for continuation in metarSubscribers.values {
+      continuation.yield(mockMETAR)
+    }
+  }
+
+  private func notifyTAFSubscribers() {
+    for continuation in tafSubscribers.values {
+      continuation.yield(mockTAF)
     }
   }
 }

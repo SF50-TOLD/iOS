@@ -53,8 +53,8 @@ final class METARXMLParser: NSObject, XMLParserDelegate {
   static func parse(data: Data) -> AsyncStream<(String, METAR)> {
     AsyncStream { continuation in
       Task {
-        let parser = METARXMLParser(continuation: continuation)
-        let xmlParser = XMLParser(data: data)
+        let parser = METARXMLParser(continuation: continuation),
+          xmlParser = XMLParser(data: data)
         xmlParser.delegate = parser
 
         let success = xmlParser.parse()

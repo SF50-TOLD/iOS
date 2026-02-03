@@ -56,8 +56,8 @@ final class TAFXMLParser: NSObject, XMLParserDelegate {
   static func parse(data: Data) -> AsyncStream<(String, TAFData)> {
     AsyncStream { continuation in
       Task {
-        let parser = TAFXMLParser(continuation: continuation)
-        let xmlParser = XMLParser(data: data)
+        let parser = TAFXMLParser(continuation: continuation),
+          xmlParser = XMLParser(data: data)
         xmlParser.delegate = parser
 
         let success = xmlParser.parse()

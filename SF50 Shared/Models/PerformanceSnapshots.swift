@@ -208,21 +208,21 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
 
   // Comparable implementation for sorting
   public static func < (lhs: Self, rhs: Self) -> Bool {
-    let num1 = Int(lhs.name.filter(\.isNumber)) ?? 0
-    let num2 = Int(rhs.name.filter(\.isNumber)) ?? 0
+    let num1 = Int(lhs.name.filter(\.isNumber)) ?? 0,
+      num2 = Int(rhs.name.filter(\.isNumber)) ?? 0
 
     if num1 != num2 {
       return num1 < num2
     }
 
     // If numbers are equal, compare the letters
-    let letter1 = lhs.name.filter(\.isLetter)
-    let letter2 = rhs.name.filter(\.isLetter)
+    let letter1 = lhs.name.filter(\.isLetter),
+      letter2 = rhs.name.filter(\.isLetter)
 
     // Order: no letter < L < C < R
-    let letterOrder = ["": 0, "L": 1, "C": 2, "R": 3]
-    let val1 = letterOrder[letter1] ?? 4
-    let val2 = letterOrder[letter2] ?? 4
+    let letterOrder = ["": 0, "L": 1, "C": 2, "R": 3],
+      val1 = letterOrder[letter1] ?? 4,
+      val2 = letterOrder[letter2] ?? 4
 
     return val1 < val2
   }
@@ -244,8 +244,8 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     }
 
     // Wind direction in METAR/TAF is in true degrees, runway heading is also true
-    let windDirectionDeg = windDirection.converted(to: .degrees).value
-    let runwayTrueHeadingDeg = trueHeading.converted(to: .degrees).value
+    let windDirectionDeg = windDirection.converted(to: .degrees).value,
+      runwayTrueHeadingDeg = trueHeading.converted(to: .degrees).value
 
     let angleDiff = windDirectionDeg - runwayTrueHeadingDeg
     let headwindComponent = cos(angleDiff * .pi / 180) * windSpeed.converted(to: .knots).value
@@ -255,30 +255,30 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
 
   /// Creates a copy of this runway with contamination override applied
   public func withContamination(_ contamination: Contamination?) -> Self {
-    let newNotam: NOTAMInput?
-    if let notam {
-      // Create a new NOTAM with the contamination override but keep other values
-      newNotam = NOTAMInput(
-        contaminationType: contamination?.type,
-        contaminationDepth: .init(value: contamination?.depth ?? 0, unit: .meters),
-        takeoffDistanceShortening: notam.takeoffDistanceShortening,
-        landingDistanceShortening: notam.landingDistanceShortening,
-        obstacleHeight: notam.obstacleHeight,
-        obstacleDistance: notam.obstacleDistance
-      )
-    } else if let contamination {
-      // Create a new NOTAM with just the contamination
-      newNotam = NOTAMInput(
-        contaminationType: contamination.type,
-        contaminationDepth: .init(value: contamination.depth ?? 0, unit: .meters),
-        takeoffDistanceShortening: .init(value: 0, unit: .meters),
-        landingDistanceShortening: .init(value: 0, unit: .meters),
-        obstacleHeight: .init(value: 0, unit: .meters),
-        obstacleDistance: .init(value: 0, unit: .meters)
-      )
-    } else {
-      newNotam = nil
-    }
+    let newNotam: NOTAMInput? =
+      if let notam {
+        // Create a new NOTAM with the contamination override but keep other values
+        NOTAMInput(
+          contaminationType: contamination?.type,
+          contaminationDepth: .init(value: contamination?.depth ?? 0, unit: .meters),
+          takeoffDistanceShortening: notam.takeoffDistanceShortening,
+          landingDistanceShortening: notam.landingDistanceShortening,
+          obstacleHeight: notam.obstacleHeight,
+          obstacleDistance: notam.obstacleDistance
+        )
+      } else if let contamination {
+        // Create a new NOTAM with just the contamination
+        NOTAMInput(
+          contaminationType: contamination.type,
+          contaminationDepth: .init(value: contamination.depth ?? 0, unit: .meters),
+          takeoffDistanceShortening: .init(value: 0, unit: .meters),
+          landingDistanceShortening: .init(value: 0, unit: .meters),
+          obstacleHeight: .init(value: 0, unit: .meters),
+          obstacleDistance: .init(value: 0, unit: .meters)
+        )
+      } else {
+        nil
+      }
 
     return Self(
       id: id,

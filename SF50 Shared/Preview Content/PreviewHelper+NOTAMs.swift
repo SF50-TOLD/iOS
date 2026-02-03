@@ -39,32 +39,32 @@ extension PreviewHelper {
       let notamId = "\(letter)\(String(format: "%04d", 8000 + index))/2025"
 
       // Vary the effective times for different statuses
-      let hourOffset: TimeInterval
-      switch index % 5 {
-        case 0:  // Active - started 1 hour ago, ends in 2 hours
-          hourOffset = -3600
-        case 1:  // Warning - starts in 2 hours
-          hourOffset = 7200
-        case 2:  // Expired - started 1 day ago, ended 2 hours ago
-          hourOffset = -86400
-        case 3:  // Future - starts in 1 day
-          hourOffset = 86400
-        default:  // Active - started 30 min ago, ends in 4 hours
-          hourOffset = -1800
-      }
+      let hourOffset: TimeInterval =
+        switch index % 5 {
+          case 0:  // Active - started 1 hour ago, ends in 2 hours
+            -3600
+          case 1:  // Warning - starts in 2 hours
+            7200
+          case 2:  // Expired - started 1 day ago, ended 2 hours ago
+            -86400
+          case 3:  // Future - starts in 1 day
+            86400
+          default:  // Active - started 30 min ago, ends in 4 hours
+            -1800
+        }
 
       let effectiveStart = baseTime.addingTimeInterval(hourOffset)
 
       // Vary end times
-      let effectiveEnd: Date?
-      switch index % 5 {
-        case 2:  // Expired
-          effectiveEnd = baseTime.addingTimeInterval(-7200)
-        case 3, 4:  // Some have end times
-          effectiveEnd = effectiveStart.addingTimeInterval(14400)
-        default:  // Some are permanent
-          effectiveEnd = index.isMultiple(of: 3) ? nil : effectiveStart.addingTimeInterval(10800)
-      }
+      let effectiveEnd: Date? =
+        switch index % 5 {
+          case 2:  // Expired
+            baseTime.addingTimeInterval(-7200)
+          case 3, 4:  // Some have end times
+            effectiveStart.addingTimeInterval(14400)
+          default:  // Some are permanent
+            index.isMultiple(of: 3) ? nil : effectiveStart.addingTimeInterval(10800)
+        }
 
       // Vary NOTAM text lengths
       let textIndex = index % loremTexts.count

@@ -61,13 +61,10 @@ public struct InterpolationView<ValueType, Content: View>: View {
             }
           }
         case .invalid:
-          HStack(spacing: 8) {
-            Image(systemName: "exclamationmark.circle")
-              .accessibilityHidden(true)
-            Text("Error")
-          }
-          .foregroundStyle(.red)
-          .bold()
+          Label("Error", systemImage: "exclamationmark.circle")
+            .foregroundStyle(.red)
+            .bold()
+            .labelStyle(CompactLabelStyle())
         case .notAvailable:
           Text("N/A")
             .foregroundStyle(.secondary)

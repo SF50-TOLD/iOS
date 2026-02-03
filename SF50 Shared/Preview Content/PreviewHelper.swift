@@ -162,7 +162,7 @@ public final class PreviewHelper: Sendable {
         flapSettingOverride: "flaps50"
       ),
       Scenario(
-        name: "Water/Slush 0.5\"",
+        name: "Water/Slush 0.5″",
         operation: .landing,
         contaminationOverride: "waterOrSlush",
         contaminationDepth: .init(value: 0.5, unit: .inches)

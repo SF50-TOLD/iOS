@@ -34,6 +34,18 @@ public struct AirportDataCodable: Codable, Sendable {
   /// All obstacles in the database (from FAA Digital Obstacle File)
   public let obstacles: [ObstacleCodable]
 
+  public init(
+    cycles: DataCycles,
+    ourAirportsLastUpdated: Date?,
+    airports: [AirportCodable],
+    obstacles: [ObstacleCodable]
+  ) {
+    self.cycles = cycles
+    self.ourAirportsLastUpdated = ourAirportsLastUpdated
+    self.airports = airports
+    self.obstacles = obstacles
+  }
+
   /**
    * Codable representation of an airport.
    *
@@ -79,6 +91,36 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// Departure procedures (SIDs) at this airport (nil if CIFP data not available)
     public let departureProcedures: [DepartureProcedureCodable]?
+
+    public init(
+      recordID: String,
+      locationID: String,
+      ICAO_ID: String?,
+      name: String,
+      city: String?,
+      dataSource: String,
+      latitude: Double,
+      longitude: Double,
+      elevation: Double,
+      variation: Double,
+      timeZone: String?,
+      runways: [RunwayCodable],
+      departureProcedures: [DepartureProcedureCodable]?
+    ) {
+      self.recordID = recordID
+      self.locationID = locationID
+      self.ICAO_ID = ICAO_ID
+      self.name = name
+      self.city = city
+      self.dataSource = dataSource
+      self.latitude = latitude
+      self.longitude = longitude
+      self.elevation = elevation
+      self.variation = variation
+      self.timeZone = timeZone
+      self.runways = runways
+      self.departureProcedures = departureProcedures
+    }
   }
 
   /**
@@ -135,6 +177,42 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// Displaced threshold distance from runway end in meters (nil if threshold is at runway end)
     public let displacedThresholdDistance: Double?
+
+    public init(
+      name: String,
+      elevation: Double?,
+      trueHeading: Double,
+      gradient: Float?,
+      length: Double,
+      takeoffRun: Double?,
+      takeoffDistance: Double?,
+      landingDistance: Double?,
+      isTurf: Bool,
+      reciprocalName: String?,
+      thresholdLatitude: Double?,
+      thresholdLongitude: Double?,
+      width: Double?,
+      thresholdCrossingHeight: Double?,
+      glidepathAngle: Double?,
+      displacedThresholdDistance: Double?
+    ) {
+      self.name = name
+      self.elevation = elevation
+      self.trueHeading = trueHeading
+      self.gradient = gradient
+      self.length = length
+      self.takeoffRun = takeoffRun
+      self.takeoffDistance = takeoffDistance
+      self.landingDistance = landingDistance
+      self.isTurf = isTurf
+      self.reciprocalName = reciprocalName
+      self.thresholdLatitude = thresholdLatitude
+      self.thresholdLongitude = thresholdLongitude
+      self.width = width
+      self.thresholdCrossingHeight = thresholdCrossingHeight
+      self.glidepathAngle = glidepathAngle
+      self.displacedThresholdDistance = displacedThresholdDistance
+    }
   }
 
   /**
@@ -156,6 +234,18 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// Required climb gradient in feet per nautical mile (nil if not plottable or no altitude constraints)
     public let requiredClimbGradientFtPerNM: Double?
+
+    public init(
+      identifier: String,
+      runwayNames: [String],
+      fixes: [FixCodable]?,
+      requiredClimbGradientFtPerNM: Double?
+    ) {
+      self.identifier = identifier
+      self.runwayNames = runwayNames
+      self.fixes = fixes
+      self.requiredClimbGradientFtPerNM = requiredClimbGradientFtPerNM
+    }
   }
 
   /**
@@ -173,6 +263,18 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// Altitude restriction (nil if no restriction)
     public let altitudeRestriction: AltitudeRestrictionCodable?
+
+    public init(
+      identifier: String,
+      latitude: Double,
+      longitude: Double,
+      altitudeRestriction: AltitudeRestrictionCodable?
+    ) {
+      self.identifier = identifier
+      self.latitude = latitude
+      self.longitude = longitude
+      self.altitudeRestriction = altitudeRestriction
+    }
   }
 
   /**
@@ -250,6 +352,12 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// DOF (Digital Obstacle File) cycle information
     public let dof: CycleInfo?
+
+    public init(nasr: CycleInfo?, cifp: CycleInfo?, dof: CycleInfo?) {
+      self.nasr = nasr
+      self.cifp = cifp
+      self.dof = dof
+    }
   }
 
   /**
@@ -270,6 +378,12 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// Whether this cycle is currently effective (not yet expired)
     public var isEffective: Bool { (effective..<expires).contains(Date()) }
+
+    public init(name: String, effective: Date, expires: Date) {
+      self.name = name
+      self.effective = effective
+      self.expires = expires
+    }
   }
 
   /**
@@ -287,5 +401,11 @@ public struct AirportDataCodable: Codable, Sendable {
 
     /// Longitude in decimal degrees
     public let longitude: Double
+
+    public init(heightFtMSL: Int, latitude: Double, longitude: Double) {
+      self.heightFtMSL = heightFtMSL
+      self.latitude = latitude
+      self.longitude = longitude
+    }
   }
 }
