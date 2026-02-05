@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		0112FFA72F2094E3009CFBBA /* SwiftDOF in Frameworks */ = {isa = PBXBuildFile; productRef = 0112FFA62F2094E3009CFBBA /* SwiftDOF */; };
 		0112FFAA2F209508009CFBBA /* SwiftCIFP in Frameworks */ = {isa = PBXBuildFile; productRef = 0112FFA92F209508009CFBBA /* SwiftCIFP */; };
-		0119A4F92F35778A0035FB76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 0119A4F82F35778A0035FB76 /* StreamingLZMA */; };
-		0119A4FB2F3577930035FB76 /* StreamingLZMAXZ in Frameworks */ = {isa = PBXBuildFile; productRef = 0119A4FA2F3577930035FB76 /* StreamingLZMAXZ */; };
 		0128374C2E5B8BB8002195A0 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128374B2E5B8BB8002195A0 /* WidgetKit.framework */; };
 		0128374E2E5B8BB8002195A0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128374D2E5B8BB8002195A0 /* SwiftUI.framework */; };
 		0128375F2E5B8BB9002195A0 /* SF50 RunwaysExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0128374A2E5B8BB8002195A0 /* SF50 RunwaysExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -18,11 +16,11 @@
 		012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E512DE2F272000D9ADC /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6B2DE2F463000D9ADC /* Logging */; };
-		012B1E6E2DE2F463000D9ADC /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6D2DE2F463000D9ADC /* AsyncAlgorithms */; };
 		0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
+		01441A6D2F35872E005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6C2F35872E005A8A76 /* StreamingLZMA */; };
+		01441A6F2F358738005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6E2F358738005A8A76 /* StreamingLZMA */; };
 		01442FC62E1D901900A0BD40 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 01442FC52E1D901900A0BD40 /* InfoPlist.xcstrings */; };
 		014457DA2F3125DB003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457D92F3125DB003ADBCD /* RealModule */; };
-		014457DC2F3125E1003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457DB2F3125E1003ADBCD /* RealModule */; };
 		016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BB2EB30889001602E6 /* SwiftNASR */; };
 		016945BE2EB30889001602E6 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BD2EB30889001602E6 /* Logging */; };
 		016945C22EB30889001602E6 /* SwiftTimeZoneLookup in Frameworks */ = {isa = PBXBuildFile; productRef = 016945C12EB30889001602E6 /* SwiftTimeZoneLookup */; };
@@ -33,15 +31,10 @@
 		01758ED72F2A9D13001D218C /* TIFF in Frameworks */ = {isa = PBXBuildFile; productRef = 01758ED62F2A9D13001D218C /* TIFF */; };
 		0179DF3E2DE2F7A9002EC77C /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 0163BCA82DDEF40D008FEE8F /* SwiftNASR */; };
 		0179DF402DE2F7A9002EC77C /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 01D1E3122DDF890100C1CAC8 /* Logging */; };
-		0179DF412DE2F7A9002EC77C /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 0163BDEF2DE05260008FEE8F /* AsyncAlgorithms */; };
 		0179DFC02DE3CDD3002EC77C /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = 0179DFBF2DE3CDD3002EC77C /* Defaults */; };
 		018B8F0C2E331989003A0DAF /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 018B8F0B2E331989003A0DAF /* RealModule */; };
-		0198B44C2E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
+		018ED7A62F345C2000D084B4 /* SwiftMETAR in Frameworks */ = {isa = PBXBuildFile; productRef = 018ED7A52F345C2000D084B4 /* SwiftMETAR */; };
 		0198B44E2E986226003CB126 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
-		0198B4502E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		0198B4512E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		0198B4522E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
-		0198B4532E986226003CB126 /* (null) in Frameworks */ = {isa = PBXBuildFile; };
 		01A1014F2E93C12E0032AB29 /* Gzip in Frameworks */ = {isa = PBXBuildFile; productRef = 01A1014E2E93C12E0032AB29 /* Gzip */; };
 		01AA52322F2DDF110085F4C6 /* SwiftR2 in Frameworks */ = {isa = PBXBuildFile; productRef = 01AA52312F2DDF110085F4C6 /* SwiftR2 */; };
 		01BEA32B2E986B10005ABCD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 01BEA32A2E986B10005ABCD8 /* PrivacyInfo.xcprivacy */; };
@@ -50,7 +43,6 @@
 		01D0DEBA2F27377800856DB4 /* Gzip in Frameworks */ = {isa = PBXBuildFile; productRef = 01D0DEB92F27377800856DB4 /* Gzip */; };
 		01D0DEBE2F27504500856DB4 /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01D0DEBF2F27504600856DB4 /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		01D0ECD92F29399700856DB4 /* SotoS3 in Frameworks */ = {isa = PBXBuildFile; productRef = 01D0ECD82F29399700856DB4 /* SotoS3 */; };
 		01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01EA44382EB327D7008FEB64 /* Security.framework */; };
 		AB352BDD14B44A2CA78F9D44 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 /* End PBXBuildFile section */
@@ -302,17 +294,16 @@
 			files = (
 				0128374E2E5B8BB8002195A0 /* SwiftUI.framework in Frameworks */,
 				0128374C2E5B8BB8002195A0 /* WidgetKit.framework in Frameworks */,
-				0198B4502E986226003CB126 /* (null) in Frameworks */,
 			);
 		};
 		012B1E382DE2F272000D9ADC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				018ED7A62F345C2000D084B4 /* SwiftMETAR in Frameworks */,
 				01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */,
 				012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */,
 				018B8F0C2E331989003A0DAF /* RealModule in Frameworks */,
 				01A1014F2E93C12E0032AB29 /* Gzip in Frameworks */,
-				012B1E6E2DE2F463000D9ADC /* AsyncAlgorithms in Frameworks */,
 				0179DFC02DE3CDD3002EC77C /* Defaults in Frameworks */,
 				AB352BDD14B44A2CA78F9D44 /* Sentry in Frameworks */,
 			);
@@ -321,7 +312,6 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */,
-				0198B4532E986226003CB126 /* (null) in Frameworks */,
 				014457DA2F3125DB003ADBCD /* RealModule in Frameworks */,
 			);
 		};
@@ -330,7 +320,7 @@
 			files = (
 				0198B44E2E986226003CB126 /* Sentry in Frameworks */,
 				01714C802F234A7E003DADCF /* Algorithms in Frameworks */,
-				0179DF412DE2F7A9002EC77C /* AsyncAlgorithms in Frameworks */,
+				01441A6D2F35872E005A8A76 /* StreamingLZMA in Frameworks */,
 				0179DF402DE2F7A9002EC77C /* Logging in Frameworks */,
 				0179DF3E2DE2F7A9002EC77C /* SwiftNASR in Frameworks */,
 				012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */,
@@ -340,29 +330,25 @@
 		0163BC762DDEE9D4008FEE8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				014457DC2F3125E1003ADBCD /* RealModule in Frameworks */,
-				0198B4512E986226003CB126 /* (null) in Frameworks */,
 			);
 		};
 		0163BC802DDEE9D4008FEE8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				0198B4522E986226003CB126 /* (null) in Frameworks */,
 			);
 		};
 		016945962EB30848001602E6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				01D0DEBE2F27504500856DB4 /* SF50_Shared.framework in Frameworks */,
+				01441A6F2F358738005A8A76 /* StreamingLZMA in Frameworks */,
 				01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */,
 				0169495C2EB314C9001602E6 /* SwiftUI.framework in Frameworks */,
-				0119A4FB2F3577930035FB76 /* StreamingLZMAXZ in Frameworks */,
 				01D0DEBA2F27377800856DB4 /* Gzip in Frameworks */,
 				0112FFA72F2094E3009CFBBA /* SwiftDOF in Frameworks */,
 				016945C22EB30889001602E6 /* SwiftTimeZoneLookup in Frameworks */,
 				016945BE2EB30889001602E6 /* Logging in Frameworks */,
 				0112FFAA2F209508009CFBBA /* SwiftCIFP in Frameworks */,
-				01D0ECD92F29399700856DB4 /* SotoS3 in Frameworks */,
 				016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */,
 				01714CB52F24587D003DADCF /* ZIPFoundation in Frameworks */,
 				01758ED72F2A9D13001D218C /* TIFF in Frameworks */,
@@ -373,13 +359,11 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */,
-				0119A4F92F35778A0035FB76 /* StreamingLZMA in Frameworks */,
 			);
 		};
 		0191DC092E9322C20099FB0E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				0198B44C2E986226003CB126 /* (null) in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -495,10 +479,10 @@
 			packageProductDependencies = (
 				012B1E672DE2F463000D9ADC /* SwiftNASR */,
 				012B1E6B2DE2F463000D9ADC /* Logging */,
-				012B1E6D2DE2F463000D9ADC /* AsyncAlgorithms */,
 				0179DFBF2DE3CDD3002EC77C /* Defaults */,
 				018B8F0B2E331989003A0DAF /* RealModule */,
 				01A1014E2E93C12E0032AB29 /* Gzip */,
+				018ED7A52F345C2000D084B4 /* SwiftMETAR */,
 			);
 			productName = "SF50 Shared";
 			productReference = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */;
@@ -555,10 +539,10 @@
 			packageProductDependencies = (
 				0163BCA82DDEF40D008FEE8F /* SwiftNASR */,
 				01D1E3122DDF890100C1CAC8 /* Logging */,
-				0163BDEF2DE05260008FEE8F /* AsyncAlgorithms */,
 				01BEBCB72E8A401100631DE6 /* SwiftHtml */,
 				602F51ECCC3348DE83D26B3E /* Sentry */,
 				01714C7F2F234A7E003DADCF /* Algorithms */,
+				01441A6C2F35872E005A8A76 /* StreamingLZMA */,
 			);
 			productName = "SF50 TOLD";
 			productReference = 0163BC6A2DDEE9D3008FEE8F /* SF50 TOLD.app */;
@@ -581,9 +565,6 @@
 				0163BC7C2DDEE9D4008FEE8F /* SF50 TOLDTests */,
 			);
 			name = "SF50 TOLDTests";
-			packageProductDependencies = (
-				014457DB2F3125E1003ADBCD /* RealModule */,
-			);
 			productName = "SF50 TOLDTests";
 			productReference = 0163BC792DDEE9D4008FEE8F /* SF50 TOLDTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -632,10 +613,9 @@
 				0112FFA92F209508009CFBBA /* SwiftCIFP */,
 				01714CB42F24587D003DADCF /* ZIPFoundation */,
 				01D0DEB92F27377800856DB4 /* Gzip */,
-				01D0ECD82F29399700856DB4 /* SotoS3 */,
 				01758ED62F2A9D13001D218C /* TIFF */,
 				01AA52312F2DDF110085F4C6 /* SwiftR2 */,
-				0119A4FA2F3577930035FB76 /* StreamingLZMAXZ */,
+				01441A6E2F358738005A8A76 /* StreamingLZMA */,
 			);
 			productName = DownloadNASR;
 			productReference = 016945992EB30848001602E6 /* DownloadNASR.app */;
@@ -655,9 +635,6 @@
 				01714CA62F2451D9003DADCF /* TerrainAssets */,
 			);
 			name = TerrainAssets;
-			packageProductDependencies = (
-				0119A4F82F35778A0035FB76 /* StreamingLZMA */,
-			);
 			productName = TerrainAssets;
 			productReference = 01714CA52F2451D9003DADCF /* TerrainAssets.appex */;
 			productType = "com.apple.product-type.extensionkit-extension";
@@ -738,7 +715,6 @@
 			packageReferences = (
 				0163BCA72DDEF40D008FEE8F /* XCRemoteSwiftPackageReference "SwiftNASR" */,
 				01D1E3112DDF890100C1CAC8 /* XCRemoteSwiftPackageReference "swift-log" */,
-				0163BDEE2DE05260008FEE8F /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 				0179DFBE2DE3CDD3002EC77C /* XCRemoteSwiftPackageReference "Defaults" */,
 				0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */,
 				01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */,
@@ -749,10 +725,10 @@
 				0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */,
 				01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 				01714CB32F24587D003DADCF /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
-				01D0ECD72F29399700856DB4 /* XCRemoteSwiftPackageReference "soto" */,
 				01758ED52F2A9D13001D218C /* XCRemoteSwiftPackageReference "tiff-ios" */,
 				0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */,
 				01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */,
+				018ED7932F340BFD00D084B4 /* XCRemoteSwiftPackageReference "SwiftMETAR" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 0163BC6B2DDEE9D3008FEE8F /* Products */;
@@ -1733,14 +1709,6 @@
 				kind = branch;
 			};
 		};
-		0163BDEE2DE05260008FEE8F /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.4;
-			};
-		};
 		01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-algorithms.git";
@@ -1781,6 +1749,14 @@
 				minimumVersion = 9.0.2;
 			};
 		};
+		018ED7932F340BFD00D084B4 /* XCRemoteSwiftPackageReference "SwiftMETAR" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RISCfuture/SwiftMETAR";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/1024jp/GzipSwift";
@@ -1813,14 +1789,6 @@
 				minimumVersion = 1.7.0;
 			};
 		};
-		01D0ECD72F29399700856DB4 /* XCRemoteSwiftPackageReference "soto" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/soto-project/soto";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 7.12.0;
-			};
-		};
 		01D1E3112DDF890100C1CAC8 /* XCRemoteSwiftPackageReference "swift-log" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-log.git";
@@ -1850,16 +1818,6 @@
 			package = 0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */;
 			productName = SwiftCIFP;
 		};
-		0119A4F82F35778A0035FB76 /* StreamingLZMA */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */;
-			productName = StreamingLZMA;
-		};
-		0119A4FA2F3577930035FB76 /* StreamingLZMAXZ */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */;
-			productName = StreamingLZMAXZ;
-		};
 		012B1E672DE2F463000D9ADC /* SwiftNASR */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0163BCA72DDEF40D008FEE8F /* XCRemoteSwiftPackageReference "SwiftNASR" */;
@@ -1870,17 +1828,17 @@
 			package = 01D1E3112DDF890100C1CAC8 /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
 		};
-		012B1E6D2DE2F463000D9ADC /* AsyncAlgorithms */ = {
+		01441A6C2F35872E005A8A76 /* StreamingLZMA */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 0163BDEE2DE05260008FEE8F /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
-			productName = AsyncAlgorithms;
+			package = 0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */;
+			productName = StreamingLZMA;
+		};
+		01441A6E2F358738005A8A76 /* StreamingLZMA */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */;
+			productName = StreamingLZMA;
 		};
 		014457D92F3125DB003ADBCD /* RealModule */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */;
-			productName = RealModule;
-		};
-		014457DB2F3125E1003ADBCD /* RealModule */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */;
 			productName = RealModule;
@@ -1889,11 +1847,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0163BCA72DDEF40D008FEE8F /* XCRemoteSwiftPackageReference "SwiftNASR" */;
 			productName = SwiftNASR;
-		};
-		0163BDEF2DE05260008FEE8F /* AsyncAlgorithms */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0163BDEE2DE05260008FEE8F /* XCRemoteSwiftPackageReference "swift-async-algorithms" */;
-			productName = AsyncAlgorithms;
 		};
 		016945BB2EB30889001602E6 /* SwiftNASR */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1935,6 +1888,11 @@
 			package = 0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */;
 			productName = RealModule;
 		};
+		018ED7A52F345C2000D084B4 /* SwiftMETAR */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 018ED7932F340BFD00D084B4 /* XCRemoteSwiftPackageReference "SwiftMETAR" */;
+			productName = SwiftMETAR;
+		};
 		01A1014E2E93C12E0032AB29 /* Gzip */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */;
@@ -1954,11 +1912,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */;
 			productName = Gzip;
-		};
-		01D0ECD82F29399700856DB4 /* SotoS3 */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 01D0ECD72F29399700856DB4 /* XCRemoteSwiftPackageReference "soto" */;
-			productName = SotoS3;
 		};
 		01D1E3122DDF890100C1CAC8 /* Logging */ = {
 			isa = XCSwiftPackageProductDependency;

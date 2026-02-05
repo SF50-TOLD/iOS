@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import SwiftMETAR
 import WeatherKit
 
 private let standardTemperatureDegC = 15.04
@@ -83,7 +84,7 @@ public struct Conditions: Sendable, Equatable {
 
   /// Whether winds are calm (less than 1 knot or not reported).
   public var windsCalm: Bool {
-    windSpeed.map { $0.converted(to: .knots).value < 1 } ?? true
+    windSpeed.map { $0 < Measurement(value: 1, unit: UnitSpeed.knots) } ?? true
   }
 
   private init(
@@ -128,56 +129,75 @@ public struct Conditions: Sendable, Equatable {
     source = .entered
   }
 
-  /// Creates conditions from a METAR observation.
-  public init(observation: METAR) {
-    validTime = .init(start: observation.observationTime, duration: 3600)
+  /// Creates conditions from a SwiftMETAR observation.
+  public init(observation: SwiftMETAR.METAR) {
+    validTime = .init(start: observation.date, duration: 3600)
 
-    if let windDir = observation.windDirection {
-      windDirection = .init(value: Double(windDir), unit: .degrees)
-    } else {
-      windDirection = nil  // VRB wind
+    switch observation.wind {
+      case .calm:
+        windDirection = .init(value: 0, unit: .degrees)
+        windSpeed = .init(value: 0, unit: .knots)
+      case .variable(let speed, _):
+        windDirection = nil  // Variable wind
+        windSpeed = speed.measurement
+      case .direction(let heading, let speed, _):
+        windDirection = .init(value: Double(heading), unit: .degrees)
+        windSpeed = speed.measurement
+      case .directionRange(let heading, _, let speed, _):
+        windDirection = .init(value: Double(heading), unit: .degrees)
+        windSpeed = speed.measurement
+      case .none:
+        windDirection = nil
+        windSpeed = nil
     }
-    windSpeed = .init(value: Double(observation.windSpeed), unit: .knots)
 
-    temperature = observation.temperature.map { .init(value: $0, unit: .celsius) }
-    dewpoint = observation.dewpoint.map { .init(value: $0, unit: .celsius) }
-
-    // Prefer sea level pressure if available, otherwise use altimeter
-    if let slp = observation.seaLevelPressure {
-      seaLevelPressure = .init(value: slp, unit: .millibars)
-    } else if let alt = observation.altimeter {
-      seaLevelPressure = .init(value: alt, unit: .inchesOfMercury)
-    } else {
-      seaLevelPressure = nil
-    }
+    temperature = observation.temperatureMeasurement
+    dewpoint = observation.dewpointMeasurement
+    seaLevelPressure = observation.altimeter?.measurement
 
     source = .NWS
   }
 
-  /// Creates conditions from a TAF forecast, or `nil` if the forecast is invalid.
-  public init?(forecast: TAF) {
-    validTime = .init(start: forecast.validFrom, end: forecast.validTo)
-
-    if let windDir = forecast.windDirection {
-      windDirection = .init(value: Double(windDir), unit: .degrees)
-    } else {
-      windDirection = nil  // VRB wind
+  /// Creates conditions from a SwiftMETAR TAF group, or `nil` if the forecast period is invalid.
+  public init?(forecast: SwiftMETAR.TAF.Group) {
+    // Extract DateInterval from the period enum
+    let interval: DateInterval
+    switch forecast.period {
+      case .range(let period):
+        interval = period.dateInterval
+      case .from(let from):
+        guard let fromDate = from.date else { return nil }
+        interval = DateInterval(start: fromDate, duration: 86400)  // 24h default
+      case .temporary(let period):
+        interval = period.dateInterval
+      case .becoming(let period):
+        interval = period.dateInterval
+      case .probability(_, let period):
+        interval = period.dateInterval
     }
+    validTime = interval
 
-    if let speed = forecast.windSpeed {
-      windSpeed = .init(value: Double(speed), unit: .knots)
-    } else {
-      windSpeed = nil
+    switch forecast.wind {
+      case .calm:
+        windDirection = .init(value: 0, unit: .degrees)
+        windSpeed = .init(value: 0, unit: .knots)
+      case .variable(let speed, _):
+        windDirection = nil  // Variable wind
+        windSpeed = speed.measurement
+      case .direction(let heading, let speed, _):
+        windDirection = .init(value: Double(heading), unit: .degrees)
+        windSpeed = speed.measurement
+      case .directionRange(let heading, _, let speed, _):
+        windDirection = .init(value: Double(heading), unit: .degrees)
+        windSpeed = speed.measurement
+      case .none:
+        windDirection = nil
+        windSpeed = nil
     }
 
     temperature = nil
     dewpoint = nil
-
-    if let alt = forecast.altimeter {
-      seaLevelPressure = .init(value: alt, unit: .inchesOfMercury)
-    } else {
-      seaLevelPressure = nil
-    }
+    seaLevelPressure = forecast.altimeter?.measurement
 
     source = .NWS
   }

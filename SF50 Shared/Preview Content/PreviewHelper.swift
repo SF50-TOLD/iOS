@@ -47,20 +47,13 @@ public final class PreviewHelper: Sendable {
   }
 
   public var NWS: Conditions {
-    // Create a mock observation from METAR string
-    let observation = METAR(
-      stationID: "KSFO",
-      observationTime: Date(),
-      temperature: 18.0,
-      dewpoint: 13.0,
-      windDirection: nil,  // Calm
-      windSpeed: 0,
-      windGust: nil,
-      altimeter: 30.10,
-      seaLevelPressure: 1019.2,
-      rawText: METARString
+    // Create mock NWS conditions (calm winds, 18°C, 30.10 inHg)
+    .init(
+      windDirection: .init(value: 0, unit: .degrees),
+      windSpeed: .init(value: 0, unit: .knots),
+      temperature: .init(value: 18, unit: .celsius),
+      seaLevelPressure: .init(value: 30.10, unit: .inchesOfMercury)
     )
-    return .init(observation: observation)
   }
 
   public var METARString: String {

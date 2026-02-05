@@ -11,6 +11,8 @@ extension WeatherLoader.Errors: LocalizedError {
         String(localized: "Received HTTP response \(response.statusCode).")
       case .gzipDecompressionFailed:
         String(localized: "Downloaded weather data was corrupted or incomplete.")
+      case .invalidTextEncoding:
+        String(localized: "Downloaded weather data had an invalid text encoding.")
     }
   }
 

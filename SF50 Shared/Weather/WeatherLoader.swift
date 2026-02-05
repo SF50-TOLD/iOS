@@ -1,6 +1,5 @@
 import CoreLocation
 import Foundation
-import Gzip
 import Logging
 @preconcurrency import WeatherKit
 
@@ -31,6 +30,26 @@ public protocol WeatherLoaderProtocol: Actor {
   /// - Parameter key: Identifies the airport to monitor.
   /// - Returns: Async stream yielding TAF text as it becomes available.
   func streamTAF(for key: WeatherLoader.Key) async -> AsyncStream<Loadable<String?>>
+
+  /// Creates a stream of winds aloft data updates.
+  /// - Parameter key: Identifies the airport to monitor.
+  /// - Returns: Async stream yielding winds aloft data as it becomes available.
+  ///   Returns `nil` for airports without a winds aloft reporting station.
+  func streamWindsAloft(for key: WeatherLoader.Key) async -> AsyncStream<Loadable<WindsAloftData?>>
+
+  /// Returns interpolated winds aloft for a specific location and altitude.
+  ///
+  /// This method performs spatial interpolation from nearby winds aloft stations
+  /// when no direct station match exists for the location.
+  ///
+  /// - Parameters:
+  ///   - coordinate: The target location
+  ///   - altitude: The target altitude
+  /// - Returns: Interpolated winds aloft entry, or `nil` if insufficient data
+  func interpolatedWindsAloft(
+    at coordinate: CLLocationCoordinate2D,
+    altitude: Measurement<UnitLength>
+  ) async -> WindsAloftData.Entry?
 }
 
 /**
@@ -63,31 +82,41 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   /// Shared singleton instance for app-wide weather loading.
   public static let shared = WeatherLoader()
 
-  private static let reloadInterval = 60.0 * 15
-  private static let METARsURL = URL(
+  static let reloadInterval = 60.0 * 15
+  static let METARsURL = URL(
     string: "https://aviationweather.gov/data/cache/metars.cache.xml.gz"
   )!
-  private static let TAFsURL = URL(
+  static let TAFsURL = URL(
     string: "https://aviationweather.gov/data/cache/tafs.cache.xml.gz"
   )!
-  private static let logger = Logger(label: "codes.tim.SF50-TOLD.WeatherLoader")
-  private static let weatherService = WeatherService()
+  static let windsAloftURL = URL(
+    string: "https://aviationweather.gov/api/data/windtemp?level=low&fcst=06&region=all&layout=on"
+  )!
+  static let logger = Logger(label: "codes.tim.SF50-TOLD.WeatherLoader")
+  static let weatherService = WeatherService()
 
-  private var observations: Loadable<[String: Observation]> = .notLoaded {
+  var observations: Loadable<[String: Observation]> = .notLoaded {
     didSet { Task { await notifySubscribers() } }
   }
-  private var forecasts: Loadable<[String: Forecast]> = .notLoaded {
+  var forecasts: Loadable<[String: Forecast]> = .notLoaded {
     didSet { Task { await notifySubscribers() } }
   }
-  private var lastLoaded: Date?
-  private var conditionsSubscribers = [
+  var windsAloft: Loadable<[String: WindsAloftData]> = .notLoaded {
+    didSet { Task { await notifySubscribers() } }
+  }
+  var stationLocations: [String: CLLocationCoordinate2D] = [:]
+  var lastLoaded: Date?
+  var conditionsSubscribers = [
     UUID: (Key, AsyncStream<Loadable<Conditions>>.Continuation)
   ]()
-  private var metarSubscribers = [UUID: (Key, AsyncStream<Loadable<String?>>.Continuation)]()
-  private var tafSubscribers = [UUID: (Key, AsyncStream<Loadable<String?>>.Continuation)]()
-  private var loadingTask: Task<Void, Never>?
+  var metarSubscribers = [UUID: (Key, AsyncStream<Loadable<String?>>.Continuation)]()
+  var tafSubscribers = [UUID: (Key, AsyncStream<Loadable<String?>>.Continuation)]()
+  var windsAloftSubscribers = [
+    UUID: (Key, AsyncStream<Loadable<WindsAloftData?>>.Continuation)
+  ]()
+  var loadingTask: Task<Void, Never>?
 
-  private var session: URLSession { .init(configuration: .ephemeral) }
+  var session: URLSession { .init(configuration: .ephemeral) }
 
   private init() {}
 
@@ -99,6 +128,7 @@ public actor WeatherLoader: WeatherLoaderProtocol {
     loadingTask = Task {
       await loadMETARs()
       await loadTAFs()
+      await loadWindsAloft()
     }
     await loadingTask?.value
     lastLoaded = .now
@@ -163,286 +193,56 @@ public actor WeatherLoader: WeatherLoaderProtocol {
     }
   }
 
-  private func removeConditionsSubscriber(id: UUID) {
-    conditionsSubscribers.removeValue(forKey: id)
-  }
+  public func streamWindsAloft(for key: Key) -> AsyncStream<Loadable<WindsAloftData?>> {
+    let id = UUID()
+    let initialData = windsAloftData(for: key)
 
-  private func removeMetarSubscriber(id: UUID) {
-    metarSubscribers.removeValue(forKey: id)
-  }
+    return AsyncStream { continuation in
+      windsAloftSubscribers[id] = (key, continuation)
 
-  private func removeTafSubscriber(id: UUID) {
-    tafSubscribers.removeValue(forKey: id)
-  }
+      // Send initial value
+      continuation.yield(initialData)
 
-  private func notifySubscribers() async {
-    // Notify conditions subscribers
-    for (_, (key, continuation)) in conditionsSubscribers {
-      let conditions = await conditions(for: key)
-      continuation.yield(conditions)
-    }
-
-    // Notify METAR subscribers
-    for (_, (key, continuation)) in metarSubscribers {
-      let raw = observations.map { $0[key.id]?.raw }
-      continuation.yield(raw)
-    }
-
-    // Notify TAF subscribers
-    for (_, (key, continuation)) in tafSubscribers {
-      let raw = forecasts.map { $0[key.id]?.raw }
-      continuation.yield(raw)
+      continuation.onTermination = { @Sendable _ in
+        Task { [weak self] in
+          await self?.removeWindsAloftSubscriber(id: id)
+        }
+      }
     }
   }
 
-  private func conditions(for key: Key) async -> Loadable<Conditions> {
-    let weather: WeatherKit.Weather?
-    do {
-      weather = try await Self.weatherService.weather(for: key.location)
-    } catch {
-      Self.logger.error(
-        "WeatherKit error",
-        metadata: [
-          "error": "\(error)",
-          "location": "\(key.location)",
-          "id": "\(key.id)"
-        ]
+  public func interpolatedWindsAloft(
+    at coordinate: CLLocationCoordinate2D,
+    altitude: Measurement<UnitLength>
+  ) -> WindsAloftData.Entry? {
+    guard case .value(let stationData) = windsAloft else { return nil }
+
+    // Build located stations from available data
+    let locatedStations: [WindsAloftInterpolator.LocatedStation] = stationData.compactMap {
+      stationID,
+      data in
+      guard let location = stationLocations[stationID] else { return nil }
+      return WindsAloftInterpolator.LocatedStation(
+        stationID: stationID,
+        coordinate: location,
+        data: data
       )
-      weather = nil
     }
 
-    if key.time.timeIntervalSinceNow < 3600 {
-      return observations.map { observations in
-        if let conditions = observations[key.id]?.conditions {
-          if let weather {
-            return conditions.adding(weather: weather.currentWeather)
-          }
-          return conditions
-        }
-        if let weather {
-          return .init(weather: weather.currentWeather)
-        }
-        return .init()
-      }
-    }
-    return forecasts.map { forecasts in
-      let forecast = forecasts[key.id]
-      if let conditions = forecast?.conditions.first(where: { $0.validTime.contains(key.time) }) {
-        if let weather, let hourly = weather.hourlyForecast.for(date: key.time) {
-          return conditions.adding(weather: hourly)
-        }
-        return conditions
-      }
-      if let weather, let hourly = weather.hourlyForecast.for(date: key.time) {
-        return .init(weather: hourly)
-      }
-      return .init()
-    }
-  }
-
-  private func loadMETARs() async {
-    observations = .loading
-    await notifySubscribers()
-
-    do {
-      try Task.checkCancellation()
-      let data = try await load(url: Self.METARsURL)
-      try Task.checkCancellation()
-
-      let newMETARs = try await withThrowingTaskGroup(of: (String, Observation)?.self) { group in
-        let xmlData: Data
-        do {
-          xmlData = try data.gunzipped()
-        } catch {
-          let prefix = data.prefix(20).map { String(format: "%02x", $0) }.joined(separator: " ")
-          Self.logger.error(
-            "Failed to decompress METAR data",
-            metadata: [
-              "error": "\(error)",
-              "dataSize": "\(data.count)",
-              "dataPrefix": "\(prefix)"
-            ]
-          )
-          throw Errors.gzipDecompressionFailed(
-            url: Self.METARsURL,
-            dataSize: data.count,
-            dataPrefix: prefix,
-            underlyingError: error
-          )
-        }
-
-        // Parse XML and stream observations
-        for try await (stationID, observation) in METARXMLParser.parse(data: xmlData) {
-          try Task.checkCancellation()
-
-          group.addTask {
-            let conditions = Conditions(observation: observation)
-            return (stationID, .init(conditions: conditions, raw: observation.rawText))
-          }
-        }
-
-        return try await group.compactMap(\.self).reduce(into: [:]) { result, pair in
-          result[pair.0] = pair.1
-        }
-      }
-
-      observations = .value(newMETARs)
-    } catch is CancellationError {
-      // Don't update observations if cancelled
-    } catch {
-      observations = .error(error)
-    }
-  }
-
-  private func loadTAFs() async {
-    forecasts = .loading
-    await notifySubscribers()
-
-    do {
-      try Task.checkCancellation()
-      let data = try await load(url: Self.TAFsURL)
-      try Task.checkCancellation()
-
-      let newTAFs = try await withThrowingTaskGroup(of: (String, Forecast)?.self) { group in
-        let xmlData: Data
-        do {
-          xmlData = try data.gunzipped()
-        } catch {
-          let prefix = data.prefix(20).map { String(format: "%02x", $0) }.joined(separator: " ")
-          Self.logger.error(
-            "Failed to decompress TAF data",
-            metadata: [
-              "error": "\(error)",
-              "dataSize": "\(data.count)",
-              "dataPrefix": "\(prefix)"
-            ]
-          )
-          throw Errors.gzipDecompressionFailed(
-            url: Self.TAFsURL,
-            dataSize: data.count,
-            dataPrefix: prefix,
-            underlyingError: error
-          )
-        }
-
-        // Parse XML and stream TAFs
-        for try await (stationID, tafData) in TAFXMLParser.parse(data: xmlData) {
-          try Task.checkCancellation()
-
-          group.addTask {
-            let conditions = tafData.forecasts.compactMap { Conditions(forecast: $0) }
-            return (stationID, .init(conditions: conditions, raw: tafData.rawText))
-          }
-        }
-
-        return try await group.compactMap(\.self)
-          .reduce(into: [:]) { result, pair in result[pair.0] = pair.1 }
-      }
-
-      forecasts = .value(newTAFs)
-    } catch is CancellationError {
-      // Don't update forecasts if cancelled
-    } catch {
-      forecasts = .error(error)
-    }
-  }
-
-  private func load(url: URL) async throws -> Data {
-    Self.logger.info("Loading weather data from URL", metadata: ["url": "\(url)"])
-
-    let (data, response) = try await session.data(from: url)
-    if let response = response as? HTTPURLResponse {
-      guard (200..<300).contains(response.statusCode) else {
-        Self.logger.error(
-          "Bad HTTP response",
-          metadata: [
-            "statusCode": "\(response.statusCode)",
-            "url": "\(url)"
-          ]
-        )
-        throw Errors.badResponse(response)
-      }
-    }
-
-    Self.logger.info(
-      "Downloaded weather data",
-      metadata: [
-        "size": "\(data.count)",
-        "url": "\(url)"
-      ]
-    )
-
-    return data
-  }
-
-  /// Errors that can occur during weather loading.
-  public enum Errors: Swift.Error {
-    /// HTTP response was not successful.
-    case badResponse(_ response: HTTPURLResponse)
-
-    /// Failed to decompress GZIP data.
-    case gzipDecompressionFailed(
-      url: URL,
-      dataSize: Int,
-      dataPrefix: String,
-      underlyingError: Error
+    return WindsAloftInterpolator.interpolate(
+      at: coordinate,
+      altitude: altitude,
+      from: locatedStations
     )
   }
 
-  /// Key identifying a weather data request by airport and time.
-  public struct Key: Hashable, Sendable {
-    /// Weather station identifier (typically ICAO code).
-    let id: String
-
-    /// Geographic location for WeatherKit requests.
-    let location: CLLocation
-
-    /// Time for which conditions are requested.
-    let time: Date
-
-    /// Creates a key for the specified airport and time.
-    /// - Parameters:
-    ///   - airport: The airport to fetch weather for.
-    ///   - time: The time for which conditions are needed.
-    public init(airport: Airport, time: Date) {
-      id = airport.weatherID
-      location = airport.location
-      self.time = time
-    }
-
-    public func hash(into hasher: inout Hasher) {
-      hasher.combine(id)
-      hasher.combine(time)
-    }
-  }
-
-  private struct Observation {
-    let conditions: Conditions
-    let raw: String
-  }
-
-  private struct Forecast {
-    let conditions: [Conditions]
-    let raw: String
-  }
-}
-
-extension Airport {
-  fileprivate var weatherID: String {
-    if let ICAO_ID { return ICAO_ID }
-    if locationID.count == 3 { return "K\(locationID)" }
-    return locationID
-  }
-}
-
-extension HourWeather {
-  fileprivate var dateRange: DateInterval {
-    .init(start: date, duration: 3600)
-  }
-}
-
-extension Forecast<HourWeather> {
-  fileprivate func `for`(date: Date) -> HourWeather? {
-    first(where: { $0.dateRange.contains(date) })
+  /// Resolves station locations from the airport database.
+  ///
+  /// Call this after loading winds aloft data to enable spatial interpolation.
+  /// Station IDs are matched against airport location IDs.
+  ///
+  /// - Parameter airports: Dictionary mapping location IDs to coordinates
+  public func setStationLocations(_ locations: [String: CLLocationCoordinate2D]) {
+    stationLocations = locations
   }
 }
