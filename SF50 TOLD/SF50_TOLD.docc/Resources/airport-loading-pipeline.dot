@@ -39,7 +39,7 @@ digraph AirportLoadingPipeline {
 
     // Processing steps
     subgraph cluster_loader {
-        label="DataLoader (ModelActor)"
+        label="NavDataLoader (ModelActor)"
         labeljust=l
         labelloc=t
         fontname="SF Pro Display, Helvetica Neue, Arial"
@@ -77,7 +77,7 @@ digraph AirportLoadingPipeline {
 
     // Destination
     swiftdata [
-        label="SwiftData Store\nAirport, Runway,\nProcedure, Obstacle models"
+        label="SwiftData Store\nAirport, Runway, Procedure,\nLeg, Navaid, Obstacle models"
         fillcolor="#d4edda"
         color="#28a745"
         height=0.9

@@ -12,18 +12,15 @@ import ZIPFoundation
 ///
 /// ## See Also
 ///
-/// - ``DataProcessor`` - The orchestrator that uses this processor
-/// - ``NASRProcessor`` - Processes NASR airport data
-/// - ``DOFProcessor`` - Processes DOF obstacle data
+/// - ``NavDataProcessor``
+/// - ``NASRProcessor``
+/// - ``DOFProcessor``
 struct CIFPProcessor {
-  /// Path terminators that indicate a plottable SID leg.
-  private static let plottablePathTerminators: Set<PathTerminator> = [
-    .initialFix,  // IF
-    .trackToFix,  // TF
-    .courseToFix,  // CF
-    .directToFix,  // DF
-    .radiusToFix,  // RF
-    .arcToFix  // AF
+  /// Path terminators that cannot be plotted because they require ATC vectors or manual input.
+  private static let unplottablePathTerminators: Set<PathTerminator> = [
+    .fromFixManual,  // FM - ATC vectors from fix
+    .headingManual,  // VM - ATC vectors / pilot discretion
+    .holdManual  // HM - hold until ATC clearance
   ]
 
   // Progress allocation within CIFP processing (out of 100):
@@ -36,6 +33,174 @@ struct CIFPProcessor {
 
   /// Logger for status messages and errors.
   let logger: Logger
+
+  // MARK: - Type Methods
+
+  /// Constructs a human-readable approach name from CIFP data.
+  ///
+  /// The CIFP identifier after the type character contains a runway designator
+  /// (1-2 digits + optional L/C/R) and optional multiple indicator letter.
+  /// For example: "I19L" → ILS RWY 19L, "H10RZ" → RNP AR Z RWY 10R,
+  /// "R12-Y" → RNAV Y RWY 12. Circling approaches use a dash: "VOR-A" → VOR/TAC-A.
+  static func approachName(type: String, identifier: String) -> String {
+    let afterType = String(identifier.dropFirst())
+
+    // Match runway approaches: 1-2 digits, optional L/C/R, optional dash, optional multiple indicator
+    if let match = afterType.wholeMatch(of: /(\d{1,2}[LCR]?)-?([A-Z])?/) {
+      let runway = String(match.1)
+      if let mult = match.2 {
+        return "\(type) \(mult) RWY \(runway)"
+      }
+      return "\(type) RWY \(runway)"
+    }
+
+    // Circling approach: extract designator after last dash
+    if let dashIndex = identifier.lastIndex(of: "-") {
+      let designator = String(identifier[identifier.index(after: dashIndex)...])
+      return "\(type)-\(designator)"
+    }
+
+    return "\(type) \(identifier)"
+  }
+
+  /// Converts a SwiftCIFP procedure leg to a ``LegTypeCodable``.
+  ///
+  /// Returns `nil` for unplottable leg types (FM, VM). Throws if required data
+  /// (course, arc radius, turn direction) is missing for a leg type that requires it.
+  private static func legType(
+    from leg: ProcedureLeg
+  ) throws -> LegTypeCodable? {
+    guard let pt = leg.pathTerminator else { return nil }
+
+    switch pt {
+      case .initialFix:
+        return .init(type: .initialFix)
+      case .trackToFix:
+        return .init(type: .trackToFix, course: leg.magneticCourseDeg)
+      case .courseToFix:
+        return .init(type: .courseToFix, course: try requireCourse(from: leg, for: pt))
+      case .directToFix:
+        return .init(type: .directToFix)
+      case .radiusToFix:
+        return .init(
+          type: .radiusToFix,
+          course: try requireCourse(from: leg, for: pt),
+          arcRadius: try requireArcRadius(from: leg, for: pt)
+        )
+      case .arcToFix:
+        return .init(
+          type: .arcToFix,
+          course: try requireCourse(from: leg, for: pt),
+          arcRadius: try requireRho(from: leg, for: pt)
+        )
+      case .holdToFix:
+        return .init(
+          type: .holdToFix,
+          course: try requireCourse(from: leg, for: pt),
+          turnDirection: try requireTurnDirection(from: leg, for: pt)
+        )
+      case .holdToAltitude:
+        return .init(
+          type: .holdToAltitude,
+          course: try requireCourse(from: leg, for: pt),
+          turnDirection: try requireTurnDirection(from: leg, for: pt)
+        )
+      case .holdManual:
+        return .init(
+          type: .holdManual,
+          course: try requireCourse(from: leg, for: pt),
+          turnDirection: try requireTurnDirection(from: leg, for: pt)
+        )
+      case .fixToAltitude:
+        return .init(type: .fixToAltitude, course: try requireCourse(from: leg, for: pt))
+      case .trackFromFixDistance:
+        return .init(type: .trackFromFixDistance, course: try requireCourse(from: leg, for: pt))
+      case .trackFromFixDME:
+        return .init(type: .trackFromFixDME, course: try requireCourse(from: leg, for: pt))
+      case .courseToAltitude:
+        return .init(type: .courseToAltitude, course: try requireCourse(from: leg, for: pt))
+      case .courseToDME:
+        return .init(type: .courseToDME, course: try requireCourse(from: leg, for: pt))
+      case .courseToIntercept:
+        return .init(type: .courseToIntercept, course: try requireCourse(from: leg, for: pt))
+      case .courseToRadial:
+        return .init(type: .courseToRadial, course: try requireCourse(from: leg, for: pt))
+      case .headingToAltitude:
+        return .init(type: .headingToAltitude, course: try requireCourse(from: leg, for: pt))
+      case .headingToDME:
+        return .init(type: .headingToDME, course: try requireCourse(from: leg, for: pt))
+      case .headingToIntercept:
+        return .init(type: .headingToIntercept, course: try requireCourse(from: leg, for: pt))
+      case .headingToRadial:
+        return .init(type: .headingToRadial, course: try requireCourse(from: leg, for: pt))
+      case .procedureTurn:
+        return .init(
+          type: .procedureTurn,
+          course: try requireCourse(from: leg, for: pt),
+          turnDirection: try requireTurnDirection(from: leg, for: pt)
+        )
+      case .fromFixManual, .headingManual:
+        return nil
+    }
+  }
+
+  private static func requireCourse(
+    from leg: ProcedureLeg,
+    for pathTerminator: PathTerminator
+  ) throws -> Double {
+    guard let course = leg.magneticCourseDeg else {
+      throw CIFPProcessorError.missingLegData(
+        pathTerminator: String(describing: pathTerminator),
+        field: "magneticCourseDeg"
+      )
+    }
+    return course
+  }
+
+  private static func requireArcRadius(
+    from leg: ProcedureLeg,
+    for pathTerminator: PathTerminator
+  ) throws -> Double {
+    guard let arcRadius = leg.arcRadiusNM else {
+      throw CIFPProcessorError.missingLegData(
+        pathTerminator: String(describing: pathTerminator),
+        field: "arcRadiusNM"
+      )
+    }
+    return arcRadius
+  }
+
+  private static func requireRho(
+    from leg: ProcedureLeg,
+    for pathTerminator: PathTerminator
+  ) throws -> Double {
+    guard let rho = leg.rhoNM else {
+      throw CIFPProcessorError.missingLegData(
+        pathTerminator: String(describing: pathTerminator),
+        field: "rhoNM"
+      )
+    }
+    return rho
+  }
+
+  private static func requireTurnDirection(
+    from leg: ProcedureLeg,
+    for pathTerminator: PathTerminator
+  ) throws -> String {
+    guard let td = leg.turnDirection else {
+      throw CIFPProcessorError.missingLegData(
+        pathTerminator: String(describing: pathTerminator),
+        field: "turnDirection"
+      )
+    }
+    switch td {
+      case .left: return "left"
+      case .right: return "right"
+      case .either: return "either"
+    }
+  }
+
+  // MARK: - Instance Methods
 
   /// Downloads and parses CIFP data for the specified cycle.
   /// - Parameters:
@@ -177,7 +342,7 @@ struct CIFPProcessor {
       // Check if all legs are plottable
       let isPlottable = sid.legs.allSatisfy { leg in
         guard let pathTerminator = leg.pathTerminator else { return false }
-        return Self.plottablePathTerminators.contains(pathTerminator)
+        return !Self.unplottablePathTerminators.contains(pathTerminator)
       }
 
       // Extract fixes and calculate gradient if plottable
@@ -196,6 +361,102 @@ struct CIFPProcessor {
         runwayNames: Array(sid.runwayNames).sorted(),
         fixes: fixes,
         requiredClimbGradientFtPerNM: requiredGradient
+      )
+      procedures.append(procedure)
+    }
+
+    return procedures.sorted { $0.identifier < $1.identifier }
+  }
+
+  /// Extracts approach procedures for an airport from CIFP data.
+  /// - Parameters:
+  ///   - icaoId: The ICAO identifier of the airport.
+  ///   - cifpData: The parsed CIFP linked data.
+  /// - Returns: Array of approach procedures for the airport.
+  func extractApproachProcedures(
+    icaoId: String,
+    cifpData: CIFPData
+  ) async -> [AirportDataCodable.ApproachProcedureCodable] {
+    guard let cifpAirport = await cifpData.airports[icaoId] else {
+      return []
+    }
+
+    var procedures = [AirportDataCodable.ApproachProcedureCodable]()
+    var processedIdentifiers = Set<String>()
+
+    for approach in cifpAirport.approaches {
+      // Skip transitions and missed approach route types — we only want the main approach
+      guard approach.approachType != .transition,
+        approach.approachType != .missedApproach
+      else { continue }
+
+      // Skip if we've already processed this approach identifier (avoid duplicates)
+      guard !processedIdentifiers.contains(approach.identifier) else { continue }
+      processedIdentifiers.insert(approach.identifier)
+
+      // Construct the full human-readable name
+      let name = Self.approachName(
+        type: approach.approachType.description,
+        identifier: approach.identifier
+      )
+
+      // Check if all missed approach legs are plottable (must have legs to be plottable).
+      // Manual terminations (FM/VM/HM) are acceptable as the final leg — e.g., "hold until
+      // ATC clears you" is a common missed approach ending with a known fix.
+      let sortedMissedApproachLegs = approach.missedApproachLegs.sorted()
+      let isMissedApproachPlottable =
+        !sortedMissedApproachLegs.isEmpty
+        && sortedMissedApproachLegs.last?.pathTerminator != nil
+        && sortedMissedApproachLegs.dropLast().allSatisfy { leg in
+          guard let pathTerminator = leg.pathTerminator else { return false }
+          return !Self.unplottablePathTerminators.contains(pathTerminator)
+        }
+
+      // Extract missed approach fixes with altitude constraints if plottable
+      var missedApproachFixes: [AirportDataCodable.FixCodable]?
+      if isMissedApproachPlottable {
+        var fixes = [AirportDataCodable.FixCodable]()
+        for leg in sortedMissedApproachLegs {
+          // Only include legs that have an altitude constraint
+          guard let altitudeConstraint = leg.altitudeConstraint else { continue }
+
+          let fix = await leg.fix
+          guard let coordinate = fix?.coordinate,
+            let fixIdentifier = fix?.identifier
+          else { continue }
+
+          guard let altitudeRestriction = convertAltitudeConstraint(altitudeConstraint) else {
+            continue
+          }
+
+          let legTypeCodable: LegTypeCodable
+          do {
+            guard let result = try Self.legType(from: leg) else { continue }
+            legTypeCodable = result
+          } catch {
+            logger.warning("Skipping missed approach leg in \(approach.identifier): \(error)")
+            continue
+          }
+
+          fixes.append(
+            AirportDataCodable.FixCodable(
+              identifier: fixIdentifier,
+              latitude: coordinate.latitudeDeg,
+              longitude: coordinate.longitudeDeg,
+              altitudeRestriction: altitudeRestriction,
+              legType: legTypeCodable
+            )
+          )
+        }
+        if !fixes.isEmpty {
+          missedApproachFixes = fixes
+        }
+      }
+
+      let procedure = AirportDataCodable.ApproachProcedureCodable(
+        identifier: approach.identifier,
+        name: name,
+        missedApproachFixes: missedApproachFixes
       )
       procedures.append(procedure)
     }
@@ -231,12 +492,23 @@ struct CIFPProcessor {
         convertAltitudeConstraint($0)
       }
 
+      // Convert leg type
+      let legTypeCodable: LegTypeCodable
+      do {
+        guard let result = try Self.legType(from: leg) else { continue }
+        legTypeCodable = result
+      } catch {
+        logger.warning("Skipping SID leg in \(sid.identifier): \(error)")
+        continue
+      }
+
       // Add fix to list
       let fixCodable = AirportDataCodable.FixCodable(
         identifier: fixIdentifier,
         latitude: currentLat,
         longitude: currentLon,
-        altitudeRestriction: altitudeRestriction
+        altitudeRestriction: altitudeRestriction,
+        legType: legTypeCodable
       )
       fixes.append(fixCodable)
 
@@ -343,6 +615,7 @@ enum CIFPProcessorError: LocalizedError {
   case invalidURL(String)
   case downloadFailed(Int)
   case cifpFileNotFound
+  case missingLegData(pathTerminator: String, field: String)
 
   var errorDescription: String? {
     String(localized: "FAA CIFP data could not be processed.")
@@ -356,6 +629,8 @@ enum CIFPProcessorError: LocalizedError {
         String(localized: "Download failed with HTTP status \(statusCode).")
       case .cifpFileNotFound:
         String(localized: "FAACIFP file not found in downloaded archive.")
+      case .missingLegData(let pathTerminator, let field):
+        String(localized: "Path terminator \(pathTerminator) missing required field \(field).")
     }
   }
 }

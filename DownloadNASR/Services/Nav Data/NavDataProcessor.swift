@@ -24,7 +24,7 @@ enum NavDataProcessorError: LocalizedError {
 
 /// Orchestrates the complete airport and obstacle data processing pipeline.
 ///
-/// ``DataProcessor`` coordinates the loading, merging, and output of data from multiple sources:
+/// ``NavDataProcessor`` coordinates the loading, merging, and output of data from multiple sources:
 ///
 /// 1. Initialize timezone lookup database
 /// 2. Download and parse FAA NASR data using SwiftNASR
@@ -326,15 +326,27 @@ struct NavDataProcessor {
     // Add all NASR airports first (they have priority)
     for airport in NASRAirports {
       // Add departure procedures from CIFP if available
-      var departureProcedures: [AirportDataCodable.DepartureProcedureCodable]?
+      let departureProcedures: [AirportDataCodable.DepartureProcedureCodable]?
       if let cifpData, let icaoId = airport.ICAO_ID {
         let procedures = await cifpProcessor.extractDepartureProcedures(
           icaoId: icaoId,
           cifpData: cifpData
         )
-        if !procedures.isEmpty {
-          departureProcedures = procedures
-        }
+        departureProcedures = procedures.isEmpty ? nil : procedures
+      } else {
+        departureProcedures = nil
+      }
+
+      // Add approach procedures from CIFP if available
+      let approachProcedures: [AirportDataCodable.ApproachProcedureCodable]?
+      if let cifpData, let icaoId = airport.ICAO_ID {
+        let procedures = await cifpProcessor.extractApproachProcedures(
+          icaoId: icaoId,
+          cifpData: cifpData
+        )
+        approachProcedures = procedures.isEmpty ? nil : procedures
+      } else {
+        approachProcedures = nil
       }
 
       let airportWithDepartures = AirportDataCodable.AirportCodable(
@@ -350,7 +362,8 @@ struct NavDataProcessor {
         variation: airport.variation,
         timeZone: airport.timeZone,
         runways: airport.runways,
-        departureProcedures: departureProcedures
+        departureProcedures: departureProcedures,
+        approachProcedures: approachProcedures
       )
 
       mergedAirports.append(airportWithDepartures)
@@ -408,15 +421,27 @@ struct NavDataProcessor {
       )
 
       // Add departure procedures from CIFP if available (OurAirports may have ICAO IDs too)
-      var departureProcedures: [AirportDataCodable.DepartureProcedureCodable]?
+      let departureProcedures: [AirportDataCodable.DepartureProcedureCodable]?
       if let cifpData, let icaoId = ourAirport.ICAO_ID {
         let procedures = await cifpProcessor.extractDepartureProcedures(
           icaoId: icaoId,
           cifpData: cifpData
         )
-        if !procedures.isEmpty {
-          departureProcedures = procedures
-        }
+        departureProcedures = procedures.isEmpty ? nil : procedures
+      } else {
+        departureProcedures = nil
+      }
+
+      // Add approach procedures from CIFP if available (OurAirports may have ICAO IDs too)
+      let approachProcedures: [AirportDataCodable.ApproachProcedureCodable]?
+      if let cifpData, let icaoId = ourAirport.ICAO_ID {
+        let procedures = await cifpProcessor.extractApproachProcedures(
+          icaoId: icaoId,
+          cifpData: cifpData
+        )
+        approachProcedures = procedures.isEmpty ? nil : procedures
+      } else {
+        approachProcedures = nil
       }
 
       let codableAirport = AirportDataCodable.AirportCodable(
@@ -432,7 +457,8 @@ struct NavDataProcessor {
         variation: variation,
         timeZone: timeZone,
         runways: runways,
-        departureProcedures: departureProcedures
+        departureProcedures: departureProcedures,
+        approachProcedures: approachProcedures
       )
 
       mergedAirports.append(codableAirport)

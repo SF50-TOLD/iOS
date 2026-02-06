@@ -1,12 +1,13 @@
 # Navigation Data Processing Pipeline
 
-Understanding how navigation data (airports and runways) flows through DownloadNASR.
+Understanding how navigation data flows through DownloadNASR.
 
 ## Overview
 
-DownloadNASR processes airport and runway data from two primary sources—FAA NASR
-and OurAirports—into a compressed format optimized for mobile distribution. This
-article explains each stage of the pipeline and the data transformations applied.
+DownloadNASR processes airport, runway, instrument procedure, and obstacle data
+from multiple FAA sources and OurAirports into a compressed format optimized for
+mobile distribution. This article explains each stage of the pipeline and the
+data transformations applied.
 
 ## Pipeline Architecture
 
@@ -43,7 +44,27 @@ The loader filters to:
 - Runways ≥500 feet
 - Excludes water runways
 
-## Stage 3: Merge and Deduplicate
+## Stage 3: FAA CIFP Download
+
+``CIFPProcessor`` downloads and parses Coded Instrument Flight Procedures for the
+same AIRAC cycle. CIFP data provides:
+
+- **Departure procedures** (SIDs): Fixes with coordinates, altitude restrictions,
+  and leg type geometry (track-to-fix, course-to-fix, holds, arcs, etc.)
+- **Approach procedures**: Missed approach fixes with altitude constraints
+
+Each procedure leg is converted to a ``LegTypeCodable`` with the path terminator
+type, magnetic course, turn direction (for holds), and arc radius (for RF/DME arcs).
+Legs with missing required data (e.g., a course-to-fix without a course) are skipped
+with a warning.
+
+## Stage 4: FAA DOF Download
+
+``DOFProcessor`` downloads the FAA Digital Obstacle File and extracts obstacles
+(towers, buildings, terrain) with their coordinates and MSL heights. Only obstacles
+near airports in the dataset are included to minimize file size.
+
+## Stage 5: Merge and Deduplicate
 
 NASR data takes priority over OurAirports. The merge process:
 
@@ -56,7 +77,7 @@ NASR data takes priority over OurAirports. The merge process:
 This ensures US airports use authoritative FAA data while international
 airports use OurAirports data.
 
-## Stage 4: Data Enrichment
+## Stage 6: Data Enrichment
 
 Each airport record is enriched with:
 
@@ -70,7 +91,7 @@ coordinates. This enables local time display in the app.
 Using the `Geomagnetism` model (World Magnetic Model), magnetic declination
 is calculated for airports without NASR-provided variation data.
 
-## Stage 5: Encoding and Compression
+## Stage 7: Encoding and Compression
 
 The final data structure is encoded as:
 
@@ -79,7 +100,7 @@ The final data structure is encoded as:
 
 The output filename follows the pattern: `{cycle}.plist.lzma` (e.g., `2501.plist.lzma`)
 
-## Stage 6: GitHub Upload
+## Stage 8: GitHub Upload
 
 If a GitHub token is configured, ``GitHubUploader`` pushes the compressed file
 to the Airport-Data repository. The iOS app downloads from this location.
@@ -88,39 +109,47 @@ Upload path: `3.0/{cycle}.plist.lzma`
 
 ## Data Format
 
-The compressed file contains an `AirportDataCodable` structure:
+The compressed file contains an ``AirportDataCodable`` structure:
 
 ```
 AirportDataCodable
-├── nasrCycle: Cycle (e.g., 2501)
-├── ourAirportsLastUpdated: Date
-└── airports: [AirportCodable]
-    ├── recordID: String
-    ├── locationID: String (FAA LID)
-    ├── ICAO_ID: String?
-    ├── name: String
-    ├── city: String
-    ├── dataSource: "nasr" | "ourAirports"
-    ├── latitude: Double (degrees)
-    ├── longitude: Double (degrees)
-    ├── elevation: Double (meters)
-    ├── variation: Double (degrees)
-    ├── timeZone: String?
-    └── runways: [RunwayCodable]
-        ├── name: String
-        ├── elevation: Double? (meters)
-        ├── trueHeading: Double (degrees)
-        ├── gradient: Double?
-        ├── length: Double (meters)
-        ├── takeoffRun: Double? (meters)
-        ├── takeoffDistance: Double? (meters)
-        ├── landingDistance: Double? (meters)
-        ├── isTurf: Bool
-        └── reciprocalName: String?
+├── cycles: DataCycles
+│   ├── nasr: CycleInfo? (effective/expires dates)
+│   ├── cifp: CycleInfo?
+│   └── dof: CycleInfo?
+├── ourAirportsLastUpdated: Date?
+├── airports: [AirportCodable]
+│   ├── recordID, locationID, ICAO_ID?, name, city?
+│   ├── dataSource: "nasr" | "ourAirports"
+│   ├── latitude, longitude (degrees), elevation (meters)
+│   ├── variation (degrees), timeZone?
+│   ├── runways: [RunwayCodable]
+│   │   ├── name, trueHeading, length, elevation?
+│   │   ├── takeoffRun?, takeoffDistance?, landingDistance?
+│   │   ├── gradient?, isTurf, reciprocalName?
+│   │   └── width?, thresholdCrossingHeight?, glidepathAngle?
+│   ├── departureProcedures: [DepartureProcedureCodable]?
+│   │   ├── identifier, runwayNames
+│   │   ├── requiredClimbGradientFtPerNM?
+│   │   └── fixes: [FixCodable]?
+│   │       ├── identifier, latitude, longitude
+│   │       ├── altitudeRestriction?
+│   │       └── legType: LegTypeCodable
+│   └── approachProcedures: [ApproachProcedureCodable]?
+│       ├── identifier, name
+│       └── missedApproachFixes: [FixCodable]?
+└── obstacles: [ObstacleCodable]
+    ├── heightFtMSL
+    ├── latitude, longitude
 ```
+
+Each ``LegTypeCodable`` stores a discriminator (`type`) plus optional `course`
+(degrees), `turnDirection`, and `arcRadius` (nautical miles).
 
 ## See Also
 
 - ``NASRProcessor``
+- ``CIFPProcessor``
+- ``DOFProcessor``
 - ``OurAirportsLoader``
 - ``GitHubUploader``

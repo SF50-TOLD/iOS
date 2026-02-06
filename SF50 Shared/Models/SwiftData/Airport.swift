@@ -18,31 +18,6 @@ public enum DataSource: String, Codable {
 /// ``Airport`` represents an aerodrome with its associated metadata including
 /// location, elevation, magnetic variation, and runways. Airport data is
 /// persisted using SwiftData and can be sourced from NASR or OurAirports.
-///
-/// ## Topics
-///
-/// ### Identification
-/// - ``recordID``
-/// - ``locationID``
-/// - ``ICAO_ID``
-/// - ``displayID``
-/// - ``name``
-/// - ``city``
-///
-/// ### Location
-/// - ``latitude``
-/// - ``longitude``
-/// - ``elevation``
-/// - ``coordinate``
-/// - ``location``
-/// - ``timeZone``
-///
-/// ### Navigation
-/// - ``variation``
-///
-/// ### Relationships
-/// - ``runways``
-/// - ``dataSource``
 @Model
 public final class Airport {
   /// Unique identifier for SwiftData persistence
@@ -77,6 +52,10 @@ public final class Airport {
   /// Departure procedures available at this airport
   @Relationship(deleteRule: .cascade)
   public var departureProcedures: [DepartureProcedure]
+
+  /// Approach procedures available at this airport
+  @Relationship(deleteRule: .cascade)
+  public var approachProcedures: [ApproachProcedure]
 
   /// Airport latitude in degrees
   public var latitude: Measurement<UnitAngle> {
@@ -177,5 +156,6 @@ public final class Airport {
     _timeZone = timeZone?.identifier
     self.runways = []
     self.departureProcedures = []
+    self.approachProcedures = []
   }
 }

@@ -78,6 +78,7 @@ public final class PreviewHelper: Sendable {
       Cycle.self,
       Obstacle.self,
       DepartureProcedure.self,
+      ApproachProcedure.self,
       Fix.self,
       configurations: .init(isStoredInMemoryOnly: true)
     )
@@ -89,6 +90,7 @@ public final class PreviewHelper: Sendable {
 
     try mainContext.delete(model: Fix.self)
     try mainContext.delete(model: DepartureProcedure.self)
+    try mainContext.delete(model: ApproachProcedure.self)
     try mainContext.delete(model: Obstacle.self)
     try mainContext.delete(model: Runway.self)
     try mainContext.delete(model: Airport.self)

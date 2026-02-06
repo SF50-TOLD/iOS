@@ -47,6 +47,7 @@ struct SF50_TOLDApp: App {
       Cycle.self,
       Obstacle.self,
       DepartureProcedure.self,
+      ApproachProcedure.self,
       Fix.self
     ])
 

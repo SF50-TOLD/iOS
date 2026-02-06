@@ -92,6 +92,9 @@ public struct AirportDataCodable: Codable, Sendable {
     /// Departure procedures (SIDs) at this airport (nil if CIFP data not available)
     public let departureProcedures: [DepartureProcedureCodable]?
 
+    /// Approach procedures at this airport (nil if CIFP data not available)
+    public let approachProcedures: [ApproachProcedureCodable]?
+
     public init(
       recordID: String,
       locationID: String,
@@ -105,7 +108,8 @@ public struct AirportDataCodable: Codable, Sendable {
       variation: Double,
       timeZone: String?,
       runways: [RunwayCodable],
-      departureProcedures: [DepartureProcedureCodable]?
+      departureProcedures: [DepartureProcedureCodable]?,
+      approachProcedures: [ApproachProcedureCodable]?
     ) {
       self.recordID = recordID
       self.locationID = locationID
@@ -120,6 +124,7 @@ public struct AirportDataCodable: Codable, Sendable {
       self.timeZone = timeZone
       self.runways = runways
       self.departureProcedures = departureProcedures
+      self.approachProcedures = approachProcedures
     }
   }
 
@@ -249,6 +254,34 @@ public struct AirportDataCodable: Codable, Sendable {
   }
 
   /**
+   * Codable representation of an approach procedure.
+   *
+   * ``ApproachProcedureCodable`` stores approach procedure data extracted from CIFP.
+   * For approaches with plottable missed approach legs, fixes with altitude constraints
+   * are included.
+   */
+  public struct ApproachProcedureCodable: Codable, Sendable {
+    /// CIFP identifier (e.g., "I23LZ")
+    public let identifier: String
+
+    /// Full approach name (e.g., "ILS Z RWY 23L")
+    public let name: String
+
+    /// Missed approach fixes with altitude constraints (nil if missed approach not plottable)
+    public let missedApproachFixes: [FixCodable]?
+
+    public init(
+      identifier: String,
+      name: String,
+      missedApproachFixes: [FixCodable]?
+    ) {
+      self.identifier = identifier
+      self.name = name
+      self.missedApproachFixes = missedApproachFixes
+    }
+  }
+
+  /**
    * Codable representation of a fix/waypoint in a procedure.
    */
   public struct FixCodable: Codable, Sendable {
@@ -264,16 +297,21 @@ public struct AirportDataCodable: Codable, Sendable {
     /// Altitude restriction (nil if no restriction)
     public let altitudeRestriction: AltitudeRestrictionCodable?
 
+    /// Leg type geometry for plotting
+    public let legType: LegTypeCodable
+
     public init(
       identifier: String,
       latitude: Double,
       longitude: Double,
-      altitudeRestriction: AltitudeRestrictionCodable?
+      altitudeRestriction: AltitudeRestrictionCodable?,
+      legType: LegTypeCodable
     ) {
       self.identifier = identifier
       self.latitude = latitude
       self.longitude = longitude
       self.altitudeRestriction = altitudeRestriction
+      self.legType = legType
     }
   }
 

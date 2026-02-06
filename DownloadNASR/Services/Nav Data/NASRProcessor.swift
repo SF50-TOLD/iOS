@@ -46,9 +46,9 @@ actor ProgressObservationHolder {
 ///
 /// ## See Also
 ///
-/// - ``DataProcessor`` - The orchestrator that uses this processor
-/// - ``CIFPProcessor`` - Processes CIFP departure procedure data
-/// - ``DOFProcessor`` - Processes DOF obstacle data
+/// - ``NavDataProcessor``
+/// - ``CIFPProcessor``
+/// - ``DOFProcessor``
 struct NASRProcessor {
   // Progress allocation within NASR processing (out of 100):
   // - Download: 0-35
@@ -223,7 +223,8 @@ struct NASRProcessor {
         variation: variationDeg,
         timeZone: timeZone,
         runways: runways,
-        departureProcedures: nil  // Added in DataProcessor from CIFP data
+        departureProcedures: nil,  // Added in DataProcessor from CIFP data
+        approachProcedures: nil
       )
 
       codableAirports.append(codableAirport)

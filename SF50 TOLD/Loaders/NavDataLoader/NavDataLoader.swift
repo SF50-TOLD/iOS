@@ -15,7 +15,7 @@ import SwiftNASR
 /// 1. **Download**: Fetches compressed data from GitHub
 /// 2. **Decompress**: Extracts LZMA-compressed property list
 /// 3. **Import**: Populates SwiftData with `Airport`, `Runway`, `DepartureProcedure`,
-///    `Fix`, and `Obstacle` models
+///    `ApproachProcedure`, `Fix`, and `Obstacle` models
 ///
 /// ## Data Source
 ///
@@ -32,7 +32,8 @@ import SwiftNASR
 ///
 /// - Airport records (location ID, name, coordinates, elevation, etc.)
 /// - Runway records (heading, length, distances, gradient)
-/// - Departure procedures (SIDs with fixes and altitude restrictions)
+/// - Departure procedures (SIDs with fixes, altitude restrictions, and leg types)
+/// - Approach procedures (with missed approach fixes and altitude restrictions)
 /// - Obstacles (from FAA Digital Obstacle File)
 /// - NASR, CIFP, and DOF cycle information
 /// - OurAirports last update timestamp
@@ -193,6 +194,7 @@ actor NavDataLoader {
     try modelContext.delete(model: SF50_Shared.Airport.self)
     try modelContext.delete(model: SF50_Shared.Runway.self)
     try modelContext.delete(model: SF50_Shared.DepartureProcedure.self)
+    try modelContext.delete(model: SF50_Shared.ApproachProcedure.self)
     try modelContext.delete(model: SF50_Shared.Fix.self)
     try modelContext.delete(model: SF50_Shared.Obstacle.self)
     try modelContext.delete(model: NOTAM.self)
@@ -288,8 +290,35 @@ actor NavDataLoader {
           latitude: .init(value: fixData.latitude, unit: .degrees),
           longitude: .init(value: fixData.longitude, unit: .degrees),
           altitudeRestriction: altitudeRestriction,
+          legType: fixData.legType,
           sequenceIndex: index,
           departureProcedure: procedure
+        )
+        modelContext.insert(fix)
+      }
+    }
+
+    // Load approach procedures
+    for procedureData in airport.approachProcedures ?? [] {
+      let procedure = ApproachProcedure(
+        identifier: procedureData.identifier,
+        name: procedureData.name,
+        airport: record
+      )
+      modelContext.insert(procedure)
+
+      for (index, fixData) in (procedureData.missedApproachFixes ?? []).enumerated() {
+        let altitudeRestriction = fixData.altitudeRestriction.map {
+          AltitudeRestriction(from: $0)
+        }
+        let fix = Fix(
+          identifier: fixData.identifier,
+          latitude: .init(value: fixData.latitude, unit: .degrees),
+          longitude: .init(value: fixData.longitude, unit: .degrees),
+          altitudeRestriction: altitudeRestriction,
+          legType: fixData.legType,
+          sequenceIndex: index,
+          approachProcedure: procedure
         )
         modelContext.insert(fix)
       }

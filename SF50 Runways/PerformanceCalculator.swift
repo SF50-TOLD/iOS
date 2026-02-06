@@ -66,6 +66,7 @@ class PerformanceCalculator {
       Cycle.self,
       Obstacle.self,
       DepartureProcedure.self,
+      ApproachProcedure.self,
       Fix.self
     ])
     let modelConfiguration = ModelConfiguration(

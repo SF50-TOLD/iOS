@@ -52,7 +52,7 @@
       "location" : "https://github.com/RISCfuture/StreamingLZMA",
       "state" : {
         "branch" : "main",
-        "revision" : "1b69f4e5e5dd8cb24f19456f899dd9be1e023f1a"
+        "revision" : "ac6e5870160f91e5911296e0b34ad844eb76f366"
       }
     },
     {
@@ -133,7 +133,7 @@
       "location" : "https://github.com/RISCfuture/SwiftCIFP.git",
       "state" : {
         "branch" : "main",
-        "revision" : "8ef2536de16dd51b37998854c00cd84a99cfb9fe"
+        "revision" : "d282ca338e10afbf7c46389fb734d89e06403885"
       }
     },
     {

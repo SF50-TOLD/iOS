@@ -21,6 +21,15 @@ It provides:
 - ``DataSource``
 - ``Runway``
 
+### Instrument Procedures
+
+- ``DepartureProcedure``
+- ``ApproachProcedure``
+- ``Fix``
+- ``LegType``
+- ``LegTypeCodable``
+- ``AltitudeRestriction``
+
 ### Data Snapshots
 
 Sendable value types for background calculations:
