@@ -1,9 +1,5 @@
 # ``SF50_TOLD/NavDataLoader``
 
-@Metadata {
-  @DocumentationExtension(mergeBehavior: append)
-}
-
 ## Topics
 
 ### Loading

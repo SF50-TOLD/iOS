@@ -4,20 +4,6 @@ import Foundation
 ///
 /// ``NOTAMInput`` is a value type that captures NOTAM data for use in
 /// background actor contexts where the SwiftData ``NOTAM`` model cannot be accessed.
-///
-/// ## Topics
-///
-/// ### Properties
-/// - ``contaminationType``
-/// - ``contaminationDepth``
-/// - ``contamination``
-/// - ``takeoffDistanceShortening``
-/// - ``landingDistanceShortening``
-/// - ``obstacleHeight``
-/// - ``obstacleDistance``
-///
-/// ### Creating Snapshots
-/// - ``init(from:)``
 public struct NOTAMInput: Sendable, Equatable {
   /// Raw contamination type string for serialization
   public let contaminationType: String?
@@ -76,31 +62,6 @@ public struct NOTAMInput: Sendable, Equatable {
 /// ``RunwayInput`` is a value type that captures runway data for use in
 /// background actor contexts where the SwiftData ``Runway`` model cannot be accessed.
 /// It includes all runway properties needed for performance calculations.
-///
-/// ## Topics
-///
-/// ### Identification
-/// - ``id``
-/// - ``name``
-///
-/// ### Physical Properties
-/// - ``elevation``
-/// - ``trueHeading``
-/// - ``gradient``
-/// - ``length``
-/// - ``isTurf``
-///
-/// ### Declared Distances
-/// - ``takeoffRun``
-/// - ``takeoffDistance``
-/// - ``landingDistance``
-///
-/// ### NOTAM Data
-/// - ``notam``
-/// - ``withContamination(_:)``
-///
-/// ### Wind Calculations
-/// - ``headwind(conditions:)``
 public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
   // MARK: - Properties
 
@@ -303,20 +264,6 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
 ///
 /// ``AirportInput`` is a value type that captures airport data for use in
 /// background actor contexts where the SwiftData ``Airport`` model cannot be accessed.
-///
-/// ## Topics
-///
-/// ### Properties
-/// - ``recordID``
-/// - ``locationID``
-/// - ``name``
-/// - ``elevation``
-/// - ``variation``
-/// - ``timeZone``
-/// - ``runways``
-///
-/// ### Creating Snapshots
-/// - ``init(from:)``
 public struct AirportInput: Sendable {
   /// Unique SwiftData record identifier
   public let recordID: String

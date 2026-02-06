@@ -306,7 +306,7 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   // MARK: - Progress Weighting
 
   /// Sum of all three phase weights for this region, proportional to its tile count
-  /// relative to the total. Used as ``Progress/pendingUnitCount`` when adding a
+  /// relative to the total. Used as `Progress.pendingUnitCount` when adding a
   /// per-region child to a processing parent.
   public func totalPhaseWeight(totalTiles: Int) -> Int64 {
     // numTiles / totalTiles gives the region's share; multiply by 10 000 to stay in integer space.

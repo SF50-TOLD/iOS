@@ -3,7 +3,7 @@ import SwiftMETAR
 
 /// Winds aloft data for a single station.
 ///
-/// ``WindsAloftData`` wraps SwiftMETAR's ``WindsAloft.Station`` providing convenience
+/// ``WindsAloftData`` wraps SwiftMETAR's `WindsAloft.Station` providing convenience
 /// accessors for wind and temperature data at various altitudes.
 ///
 /// ## Usage

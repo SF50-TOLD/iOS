@@ -7,16 +7,6 @@ import SwiftData
 /// ``Obstacle`` represents a vertical obstruction that could affect aircraft
 /// operations, such as towers, buildings, or terrain features. Obstacle data
 /// is used for departure procedure planning and obstacle clearance calculations.
-///
-/// ## Topics
-///
-/// ### Location
-/// - ``latitude``
-/// - ``longitude``
-/// - ``coordinate``
-///
-/// ### Height
-/// - ``heightMSL``
 @Model
 public final class Obstacle {
   private var _heightMSL: Double  // meters

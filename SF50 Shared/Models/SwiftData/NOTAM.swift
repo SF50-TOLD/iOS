@@ -23,23 +23,6 @@ public enum ShorteningLocation: String, Codable, CaseIterable, Sendable {
 ///
 /// ``NOTAM`` represents temporary conditions that affect runway performance calculations,
 /// including contamination (ice, snow, water), displaced thresholds, and obstacles.
-///
-/// ## Topics
-///
-/// ### Contamination
-/// - ``contamination``
-///
-/// ### Distance Restrictions
-/// - ``takeoffDistanceShortening``
-/// - ``landingDistanceShortening``
-///
-/// ### Obstacles
-/// - ``obstacleHeight``
-/// - ``obstacleDistance``
-///
-/// ### State
-/// - ``isEmpty``
-/// - ``clearFor(operation:)``
 @Model
 public final class NOTAM {
   private var _contaminationType: String?

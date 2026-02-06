@@ -7,22 +7,6 @@ import SwiftData
 /// CIFP (Coded Instrument Flight Procedures) data. It includes the procedure
 /// identifier, associated runways, required climb gradient if any, and the
 /// sequence of fixes that define the procedure route.
-///
-/// ## Topics
-///
-/// ### Identification
-/// - ``identifier``
-/// - ``runwayNames``
-///
-/// ### Requirements
-/// - ``requiredClimbGradientFtPerNM``
-///
-/// ### Route
-/// - ``fixes``
-/// - ``isPlottable``
-///
-/// ### Relationships
-/// - ``airport``
 @Model
 public final class DepartureProcedure {
   #Unique<DepartureProcedure>([\.airport, \.identifier])

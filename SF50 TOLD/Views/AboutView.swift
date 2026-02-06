@@ -78,6 +78,7 @@ struct AboutView: View {
           LabeledContent("Terrain Data") {
             Text(terrainGeneratedAt, format: .dateTime.day().month().year())
               .bold()
+              .foregroundStyle(.primary)
           }
         }
 

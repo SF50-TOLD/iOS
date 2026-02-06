@@ -6,28 +6,6 @@ import SwiftData
 /// ``Scenario`` represents a set of adjustments to be applied to base conditions
 /// when calculating hypothetical performance. Scenarios can modify temperature,
 /// wind speed, weight, flap settings, and runway contamination.
-///
-/// ## Topics
-///
-/// ### Properties
-/// - ``name``
-/// - ``operation``
-///
-/// ### Delta Adjustments
-/// - ``deltaTemperature``
-/// - ``deltaWindSpeed``
-/// - ``deltaWeight``
-///
-/// ### Overrides
-/// - ``flapSettingOverride``
-/// - ``getFlapSettingOverride()``
-/// - ``contaminationOverride``
-/// - ``contaminationDepth``
-/// - ``getContaminationOverride()``
-/// - ``isDryOverride``
-///
-/// ### Factory Methods
-/// - ``defaultScenarios()``
 @Model
 public final class Scenario {
   /// Scenario name

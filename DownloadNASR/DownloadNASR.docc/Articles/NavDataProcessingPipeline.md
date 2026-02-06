@@ -67,7 +67,7 @@ coordinates. This enables local time display in the app.
 
 ### Magnetic Variation
 
-Using the ``Geomagnetism`` model (World Magnetic Model), magnetic declination
+Using the `Geomagnetism` model (World Magnetic Model), magnetic declination
 is calculated for airports without NASR-provided variation data.
 
 ## Stage 5: Encoding and Compression
@@ -88,7 +88,7 @@ Upload path: `3.0/{cycle}.plist.lzma`
 
 ## Data Format
 
-The compressed file contains an ``AirportDataCodable`` structure:
+The compressed file contains an `AirportDataCodable` structure:
 
 ```
 AirportDataCodable

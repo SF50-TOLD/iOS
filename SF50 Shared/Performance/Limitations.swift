@@ -5,28 +5,6 @@ import Foundation
 /// ``Limitations`` provides access to the aircraft's certified operating limits
 /// as specified in the Aircraft Flight Manual (AFM). Different aircraft generations
 /// may have different limitations.
-///
-/// ## Topics
-///
-/// ### Weight Limits
-/// - ``maxTakeoffWeight``
-/// - ``maxLandingWeight``
-/// - ``maxZeroFuelWeight``
-///
-/// ### Altitude Limits
-/// - ``maxTakeoffAltitude``
-/// - ``maxEnrouteAltitude``
-///
-/// ### Wind Limits
-/// - ``maxTailwind``
-/// - ``maxCrosswind_flaps50``
-/// - ``maxCrosswind_flaps100``
-///
-/// ### Other Limits
-/// - ``maxFuel``
-/// - ``minRunwayLength``
-/// - ``minTemperature``
-/// - ``maxTemperature``
 public protocol Limitations {
   /// Maximum certified takeoff weight.
   static var maxTakeoffWeight: Measurement<UnitMass> { get }

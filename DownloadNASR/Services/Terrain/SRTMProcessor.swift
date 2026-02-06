@@ -51,9 +51,9 @@ enum SRTMProcessorError: LocalizedError {
 /// ## Progress Tracking
 ///
 /// The processor uses callbacks to report progress:
-/// - ``onProgress``: Called when progress state changes
-/// - ``onUploadError``: Called if R2 upload fails
-/// - ``onLog``: Called for each log entry
+/// - `onProgress`: Called when progress state changes
+/// - `onUploadError`: Called if R2 upload fails
+/// - `onLog`: Called for each log entry
 actor SRTMProcessor {
 
   // MARK: - Type Properties

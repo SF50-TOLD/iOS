@@ -10,27 +10,6 @@ import Foundation
 /// Performance calculations often produce results with uncertainty due to interpolation,
 /// extrapolation, or measurement error. This type encapsulates both the value and its
 /// uncertainty, while also representing error states like invalid inputs or offscale conditions.
-///
-/// ## Topics
-///
-/// ### Value Cases
-///
-/// - ``value(_:)``
-/// - ``valueWithUncertainty(_:uncertainty:)``
-///
-/// ### Error States
-///
-/// - ``invalid``
-/// - ``notAvailable``
-/// - ``notAuthorized``
-/// - ``offscaleHigh``
-/// - ``offscaleLow``
-///
-/// ### Transformations
-///
-/// - ``map(_:)-((T)->U)``
-/// - ``map(_:)-((T,T?)->(U,U?))``
-/// - ``flatMap(_:)``
 public enum Value<T> {
   /// A definite value with no uncertainty.
   case value(T)

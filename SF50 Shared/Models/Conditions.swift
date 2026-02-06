@@ -25,41 +25,6 @@ public let standardSeaLevelPressure = Measurement(
 /// ``Conditions`` represents weather observations or forecasts including wind,
 /// temperature, dewpoint, and pressure. Conditions can be sourced from METAR,
 /// TAF, WeatherKit forecasts, or manually entered by the user.
-///
-/// ## Topics
-///
-/// ### Creating Conditions
-///
-/// - ``init(windDirection:windSpeed:temperature:seaLevelPressure:)``
-/// - ``init(observation:)``
-/// - ``init(forecast:)``
-/// - ``init(weather:)-(CurrentWeather)``
-/// - ``init()``
-///
-/// ### Wind Properties
-///
-/// - ``windDirection``
-/// - ``windSpeed``
-/// - ``windsCalm``
-///
-/// ### Temperature and Pressure
-///
-/// - ``temperature``
-/// - ``dewpoint``
-/// - ``seaLevelPressure``
-/// - ``temperature(at:)``
-/// - ``densityAltitude(elevation:)``
-///
-/// ### Metadata
-///
-/// - ``validTime``
-/// - ``source``
-/// - ``Source``
-///
-/// ### Combining Conditions
-///
-/// - ``adding(conditions:)``
-/// - ``userModified(with:)``
 public struct Conditions: Sendable, Equatable {
   /// Time interval during which these conditions are valid.
   public let validTime: DateInterval

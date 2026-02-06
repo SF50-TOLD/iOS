@@ -22,13 +22,6 @@ public enum FlapSetting: Sendable {
 ///
 /// ``Configuration`` represents the physical configuration of the aircraft
 /// for performance calculations, including gross weight and flap deflection.
-///
-/// ## Topics
-///
-/// ### Properties
-/// - ``weight``
-/// - ``flapSetting``
-/// - ``iceProtection``
 public struct Configuration {
   /// Aircraft gross weight
   public let weight: Measurement<UnitMass>

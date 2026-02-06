@@ -7,26 +7,6 @@
 ///
 /// Performance models are configured with atmospheric conditions, aircraft
 /// configuration, and runway data, then queried for specific performance values.
-///
-/// ## Topics
-///
-/// ### Input Data
-/// - ``conditions``
-/// - ``configuration``
-/// - ``runway``
-/// - ``notam``
-///
-/// ### Takeoff Performance
-/// - ``takeoffRunFt``
-/// - ``takeoffDistanceFt``
-/// - ``takeoffClimbGradientFtNmi``
-/// - ``takeoffClimbRateFtMin``
-///
-/// ### Landing Performance
-/// - ``VrefKts``
-/// - ``landingRunFt``
-/// - ``landingDistanceFt``
-/// - ``meetsGoAroundClimbGradient``
 public protocol PerformanceModel {
   /// Atmospheric conditions for the calculation.
   var conditions: Conditions { get }

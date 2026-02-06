@@ -182,7 +182,7 @@ Terrain data is organized into geographic regions:
 - **Europe**: Western and Central Europe
 - **Additional regions**: As needed for coverage
 
-The ``TerrainRegion`` enum defines available regions and their geographic bounds.
+The `TerrainRegion` enum defines available regions and their geographic bounds.
 Use ``TerrainDataLoader/regionStatus(for:)`` to determine which region covers a
 specific coordinate.
 

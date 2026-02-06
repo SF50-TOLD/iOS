@@ -4,7 +4,7 @@ How terrain data is downloaded, processed, and distributed.
 
 ## Overview
 
-The terrain processing pipeline downloads SRTM elevation data, combines it into optimized regional files, and uploads to CloudFlare R2 for distribution. This build-time tool generates the terrain files that ``TerrainService`` loads at runtime.
+The terrain processing pipeline downloads SRTM elevation data, combines it into optimized regional files, and uploads to CloudFlare R2 for distribution. This build-time tool generates the terrain files that `TerrainService` loads at runtime.
 
 The pipeline processes ~14,000 individual 1×1 degree tiles into 11 regional files, with LZMA compression reducing total size from ~40 GB to ~3 GB.
 
@@ -116,7 +116,7 @@ Compressed files and manifest are uploaded to CloudFlare R2 for CDN distribution
 
 ## Output Format
 
-The output binary format is documented in detail in <doc:DigitalElevationModel>. Key points:
+The output binary format is documented in detail in the SF50 Shared framework's Digital Elevation Model article. Key points:
 
 - **Version 2**: Uses 64-bit file offsets for large regions
 - **Resolution**: 1201 samples per tile side (SRTM3)

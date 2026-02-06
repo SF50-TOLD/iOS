@@ -84,8 +84,8 @@ private struct ActorLogHandler: LogHandler {
 
 /// View model coordinating the airport data processing UI.
 ///
-/// ``ProcessorViewModel`` manages the state for the DownloadNASR tool's main
-/// interface. It coordinates ``DataProcessor`` execution and provides observable
+/// ``NavDataProcessorViewModel`` manages the state for the DownloadNASR tool's main
+/// interface. It coordinates ``NavDataProcessor`` execution and provides observable
 /// properties for progress display.
 ///
 /// ## Usage

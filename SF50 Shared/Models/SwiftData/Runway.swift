@@ -8,42 +8,6 @@ import SwiftData
 /// length, elevation, heading, gradient, and declared distances for takeoff and landing.
 /// Each physical runway surface is represented by two ``Runway`` instances (one for each
 /// direction) linked via the ``reciprocal`` relationship.
-///
-/// ## Topics
-///
-/// ### Identification
-/// - ``name``
-/// - ``airport``
-/// - ``reciprocal``
-///
-/// ### Physical Properties
-/// - ``elevation``
-/// - ``trueHeading``
-/// - ``magneticHeading``
-/// - ``gradient``
-/// - ``gradientOrBestGuess``
-/// - ``length``
-/// - ``isTurf``
-///
-/// ### Declared Distances
-/// - ``takeoffRun``
-/// - ``takeoffRunOrLength``
-/// - ``takeoffDistance``
-/// - ``takeoffDistanceOrLength``
-/// - ``landingDistance``
-/// - ``landingDistanceOrLength``
-///
-/// ### NOTAM-Adjusted Distances
-/// - ``notam``
-/// - ``notamedTakeoffDistance``
-/// - ``notamedTakeoffRun``
-/// - ``notamedLandingDistance``
-/// - ``hasTakeoffDistanceNOTAM``
-/// - ``hasLandingDistanceNOTAM``
-///
-/// ### Wind Calculations
-/// - ``headwind(conditions:)``
-/// - ``crosswind(conditions:)``
 @Model
 public final class Runway {
   /// Runway identifier (e.g., "28L", "09", "16R")
@@ -275,6 +239,7 @@ public final class Runway {
    *   - takeoffRun: Declared TORA, or `nil` to use full length.
    *   - takeoffDistance: Declared TODA, or `nil` to use full length.
    *   - landingDistance: Declared LDA, or `nil` to use full length.
+   *   - width: Runway width, or `nil` if not available.
    *   - isTurf: Whether the runway is unpaved (grass/turf).
    *   - thresholdCoordinate: Threshold location, or `nil` if not available.
    *   - thresholdCrossingHeight: TCH for approach, or `nil` if not available.

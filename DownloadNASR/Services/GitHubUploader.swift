@@ -10,7 +10,7 @@ import Logging
 /// ## Authentication
 ///
 /// Requires a GitHub Personal Access Token with "Contents" write permission.
-/// Tokens are stored securely using ``KeychainManager``.
+/// Tokens are stored securely using `KeychainManager`.
 ///
 /// ## Usage
 ///
@@ -26,9 +26,9 @@ import Logging
 /// ## Error Handling
 ///
 /// Throws ``GitHubAPIError`` for common failure modes:
-/// - ``GitHubAPIError/invalidToken``: Token expired or invalid
-/// - ``GitHubAPIError/permissionDenied``: Token lacks write access
-/// - ``GitHubAPIError/repositoryNotFound``: Repo not found or not accessible
+/// - `GitHubAPIError.invalidToken`: Token expired or invalid
+/// - `GitHubAPIError.permissionDenied`: Token lacks write access
+/// - `GitHubAPIError.repositoryNotFound`: Repo not found or not accessible
 class GitHubUploader {
   private let token: String
   private let repo: String

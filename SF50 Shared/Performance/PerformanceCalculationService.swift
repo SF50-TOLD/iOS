@@ -44,16 +44,6 @@ extension Value where T == Double {
 /// ``TakeoffResults`` contains the computed takeoff distances and climb performance
 /// for a given set of conditions. All values are wrapped in ``Value`` to handle
 /// uncertainty and error states.
-///
-/// ## Topics
-///
-/// ### Distances
-/// - ``takeoffRun``
-/// - ``takeoffDistance``
-///
-/// ### Climb Performance
-/// - ``takeoffClimbGradient``
-/// - ``takeoffClimbRate``
 public struct TakeoffResults {
   /// Ground run distance from brake release to liftoff.
   public let takeoffRun: Value<Measurement<UnitLength>>
@@ -72,18 +62,6 @@ public struct TakeoffResults {
 ///
 /// ``LandingResults`` contains the computed landing distances, reference speed,
 /// and go-around capability for a given set of conditions.
-///
-/// ## Topics
-///
-/// ### Speeds
-/// - ``Vref``
-///
-/// ### Distances
-/// - ``landingRun``
-/// - ``landingDistance``
-///
-/// ### Go-Around Performance
-/// - ``meetsGoAroundClimbGradient``
 public struct LandingResults {
   /// Reference approach speed for the landing configuration.
   public let Vref: Value<Measurement<UnitSpeed>>
@@ -104,18 +82,6 @@ public struct LandingResults {
 /// performance models and calculates takeoff/landing results. It selects the
 /// appropriate performance model implementation based on aircraft generation
 /// and user preferences.
-///
-/// ## Topics
-///
-/// ### Singleton Access
-/// - ``shared``
-///
-/// ### Creating Models
-/// - ``createPerformanceModel(conditions:configuration:runway:notam:useRegressionModel:aircraftType:)``
-///
-/// ### Calculating Performance
-/// - ``calculateTakeoff(for:safetyFactor:)``
-/// - ``calculateLanding(for:safetyFactor:)``
 public final class DefaultPerformanceCalculationService: PerformanceCalculationService {
   /// Shared singleton instance.
   public static let shared = DefaultPerformanceCalculationService()

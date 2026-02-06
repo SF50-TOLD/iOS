@@ -36,4 +36,4 @@ After configuration, build and run SF50 TOLD. If the NOTAM API credentials are m
 
 ### DownloadNASR Tool
 
-If you're also working with the DownloadNASR tool for processing nav data, see <doc:../../../DownloadNASR/DownloadNASR.docc/Articles/GettingStarted> for its separate credential configuration.
+If you're also working with the DownloadNASR tool for processing nav data, see the DownloadNASR target's documentation for its separate credential configuration.

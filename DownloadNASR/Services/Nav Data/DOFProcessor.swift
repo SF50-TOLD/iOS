@@ -11,9 +11,9 @@ import ZIPFoundation
 ///
 /// ## See Also
 ///
-/// - ``DataProcessor`` - The orchestrator that uses this processor
-/// - ``NASRProcessor`` - Processes NASR airport data
-/// - ``CIFPProcessor`` - Processes CIFP departure procedure data
+/// - ``NavDataProcessor``
+/// - ``NASRProcessor``
+/// - ``CIFPProcessor``
 struct DOFProcessor {
   // Progress allocation within DOF processing (out of 100):
   // - Download: 0-50

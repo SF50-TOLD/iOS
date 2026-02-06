@@ -241,7 +241,7 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   /// Call this after loading winds aloft data to enable spatial interpolation.
   /// Station IDs are matched against airport location IDs.
   ///
-  /// - Parameter airports: Dictionary mapping location IDs to coordinates
+  /// - Parameter locations: Dictionary mapping location IDs to coordinates.
   public func setStationLocations(_ locations: [String: CLLocationCoordinate2D]) {
     stationLocations = locations
   }
