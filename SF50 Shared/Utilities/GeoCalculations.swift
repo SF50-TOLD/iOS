@@ -9,9 +9,6 @@ public enum GeoCalculations {
   /// but in practice it's used safely with temporary instance state.
   nonisolated(unsafe) private static let geomagnetism = Geomagnetism()
 
-  /// Earth radius in nautical miles.
-  public static let earthRadiusNM = 3440.065
-
   /// Calculates bearing between two points specified in arcseconds.
   /// - Parameters:
   ///   - from: Tuple of (latitude, longitude) in arcseconds

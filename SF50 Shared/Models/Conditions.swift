@@ -3,23 +3,6 @@ import Foundation
 import SwiftMETAR
 import WeatherKit
 
-private let standardTemperatureDegC = 15.04
-
-/// Standard sea level pressure in hectopascals (ISA standard: 1013.25 hPa).
-public let standardSeaLevelPressureHPa = 1013.25
-
-/// Standard temperature at sea level (ISA standard: 15.04°C).
-public let standardTemperature = Measurement(
-  value: standardTemperatureDegC,
-  unit: UnitTemperature.celsius
-)
-
-/// Standard sea level pressure (ISA standard: 1013.25 hPa / 29.92 inHg).
-public let standardSeaLevelPressure = Measurement(
-  value: standardSeaLevelPressureHPa,
-  unit: UnitPressure.hectopascals
-)
-
 /// Atmospheric conditions used for performance calculations.
 ///
 /// ``Conditions`` represents weather observations or forecasts including wind,
@@ -264,22 +247,21 @@ public struct Conditions: Sendable, Equatable {
 
   /// Calculates density altitude at the given elevation using NWS dry-air formula.
   public func densityAltitude(elevation: Measurement<UnitLength>) -> Measurement<UnitLength> {
-    // NWS formula uses station pressure (actual pressure at the elevation), not altimeter setting
     let stationPressureInHg = absolutePressure(elevation: elevation)
       .converted(to: .inchesOfMercury).value
     let tempDegF = temperature(at: elevation).converted(to: .fahrenheit).value
 
-    // NWS dry-air density altitude approximation
-    let DA = 145442.16 * (1.0 - pow((17.326 * stationPressureInHg) / (459.67 + tempDegF), 0.235))
-
+    let DA = SF50_Shared.densityAltitude(
+      stationPressureInHg: stationPressureInHg,
+      temperatureF: tempDegF
+    )
     return .init(value: DA, unit: .feet)
   }
 
   private func ISATemperature(at altitude: Measurement<UnitLength>) -> Measurement<UnitTemperature>
   {
     let altFt = altitude.converted(to: .feet).value
-    let tempC = standardTemperatureDegC - 0.001978152 * altFt
-    return .init(value: tempC, unit: .celsius)
+    return .init(value: isaTemperature(altitudeFt: altFt), unit: .celsius)
   }
 
   private func absolutePressure(elevation: Measurement<UnitLength>) -> Measurement<UnitPressure> {
@@ -290,11 +272,11 @@ public struct Conditions: Sendable, Equatable {
   private func pressure(altimeter: Measurement<UnitPressure>, altitude: Measurement<UnitLength>)
     -> Measurement<UnitPressure>
   {
-    let altHpa = altimeter.converted(to: .hectopascals).value
+    let slpPa = altimeter.converted(to: .hectopascals).value * 100
     let altM = altitude.converted(to: .meters).value
 
-    let pressure = altHpa * pow(1.0 + altM * -0.0000225616, 5.25143)
-    return .init(value: pressure, unit: .hectopascals)
+    let pressurePa = pressureAtAltitude(seaLevelPressurePa: slpPa, altitudeM: altM)
+    return .init(value: pressurePa / 100, unit: .hectopascals)
   }
 
   /// Data source for weather conditions.

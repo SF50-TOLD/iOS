@@ -50,9 +50,8 @@ public final class ClimbPerformanceViewModel {
   }
 
   public var OAT: Measurement<UnitTemperature> {
-    // ISA temperature = 15°C - 1.98°C per 1000 ft
     let altitudeFeet = altitude.converted(to: .feet).value
-    let ISATemp = 15.0 - (1.98 * altitudeFeet / 1000.0)
+    let ISATemp = isaTemperature(altitudeFt: altitudeFeet)
     let OATCelsius = ISATemp + ISADeviation.converted(to: .celsius).value
     return Measurement(value: OATCelsius, unit: .celsius)
   }
@@ -69,13 +68,16 @@ public final class ClimbPerformanceViewModel {
   public private(set) var climbRate: Value<Measurement<UnitSpeed>>
   public private(set) var climbGradient: Value<Measurement<UnitSlope>>
 
-  /// Approximates TAS from IAS using altitude (pressure ratio)
+  /// TAS from IAS using full barometric formula with ISA pressure and actual OAT.
   public var climbSpeedTAS: Value<Measurement<UnitSpeed>> {
     climbSpeed.map { IAS, uncertainty in
       let altFeet = altitude.converted(to: .feet).value
-      // TAS ≈ IAS / sqrt(σ), where σ ≈ (1 - altFeet/145442)^4.255876
-      let sigma = pow(1.0 - altFeet / 145442.0, 4.255876)
-      let TASMultiplier = 1.0 / sqrt(sigma)
+      let oatC = OAT.converted(to: .celsius).value
+      let P = pressureAtAltitude(
+        seaLevelPressurePa: standardSeaLevelPressureHPa * 100,
+        altitudeM: altFeet * feetToMeters
+      )
+      let TASMultiplier = trueAirspeed(indicatedAirspeedKts: 1.0, pressurePa: P, temperatureC: oatC)
       let TAS = Measurement(value: IAS.value * TASMultiplier, unit: IAS.unit)
       let uncert = uncertainty.map { Measurement(value: $0.value * TASMultiplier, unit: $0.unit) }
       return (TAS, uncert)
@@ -85,10 +87,9 @@ public final class ClimbPerformanceViewModel {
   /// Mach number for current climb speed
   public var climbMach: Value<Double> {
     climbSpeedTAS.flatMap { TAS in
-      let tempKelvin = OAT.converted(to: .kelvin).value
-      let speedOfSound = 38.967854 * sqrt(tempKelvin)
+      let oatC = OAT.converted(to: .celsius).value
       let TASKnots = TAS.converted(to: .knots).value
-      return .value(TASKnots / speedOfSound)
+      return .value(TASKnots / speedOfSound(oatCelsius: oatC))
     }
   }
 

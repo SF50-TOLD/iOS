@@ -169,12 +169,11 @@ public final class Runway {
     let bearingRadians = reciprocalHeading * .pi / 180
 
     let distanceMeters = displacement.converted(to: .meters).value
-    let earthRadius: Double = 6371000
 
     let lat1 = threshold.latitude * .pi / 180
     let lon1 = threshold.longitude * .pi / 180
 
-    let angularDistance = distanceMeters / earthRadius
+    let angularDistance = distanceMeters / earthRadiusMeters
 
     let lat2 = asin(
       sin(lat1) * cos(angularDistance)
