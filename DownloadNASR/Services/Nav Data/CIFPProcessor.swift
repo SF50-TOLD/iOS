@@ -23,6 +23,21 @@ struct CIFPProcessor {
     .holdManual  // HM - hold until ATC clearance
   ]
 
+  /// Path terminators whose endpoint is computed from course/heading + altitude,
+  /// not from a fix coordinate. These legs don't require a resolved fix.
+  private static let toAltitudePathTerminators: Set<PathTerminator> = [
+    .fixToAltitude,  // FA
+    .courseToAltitude,  // CA
+    .headingToAltitude  // VA
+  ]
+
+  /// Path terminators that use DME distance for termination.
+  private static let dmePathTerminators: Set<PathTerminator> = [
+    .trackFromFixDME,
+    .courseToDME,
+    .headingToDME
+  ]
+
   // Progress allocation within CIFP processing (out of 100):
   // - Download: 0-30
   // - Parse: 30-90
@@ -61,6 +76,19 @@ struct CIFPProcessor {
     }
 
     return "\(type) \(identifier)"
+  }
+
+  /// Extracts DME-related fields from a procedure leg, if applicable.
+  ///
+  /// Returns the recommended navaid identifier, its ICAO region, and the DME
+  /// termination distance for legs that use DME distance as a terminator.
+  static func dmeFields(
+    from leg: ProcedureLeg
+  ) -> (navaidIdentifier: String?, navaidICAO: String?, distanceNM: Double?) {
+    guard let pt = leg.pathTerminator, dmePathTerminators.contains(pt) else {
+      return (nil, nil, nil)
+    }
+    return (leg.recommendedNavaid, leg.recommendedNavaidICAO, leg.routeDistanceNMOrMinutes)
   }
 
   /// Converts a SwiftCIFP procedure leg to a ``LegTypeCodable``.
@@ -345,13 +373,13 @@ struct CIFPProcessor {
         return !Self.unplottablePathTerminators.contains(pathTerminator)
       }
 
-      // Extract fixes and calculate gradient if plottable
-      var fixes: [AirportDataCodable.FixCodable]?
+      // Extract legs and calculate gradient if plottable
+      var legs: [AirportDataCodable.LegCodable]?
       var requiredGradient: Double?
       if isPlottable {
-        let (extractedFixes, gradient) = await extractFixesAndGradient(sid: sid, cifpData: cifpData)
-        if !extractedFixes.isEmpty {
-          fixes = extractedFixes
+        let (extractedLegs, gradient) = await extractLegsAndGradient(sid: sid, cifpData: cifpData)
+        if !extractedLegs.isEmpty {
+          legs = extractedLegs
         }
         requiredGradient = gradient
       }
@@ -359,7 +387,7 @@ struct CIFPProcessor {
       let procedure = AirportDataCodable.DepartureProcedureCodable(
         identifier: sid.identifier,
         runwayNames: Array(sid.runwayNames).sorted(),
-        fixes: fixes,
+        legs: legs,
         requiredClimbGradientFtPerNM: requiredGradient
       )
       procedures.append(procedure)
@@ -412,18 +440,28 @@ struct CIFPProcessor {
           return !Self.unplottablePathTerminators.contains(pathTerminator)
         }
 
-      // Extract missed approach fixes with altitude constraints if plottable
-      var missedApproachFixes: [AirportDataCodable.FixCodable]?
+      // Extract missed approach legs with altitude constraints if plottable
+      var missedApproachLegs: [AirportDataCodable.LegCodable]?
       if isMissedApproachPlottable {
-        var fixes = [AirportDataCodable.FixCodable]()
+        var legs = [AirportDataCodable.LegCodable]()
         for leg in sortedMissedApproachLegs {
           // Only include legs that have an altitude constraint
           guard let altitudeConstraint = leg.altitudeConstraint else { continue }
 
           let fix = await leg.fix
-          guard let coordinate = fix?.coordinate,
-            let fixIdentifier = fix?.identifier
-          else { continue }
+          let coordinate = fix?.coordinate
+          let fixIdentifier = fix?.identifier
+
+          // *ToAltitude legs (FA/CA/VA) compute their endpoint from
+          // course/heading + altitude + climb profile, so they don't need
+          // a fix coordinate. All other leg types require one.
+          let isToAltitude =
+            leg.pathTerminator.map {
+              Self.toAltitudePathTerminators.contains($0)
+            } ?? false
+          if !isToAltitude {
+            guard coordinate != nil, fixIdentifier != nil else { continue }
+          }
 
           guard let altitudeRestriction = convertAltitudeConstraint(altitudeConstraint) else {
             continue
@@ -438,25 +476,31 @@ struct CIFPProcessor {
             continue
           }
 
-          fixes.append(
-            AirportDataCodable.FixCodable(
+          // Extract DME fields if applicable
+          let dme = Self.dmeFields(from: leg)
+
+          legs.append(
+            AirportDataCodable.LegCodable(
               identifier: fixIdentifier,
-              latitude: coordinate.latitudeDeg,
-              longitude: coordinate.longitudeDeg,
+              latitude: coordinate?.latitudeDeg,
+              longitude: coordinate?.longitudeDeg,
               altitudeRestriction: altitudeRestriction,
-              legType: legTypeCodable
+              legType: legTypeCodable,
+              recommendedNavaidIdentifier: dme.navaidIdentifier,
+              recommendedNavaidICAO: dme.navaidICAO,
+              dmeDistanceNM: dme.distanceNM
             )
           )
         }
-        if !fixes.isEmpty {
-          missedApproachFixes = fixes
+        if !legs.isEmpty {
+          missedApproachLegs = legs
         }
       }
 
       let procedure = AirportDataCodable.ApproachProcedureCodable(
         identifier: approach.identifier,
         name: name,
-        missedApproachFixes: missedApproachFixes
+        missedApproachLegs: missedApproachLegs
       )
       procedures.append(procedure)
     }
@@ -464,12 +508,12 @@ struct CIFPProcessor {
     return procedures.sorted { $0.identifier < $1.identifier }
   }
 
-  /// Extracts fixes and calculates climb gradient for a SID.
-  private func extractFixesAndGradient(
+  /// Extracts legs and calculates climb gradient for a SID.
+  private func extractLegsAndGradient(
     sid: SID,
     cifpData _: CIFPData
-  ) async -> (fixes: [AirportDataCodable.FixCodable], gradient: Double?) {
-    var fixes = [AirportDataCodable.FixCodable]()
+  ) async -> (legs: [AirportDataCodable.LegCodable], gradient: Double?) {
+    var legs = [AirportDataCodable.LegCodable]()
     var maxGradient: Double?
     var previousLatitude: Double?
     var previousLongitude: Double?
@@ -502,15 +546,21 @@ struct CIFPProcessor {
         continue
       }
 
-      // Add fix to list
-      let fixCodable = AirportDataCodable.FixCodable(
+      // Extract DME fields if applicable
+      let dme = Self.dmeFields(from: leg)
+
+      // Add leg to list
+      let legCodable = AirportDataCodable.LegCodable(
         identifier: fixIdentifier,
         latitude: currentLat,
         longitude: currentLon,
         altitudeRestriction: altitudeRestriction,
-        legType: legTypeCodable
+        legType: legTypeCodable,
+        recommendedNavaidIdentifier: dme.navaidIdentifier,
+        recommendedNavaidICAO: dme.navaidICAO,
+        dmeDistanceNM: dme.distanceNM
       )
-      fixes.append(fixCodable)
+      legs.append(legCodable)
 
       // Calculate gradient if we have altitude data
       if let altitudeConstraint = leg.altitudeConstraint,
@@ -546,7 +596,7 @@ struct CIFPProcessor {
       previousLongitude = currentLon
     }
 
-    return (fixes, maxGradient)
+    return (legs, maxGradient)
   }
 
   /// Converts a SwiftCIFP altitude constraint to our codable representation.

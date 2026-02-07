@@ -82,4 +82,26 @@ enum Helper {
     )
     return RunwayInput(from: runway, airport: runway.airport)
   }
+
+  static func createTestLeg(
+    identifier: String? = "FIX",
+    latitude: Double? = 37.0,
+    longitude: Double? = -122.0,
+    altitudeRestriction: AltitudeRestriction? = nil,
+    legType: LegType = .initialFix,
+    sequenceIndex: Int = 0,
+    navaid: Navaid? = nil,
+    dmeDistance: Measurement<UnitLength>? = nil
+  ) -> Leg {
+    Leg(
+      identifier: identifier,
+      latitude: latitude.map { Measurement(value: $0, unit: .degrees) },
+      longitude: longitude.map { Measurement(value: $0, unit: .degrees) },
+      altitudeRestriction: altitudeRestriction,
+      legType: legType,
+      sequenceIndex: sequenceIndex,
+      navaid: navaid,
+      dmeDistance: dmeDistance
+    )
+  }
 }

@@ -13,7 +13,7 @@
 
 ### Route
 
-- ``fixes``
+- ``legs``
 - ``isPlottable``
 
 ### Relationships

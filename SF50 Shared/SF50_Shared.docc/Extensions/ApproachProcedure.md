@@ -9,7 +9,7 @@
 
 ### Missed Approach
 
-- ``missedApproachFixes``
+- ``missedApproachLegs``
 - ``isMissedApproachPlottable``
 
 ### Relationships

@@ -34,16 +34,21 @@ public struct AirportDataCodable: Codable, Sendable {
   /// All obstacles in the database (from FAA Digital Obstacle File)
   public let obstacles: [ObstacleCodable]
 
+  /// DME-capable navaids referenced by procedure legs (nil for older data files)
+  public let navaids: [NavaidCodable]?
+
   public init(
     cycles: DataCycles,
     ourAirportsLastUpdated: Date?,
     airports: [AirportCodable],
-    obstacles: [ObstacleCodable]
+    obstacles: [ObstacleCodable],
+    navaids: [NavaidCodable]? = nil
   ) {
     self.cycles = cycles
     self.ourAirportsLastUpdated = ourAirportsLastUpdated
     self.airports = airports
     self.obstacles = obstacles
+    self.navaids = navaids
   }
 
   /**
@@ -234,8 +239,8 @@ public struct AirportDataCodable: Codable, Sendable {
     /// Associated runway designators (e.g., ["28L", "28R"])
     public let runwayNames: [String]
 
-    /// Fixes along the procedure (nil if not plottable)
-    public let fixes: [FixCodable]?
+    /// Legs along the procedure (nil if not plottable)
+    public let legs: [LegCodable]?
 
     /// Required climb gradient in feet per nautical mile (nil if not plottable or no altitude constraints)
     public let requiredClimbGradientFtPerNM: Double?
@@ -243,12 +248,12 @@ public struct AirportDataCodable: Codable, Sendable {
     public init(
       identifier: String,
       runwayNames: [String],
-      fixes: [FixCodable]?,
+      legs: [LegCodable]?,
       requiredClimbGradientFtPerNM: Double?
     ) {
       self.identifier = identifier
       self.runwayNames = runwayNames
-      self.fixes = fixes
+      self.legs = legs
       self.requiredClimbGradientFtPerNM = requiredClimbGradientFtPerNM
     }
   }
@@ -267,32 +272,32 @@ public struct AirportDataCodable: Codable, Sendable {
     /// Full approach name (e.g., "ILS Z RWY 23L")
     public let name: String
 
-    /// Missed approach fixes with altitude constraints (nil if missed approach not plottable)
-    public let missedApproachFixes: [FixCodable]?
+    /// Missed approach legs with altitude constraints (nil if missed approach not plottable)
+    public let missedApproachLegs: [LegCodable]?
 
     public init(
       identifier: String,
       name: String,
-      missedApproachFixes: [FixCodable]?
+      missedApproachLegs: [LegCodable]?
     ) {
       self.identifier = identifier
       self.name = name
-      self.missedApproachFixes = missedApproachFixes
+      self.missedApproachLegs = missedApproachLegs
     }
   }
 
   /**
-   * Codable representation of a fix/waypoint in a procedure.
+   * Codable representation of a procedure leg.
    */
-  public struct FixCodable: Codable, Sendable {
-    /// Fix identifier (e.g., "PORTE", "WLSON")
-    public let identifier: String
+  public struct LegCodable: Codable, Sendable {
+    /// Fix identifier (e.g., "PORTE", "WLSON"). Nil for *ToAltitude legs with no fix.
+    public let identifier: String?
 
-    /// Latitude in decimal degrees
-    public let latitude: Double
+    /// Latitude in decimal degrees. Nil for legs with no fix (e.g., CA/VA).
+    public let latitude: Double?
 
-    /// Longitude in decimal degrees
-    public let longitude: Double
+    /// Longitude in decimal degrees. Nil for legs with no fix (e.g., CA/VA).
+    public let longitude: Double?
 
     /// Altitude restriction (nil if no restriction)
     public let altitudeRestriction: AltitudeRestrictionCodable?
@@ -300,18 +305,33 @@ public struct AirportDataCodable: Codable, Sendable {
     /// Leg type geometry for plotting
     public let legType: LegTypeCodable
 
+    /// Recommended navaid identifier for DME legs (nil if not a DME leg)
+    public let recommendedNavaidIdentifier: String?
+
+    /// ICAO region of the recommended navaid (nil if not a DME leg)
+    public let recommendedNavaidICAO: String?
+
+    /// DME termination distance in nautical miles (nil if not a DME leg)
+    public let dmeDistanceNM: Double?
+
     public init(
-      identifier: String,
-      latitude: Double,
-      longitude: Double,
+      identifier: String?,
+      latitude: Double?,
+      longitude: Double?,
       altitudeRestriction: AltitudeRestrictionCodable?,
-      legType: LegTypeCodable
+      legType: LegTypeCodable,
+      recommendedNavaidIdentifier: String? = nil,
+      recommendedNavaidICAO: String? = nil,
+      dmeDistanceNM: Double? = nil
     ) {
       self.identifier = identifier
       self.latitude = latitude
       self.longitude = longitude
       self.altitudeRestriction = altitudeRestriction
       self.legType = legType
+      self.recommendedNavaidIdentifier = recommendedNavaidIdentifier
+      self.recommendedNavaidICAO = recommendedNavaidICAO
+      self.dmeDistanceNM = dmeDistanceNM
     }
   }
 

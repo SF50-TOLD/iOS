@@ -15,7 +15,7 @@ import SwiftNASR
 /// 1. **Download**: Fetches compressed data from GitHub
 /// 2. **Decompress**: Extracts LZMA-compressed property list
 /// 3. **Import**: Populates SwiftData with `Airport`, `Runway`, `DepartureProcedure`,
-///    `ApproachProcedure`, `Fix`, and `Obstacle` models
+///    `ApproachProcedure`, `Leg`, and `Obstacle` models
 ///
 /// ## Data Source
 ///
@@ -32,8 +32,8 @@ import SwiftNASR
 ///
 /// - Airport records (location ID, name, coordinates, elevation, etc.)
 /// - Runway records (heading, length, distances, gradient)
-/// - Departure procedures (SIDs with fixes, altitude restrictions, and leg types)
-/// - Approach procedures (with missed approach fixes and altitude restrictions)
+/// - Departure procedures (SIDs with legs, altitude restrictions, and leg types)
+/// - Approach procedures (with missed approach legs and altitude restrictions)
 /// - Obstacles (from FAA Digital Obstacle File)
 /// - NASR, CIFP, and DOF cycle information
 /// - OurAirports last update timestamp
@@ -78,6 +78,7 @@ actor NavDataLoader {
   var state: State = .idle
 
   private let decoder = PropertyListDecoder()
+  private var navaidLookup: [String: SF50_Shared.Navaid] = [:]
 
   private let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",
@@ -97,6 +98,9 @@ actor NavDataLoader {
 
     state = .extracting(progress: nil)
     let nasr = try decompress(data: data)
+
+    // Load navaids first so they're available for leg relationships
+    loadNavaids(nasr.navaids ?? [])
 
     // Combined progress tracking across both loading phases
     state = .loading(progress: 0)
@@ -190,12 +194,36 @@ actor NavDataLoader {
     }
   }
 
+  private func lookupNavaid(_ legData: AirportDataCodable.LegCodable) -> SF50_Shared.Navaid? {
+    guard let id = legData.recommendedNavaidIdentifier,
+      let icao = legData.recommendedNavaidICAO
+    else { return nil }
+    return navaidLookup["\(id):\(icao)"]
+  }
+
+  private func loadNavaids(_ navaids: [NavaidCodable]) {
+    navaidLookup.removeAll()
+    for navaidData in navaids {
+      let navaid = SF50_Shared.Navaid(
+        identifier: navaidData.identifier,
+        icaoRegion: navaidData.icaoRegion,
+        type: navaidData.type,
+        latitude: .init(value: navaidData.latitude, unit: .degrees),
+        longitude: .init(value: navaidData.longitude, unit: .degrees),
+        elevation: navaidData.elevationFt.map { .init(value: $0, unit: .feet) }
+      )
+      modelContext.insert(navaid)
+      navaidLookup["\(navaidData.identifier):\(navaidData.icaoRegion)"] = navaid
+    }
+  }
+
   private func resetData() throws {
     try modelContext.delete(model: SF50_Shared.Airport.self)
     try modelContext.delete(model: SF50_Shared.Runway.self)
     try modelContext.delete(model: SF50_Shared.DepartureProcedure.self)
     try modelContext.delete(model: SF50_Shared.ApproachProcedure.self)
-    try modelContext.delete(model: SF50_Shared.Fix.self)
+    try modelContext.delete(model: SF50_Shared.Leg.self)
+    try modelContext.delete(model: SF50_Shared.Navaid.self)
     try modelContext.delete(model: SF50_Shared.Obstacle.self)
     try modelContext.delete(model: NOTAM.self)
     try modelContext.save()
@@ -280,21 +308,24 @@ actor NavDataLoader {
       )
       modelContext.insert(procedure)
 
-      // Load fixes for this procedure
-      for (index, fixData) in (procedureData.fixes ?? []).enumerated() {
-        let altitudeRestriction = fixData.altitudeRestriction.map {
+      // Load legs for this procedure
+      for (index, legData) in (procedureData.legs ?? []).enumerated() {
+        let altitudeRestriction = legData.altitudeRestriction.map {
           AltitudeRestriction(from: $0)
         }
-        let fix = Fix(
-          identifier: fixData.identifier,
-          latitude: .init(value: fixData.latitude, unit: .degrees),
-          longitude: .init(value: fixData.longitude, unit: .degrees),
+        let navaid = lookupNavaid(legData)
+        let leg = Leg(
+          identifier: legData.identifier,
+          latitude: legData.latitude.map { .init(value: $0, unit: .degrees) },
+          longitude: legData.longitude.map { .init(value: $0, unit: .degrees) },
           altitudeRestriction: altitudeRestriction,
-          legType: fixData.legType,
+          legType: legData.legType,
           sequenceIndex: index,
-          departureProcedure: procedure
+          departureProcedure: procedure,
+          navaid: navaid,
+          dmeDistance: legData.dmeDistanceNM.map { .init(value: $0, unit: .nauticalMiles) }
         )
-        modelContext.insert(fix)
+        modelContext.insert(leg)
       }
     }
 
@@ -307,20 +338,23 @@ actor NavDataLoader {
       )
       modelContext.insert(procedure)
 
-      for (index, fixData) in (procedureData.missedApproachFixes ?? []).enumerated() {
-        let altitudeRestriction = fixData.altitudeRestriction.map {
+      for (index, legData) in (procedureData.missedApproachLegs ?? []).enumerated() {
+        let altitudeRestriction = legData.altitudeRestriction.map {
           AltitudeRestriction(from: $0)
         }
-        let fix = Fix(
-          identifier: fixData.identifier,
-          latitude: .init(value: fixData.latitude, unit: .degrees),
-          longitude: .init(value: fixData.longitude, unit: .degrees),
+        let navaid = lookupNavaid(legData)
+        let leg = Leg(
+          identifier: legData.identifier,
+          latitude: legData.latitude.map { .init(value: $0, unit: .degrees) },
+          longitude: legData.longitude.map { .init(value: $0, unit: .degrees) },
           altitudeRestriction: altitudeRestriction,
-          legType: fixData.legType,
+          legType: legData.legType,
           sequenceIndex: index,
-          approachProcedure: procedure
+          approachProcedure: procedure,
+          navaid: navaid,
+          dmeDistance: legData.dmeDistanceNM.map { .init(value: $0, unit: .nauticalMiles) }
         )
-        modelContext.insert(fix)
+        modelContext.insert(leg)
       }
     }
   }

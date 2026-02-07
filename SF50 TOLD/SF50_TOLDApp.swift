@@ -48,7 +48,8 @@ struct SF50_TOLDApp: App {
       Obstacle.self,
       DepartureProcedure.self,
       ApproachProcedure.self,
-      Fix.self
+      Leg.self,
+      Navaid.self
     ])
 
     // Use in-memory storage for screenshot generation to avoid file access issues

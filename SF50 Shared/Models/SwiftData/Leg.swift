@@ -2,19 +2,19 @@ import CoreLocation
 import Foundation
 import SwiftData
 
-/// A navigational fix in an instrument procedure.
+/// A leg in an instrument procedure.
 ///
-/// ``Fix`` represents a waypoint or intersection in a departure procedure
-/// (SID) or missed approach procedure. Each fix has a ``legType`` describing
-/// the path geometry used to reach it, and may have an ``altitudeRestriction``
-/// specifying minimum, maximum, or exact crossing altitudes.
+/// ``Leg`` represents a path segment in a departure procedure (SID) or missed
+/// approach procedure. Each leg has a ``legType`` describing the path geometry,
+/// a fix identifier and coordinates for the termination point, and may have an
+/// ``altitudeRestriction`` specifying minimum, maximum, or exact crossing altitudes.
 @Model
-public final class Fix {
-  /// Fix identifier (e.g., "ORCKA", "REBAS")
-  public var identifier: String
+public final class Leg {
+  /// Fix identifier (e.g., "ORCKA", "REBAS"). Nil for *ToAltitude legs with no fix.
+  public var identifier: String?
 
-  private var _latitude: Double  // decimal degrees
-  private var _longitude: Double  // decimal degrees
+  private var _latitude: Double?  // decimal degrees
+  private var _longitude: Double?  // decimal degrees
 
   // Altitude restriction stored as type + values (following NOTAM/Contamination pattern)
   private var _altitudeRestrictionType: String?
@@ -27,38 +27,49 @@ public final class Fix {
   private var _legTurnDirection: String?  // "left", "right", "either"
   private var _legArcRadius: Double?  // nautical miles
 
-  /// Position in the departure procedure fix sequence (0-indexed)
+  // DME distance stored as raw value for SwiftData persistence
+  private var _dmeDistanceNM: Double?  // nautical miles
+
+  /// Position in the procedure leg sequence (0-indexed)
   public var sequenceIndex: Int
 
-  /// The departure procedure this fix belongs to
-  @Relationship(deleteRule: .nullify, inverse: \DepartureProcedure.fixes)
+  /// The departure procedure this leg belongs to
+  @Relationship(deleteRule: .nullify, inverse: \DepartureProcedure.legs)
   public var departureProcedure: DepartureProcedure?
 
-  /// The approach procedure this fix belongs to (for missed approach fixes)
-  @Relationship(deleteRule: .nullify, inverse: \ApproachProcedure.missedApproachFixes)
+  /// The approach procedure this leg belongs to (for missed approach legs)
+  @Relationship(deleteRule: .nullify, inverse: \ApproachProcedure.missedApproachLegs)
   public var approachProcedure: ApproachProcedure?
 
-  /// Fix latitude in degrees
-  public var latitude: Measurement<UnitAngle> {
-    get { .init(value: _latitude, unit: .degrees) }
-    set { _latitude = newValue.converted(to: .degrees).value }
+  /// The recommended DME navaid for this leg (nil if not a DME leg)
+  @Relationship(deleteRule: .noAction, inverse: \Navaid.legs)
+  public var navaid: Navaid?
+
+  /// Fix latitude in degrees. Nil for legs with no fix (e.g., CA/VA).
+  public var latitude: Measurement<UnitAngle>? {
+    get { _latitude.map { .init(value: $0, unit: .degrees) } }
+    set { _latitude = newValue?.converted(to: .degrees).value }
   }
 
-  /// Fix longitude in degrees
-  public var longitude: Measurement<UnitAngle> {
-    get { .init(value: _longitude, unit: .degrees) }
-    set { _longitude = newValue.converted(to: .degrees).value }
+  /// Fix longitude in degrees. Nil for legs with no fix (e.g., CA/VA).
+  public var longitude: Measurement<UnitAngle>? {
+    get { _longitude.map { .init(value: $0, unit: .degrees) } }
+    set { _longitude = newValue?.converted(to: .degrees).value }
   }
 
-  /// CoreLocation coordinate for the fix
-  public var coordinate: CLLocationCoordinate2D {
-    .init(
-      latitude: latitude.converted(to: .degrees).value,
-      longitude: longitude.converted(to: .degrees).value
-    )
+  /// CoreLocation coordinate for the fix. Nil for legs with no fix.
+  public var coordinate: CLLocationCoordinate2D? {
+    guard let lat = _latitude, let lon = _longitude else { return nil }
+    return .init(latitude: lat, longitude: lon)
   }
 
-  /// Altitude restriction at this fix
+  /// DME termination distance from the recommended navaid (nil if not a DME leg)
+  public var dmeDistance: Measurement<UnitLength>? {
+    get { _dmeDistanceNM.map { .init(value: $0, unit: .nauticalMiles) } }
+    set { _dmeDistanceNM = newValue?.converted(to: .nauticalMiles).value }
+  }
+
+  /// Altitude restriction at this leg's termination point
   public var altitudeRestriction: AltitudeRestriction? {
     get {
       .init(
@@ -98,33 +109,38 @@ public final class Fix {
     }
   }
 
-  /// Creates a new fix.
+  /// Creates a new leg.
   ///
   /// - Parameters:
-  ///   - identifier: Fix identifier.
-  ///   - latitude: Fix latitude.
-  ///   - longitude: Fix longitude.
-  ///   - altitudeRestriction: Altitude restriction at this fix, if any.
+  ///   - identifier: Fix identifier (nil for *ToAltitude legs with no fix).
+  ///   - latitude: Fix latitude (nil for legs with no fix).
+  ///   - longitude: Fix longitude (nil for legs with no fix).
+  ///   - altitudeRestriction: Altitude restriction at this leg's termination point, if any.
   ///   - legType: Leg type geometry for plotting.
-  ///   - sequenceIndex: Position in the procedure fix sequence.
-  ///   - departureProcedure: The departure procedure this fix belongs to.
-  ///   - approachProcedure: The approach procedure this fix belongs to.
+  ///   - sequenceIndex: Position in the procedure leg sequence.
+  ///   - departureProcedure: The departure procedure this leg belongs to.
+  ///   - approachProcedure: The approach procedure this leg belongs to.
+  ///   - navaid: The recommended DME navaid, if applicable.
+  ///   - dmeDistance: DME termination distance, if applicable.
   public init(
-    identifier: String,
-    latitude: Measurement<UnitAngle>,
-    longitude: Measurement<UnitAngle>,
+    identifier: String?,
+    latitude: Measurement<UnitAngle>?,
+    longitude: Measurement<UnitAngle>?,
     altitudeRestriction: AltitudeRestriction? = nil,
     legType: LegType,
     sequenceIndex: Int,
     departureProcedure: DepartureProcedure? = nil,
-    approachProcedure: ApproachProcedure? = nil
+    approachProcedure: ApproachProcedure? = nil,
+    navaid: Navaid? = nil,
+    dmeDistance: Measurement<UnitLength>? = nil
   ) {
     self.identifier = identifier
-    _latitude = latitude.converted(to: .degrees).value
-    _longitude = longitude.converted(to: .degrees).value
+    _latitude = latitude?.converted(to: .degrees).value
+    _longitude = longitude?.converted(to: .degrees).value
     _altitudeRestrictionType = altitudeRestriction?.type
     _altitudeMin = altitudeRestriction?.altitudeMin
     _altitudeMax = altitudeRestriction?.altitudeMax
+    _dmeDistanceNM = dmeDistance?.converted(to: .nauticalMiles).value
     // Decompose legType into backing fields inline (can't use computed setter before init completes)
     let decomposed = Self.decomposeLegType(legType)
     _legType = decomposed.type
@@ -134,20 +150,23 @@ public final class Fix {
     self.sequenceIndex = sequenceIndex
     self.departureProcedure = departureProcedure
     self.approachProcedure = approachProcedure
+    self.navaid = navaid
   }
 
-  /// Creates a new fix from a codable leg type representation.
+  /// Creates a new leg from a codable leg type representation.
   ///
   /// Convenience initializer for the ``NavDataLoader`` import path.
   public convenience init(
-    identifier: String,
-    latitude: Measurement<UnitAngle>,
-    longitude: Measurement<UnitAngle>,
+    identifier: String?,
+    latitude: Measurement<UnitAngle>?,
+    longitude: Measurement<UnitAngle>?,
     altitudeRestriction: AltitudeRestriction? = nil,
     legType: LegTypeCodable,
     sequenceIndex: Int,
     departureProcedure: DepartureProcedure? = nil,
-    approachProcedure: ApproachProcedure? = nil
+    approachProcedure: ApproachProcedure? = nil,
+    navaid: Navaid? = nil,
+    dmeDistance: Measurement<UnitLength>? = nil
   ) {
     self.init(
       identifier: identifier,
@@ -157,7 +176,9 @@ public final class Fix {
       legType: LegType(from: legType),
       sequenceIndex: sequenceIndex,
       departureProcedure: departureProcedure,
-      approachProcedure: approachProcedure
+      approachProcedure: approachProcedure,
+      navaid: navaid,
+      dmeDistance: dmeDistance
     )
   }
 

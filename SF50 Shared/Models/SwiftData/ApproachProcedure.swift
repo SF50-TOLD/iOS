@@ -21,13 +21,13 @@ public final class ApproachProcedure {
   @Relationship(deleteRule: .nullify, inverse: \Airport.approachProcedures)
   public var airport: Airport?
 
-  /// Missed approach fixes with altitude constraints
+  /// Missed approach legs with altitude constraints
   @Relationship(deleteRule: .cascade)
-  public var missedApproachFixes: [Fix]
+  public var missedApproachLegs: [Leg]
 
-  /// Whether the missed approach has plottable fixes with altitude constraints.
+  /// Whether the missed approach has plottable legs with altitude constraints.
   public var isMissedApproachPlottable: Bool {
-    !missedApproachFixes.isEmpty
+    !missedApproachLegs.isEmpty
   }
 
   /// Creates a new approach procedure.
@@ -44,6 +44,6 @@ public final class ApproachProcedure {
     self.identifier = identifier
     self.name = name
     self.airport = airport
-    self.missedApproachFixes = []
+    self.missedApproachLegs = []
   }
 }

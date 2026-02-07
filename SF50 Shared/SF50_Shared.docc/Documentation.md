@@ -25,7 +25,7 @@ It provides:
 
 - ``DepartureProcedure``
 - ``ApproachProcedure``
-- ``Fix``
+- ``Leg``
 - ``LegType``
 - ``LegTypeCodable``
 - ``AltitudeRestriction``

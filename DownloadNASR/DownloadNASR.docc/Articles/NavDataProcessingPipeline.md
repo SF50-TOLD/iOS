@@ -131,13 +131,13 @@ AirportDataCodable
 │   ├── departureProcedures: [DepartureProcedureCodable]?
 │   │   ├── identifier, runwayNames
 │   │   ├── requiredClimbGradientFtPerNM?
-│   │   └── fixes: [FixCodable]?
+│   │   └── fixes: [LegCodable]?
 │   │       ├── identifier, latitude, longitude
 │   │       ├── altitudeRestriction?
 │   │       └── legType: LegTypeCodable
 │   └── approachProcedures: [ApproachProcedureCodable]?
 │       ├── identifier, name
-│       └── missedApproachFixes: [FixCodable]?
+│       └── missedApproachFixes: [LegCodable]?
 └── obstacles: [ObstacleCodable]
     ├── heightFtMSL
     ├── latitude, longitude

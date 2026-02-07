@@ -96,4 +96,108 @@ public enum GeoCalculations {
     let lon = from.longitude + (to.longitude - from.longitude) * fraction
     return CLLocationCoordinate2D(latitude: lat, longitude: lon)
   }
+
+  /// Calculates the initial bearing from one coordinate to another.
+  ///
+  /// Uses the forward azimuth formula on a spherical Earth.
+  ///
+  /// - Parameters:
+  ///   - from: Starting coordinate.
+  ///   - to: Destination coordinate.
+  /// - Returns: The initial bearing as a Measurement in degrees (0-360).
+  public static func bearing(
+    from start: CLLocationCoordinate2D,
+    to end: CLLocationCoordinate2D
+  ) -> Measurement<UnitAngle> {
+    let lat1 = start.latitude * .pi / 180
+    let lat2 = end.latitude * .pi / 180
+    let deltaLon = (end.longitude - start.longitude) * .pi / 180
+
+    let x = sin(deltaLon) * cos(lat2)
+    let y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon)
+
+    let bearingRadians = atan2(x, y)
+    let bearingDegrees = (bearingRadians * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+
+    return .init(value: bearingDegrees, unit: .degrees)
+  }
+
+  /// Computes ground track and ground speed from the wind triangle.
+  ///
+  /// - Parameters:
+  ///   - trueHeading: Aircraft true heading (direction nose points)
+  ///   - tasKnots: True airspeed in knots
+  ///   - windFromTrue: Direction wind blows FROM (true north ref)
+  ///   - windSpeedKnots: Wind speed in knots
+  /// - Returns: (groundTrack: degrees true 0-360, groundSpeedKnots: Double)
+  public static func windTriangle(
+    trueHeading: Measurement<UnitAngle>,
+    tasKnots: Double,
+    windFromTrue: Measurement<UnitAngle>,
+    windSpeedKnots: Double
+  ) -> (groundTrack: Measurement<UnitAngle>, groundSpeedKnots: Double) {
+    let thRad = trueHeading.converted(to: .radians).value
+    let wdRad = windFromTrue.converted(to: .radians).value
+
+    // Aircraft air velocity
+    let airEast = tasKnots * sin(thRad)
+    let airNorth = tasKnots * cos(thRad)
+
+    // Wind pushes opposite to FROM direction
+    let windEast = -windSpeedKnots * sin(wdRad)
+    let windNorth = -windSpeedKnots * cos(wdRad)
+
+    // Ground velocity
+    let gsEast = airEast + windEast
+    let gsNorth = airNorth + windNorth
+
+    let groundSpeed = (gsEast * gsEast + gsNorth * gsNorth).squareRoot()
+    let trackRad = atan2(gsEast, gsNorth)
+    let trackDeg = (trackRad * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
+
+    return (
+      groundTrack: .init(value: trackDeg, unit: .degrees),
+      groundSpeedKnots: groundSpeed
+    )
+  }
+
+  /// Calculates a destination coordinate given a starting point, distance, and bearing.
+  ///
+  /// Uses the Haversine formula on a spherical Earth.
+  ///
+  /// - Parameters:
+  ///   - from: Starting coordinate.
+  ///   - distance: Distance to travel.
+  ///   - bearing: True bearing in degrees (0-360).
+  /// - Returns: The destination coordinate.
+  public static func destination(
+    from start: CLLocationCoordinate2D,
+    distance: Measurement<UnitLength>,
+    bearing: Measurement<UnitAngle>
+  ) -> CLLocationCoordinate2D {
+    let distanceMeters = distance.converted(to: .meters).value
+    let bearingRadians = bearing.converted(to: .radians).value
+
+    let lat1 = start.latitude * .pi / 180
+    let lon1 = start.longitude * .pi / 180
+
+    let angularDistance = distanceMeters / earthRadiusMeters
+
+    let lat2 = asin(
+      sin(lat1) * cos(angularDistance)
+        + cos(lat1) * sin(angularDistance) * cos(bearingRadians)
+    )
+
+    let lon2 =
+      lon1
+      + atan2(
+        sin(bearingRadians) * sin(angularDistance) * cos(lat1),
+        cos(angularDistance) - sin(lat1) * sin(lat2)
+      )
+
+    return CLLocationCoordinate2D(
+      latitude: lat2 * 180 / .pi,
+      longitude: lon2 * 180 / .pi
+    )
+  }
 }

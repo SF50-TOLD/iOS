@@ -27,9 +27,9 @@ public final class DepartureProcedure {
   @Relationship(deleteRule: .nullify, inverse: \Airport.departureProcedures)
   public var airport: Airport?
 
-  /// Fixes that define the procedure route
+  /// Legs that define the procedure route
   @Relationship(deleteRule: .cascade)
-  public var fixes: [Fix]
+  public var legs: [Leg]
 
   /// Required climb gradient in feet per nautical mile
   ///
@@ -40,9 +40,9 @@ public final class DepartureProcedure {
     set { _requiredClimbGradient = newValue }
   }
 
-  /// Whether this procedure has fixes that can be plotted on a map
+  /// Whether this procedure has legs that can be plotted on a map
   public var isPlottable: Bool {
-    !fixes.isEmpty
+    !legs.isEmpty
   }
 
   /// Creates a new departure procedure.
@@ -62,6 +62,6 @@ public final class DepartureProcedure {
     self.runwayNames = runwayNames
     _requiredClimbGradient = requiredClimbGradientFtPerNM
     self.airport = airport
-    self.fixes = []
+    self.legs = []
   }
 }

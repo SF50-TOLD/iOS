@@ -119,12 +119,13 @@ struct NavDataProcessor {
       dof: dofInfo
     )
 
-    // Create combined codable data structure with airports and obstacles
+    // Create combined codable data structure with airports, obstacles, and navaids
     let codableData = AirportDataCodable(
       cycles: cycles,
       ourAirportsLastUpdated: loadedData.ourAirportsLastUpdated,
       airports: loadedData.airports,
-      obstacles: loadedData.obstacles
+      obstacles: loadedData.obstacles,
+      navaids: loadedData.navaids
     )
 
     // Write and compress combined data (19 units, cumulative: 91)
@@ -234,12 +235,21 @@ struct NavDataProcessor {
 
     try Task.checkCancellation()
 
+    // Extract DME-capable navaids from CIFP data
+    let navaids: [NavaidCodable]?
+    if let cifpData = cifpResult.data {
+      navaids = await extractDMENavaids(from: cifpData)
+    } else {
+      navaids = nil
+    }
+
     return LoadedData(
       airports: mergedAirports,
       ourAirportsLastUpdated: ourAirportsLastUpdated,
       cifpCycle: cifpResult.cycle,
       dofCycle: dofResult.cycle,
-      obstacles: dofResult.obstacles
+      obstacles: dofResult.obstacles,
+      navaids: navaids
     )
   }
 
@@ -471,6 +481,34 @@ struct NavDataProcessor {
     return mergedAirports
   }
 
+  // MARK: - Navaid Extraction
+
+  /// Extracts DME-capable navaids from CIFP data.
+  private func extractDMENavaids(from cifpData: CIFPData) async -> [NavaidCodable] {
+    let vhfNavaids = await cifpData.vhfNavaids
+    var navaids = [NavaidCodable]()
+
+    for (_, navaid) in vhfNavaids {
+      guard navaid.hasDME else { continue }
+
+      // Prefer DME transponder coordinate, fall back to VOR
+      guard let coordinate = navaid.dmeCoordinate ?? navaid.vorCoordinate else { continue }
+
+      let navaidCodable = NavaidCodable(
+        identifier: navaid.identifier,
+        icaoRegion: navaid.icaoRegion,
+        type: navaid.navaidClass.description,
+        latitude: coordinate.latitudeDeg,
+        longitude: coordinate.longitudeDeg,
+        elevationFt: navaid.dmeElevationFt.map { Double($0) }
+      )
+      navaids.append(navaidCodable)
+    }
+
+    logger.notice("Extracted \(navaids.count) DME-capable navaids from CIFP data")
+    return navaids
+  }
+
   // MARK: - Nested Types
 
   /// Container for all loaded data sources.
@@ -480,6 +518,7 @@ struct NavDataProcessor {
     let cifpCycle: SwiftCIFP.Cycle?
     let dofCycle: SwiftDOF.Cycle?
     let obstacles: [AirportDataCodable.ObstacleCodable]
+    let navaids: [NavaidCodable]?
   }
 
   /// Result of writing and compressing a data file.

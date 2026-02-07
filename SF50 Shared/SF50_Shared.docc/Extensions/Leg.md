@@ -1,4 +1,4 @@
-# ``SF50_Shared/Fix``
+# ``SF50_Shared/Leg``
 
 ## Topics
 
@@ -20,6 +20,11 @@
 ### Leg Geometry
 
 - ``legType``
+
+### DME Data
+
+- ``navaid``
+- ``dmeDistance``
 
 ### Relationships
 

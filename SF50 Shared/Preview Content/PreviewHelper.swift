@@ -79,7 +79,7 @@ public final class PreviewHelper: Sendable {
       Obstacle.self,
       DepartureProcedure.self,
       ApproachProcedure.self,
-      Fix.self,
+      Leg.self,
       configurations: .init(isStoredInMemoryOnly: true)
     )
   }
@@ -88,7 +88,7 @@ public final class PreviewHelper: Sendable {
   public func reset() throws {
     Defaults.removeAll(suite: .init(suiteName: "group.codes.tim.TOLD")!)
 
-    try mainContext.delete(model: Fix.self)
+    try mainContext.delete(model: Leg.self)
     try mainContext.delete(model: DepartureProcedure.self)
     try mainContext.delete(model: ApproachProcedure.self)
     try mainContext.delete(model: Obstacle.self)
