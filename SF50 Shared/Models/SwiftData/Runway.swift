@@ -173,7 +173,7 @@ public final class Runway {
     let lat1 = threshold.latitude * .pi / 180
     let lon1 = threshold.longitude * .pi / 180
 
-    let angularDistance = distanceMeters / earthRadiusMeters
+    let angularDistance = distanceMeters / earthRadiusM
 
     let lat2 = asin(
       sin(lat1) * cos(angularDistance)

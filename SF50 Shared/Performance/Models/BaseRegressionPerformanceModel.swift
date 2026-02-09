@@ -112,6 +112,55 @@ class BaseRegressionPerformanceModel: BasePerformanceModel {
     ])
   }
 
+  /// Evaluates a delta equation: result = base_value - max(0, delta_value).
+  ///
+  /// For delta polynomial equations, the result is computed as the base value
+  /// minus the fitted delta. The delta is clamped to zero to prevent the
+  /// result from exceeding the base value.
+  ///
+  /// Falls back to regular evaluation if the equation is not a delta type.
+  ///
+  /// - Parameters:
+  ///   - base: The base regression equation.
+  ///   - delta: The delta regression equation (type `.deltaPolynomial`).
+  /// - Returns: The calculated result with uncertainty.
+  func evaluateDelta(base: RegressionEquation, delta: RegressionEquation) -> Value<Double> {
+    guard delta.type == .deltaPolynomial else {
+      return evaluate(delta)
+    }
+
+    let inputs: [String: Double] = [
+      "weight": weight,
+      "altitude": altitude,
+      "temperature": temperature
+    ]
+
+    let baseResult = base.evaluate(inputs: inputs)
+    let deltaResult = delta.evaluate(inputs: inputs)
+
+    let baseVal: Double
+    switch baseResult {
+      case .value(let v): baseVal = v
+      case .valueWithUncertainty(let v, _): baseVal = v
+      default: return evaluate(delta)
+    }
+
+    let deltaVal: Double
+    switch deltaResult {
+      case .value(let v): deltaVal = v
+      case .valueWithUncertainty(let v, _): deltaVal = v
+      default: return evaluate(delta)
+    }
+
+    let result = baseVal - max(0, deltaVal)
+
+    if let key = delta.uncertaintyKey {
+      let rmse = ResidualErrorCalculator.RMSE(for: key, binParameters: inputs)
+      return .valueWithUncertainty(result, uncertainty: rmse)
+    }
+    return .value(result)
+  }
+
   // MARK: - Shared uncertainty calculation
 
   func uncertainty(for table: String) -> Double {

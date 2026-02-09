@@ -3,13 +3,13 @@ import Foundation
 // MARK: - Earth
 
 /// Mean radius of the Earth in meters.
-public let earthRadiusMeters: Double = 6_371_000
+public let earthRadiusM: Double = 6_371_000
 
 /// Meters per nautical mile (exact by definition).
 private let metersPerNauticalMile: Double = 1852
 
 /// Mean radius of the Earth in nautical miles.
-public let earthRadiusNM: Double = earthRadiusMeters / metersPerNauticalMile
+public let earthRadiusNM: Double = earthRadiusM / metersPerNauticalMile
 
 // MARK: - Standard Atmosphere (ISA)
 
@@ -69,11 +69,14 @@ private let speedOfSoundCoefficientKts: Double = 38.967854
 /// Feet to meters conversion factor.
 public let feetToMeters: Double = 0.3048
 
+/// Feet per nautical mile.
+public let feetPerNauticalMile: Double = metersPerNauticalMile / feetToMeters
+
 /// Offset to convert Celsius to Kelvin.
 private let celsiusToKelvinOffset: Double = 273.15
 
 /// Inches of mercury to Pascals conversion factor.
-public let inHgToPascals: Double = 3386.39
+public let inHgToPa: Double = 3386.39
 
 // MARK: - Atmospheric Functions
 
@@ -125,10 +128,10 @@ public func trueAirspeed(indicatedAirspeedKts: Double, pressurePa: Double, tempe
 
 /// Speed of sound in knots from outside air temperature.
 ///
-/// - Parameter oatCelsius: Outside air temperature in °C.
+/// - Parameter OATC: Outside air temperature in °C.
 /// - Returns: Speed of sound in knots.
-public func speedOfSound(oatCelsius: Double) -> Double {
-  speedOfSoundCoefficientKts * (oatCelsius + celsiusToKelvinOffset).squareRoot()
+public func speedOfSound(OATC: Double) -> Double {
+  speedOfSoundCoefficientKts * (OATC + celsiusToKelvinOffset).squareRoot()
 }
 
 /// NWS dry-air density altitude approximation.

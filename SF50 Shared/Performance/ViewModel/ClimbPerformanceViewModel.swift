@@ -71,13 +71,13 @@ public final class ClimbPerformanceViewModel {
   /// TAS from IAS using full barometric formula with ISA pressure and actual OAT.
   public var climbSpeedTAS: Value<Measurement<UnitSpeed>> {
     climbSpeed.map { IAS, uncertainty in
-      let altFeet = altitude.converted(to: .feet).value
-      let oatC = OAT.converted(to: .celsius).value
+      let altitudeFt = altitude.converted(to: .feet).value
+      let OATC = OAT.converted(to: .celsius).value
       let P = pressureAtAltitude(
         seaLevelPressurePa: standardSeaLevelPressureHPa * 100,
-        altitudeM: altFeet * feetToMeters
+        altitudeM: altitudeFt * feetToMeters
       )
-      let TASMultiplier = trueAirspeed(indicatedAirspeedKts: 1.0, pressurePa: P, temperatureC: oatC)
+      let TASMultiplier = trueAirspeed(indicatedAirspeedKts: 1.0, pressurePa: P, temperatureC: OATC)
       let TAS = Measurement(value: IAS.value * TASMultiplier, unit: IAS.unit)
       let uncert = uncertainty.map { Measurement(value: $0.value * TASMultiplier, unit: $0.unit) }
       return (TAS, uncert)
@@ -87,9 +87,9 @@ public final class ClimbPerformanceViewModel {
   /// Mach number for current climb speed
   public var climbMach: Value<Double> {
     climbSpeedTAS.flatMap { TAS in
-      let oatC = OAT.converted(to: .celsius).value
-      let TASKnots = TAS.converted(to: .knots).value
-      return .value(TASKnots / speedOfSound(oatCelsius: oatC))
+      let OATC = OAT.converted(to: .celsius).value
+      let TASKts = TAS.converted(to: .knots).value
+      return .value(TASKts / speedOfSound(OATC: OATC))
     }
   }
 

@@ -39,7 +39,19 @@ enum NavDataProcessorError: LocalizedError {
 /// ## Progress Tracking
 ///
 /// The processor reports progress through the ``onProgress`` callback with
-/// 100 total units representing each major step.
+/// 100 total units distributed across each major step. Unit allocations are
+/// derived from measured processing times (Release build, ~29K airports,
+/// ~627K obstacles, cycle 2026-02-19, total ~143 s):
+///
+/// | Step            | Time | Units | Cumulative |
+/// |-----------------|------|-------|------------|
+/// | NASR loading    |  29s |    20 |          20 |
+/// | OurAirports     |   2s |     2 |          22 |
+/// | CIFP            |   9s |     6 |          28 |
+/// | DOF             |  13s |     9 |          37 |
+/// | Merge           |  64s |    45 |          82 |
+/// | Write + compress|  16s |    11 |          93 |
+/// | Upload          |  10s |     7 |         100 |
 ///
 /// ## See Also
 ///
@@ -49,6 +61,22 @@ enum NavDataProcessorError: LocalizedError {
 /// - ``OurAirportsLoader``
 /// - ``GitHubUploader``
 struct NavDataProcessor {
+
+  // MARK: - Progress Phase Boundaries
+
+  /// Cumulative progress boundaries for each processing phase.
+  ///
+  /// Derived from measured Release-build processing times (cycle 2026-02-19,
+  /// ~29K airports, ~627K obstacles, ~143 s total). See class-level doc for
+  /// the full timing table.
+  private static let nasrEnd: Int64 = 20
+  private static let ourAirportsEnd: Int64 = 22
+  private static let cifpEnd: Int64 = 28
+  private static let dofEnd: Int64 = 37
+  private static let mergeEnd: Int64 = 82
+  private static let compressEnd: Int64 = 93
+  // Upload runs from compressEnd to 100.
+
   /// The NASR cycle to download (e.g., 2501 for January 2025).
   let cycle: SwiftNASR.Cycle
 
@@ -71,7 +99,7 @@ struct NavDataProcessor {
 
   /// Executes the complete data processing pipeline.
   func process() async throws {
-    // Load and merge all data (72 units)
+    // Load and merge all data (0 → mergeEnd)
     let loadedData = try await loadAndMergeAllData()
 
     // Build cycle information with effective/expiration dates
@@ -128,17 +156,17 @@ struct NavDataProcessor {
       navaids: loadedData.navaids
     )
 
-    // Write and compress combined data (19 units, cumulative: 91)
+    // Write and compress combined data (compressEnd - mergeEnd units)
     let result = try writeAndCompressData(
       codableData,
       filename: "\(cycle)",
       dataDescription: "airport and obstacle"
     )
-    await reportProgress(91, String(localized: "Compressing…"))
+    await reportProgress(Self.compressEnd, String(localized: "Compressing…"))
 
     try Task.checkCancellation()
 
-    // Upload to GitHub (9 units, cumulative: 100)
+    // Upload to GitHub (100 - compressEnd units)
     await uploadToGitHub(file: result.lzmaFile)
     await reportProgress(100, String(localized: "Complete!"))
 
@@ -166,7 +194,7 @@ struct NavDataProcessor {
 
     try Task.checkCancellation()
 
-    // Load NASR data (28 units, cumulative: 28)
+    // Load NASR data (0 → nasrEnd)
     logger.notice("Loading NASR data for cycle \(cycle)…")
     await reportProgress(0, String(localized: "Loading NASR data…"))
     let nasrProcessor = NASRProcessor(logger: logger)
@@ -174,56 +202,55 @@ struct NavDataProcessor {
       cycle: cycle,
       timezoneLookup: timezoneLookup
     ) { completed, total in
-      // Map NASR progress (0-total) to overall progress (0-28)
-      let mapped = Int64(Double(completed) / Double(total) * 28)
+      let mapped = Int64(Double(completed) / Double(total) * Double(Self.nasrEnd))
       await self.reportProgress(mapped, String(localized: "Loading NASR data…"))
     }
 
     try Task.checkCancellation()
 
-    // Load OurAirports data (2 units, cumulative: 30)
+    // Load OurAirports data (nasrEnd → ourAirportsEnd)
+    let ourAirportsSpan = Self.ourAirportsEnd - Self.nasrEnd
     logger.notice("Loading OurAirports data…")
-    await reportProgress(28, String(localized: "Loading OurAirports data…"))
+    await reportProgress(Self.nasrEnd, String(localized: "Loading OurAirports data…"))
     let ourAirportsLoader = OurAirportsLoader(logger: logger)
     let (ourAirports, ourAirportsLastUpdated) = try await ourAirportsLoader.loadAirports {
       completed,
       total in
-      // Map OurAirports progress (0-total) to overall progress (28-30)
-      let mapped = 28 + Int64(Double(completed) / Double(total) * 2)
+      let mapped = Self.nasrEnd + Int64(Double(completed) / Double(total) * Double(ourAirportsSpan))
       await self.reportProgress(mapped, String(localized: "Loading OurAirports data…"))
     }
 
     try Task.checkCancellation()
 
-    // Load CIFP data (6 units, cumulative: 36)
+    // Load CIFP data (ourAirportsEnd → cifpEnd)
+    let cifpSpan = Self.cifpEnd - Self.ourAirportsEnd
     logger.notice("Loading CIFP data…")
-    await reportProgress(30, String(localized: "Loading CIFP data…"))
+    await reportProgress(Self.ourAirportsEnd, String(localized: "Loading CIFP data…"))
     let cifpProcessor = CIFPProcessor(logger: logger)
     let cifpResult = try await cifpProcessor.loadCIFPData(cycle: cycle) { completed, total in
-      // Map CIFP progress (0-total) to overall progress (30-36)
-      let mapped = 30 + Int64(Double(completed) / Double(total) * 6)
+      let mapped = Self.ourAirportsEnd + Int64(Double(completed) / Double(total) * Double(cifpSpan))
       await self.reportProgress(mapped, String(localized: "Loading CIFP data…"))
     }
-    await reportProgress(36, String(localized: "Loading CIFP data…"))
+    await reportProgress(Self.cifpEnd, String(localized: "Loading CIFP data…"))
 
     try Task.checkCancellation()
 
-    // Load DOF data (8 units, cumulative: 44)
+    // Load DOF data (cifpEnd → dofEnd)
+    let dofSpan = Self.dofEnd - Self.cifpEnd
     logger.notice("Loading DOF data…")
-    await reportProgress(36, String(localized: "Loading DOF data…"))
+    await reportProgress(Self.cifpEnd, String(localized: "Loading DOF data…"))
     let dofProcessor = DOFProcessor(logger: logger)
     let dofResult = try await dofProcessor.loadDOFData { completed, total in
-      // Map DOF progress (0-total) to overall progress (36-44)
-      let mapped = 36 + Int64(Double(completed) / Double(total) * 8)
+      let mapped = Self.cifpEnd + Int64(Double(completed) / Double(total) * Double(dofSpan))
       await self.reportProgress(mapped, String(localized: "Loading DOF data…"))
     }
-    await reportProgress(44, String(localized: "Loading DOF data…"))
+    await reportProgress(Self.dofEnd, String(localized: "Loading DOF data…"))
 
     try Task.checkCancellation()
 
-    // Merge and de-duplicate (28 units, cumulative: 72)
+    // Merge and de-duplicate (dofEnd → mergeEnd)
     logger.notice("Merging and de-duplicating airport data…")
-    await reportProgress(44, String(localized: "Merging and de-duplicating airport data…"))
+    await reportProgress(Self.dofEnd, String(localized: "Merging and de-duplicating airport data…"))
     let mergedAirports = await mergeAirports(
       NASRAirports: nasrAirports,
       ourAirports: ourAirports,
@@ -231,7 +258,7 @@ struct NavDataProcessor {
       cifpData: cifpResult.data,
       cifpProcessor: cifpProcessor
     )
-    await reportProgress(72, String(localized: "Merging complete"))
+    await reportProgress(Self.mergeEnd, String(localized: "Merging complete"))
 
     try Task.checkCancellation()
 
@@ -301,7 +328,7 @@ struct NavDataProcessor {
     }
 
     logger.notice("Uploading to GitHub…")
-    await reportProgress(91, String(localized: "Uploading to GitHub…"))
+    await reportProgress(Self.compressEnd, String(localized: "Uploading to GitHub…"))
 
     do {
       let uploader = GitHubUploader(logger: logger)

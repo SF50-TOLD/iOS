@@ -74,12 +74,12 @@ final class ContaminationCalculator {
   /// - Parameters:
   ///   - aircraftType: The aircraft type
   ///   - loader: The data table loader to load contamination tables from
-  init(aircraftType: AircraftType, loader: DataTableLoader) throws {
+  init(aircraftType: AircraftType, loader: DataTableLoader) {
     self.aircraftType = aircraftType
-    self.compactSnowData = try loader.loadContaminationCompactSnowData()
-    self.drySnowData = try loader.loadContaminationDrySnowData()
-    self.slushData = try loader.loadContaminationSlushData()
-    self.waterData = try loader.loadContaminationWaterData()
+    self.compactSnowData = loader.loadContaminationCompactSnowData()
+    self.drySnowData = loader.loadContaminationDrySnowData()
+    self.slushData = loader.loadContaminationSlushData()
+    self.waterData = loader.loadContaminationWaterData()
   }
 
   /// Creates a contamination calculator for regression model (no data tables).

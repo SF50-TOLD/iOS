@@ -327,7 +327,6 @@ final class TabularPerformanceModelG2: BasePerformanceModel {
 
   // MARK: - Initializers
 
-  // swiftlint:disable force_try
   init(
     conditions: Conditions,
     configuration: Configuration,
@@ -349,59 +348,58 @@ final class TabularPerformanceModelG2: BasePerformanceModel {
       notam: notam
     ).landingPrefix(for: configuration.flapSetting)
 
-    takeoffRunData = try! loader.loadTakeoffRunData()
-    takeoffDistanceData = try! loader.loadTakeoffDistanceData()
-    takeoffClimbGradientData = try! loader.loadTakeoffClimbGradientData()
-    takeoffClimbRateData = try! loader.loadTakeoffClimbRateData()
-    vrefData = try! loader.loadVrefData(vrefPrefix: vrefPrefix)
-    landingRunData = try! loader.loadLandingRunData(landingPrefix: landingPrefix)
-    landingDistanceData = try! loader.loadLandingDistanceData(landingPrefix: landingPrefix)
+    takeoffRunData = loader.loadTakeoffRunData()
+    takeoffDistanceData = loader.loadTakeoffDistanceData()
+    takeoffClimbGradientData = loader.loadTakeoffClimbGradientData()
+    takeoffClimbRateData = loader.loadTakeoffClimbRateData()
+    vrefData = loader.loadVrefData(vrefPrefix: vrefPrefix)
+    landingRunData = loader.loadLandingRunData(landingPrefix: landingPrefix)
+    landingDistanceData = loader.loadLandingDistanceData(landingPrefix: landingPrefix)
 
-    takeoffRun_headwindData = try! loader.loadTakeoffRunHeadwindData()
-    takeoffRun_tailwindData = try! loader.loadTakeoffRunTailwindData()
-    takeoffRun_downhillData = try! loader.loadTakeoffRunDownhillData()
-    takeoffRun_uphillData = try! loader.loadTakeoffRunUphillData()
-    takeoffDistance_headwindData = try! loader.loadTakeoffDistanceHeadwindData()
-    takeoffDistance_tailwindData = try! loader.loadTakeoffDistanceTailwindData()
-    takeoffDistance_unpavedData = try! loader.loadTakeoffDistanceUnpavedData()
+    takeoffRun_headwindData = loader.loadTakeoffRunHeadwindData()
+    takeoffRun_tailwindData = loader.loadTakeoffRunTailwindData()
+    takeoffRun_downhillData = loader.loadTakeoffRunDownhillData()
+    takeoffRun_uphillData = loader.loadTakeoffRunUphillData()
+    takeoffDistance_headwindData = loader.loadTakeoffDistanceHeadwindData()
+    takeoffDistance_tailwindData = loader.loadTakeoffDistanceTailwindData()
+    takeoffDistance_unpavedData = loader.loadTakeoffDistanceUnpavedData()
 
-    landingRun_headwindData = try! loader.loadLandingRunHeadwindData(landingPrefix: landingPrefix)
-    landingRun_tailwindData = try! loader.loadLandingRunTailwindData(landingPrefix: landingPrefix)
-    landingRun_downhillData = try! loader.loadLandingRunDownhillData(landingPrefix: landingPrefix)
-    landingRun_uphillData = try! loader.loadLandingRunUphillData(landingPrefix: landingPrefix)
-    landingDistance_headwindData = try! loader.loadLandingDistanceHeadwindData(
+    landingRun_headwindData = loader.loadLandingRunHeadwindData(landingPrefix: landingPrefix)
+    landingRun_tailwindData = loader.loadLandingRunTailwindData(landingPrefix: landingPrefix)
+    landingRun_downhillData = loader.loadLandingRunDownhillData(landingPrefix: landingPrefix)
+    landingRun_uphillData = loader.loadLandingRunUphillData(landingPrefix: landingPrefix)
+    landingDistance_headwindData = loader.loadLandingDistanceHeadwindData(
       landingPrefix: landingPrefix
     )
-    landingDistance_tailwindData = try! loader.loadLandingDistanceTailwindData(
+    landingDistance_tailwindData = loader.loadLandingDistanceTailwindData(
       landingPrefix: landingPrefix
     )
-    landingDistance_unpavedData = try! loader.loadLandingDistanceUnpavedData(
+    landingDistance_unpavedData = loader.loadLandingDistanceUnpavedData(
       landingPrefix: landingPrefix
     )
 
-    contaminationCalculator = try! ContaminationCalculator(
+    contaminationCalculator = ContaminationCalculator(
       aircraftType: aircraftType,
       loader: loader
     )
 
-    enrouteClimb_gradientNormalData = try! loader.loadEnrouteClimbGradientData(
+    enrouteClimb_gradientNormalData = loader.loadEnrouteClimbGradientData(
       iceContaminated: false
     )
-    enrouteClimb_rateNormalData = try! loader.loadEnrouteClimbRateData(iceContaminated: false)
-    enrouteClimb_speedNormalData = try! loader.loadEnrouteClimbSpeedData(iceContaminated: false)
-    enrouteClimb_gradientIceContaminatedData = try! loader.loadEnrouteClimbGradientData(
+    enrouteClimb_rateNormalData = loader.loadEnrouteClimbRateData(iceContaminated: false)
+    enrouteClimb_speedNormalData = loader.loadEnrouteClimbSpeedData(iceContaminated: false)
+    enrouteClimb_gradientIceContaminatedData = loader.loadEnrouteClimbGradientData(
       iceContaminated: true
     )
-    enrouteClimb_rateIceContaminatedData = try! loader.loadEnrouteClimbRateData(
+    enrouteClimb_rateIceContaminatedData = loader.loadEnrouteClimbRateData(
       iceContaminated: true
     )
-    enrouteClimb_speedIceContaminatedData = try! loader.loadEnrouteClimbSpeedData(
+    enrouteClimb_speedIceContaminatedData = loader.loadEnrouteClimbSpeedData(
       iceContaminated: true
     )
 
     super.init(conditions: conditions, configuration: configuration, runway: runway, notam: notam)
   }
-  // swiftlint:enable force_try
 
   // MARK: - Functions
 

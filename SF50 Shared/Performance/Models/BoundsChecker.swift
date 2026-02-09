@@ -42,19 +42,17 @@ final class BoundsChecker {
   private let landingRunData_flaps50: DataTable
   private let landingRunData_flaps50Ice: DataTable
 
-  // swiftlint:disable force_try
   init(aircraftType: AircraftType) {
     let loader = DataTableLoader(aircraftType: aircraftType)
 
     // Load takeoff data for bounds
-    self.takeoffRunData = try! loader.loadTakeoffRunData()
+    self.takeoffRunData = loader.loadTakeoffRunData()
 
     // Load landing data for each flap configuration
-    self.landingRunData_flaps100 = try! loader.loadLandingRunData(landingPrefix: "100")
-    self.landingRunData_flaps50 = try! loader.loadLandingRunData(landingPrefix: "50")
-    self.landingRunData_flaps50Ice = try! loader.loadLandingRunData(landingPrefix: "50 ice")
+    self.landingRunData_flaps100 = loader.loadLandingRunData(landingPrefix: "100")
+    self.landingRunData_flaps50 = loader.loadLandingRunData(landingPrefix: "50")
+    self.landingRunData_flaps50Ice = loader.loadLandingRunData(landingPrefix: "50 ice")
   }
-  // swiftlint:enable force_try
 
   /// Returns the bounds status for takeoff parameters.
   /// - Parameters:

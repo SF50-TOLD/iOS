@@ -12,15 +12,15 @@ struct GeoCalculationsTests {
   func windTriangleNoWind() {
     let result = GeoCalculations.windTriangle(
       trueHeading: .init(value: 90, unit: .degrees),
-      tasKnots: 170,
+      TASKts: 170,
       windFromTrue: .init(value: 0, unit: .degrees),
-      windSpeedKnots: 0
+      windSpeedKts: 0
     )
     #expect(
       result.groundTrack.converted(to: .degrees).value
         .isApproximatelyEqual(to: 90, absoluteTolerance: 0.01)
     )
-    #expect(result.groundSpeedKnots.isApproximatelyEqual(to: 170, absoluteTolerance: 0.01))
+    #expect(result.groundSpeedKts.isApproximatelyEqual(to: 170, absoluteTolerance: 0.01))
   }
 
   @Test
@@ -28,12 +28,12 @@ struct GeoCalculationsTests {
     // Heading north, wind from north = headwind
     let result = GeoCalculations.windTriangle(
       trueHeading: .init(value: 0, unit: .degrees),
-      tasKnots: 170,
+      TASKts: 170,
       windFromTrue: .init(value: 0, unit: .degrees),
-      windSpeedKnots: 30
+      windSpeedKts: 30
     )
     // GS = TAS - wind = 140, track unchanged
-    #expect(result.groundSpeedKnots.isApproximatelyEqual(to: 140, absoluteTolerance: 0.01))
+    #expect(result.groundSpeedKts.isApproximatelyEqual(to: 140, absoluteTolerance: 0.01))
     let track = result.groundTrack.converted(to: .degrees).value
     // Track should be 0 (or 360)
     let normalizedTrack = track < 1 ? track + 360 : track
@@ -45,12 +45,12 @@ struct GeoCalculationsTests {
     // Heading north, wind from south = tailwind
     let result = GeoCalculations.windTriangle(
       trueHeading: .init(value: 0, unit: .degrees),
-      tasKnots: 170,
+      TASKts: 170,
       windFromTrue: .init(value: 180, unit: .degrees),
-      windSpeedKnots: 30
+      windSpeedKts: 30
     )
     // GS = TAS + wind = 200, track unchanged
-    #expect(result.groundSpeedKnots.isApproximatelyEqual(to: 200, absoluteTolerance: 0.01))
+    #expect(result.groundSpeedKts.isApproximatelyEqual(to: 200, absoluteTolerance: 0.01))
     let track = result.groundTrack.converted(to: .degrees).value
     let normalizedTrack = track < 1 ? track + 360 : track
     #expect(normalizedTrack.isApproximatelyEqual(to: 360, absoluteTolerance: 0.01))
@@ -61,14 +61,14 @@ struct GeoCalculationsTests {
     // Heading north, wind from west (270) = pushes east
     let result = GeoCalculations.windTriangle(
       trueHeading: .init(value: 0, unit: .degrees),
-      tasKnots: 170,
+      TASKts: 170,
       windFromTrue: .init(value: 270, unit: .degrees),
-      windSpeedKnots: 30
+      windSpeedKts: 30
     )
     // GS should be less than TAS+wind but more than TAS-wind
     // sqrt(170^2 + 30^2) = sqrt(29800) ~ 172.6
     let expectedGS = (170.0 * 170.0 + 30.0 * 30.0).squareRoot()
-    #expect(result.groundSpeedKnots.isApproximatelyEqual(to: expectedGS, absoluteTolerance: 0.1))
+    #expect(result.groundSpeedKts.isApproximatelyEqual(to: expectedGS, absoluteTolerance: 0.1))
 
     // Track should be deflected east of north
     let track = result.groundTrack.converted(to: .degrees).value

@@ -126,26 +126,26 @@ public enum GeoCalculations {
   ///
   /// - Parameters:
   ///   - trueHeading: Aircraft true heading (direction nose points)
-  ///   - tasKnots: True airspeed in knots
+  ///   - TASKts: True airspeed in knots
   ///   - windFromTrue: Direction wind blows FROM (true north ref)
-  ///   - windSpeedKnots: Wind speed in knots
-  /// - Returns: (groundTrack: degrees true 0-360, groundSpeedKnots: Double)
+  ///   - windSpeedKts: Wind speed in knots
+  /// - Returns: (groundTrack: degrees true 0-360, groundSpeedKts: Double)
   public static func windTriangle(
     trueHeading: Measurement<UnitAngle>,
-    tasKnots: Double,
+    TASKts: Double,
     windFromTrue: Measurement<UnitAngle>,
-    windSpeedKnots: Double
-  ) -> (groundTrack: Measurement<UnitAngle>, groundSpeedKnots: Double) {
+    windSpeedKts: Double
+  ) -> (groundTrack: Measurement<UnitAngle>, groundSpeedKts: Double) {
     let thRad = trueHeading.converted(to: .radians).value
     let wdRad = windFromTrue.converted(to: .radians).value
 
     // Aircraft air velocity
-    let airEast = tasKnots * sin(thRad)
-    let airNorth = tasKnots * cos(thRad)
+    let airEast = TASKts * sin(thRad)
+    let airNorth = TASKts * cos(thRad)
 
     // Wind pushes opposite to FROM direction
-    let windEast = -windSpeedKnots * sin(wdRad)
-    let windNorth = -windSpeedKnots * cos(wdRad)
+    let windEast = -windSpeedKts * sin(wdRad)
+    let windNorth = -windSpeedKts * cos(wdRad)
 
     // Ground velocity
     let gsEast = airEast + windEast
@@ -157,7 +157,7 @@ public enum GeoCalculations {
 
     return (
       groundTrack: .init(value: trackDeg, unit: .degrees),
-      groundSpeedKnots: groundSpeed
+      groundSpeedKts: groundSpeed
     )
   }
 
@@ -181,7 +181,7 @@ public enum GeoCalculations {
     let lat1 = start.latitude * .pi / 180
     let lon1 = start.longitude * .pi / 180
 
-    let angularDistance = distanceMeters / earthRadiusMeters
+    let angularDistance = distanceMeters / earthRadiusM
 
     let lat2 = asin(
       sin(lat1) * cos(angularDistance)

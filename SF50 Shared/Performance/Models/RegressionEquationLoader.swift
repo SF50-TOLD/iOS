@@ -43,149 +43,152 @@ struct RegressionEquationLoader {
 
   // MARK: - Takeoff Equations
 
-  func loadTakeoffRunEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-ground-run.json")
+  func loadTakeoffRunEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-ground-run.json")
   }
 
-  func loadTakeoffDistanceEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-total-distance.json")
+  func loadTakeoffDistanceEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-total-distance.json")
   }
 
-  func loadTakeoffClimbGradientEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-climb-gradient.json")
+  func loadTakeoffClimbGradientEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-climb-gradient.json")
   }
 
-  func loadTakeoffClimbRateEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-climb-rate.json")
+  func loadTakeoffClimbRateEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-climb-rate.json")
   }
 
   // MARK: - Takeoff Adjustment Factor Equations
 
-  func loadTakeoffRunHeadwindFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-run-headwind-factor.json")
+  func loadTakeoffRunHeadwindFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-run-headwind-factor.json")
   }
 
-  func loadTakeoffRunTailwindFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-run-tailwind-factor.json")
+  func loadTakeoffRunTailwindFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-run-tailwind-factor.json")
   }
 
-  func loadTakeoffRunUphillFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-run-uphill-factor.json")
+  func loadTakeoffRunUphillFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-run-uphill-factor.json")
   }
 
-  func loadTakeoffRunDownhillFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-run-downhill-factor.json")
+  func loadTakeoffRunDownhillFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-run-downhill-factor.json")
   }
 
-  func loadTakeoffDistanceHeadwindFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-distance-headwind-factor.json")
+  func loadTakeoffDistanceHeadwindFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-distance-headwind-factor.json")
   }
 
-  func loadTakeoffDistanceTailwindFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-distance-tailwind-factor.json")
+  func loadTakeoffDistanceTailwindFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-distance-tailwind-factor.json")
   }
 
-  func loadTakeoffDistanceUnpavedFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "takeoff-distance-unpaved-factor.json")
+  func loadTakeoffDistanceUnpavedFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "takeoff-distance-unpaved-factor.json")
   }
 
   // MARK: - Landing Equations
 
-  func loadLandingRunEquation(flapSetting: FlapSetting) throws -> RegressionEquation {
+  func loadLandingRunEquation(flapSetting: FlapSetting) -> RegressionEquation {
     let filename = "landing-run-\(flapSetting.regressionFileSuffix).json"
-    return try loadEquation(filename: filename)
+    return loadEquation(filename: filename)
   }
 
-  func loadLandingDistanceEquation(flapSetting: FlapSetting) throws -> RegressionEquation {
+  func loadLandingDistanceEquation(flapSetting: FlapSetting) -> RegressionEquation {
     let filename = "landing-distance-\(flapSetting.regressionFileSuffix).json"
-    return try loadEquation(filename: filename)
+    return loadEquation(filename: filename)
   }
 
-  func loadGoAroundClimbGradientEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "go-around-climb-gradient.json")
+  func loadGoAroundClimbGradientEquation() -> RegressionEquation {
+    loadEquation(filename: "go-around-climb-gradient.json")
   }
 
   // MARK: - Landing Adjustment Factor Equations
 
-  func loadLandingRunHeadwindFactorEquation(flapSetting: FlapSetting) throws -> RegressionEquation {
+  func loadLandingRunHeadwindFactorEquation(flapSetting: FlapSetting) -> RegressionEquation {
     let filename = "landing-run-headwind-factor-\(flapSetting.regressionFileSuffix).json"
-    return try loadEquation(filename: filename)
+    return loadEquation(filename: filename)
   }
 
-  func loadLandingRunTailwindFactorEquation(flapSetting: FlapSetting) throws -> RegressionEquation {
+  func loadLandingRunTailwindFactorEquation(flapSetting: FlapSetting) -> RegressionEquation {
     let filename = "landing-run-tailwind-factor-\(flapSetting.regressionFileSuffix).json"
-    return try loadEquation(filename: filename)
+    return loadEquation(filename: filename)
   }
 
-  func loadLandingRunUphillFactorEquation(flapSetting: FlapSetting) throws -> RegressionEquation {
+  func loadLandingRunUphillFactorEquation(flapSetting: FlapSetting) -> RegressionEquation {
     let filename = "landing-run-uphill-factor-\(flapSetting.regressionFileSuffix).json"
-    return try loadEquation(filename: filename)
+    return loadEquation(filename: filename)
   }
 
-  func loadLandingRunDownhillFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "landing-run-downhill-factor.json")
+  func loadLandingRunDownhillFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "landing-run-downhill-factor.json")
   }
 
   func loadLandingDistanceHeadwindFactorEquation(
     flapSetting: FlapSetting
-  ) throws -> RegressionEquation {
+  ) -> RegressionEquation {
     let filename = "landing-distance-headwind-factor-\(flapSetting.regressionFileSuffix).json"
-    return try loadEquation(filename: filename)
+    return loadEquation(filename: filename)
   }
 
   func loadLandingDistanceTailwindFactorEquation(
     flapSetting: FlapSetting
-  ) throws -> RegressionEquation {
+  ) -> RegressionEquation {
     let filename = "landing-distance-tailwind-factor-\(flapSetting.regressionFileSuffix).json"
-    return try loadEquation(filename: filename)
+    return loadEquation(filename: filename)
   }
 
-  func loadLandingDistanceUnpavedFactorEquation() throws -> RegressionEquation {
-    try loadEquation(filename: "landing-distance-unpaved-factor.json")
+  func loadLandingDistanceUnpavedFactorEquation() -> RegressionEquation {
+    loadEquation(filename: "landing-distance-unpaved-factor.json")
   }
 
   // MARK: - Vref Equations
 
-  func loadVrefEquation(flapSetting: FlapSetting) throws -> RegressionEquation {
+  func loadVrefEquation(flapSetting: FlapSetting) -> RegressionEquation {
     let filename = "vref-\(flapSetting.regressionFileSuffix).json"
-    return try loadEquation(filename: filename)
+    return loadEquation(filename: filename)
   }
 
   // MARK: - En Route Climb Equations
 
-  func loadEnrouteClimbGradientEquation(iceContaminated: Bool) throws -> RegressionEquation {
+  func loadEnrouteClimbGradientEquation(iceContaminated: Bool) -> RegressionEquation {
     let suffix = iceContaminated ? "ice" : "normal"
-    return try loadEquation(filename: "enroute-climb-gradient-\(suffix).json")
+    return loadEquation(filename: "enroute-climb-gradient-\(suffix).json")
   }
 
-  func loadEnrouteClimbRateEquation(iceContaminated: Bool) throws -> RegressionEquation {
+  func loadEnrouteClimbRateEquation(iceContaminated: Bool) -> RegressionEquation {
     let suffix = iceContaminated ? "ice" : "normal"
-    return try loadEquation(filename: "enroute-climb-rate-\(suffix).json")
+    return loadEquation(filename: "enroute-climb-rate-\(suffix).json")
   }
 
-  func loadEnrouteClimbSpeedEquation(iceContaminated: Bool) throws -> RegressionEquation {
+  func loadEnrouteClimbSpeedEquation(iceContaminated: Bool) -> RegressionEquation {
     let suffix = iceContaminated ? "ice" : "normal"
-    return try loadEquation(filename: "enroute-climb-speed-\(suffix).json")
+    return loadEquation(filename: "enroute-climb-speed-\(suffix).json")
   }
 
   // MARK: - En Route Obstacle Climb Equations
 
-  func loadEnrouteObstacleClimbGradientEquation(iceContaminated: Bool) throws -> RegressionEquation
-  {
+  func loadEnrouteObstacleClimbGradientEquation(iceContaminated: Bool) -> RegressionEquation {
     let suffix = iceContaminated ? "ice" : "normal"
-    return try loadEquation(filename: "enroute-obstacle-climb-gradient-\(suffix).json")
+    return loadEquation(filename: "enroute-obstacle-climb-gradient-\(suffix).json")
   }
 
-  func loadEnrouteObstacleClimbRateEquation(iceContaminated: Bool) throws -> RegressionEquation {
+  func loadEnrouteObstacleClimbRateEquation(iceContaminated: Bool) -> RegressionEquation {
     let suffix = iceContaminated ? "ice" : "normal"
-    return try loadEquation(filename: "enroute-obstacle-climb-rate-\(suffix).json")
+    return loadEquation(filename: "enroute-obstacle-climb-rate-\(suffix).json")
   }
 
   // MARK: - Private Helpers
 
-  private func loadEquation(filename: String) throws -> RegressionEquation {
+  private func loadEquation(filename: String) -> RegressionEquation {
     let url = dataURL.appending(path: filename)
-    return try RegressionEquation(fileURL: url)
+    do {
+      return try RegressionEquation(fileURL: url)
+    } catch {
+      fatalError("Failed to load bundled regression equation \(filename): \(error)")
+    }
   }
 }
 

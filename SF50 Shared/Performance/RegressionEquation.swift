@@ -45,6 +45,9 @@ final class RegressionEquation {
   /// Uncertainty key for residual error lookup, if applicable
   let uncertaintyKey: String?
 
+  /// Name of the base equation for delta polynomial types, nil otherwise.
+  let baseEquationName: String?
+
   /// The parsed equation definition
   private let equation: EquationDefinition
 
@@ -54,7 +57,7 @@ final class RegressionEquation {
   ///
   /// - Parameter fileURL: The URL of the JSON file to load.
   /// - Throws: `Errors.badEncoding` if the file cannot be read,
-  ///           `Errors.invalidSchema` if the JSON structure is invalid.
+  ///           `Errors.decodingFailed` if the JSON structure is invalid.
   convenience init(fileURL: URL) throws {
     let data = try Data(contentsOf: fileURL)
     try self.init(json: data)
@@ -63,14 +66,14 @@ final class RegressionEquation {
   /// Creates a regression equation from JSON data.
   ///
   /// - Parameter json: The JSON data to parse.
-  /// - Throws: `Errors.invalidSchema` if the JSON structure is invalid.
+  /// - Throws: `Errors.decodingFailed` if the JSON structure is invalid.
   init(json: Data) throws {
     let decoder = JSONDecoder()
     let file: EquationFile
     do {
       file = try decoder.decode(EquationFile.self, from: json)
     } catch {
-      throw Errors.invalidSchema(error.localizedDescription)
+      throw Errors.decodingFailed(error)
     }
 
     guard file.version == "1.0" else {
@@ -80,36 +83,43 @@ final class RegressionEquation {
     self.type = file.type
     self.variables = file.variables
     self.uncertaintyKey = file.uncertaintyKey
+    self.baseEquationName = file.baseEquation
 
     // Parse type-specific equation content
     switch file.type {
       case .polynomial:
         guard let poly = file.equation.polynomial else {
-          throw Errors.invalidSchema("Missing polynomial equation definition")
+          throw Errors.missingEquationDefinition(.polynomial)
+        }
+        self.equation = .polynomial(poly)
+
+      case .deltaPolynomial:
+        guard let poly = file.equation.polynomial else {
+          throw Errors.missingEquationDefinition(.deltaPolynomial)
         }
         self.equation = .polynomial(poly)
 
       case .linear:
         guard let linear = file.equation.linear else {
-          throw Errors.invalidSchema("Missing linear equation definition")
+          throw Errors.missingEquationDefinition(.linear)
         }
         self.equation = .linear(linear)
 
       case .constant:
         guard let constant = file.equation.constant else {
-          throw Errors.invalidSchema("Missing constant equation definition")
+          throw Errors.missingEquationDefinition(.constant)
         }
         self.equation = .constant(constant)
 
       case .piecewise:
         guard let piecewise = file.equation.piecewise else {
-          throw Errors.invalidSchema("Missing piecewise equation definition")
+          throw Errors.missingEquationDefinition(.piecewise)
         }
         self.equation = .piecewise(piecewise)
 
       case .logistic:
         guard let logistic = file.equation.logistic else {
-          throw Errors.invalidSchema("Missing logistic equation definition")
+          throw Errors.missingEquationDefinition(.logistic)
         }
         self.equation = .logistic(logistic)
     }
@@ -286,6 +296,8 @@ final class RegressionEquation {
   enum EquationType: String, Codable, Sendable {
     /// Multi-variable polynomial equation (degree 1-3)
     case polynomial
+    /// Delta polynomial: result = base - max(0, delta). Stored as polynomial coefficients.
+    case deltaPolynomial = "delta_polynomial"
     /// Simple linear equation (y = mx + b)
     case linear
     /// Single constant value
@@ -300,8 +312,10 @@ final class RegressionEquation {
   enum Errors: LocalizedError {
     /// The file data could not be decoded.
     case badEncoding
-    /// The JSON schema is invalid.
-    case invalidSchema(String)
+    /// The JSON data could not be decoded.
+    case decodingFailed(Error)
+    /// The equation definition for the given type is missing from the schema.
+    case missingEquationDefinition(EquationType)
     /// The schema version is not supported.
     case unsupportedVersion(String)
     /// A required input variable is missing.
@@ -317,8 +331,10 @@ final class RegressionEquation {
       switch self {
         case .badEncoding:
           String(localized: "The file data could not be decoded.")
-        case .invalidSchema(let detail):
-          String(localized: "The JSON schema is invalid: \(detail)")
+        case .decodingFailed(let error):
+          String(localized: "The JSON schema is invalid: \(error.localizedDescription)")
+        case .missingEquationDefinition(let type):
+          String(localized: "Missing \(type.rawValue) equation definition.")
         case .unsupportedVersion(let version):
           String(localized: "Schema version “\(version)” is not supported.")
         case .missingVariable(let name):
@@ -342,11 +358,13 @@ private struct EquationFile: Codable {
   let type: RegressionEquation.EquationType
   let variables: [String]
   let uncertaintyKey: String?
+  let baseEquation: String?
   let equation: EquationContainer
 
   enum CodingKeys: String, CodingKey {
     case version, name, description, type, variables
     case uncertaintyKey = "uncertainty_key"
+    case baseEquation = "base_equation"
     case equation
   }
 }

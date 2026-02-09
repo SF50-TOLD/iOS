@@ -51,11 +51,11 @@ actor ProgressObservationHolder {
 /// - ``DOFProcessor``
 struct NASRProcessor {
   // Progress allocation within NASR processing (out of 100):
-  // - Download: 0-35
-  // - Parse airports: 35-90
-  // - Parse ILS: 90-100
-  private static let downloadProgressEnd = 35
-  private static let airportsProgressEnd = 90
+  // - Download: 0-22
+  // - Parse airports: 22-98
+  // - Parse ILS: 98-100
+  private static let downloadProgressEnd = 22
+  private static let airportsProgressEnd = 98
   private static let ilsProgressEnd = 100
 
   /// Logger for status messages and errors.

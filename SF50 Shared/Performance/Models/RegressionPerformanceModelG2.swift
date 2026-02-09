@@ -135,11 +135,17 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
   }
 
   override var enrouteObstacleClimbGradientFtNmi_iceContaminated: Value<Double> {
-    evaluate(enrouteObstacleClimbGradientIceEquation)
+    evaluateDelta(
+      base: enrouteObstacleClimbGradientNormalEquation,
+      delta: enrouteObstacleClimbGradientIceEquation
+    )
   }
 
   override var enrouteObstacleClimbRateFtMin_iceContaminated: Value<Double> {
-    evaluate(enrouteObstacleClimbRateIceEquation)
+    evaluateDelta(
+      base: enrouteObstacleClimbRateNormalEquation,
+      delta: enrouteObstacleClimbRateIceEquation
+    )
   }
 
   private var takeoffRunBaseFt: Value<Double> {
@@ -369,7 +375,6 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
 
   // MARK: - Initializer
 
-  // swiftlint:disable force_try
   override init(
     conditions: Conditions,
     configuration: Configuration,
@@ -380,51 +385,51 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
     let loader = RegressionEquationLoader(aircraftType: aircraftType)
 
     // Load takeoff equations
-    takeoffRunEquation = try! loader.loadTakeoffRunEquation()
-    takeoffDistanceEquation = try! loader.loadTakeoffDistanceEquation()
-    takeoffClimbGradientEquation = try! loader.loadTakeoffClimbGradientEquation()
-    takeoffClimbRateEquation = try! loader.loadTakeoffClimbRateEquation()
+    takeoffRunEquation = loader.loadTakeoffRunEquation()
+    takeoffDistanceEquation = loader.loadTakeoffDistanceEquation()
+    takeoffClimbGradientEquation = loader.loadTakeoffClimbGradientEquation()
+    takeoffClimbRateEquation = loader.loadTakeoffClimbRateEquation()
 
     // Load en route climb equations
-    enrouteClimbGradientNormalEquation = try! loader.loadEnrouteClimbGradientEquation(
+    enrouteClimbGradientNormalEquation = loader.loadEnrouteClimbGradientEquation(
       iceContaminated: false
     )
-    enrouteClimbRateNormalEquation = try! loader.loadEnrouteClimbRateEquation(
+    enrouteClimbRateNormalEquation = loader.loadEnrouteClimbRateEquation(
       iceContaminated: false
     )
-    enrouteClimbSpeedNormalEquation = try! loader.loadEnrouteClimbSpeedEquation(
+    enrouteClimbSpeedNormalEquation = loader.loadEnrouteClimbSpeedEquation(
       iceContaminated: false
     )
-    enrouteClimbGradientIceEquation = try! loader.loadEnrouteClimbGradientEquation(
+    enrouteClimbGradientIceEquation = loader.loadEnrouteClimbGradientEquation(
       iceContaminated: true
     )
-    enrouteClimbRateIceEquation = try! loader.loadEnrouteClimbRateEquation(iceContaminated: true)
-    enrouteClimbSpeedIceEquation = try! loader.loadEnrouteClimbSpeedEquation(iceContaminated: true)
+    enrouteClimbRateIceEquation = loader.loadEnrouteClimbRateEquation(iceContaminated: true)
+    enrouteClimbSpeedIceEquation = loader.loadEnrouteClimbSpeedEquation(iceContaminated: true)
 
     // Load en route obstacle climb equations
     enrouteObstacleClimbGradientNormalEquation =
-      try! loader.loadEnrouteObstacleClimbGradientEquation(
+      loader.loadEnrouteObstacleClimbGradientEquation(
         iceContaminated: false
       )
-    enrouteObstacleClimbRateNormalEquation = try! loader.loadEnrouteObstacleClimbRateEquation(
+    enrouteObstacleClimbRateNormalEquation = loader.loadEnrouteObstacleClimbRateEquation(
       iceContaminated: false
     )
-    enrouteObstacleClimbGradientIceEquation = try! loader.loadEnrouteObstacleClimbGradientEquation(
+    enrouteObstacleClimbGradientIceEquation = loader.loadEnrouteObstacleClimbGradientEquation(
       iceContaminated: true
     )
-    enrouteObstacleClimbRateIceEquation = try! loader.loadEnrouteObstacleClimbRateEquation(
+    enrouteObstacleClimbRateIceEquation = loader.loadEnrouteObstacleClimbRateEquation(
       iceContaminated: true
     )
 
     // Load landing equations
-    landingRunFlaps100Equation = try! loader.loadLandingRunEquation(flapSetting: .flaps100)
-    landingRunFlaps50Equation = try! loader.loadLandingRunEquation(flapSetting: .flaps50)
-    landingRunFlaps50IceEquation = try! loader.loadLandingRunEquation(flapSetting: .flaps50Ice)
-    landingDistanceFlaps100Equation = try! loader.loadLandingDistanceEquation(
+    landingRunFlaps100Equation = loader.loadLandingRunEquation(flapSetting: .flaps100)
+    landingRunFlaps50Equation = loader.loadLandingRunEquation(flapSetting: .flaps50)
+    landingRunFlaps50IceEquation = loader.loadLandingRunEquation(flapSetting: .flaps50Ice)
+    landingDistanceFlaps100Equation = loader.loadLandingDistanceEquation(
       flapSetting: .flaps100
     )
-    landingDistanceFlaps50Equation = try! loader.loadLandingDistanceEquation(flapSetting: .flaps50)
-    landingDistanceFlaps50IceEquation = try! loader.loadLandingDistanceEquation(
+    landingDistanceFlaps50Equation = loader.loadLandingDistanceEquation(flapSetting: .flaps50)
+    landingDistanceFlaps50IceEquation = loader.loadLandingDistanceEquation(
       flapSetting: .flaps50Ice
     )
 
@@ -436,5 +441,4 @@ final class RegressionPerformanceModelG2: BaseSF50RegressionPerformanceModel {
       aircraftType: aircraftType
     )
   }
-  // swiftlint:enable force_try
 }
