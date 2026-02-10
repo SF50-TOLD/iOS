@@ -104,6 +104,7 @@ Types for managing asynchronous loading state:
 ### Terrain Data
 
 - <doc:DigitalElevationModel>
+- <doc:ClimbProfileAndTerrainAnalysis>
 - ``TerrainService``
 - ``TerrainRegion``
 - ``TerrainProfile``

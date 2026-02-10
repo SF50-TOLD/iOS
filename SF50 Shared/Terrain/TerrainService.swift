@@ -79,6 +79,13 @@ public actor TerrainService {
     loadedTiles[region] != nil
   }
 
+  // MARK: - Elevation Reader
+
+  /// Creates a snapshot of the currently loaded tiles for lock-free elevation queries.
+  public func makeElevationReader() -> ElevationReader {
+    ElevationReader(tiles: loadedTiles)
+  }
+
   // MARK: - Point Elevation
 
   /// Returns the terrain elevation at a coordinate.
@@ -134,8 +141,8 @@ public actor TerrainService {
       return TerrainProfile(points: [])
     }
 
-    var points: [TerrainProfilePoint] = []
-    var totalDistanceNM = 0.0
+    var points: [TerrainProfilePoint] = [],
+      totalDistanceNM = 0.0
 
     // Add first point
     if let elevM = elevationM(at: coordinates[0]) {
@@ -150,8 +157,8 @@ public actor TerrainService {
 
     // Process each segment
     for i in 1..<coordinates.count {
-      let from = coordinates[i - 1]
-      let to = coordinates[i]
+      let from = coordinates[i - 1],
+        to = coordinates[i]
       let segmentDistanceNM = GeoCalculations.distanceNM(from: from, to: to)
 
       // Sample points along the segment
@@ -187,5 +194,42 @@ public actor TerrainService {
     }
 
     return TerrainProfile(points: points)
+  }
+}
+
+// MARK: - ElevationReader
+
+/// A lightweight, `Sendable` snapshot of loaded terrain tiles for lock-free elevation queries.
+///
+/// Use ``TerrainService/makeElevationReader()`` to create an instance. Because this type
+/// captures only immutable tile references, it can be passed freely across concurrency domains
+/// without requiring actor hops for each query.
+public struct ElevationReader: Sendable {
+  private let tiles: [TerrainRegion: MappedTerrainTile]
+
+  /// The set of terrain regions available in this snapshot.
+  public let loadedRegions: Set<TerrainRegion>
+
+  init(tiles: [TerrainRegion: MappedTerrainTile]) {
+    self.tiles = tiles
+    self.loadedRegions = Set(tiles.keys)
+  }
+
+  /// Returns the terrain elevation at a coordinate.
+  public func elevation(at coordinate: CLLocationCoordinate2D) -> Measurement<UnitLength>? {
+    elevation(at: coordinate.latitude, longitude: coordinate.longitude)
+  }
+
+  /// Returns the terrain elevation at a coordinate.
+  public func elevation(at latitude: Double, longitude: Double) -> Measurement<UnitLength>? {
+    let regions = TerrainRegion.containing(latitude: latitude, longitude: longitude)
+    for region in regions {
+      if let tile = tiles[region],
+        let elevM = tile.interpolatedElevation(at: latitude, longitude: longitude)
+      {
+        return Measurement(value: elevM, unit: .meters)
+      }
+    }
+    return nil
   }
 }

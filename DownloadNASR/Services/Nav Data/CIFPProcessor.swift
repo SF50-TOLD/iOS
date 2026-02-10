@@ -34,6 +34,7 @@ struct CIFPProcessor {
   /// Path terminators that use DME distance for termination.
   private static let dmePathTerminators: Set<PathTerminator> = [
     .trackFromFixDME,
+    .trackFromFixDistance,  // FC: routeDistanceNMOrMinutes is ground distance, not slant range
     .courseToDME,
     .headingToDME
   ]

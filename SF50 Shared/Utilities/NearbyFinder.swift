@@ -77,3 +77,4 @@ public enum NearbyFinder {
 // MARK: - Conformances for existing types
 
 extension Airport: Locatable {}
+extension Obstacle: Locatable {}

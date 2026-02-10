@@ -48,4 +48,22 @@ extension Measurement where UnitType == UnitAngle {
     let reciprocalDegrees = (degreesValue + 180).truncatingRemainder(dividingBy: 360)
     return .init(value: reciprocalDegrees, unit: .degrees)
   }
+
+  /// Converts a magnetic bearing to true bearing using the given variation.
+  public func toTrue(variation: Measurement<UnitAngle>) -> Measurement<UnitAngle> {
+    let trueDeg =
+      (converted(to: .degrees).value
+      + variation.converted(to: .degrees).value)
+      .truncatingRemainder(dividingBy: 360)
+    return .init(value: trueDeg < 0 ? trueDeg + 360 : trueDeg, unit: .degrees)
+  }
+
+  /// Converts a true bearing to magnetic bearing using the given variation.
+  public func toMagnetic(variation: Measurement<UnitAngle>) -> Measurement<UnitAngle> {
+    let magDeg =
+      (converted(to: .degrees).value
+      - variation.converted(to: .degrees).value)
+      .truncatingRemainder(dividingBy: 360)
+    return .init(value: magDeg < 0 ? magDeg + 360 : magDeg, unit: .degrees)
+  }
 }

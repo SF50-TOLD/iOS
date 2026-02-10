@@ -54,4 +54,25 @@ public final class Obstacle {
     _latitude = latitude.converted(to: .degrees).value
     _longitude = longitude.converted(to: .degrees).value
   }
+
+  /// Returns a fetch descriptor for obstacles within a lat/lon bounding box.
+  /// - Parameters:
+  ///   - minLat: Minimum latitude in decimal degrees.
+  ///   - maxLat: Maximum latitude in decimal degrees.
+  ///   - minLon: Minimum longitude in decimal degrees.
+  ///   - maxLon: Maximum longitude in decimal degrees.
+  /// - Returns: A configured fetch descriptor.
+  public static func fetchDescriptor(
+    minLat: Double,
+    maxLat: Double,
+    minLon: Double,
+    maxLon: Double
+  ) -> FetchDescriptor<Obstacle> {
+    FetchDescriptor(
+      predicate: #Predicate<Obstacle> {
+        $0._latitude >= minLat && $0._latitude <= maxLat
+          && $0._longitude >= minLon && $0._longitude <= maxLon
+      }
+    )
+  }
 }
