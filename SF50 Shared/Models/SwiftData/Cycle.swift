@@ -25,7 +25,6 @@ public enum CycleDataSource: String, Codable, CaseIterable {
 /// ``Cycle`` tracks the effective dates and metadata for each FAA data source.
 /// Each data source (NASR, CIFP, DOF) has its own publication cycle with
 /// different effective and expiration dates.
-/// - ``isNotYetActive``
 @Model
 public final class Cycle: AnyCycle {
   /// Identifies the data source (NASR, CIFP, DOF).

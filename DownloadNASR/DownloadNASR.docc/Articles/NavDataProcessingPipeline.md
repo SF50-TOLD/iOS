@@ -49,14 +49,18 @@ The loader filters to:
 ``CIFPProcessor`` downloads and parses Coded Instrument Flight Procedures for the
 same AIRAC cycle. CIFP data provides:
 
-- **Departure procedures** (SIDs): Fixes with coordinates, altitude restrictions,
-  and leg type geometry (track-to-fix, course-to-fix, holds, arcs, etc.)
+- **Departure procedures** (SIDs): Organized into segments per runway transition
+  and common route, with fixes, altitude restrictions, and leg type geometry
+  (track-to-fix, course-to-fix, holds, arcs, etc.)
 - **Approach procedures**: Missed approach fixes with altitude constraints
+- **DME-capable navaids**: VOR/DME, VORTAC, DME, and TACAN facilities referenced
+  by procedure legs for DME distance termination
 
 Each procedure leg is converted to a ``LegTypeCodable`` with the path terminator
 type, magnetic course, turn direction (for holds), and arc radius (for RF/DME arcs).
-Legs with missing required data (e.g., a course-to-fix without a course) are skipped
-with a warning.
+DME-terminated legs also include the recommended navaid identifier and termination
+distance. Legs with missing required data (e.g., a course-to-fix without a course)
+are skipped with a warning.
 
 ## Stage 4: FAA DOF Download
 
@@ -124,23 +128,32 @@ AirportDataCodable
 │   ├── latitude, longitude (degrees), elevation (meters)
 │   ├── variation (degrees), timeZone?
 │   ├── runways: [RunwayCodable]
-│   │   ├── name, trueHeading, length, elevation?
+│   │   ├── name, trueHeading, length, elevation? (threshold elevation)
 │   │   ├── takeoffRun?, takeoffDistance?, landingDistance?
 │   │   ├── gradient?, isTurf, reciprocalName?
-│   │   └── width?, thresholdCrossingHeight?, glidepathAngle?
-│   ├── departureProcedures: [DepartureProcedureCodable]?
-│   │   ├── identifier, runwayNames
-│   │   ├── requiredClimbGradientFtPerNM?
-│   │   └── fixes: [LegCodable]?
-│   │       ├── identifier, latitude, longitude
-│   │       ├── altitudeRestriction?
-│   │       └── legType: LegTypeCodable
-│   └── approachProcedures: [ApproachProcedureCodable]?
-│       ├── identifier, name
-│       └── missedApproachFixes: [LegCodable]?
+│   │   ├── thresholdLatitude?, thresholdLongitude?
+│   │   ├── width?, displacedThresholdDistance?
+│   │   └── thresholdCrossingHeight?, glidepathAngle?
+│   └── procedures: [ProcedureCodable]?
+│       ├── type: "departure" | "approach"
+│       ├── identifier, name? (approaches), runwayName? (approaches)
+│       ├── requiredClimbGradientFtPerNM? (departures)
+│       └── segments: [SegmentCodable]?
+│           ├── runwayNames: [String]? (nil for common route or missed approach)
+│           └── legs: [LegCodable]
+│               ├── identifier?, latitude?, longitude?
+│               ├── altitudeRestriction?: AltitudeRestrictionCodable
+│               ├── legType: LegTypeCodable
+│               ├── recommendedNavaidIdentifier?, recommendedNavaidICAO?
+│               └── dmeDistanceNM?, thetaDeg?
+├── navaids: [NavaidCodable]?
+│   ├── identifier, icaoRegion
+│   ├── type (e.g., "VOR/DME", "VORTAC", "DME", "TACAN")
+│   ├── latitude, longitude (degrees)
+│   └── elevationFt?
 └── obstacles: [ObstacleCodable]
     ├── heightFtMSL
-    ├── latitude, longitude
+    └── latitude, longitude
 ```
 
 Each ``LegTypeCodable`` stores a discriminator (`type`) plus optional `course`

@@ -82,7 +82,7 @@ let climbProfile = ClimbProfileGenerator.generate(
 // Stage 2: Project the departure procedure onto a geographic path
 let pathGenerator = ProcedurePathGenerator(
     climbProfile: climbProfile,
-    schedule: .init(firstSegment: .enrouteObstacle(antiIce: false)),
+    schedule: .init(segments: [.init(profile: .enrouteObstacle(antiIce: false))]),
     magneticVariation: magneticVariation
 )
 guard let path = pathGenerator.departurePath(

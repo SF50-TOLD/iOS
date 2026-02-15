@@ -94,8 +94,8 @@ Task { [weak self] in
 
 To avoid blocking the main actor, data import uses batch processing:
 
-1. Airports are processed in batches of 100
-2. Obstacles are processed in batches of 1000
+1. Airports are processed in batches of 500
+2. Obstacles are processed in batches of 5000
 3. SwiftData is saved after each batch
 4. Sub-functions report raw item counts via closures
 5. The orchestrator (`load()`) calculates unified progress
