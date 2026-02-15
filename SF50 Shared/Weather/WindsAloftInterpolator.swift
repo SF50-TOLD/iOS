@@ -78,8 +78,8 @@ public enum WindsAloftInterpolator {
     let interpolatedSpeed = weightedSpeed / totalWeight
 
     // Interpolate wind direction using unit vectors
-    var sumX = 0.0
-    var sumY = 0.0
+    var sumX = 0.0,
+      sumY = 0.0
     var hasValidDirection = false
     for (i, stationEntry) in entries.enumerated() {
       if let direction = stationEntry.entry.windDirection?.converted(to: .degrees).value {
@@ -100,8 +100,8 @@ public enum WindsAloftInterpolator {
     }
 
     // Interpolate temperature
-    var weightedTemp = 0.0
-    var tempWeight = 0.0
+    var weightedTemp = 0.0,
+      tempWeight = 0.0
     for (i, stationEntry) in entries.enumerated() {
       if let temp = stationEntry.entry.temperature?.converted(to: .celsius).value {
         weightedTemp += weights[i] * temp

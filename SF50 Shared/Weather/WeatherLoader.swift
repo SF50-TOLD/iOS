@@ -82,7 +82,8 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   /// Shared singleton instance for app-wide weather loading.
   public static let shared = WeatherLoader()
 
-  static let reloadInterval = 60.0 * 15
+  private static let reloadIntervalMinutes: Double = 15
+  static let reloadInterval = 60.0 * reloadIntervalMinutes
   static let METARsURL = URL(
     string: "https://aviationweather.gov/data/cache/metars.cache.xml.gz"
   )!

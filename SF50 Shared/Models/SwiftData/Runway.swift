@@ -140,8 +140,8 @@ public final class Runway {
 
   /// Threshold coordinate if available, or `nil` if coordinates are not known
   public var thresholdCoordinate: CLLocationCoordinate2D? {
-    guard let lat = _thresholdLatitude, let lon = _thresholdLongitude else { return nil }
-    return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+    guard let _thresholdLatitude, let _thresholdLongitude else { return nil }
+    return CLLocationCoordinate2D(latitude: _thresholdLatitude, longitude: _thresholdLongitude)
   }
 
   /// Whether threshold coordinates are available for this runway
@@ -159,7 +159,7 @@ public final class Runway {
     guard let threshold = thresholdCoordinate else { return nil }
 
     // If there's no displacement, takeoff starts at the threshold
-    guard let displacement = displacedThresholdDistance, displacement.value > 0 else {
+    guard let displacedThresholdDistance, displacedThresholdDistance.value > 0 else {
       return threshold
     }
 
@@ -168,7 +168,7 @@ public final class Runway {
       .truncatingRemainder(dividingBy: 360)
     let bearingRadians = reciprocalHeading * .pi / 180
 
-    let distanceMeters = displacement.converted(to: .meters).value
+    let distanceMeters = displacedThresholdDistance.converted(to: .meters).value
 
     let lat1 = threshold.latitude * .pi / 180
     let lon1 = threshold.longitude * .pi / 180

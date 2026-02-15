@@ -23,6 +23,7 @@ import Foundation
 /// // Climb gradient (318 ft/nm ≈ 3° flight path angle)
 /// let climbGradient = Measurement(value: 318, unit: UnitSlope.feetPerNauticalMile)
 /// ```
+@preconcurrency
 public final class UnitSlope: Dimension, @unchecked Sendable {
   /// Base unit: gradient = rise/run as decimal
   public static let gradient = UnitSlope(

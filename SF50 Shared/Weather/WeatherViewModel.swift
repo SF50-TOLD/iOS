@@ -83,6 +83,7 @@ public final class WeatherViewModel: WithIdentifiableError {
   public var error: Error?
   public private(set) var METAR: Loadable<String?> = .notLoaded
   public private(set) var TAF: Loadable<String?> = .notLoaded
+  public private(set) var windsAloft: Loadable<WindsAloftData?> = .notLoaded
 
   private var subscription: Task<Void, Never>?
   private var defaultsTask: Task<Void, Never>?
@@ -152,6 +153,7 @@ public final class WeatherViewModel: WithIdentifiableError {
       if !isManualMode {
         conditions = .init()
       }
+      windsAloft = .notLoaded
       return
     }
 
@@ -208,6 +210,12 @@ public final class WeatherViewModel: WithIdentifiableError {
           let stream = await loader.streamTAF(for: key)
           for await value in stream where !Task.isCancelled {
             await MainActor.run { self.TAF = value }
+          }
+        }
+        group.addTask { [self] in
+          let stream = await loader.streamWindsAloft(for: key)
+          for await value in stream where !Task.isCancelled {
+            await MainActor.run { self.windsAloft = value }
           }
         }
       }

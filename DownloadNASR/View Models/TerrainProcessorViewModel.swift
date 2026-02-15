@@ -117,8 +117,8 @@ final class TerrainProcessorViewModel {
 
   /// Estimated time remaining based on elapsed time and progress fraction.
   func estimatedTimeRemaining() -> Duration? {
-    guard let start = processingStartDate, progress > 0, progress < 1 else { return nil }
-    let elapsed = Date.now.timeIntervalSince(start)
+    guard let processingStartDate, progress > 0, progress < 1 else { return nil }
+    let elapsed = Date.now.timeIntervalSince(processingStartDate)
     let totalEstimate = elapsed / progress
     let remaining = totalEstimate - elapsed
     return .seconds(remaining)

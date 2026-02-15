@@ -109,12 +109,12 @@ public enum GeoCalculations {
     from start: CLLocationCoordinate2D,
     to end: CLLocationCoordinate2D
   ) -> Measurement<UnitAngle> {
-    let lat1 = start.latitude * .pi / 180
-    let lat2 = end.latitude * .pi / 180
-    let deltaLon = (end.longitude - start.longitude) * .pi / 180
+    let lat1 = start.latitude * .pi / 180,
+      lat2 = end.latitude * .pi / 180,
+      deltaLon = (end.longitude - start.longitude) * .pi / 180
 
-    let x = sin(deltaLon) * cos(lat2)
-    let y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon)
+    let x = sin(deltaLon) * cos(lat2),
+      y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon)
 
     let bearingRadians = atan2(x, y)
     let bearingDegrees = (bearingRadians * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
@@ -126,30 +126,30 @@ public enum GeoCalculations {
   ///
   /// - Parameters:
   ///   - trueHeading: Aircraft true heading (direction nose points)
-  ///   - TASKts: True airspeed in knots
+  ///   - TAS_Kts: True airspeed in knots
   ///   - windFromTrue: Direction wind blows FROM (true north ref)
   ///   - windSpeedKts: Wind speed in knots
   /// - Returns: (groundTrack: degrees true 0-360, groundSpeedKts: Double)
   public static func windTriangle(
     trueHeading: Measurement<UnitAngle>,
-    TASKts: Double,
+    TAS_Kts: Double,
     windFromTrue: Measurement<UnitAngle>,
     windSpeedKts: Double
   ) -> (groundTrack: Measurement<UnitAngle>, groundSpeedKts: Double) {
-    let thRad = trueHeading.converted(to: .radians).value
-    let wdRad = windFromTrue.converted(to: .radians).value
+    let thRad = trueHeading.converted(to: .radians).value,
+      wdRad = windFromTrue.converted(to: .radians).value
 
     // Aircraft air velocity
-    let airEast = TASKts * sin(thRad)
-    let airNorth = TASKts * cos(thRad)
+    let airEast = TAS_Kts * sin(thRad),
+      airNorth = TAS_Kts * cos(thRad)
 
     // Wind pushes opposite to FROM direction
-    let windEast = -windSpeedKts * sin(wdRad)
-    let windNorth = -windSpeedKts * cos(wdRad)
+    let windEast = -windSpeedKts * sin(wdRad),
+      windNorth = -windSpeedKts * cos(wdRad)
 
     // Ground velocity
-    let gsEast = airEast + windEast
-    let gsNorth = airNorth + windNorth
+    let gsEast = airEast + windEast,
+      gsNorth = airNorth + windNorth
 
     let groundSpeed = (gsEast * gsEast + gsNorth * gsNorth).squareRoot()
     let trackRad = atan2(gsEast, gsNorth)

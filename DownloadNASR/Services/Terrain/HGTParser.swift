@@ -270,8 +270,8 @@ enum HGTParser {
       let exactRow = (1.0 - latOffset) * Double(samples - 1)
       let exactCol = lonOffset * Double(samples - 1)
 
-      let (rowFrac, rowInt) = modf(exactRow),
-        (colFrac, colInt) = modf(exactCol)
+      let (rowInt, rowFrac) = modf(exactRow),
+        (colInt, colFrac) = modf(exactCol)
 
       let row0 = Int(rowInt),
         col0 = Int(colInt),

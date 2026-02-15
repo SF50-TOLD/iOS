@@ -1,6 +1,12 @@
 import Foundation
 import SwiftData
 
+/// Common interface for types that represent a publication cycle.
+public protocol AnyCycle {
+  var name: String { get }
+  var isEffective: Bool { get }
+}
+
 /// Identifies the data source for cycle information.
 ///
 /// Each data source represents a different FAA dataset that follows
@@ -21,7 +27,7 @@ public enum CycleDataSource: String, Codable, CaseIterable {
 /// different effective and expiration dates.
 /// - ``isNotYetActive``
 @Model
-public final class Cycle {
+public final class Cycle: AnyCycle {
   /// Identifies the data source (NASR, CIFP, DOF).
   ///
   /// Stored as a string for SwiftData compatibility but exposed as

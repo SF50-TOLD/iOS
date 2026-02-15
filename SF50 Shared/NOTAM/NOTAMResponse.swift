@@ -191,7 +191,7 @@ extension NOTAMResponse {
     if now < effectiveStart {
       return false
     }
-    if let end = effectiveEnd, now > end {
+    if let effectiveEnd, now > effectiveEnd {
       return false
     }
     return true
