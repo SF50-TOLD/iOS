@@ -79,23 +79,24 @@ public func runwayCorners(
   let headingDegrees = heading.converted(to: .degrees).value
 
   // Calculate the perpendicular bearings (left and right of runway centerline)
-  let leftBearing = Measurement<UnitAngle>(
-    value: (headingDegrees - 90).truncatingRemainder(dividingBy: 360),
-    unit: .degrees
-  )
-  let rightBearing = Measurement<UnitAngle>(
-    value: (headingDegrees + 90).truncatingRemainder(dividingBy: 360),
-    unit: .degrees
-  )
+  let
+    leftBearing = Measurement<UnitAngle>(
+      value: (headingDegrees - 90).truncatingRemainder(dividingBy: 360),
+      unit: .degrees
+    ),
+    rightBearing = Measurement<UnitAngle>(
+      value: (headingDegrees + 90).truncatingRemainder(dividingBy: 360),
+      unit: .degrees
+    )
 
   // Calculate the far end of the runway
   let farEnd = destination(from: threshold, distance: length, bearing: heading)
 
   // Calculate the four corners
-  let thresholdLeft = destination(from: threshold, distance: halfWidth, bearing: leftBearing)
-  let thresholdRight = destination(from: threshold, distance: halfWidth, bearing: rightBearing)
-  let farEndLeft = destination(from: farEnd, distance: halfWidth, bearing: leftBearing)
-  let farEndRight = destination(from: farEnd, distance: halfWidth, bearing: rightBearing)
+  let thresholdLeft = destination(from: threshold, distance: halfWidth, bearing: leftBearing),
+    thresholdRight = destination(from: threshold, distance: halfWidth, bearing: rightBearing),
+    farEndLeft = destination(from: farEnd, distance: halfWidth, bearing: leftBearing),
+    farEndRight = destination(from: farEnd, distance: halfWidth, bearing: rightBearing)
 
   return [thresholdLeft, thresholdRight, farEndRight, farEndLeft]
 }
@@ -148,24 +149,24 @@ public func generateChevrons(
 ) -> [ChevronData] {
   var chevrons: [ChevronData] = []
 
-  let headingDegrees = heading.converted(to: .degrees).value
-  let leftBearing = Measurement<UnitAngle>(
-    value: (headingDegrees - 90).truncatingRemainder(dividingBy: 360),
-    unit: .degrees
-  )
-  let rightBearing = Measurement<UnitAngle>(
-    value: (headingDegrees + 90).truncatingRemainder(dividingBy: 360),
-    unit: .degrees
-  )
+  let headingDegrees = heading.converted(to: .degrees).value,
+    leftBearing = Measurement<UnitAngle>(
+      value: (headingDegrees - 90).truncatingRemainder(dividingBy: 360),
+      unit: .degrees
+    ),
+    rightBearing = Measurement<UnitAngle>(
+      value: (headingDegrees + 90).truncatingRemainder(dividingBy: 360),
+      unit: .degrees
+    )
 
-  let halfWidth = width / 2.0
-  let depthMeters = depth.converted(to: .meters).value
-  let distanceMeters = distance.converted(to: .meters).value
+  let halfWidth = width / 2.0,
+    depthMeters = depth.converted(to: .meters).value,
+    distanceMeters = distance.converted(to: .meters).value
 
   // Generate tessellated chevrons - alternating forward and backward pointing triangles
   // that fill the entire area with no gaps
-  var currentDistance: Double = 0
-  var isPrimary = true
+  var currentDistance: Double = 0,
+    isPrimary = true
 
   while currentDistance < distanceMeters {
     // Row position along the centerline

@@ -1,4 +1,3 @@
-import Defaults
 import SF50_Shared
 import SwiftData
 import SwiftUI
@@ -6,9 +5,6 @@ import SwiftUI
 struct TakeoffView: View {
   @Environment(\.modelContext)
   private var modelContext
-
-  @Default(.takeoffRunway)
-  private var runwayID
 
   @State private var performance: TakeoffPerformanceViewModel?
   @State private var weather: WeatherViewModel?
@@ -19,8 +15,7 @@ struct TakeoffView: View {
         Form {
           TakeoffPerformanceView()
           TakeoffResultsView()
-          TakeoffReportButton()
-          TakeoffMapLink()
+          TakeoffReportsView()
         }.navigationTitle("Takeoff")
       } else {
         ProgressView()

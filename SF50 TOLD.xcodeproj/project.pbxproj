@@ -37,6 +37,7 @@
 		0198B44E2E986226003CB126 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 		01A1014F2E93C12E0032AB29 /* Gzip in Frameworks */ = {isa = PBXBuildFile; productRef = 01A1014E2E93C12E0032AB29 /* Gzip */; };
 		01AA52322F2DDF110085F4C6 /* SwiftR2 in Frameworks */ = {isa = PBXBuildFile; productRef = 01AA52312F2DDF110085F4C6 /* SwiftR2 */; };
+		01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01BABAE92F3B12E5000EA5E1 /* Charts.framework */; };
 		01BEA32B2E986B10005ABCD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 01BEA32A2E986B10005ABCD8 /* PrivacyInfo.xcprivacy */; };
 		01BEBCB82E8A401100631DE6 /* SwiftHtml in Frameworks */ = {isa = PBXBuildFile; productRef = 01BEBCB72E8A401100631DE6 /* SwiftHtml */; };
 		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
@@ -170,6 +171,7 @@
 		0191DC1E2E9323590099FB0E /* SF50 Shared Unit Tests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "SF50 Shared Unit Tests.xctestplan"; path = "SF50 SharedTests/SF50 Shared Unit Tests.xctestplan"; sourceTree = "<group>"; };
 		0191DC212E9323950099FB0E /* SF50 TOLD UI Tests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "SF50 TOLD UI Tests.xctestplan"; path = "SF50 TOLDUITests/SF50 TOLD UI Tests.xctestplan"; sourceTree = "<group>"; };
 		01AB24552E948B89005D8996 /* SF50 RunwaysExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SF50 RunwaysExtension.entitlements"; sourceTree = "<group>"; };
+		01BABAE92F3B12E5000EA5E1 /* Charts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Charts.framework; path = System/Library/Frameworks/Charts.framework; sourceTree = SDKROOT; };
 		01BEA32A2E986B10005ABCD8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		01EA44382EB327D7008FEB64 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		01NOTAM01NOTAM01NOTAM /* NOTAMAPIConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = NOTAMAPIConfig.xcconfig; path = "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig"; sourceTree = SOURCE_ROOT; };
@@ -319,6 +321,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				0198B44E2E986226003CB126 /* Sentry in Frameworks */,
+				01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */,
 				01714C802F234A7E003DADCF /* Algorithms in Frameworks */,
 				01441A6D2F35872E005A8A76 /* StreamingLZMA in Frameworks */,
 				0179DF402DE2F7A9002EC77C /* Logging in Frameworks */,
@@ -421,6 +424,7 @@
 		01D1E30E2DDF865100C1CAC8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				01BABAE92F3B12E5000EA5E1 /* Charts.framework */,
 				01EA44382EB327D7008FEB64 /* Security.framework */,
 				0169495B2EB314C9001602E6 /* SwiftUI.framework */,
 				0128374B2E5B8BB8002195A0 /* WidgetKit.framework */,

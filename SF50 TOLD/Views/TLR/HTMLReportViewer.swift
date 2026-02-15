@@ -89,7 +89,7 @@ struct HTMLReportViewer: View {
           NSError(
             domain: "PDFGeneration",
             code: -1,
-            userInfo: [NSLocalizedDescriptionKey: "Failed to generate PDF"]
+            userInfo: [NSLocalizedDescriptionKey: String(localized: "Failed to generate PDF")]
           )
         )
       }
@@ -104,12 +104,12 @@ struct HTMLReportViewer: View {
             try data.write(to: tempURL)
             pdfURL = tempURL
           } catch {
-            errorMessage = "Failed to save PDF: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to save PDF: \(error.localizedDescription)")
             showError = true
           }
 
         case .failure(let error):
-          errorMessage = "Failed to create PDF: \(error.localizedDescription)"
+          errorMessage = String(localized: "Failed to create PDF: \(error.localizedDescription)")
           showError = true
       }
     }

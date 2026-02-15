@@ -1,4 +1,3 @@
-import Defaults
 import SF50_Shared
 import SwiftData
 import SwiftUI
@@ -6,9 +5,6 @@ import SwiftUI
 struct LandingView: View {
   @Environment(\.modelContext)
   private var modelContext
-
-  @Default(.landingRunway)
-  private var runwayID
 
   @State private var performance: LandingPerformanceViewModel?
   @State private var weather: WeatherViewModel?
@@ -20,8 +16,7 @@ struct LandingView: View {
         Form {
           LandingPerformanceView()
           LandingResultsView()
-          LandingReportButton()
-          LandingMapLink()
+          LandingReportsView()
         }.navigationTitle("Landing")
       } else {
         ProgressView()

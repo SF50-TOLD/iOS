@@ -60,7 +60,7 @@ struct UnitsSettingsView: View {
         .accessibilityIdentifier("runwayLengthUnitPicker")
 
         Picker("Distance", selection: $distanceUnit) {
-          Text("Nautical Miles (Nmi)").tag(UnitLength.nauticalMiles)
+          Text("Nautical Miles (NM)").tag(UnitLength.nauticalMiles)
           Text("Kilometers (km)").tag(UnitLength.kilometers)
           Text("Statute Miles (mi)").tag(UnitLength.miles)
         }
