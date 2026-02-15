@@ -46,8 +46,8 @@ struct SF50_TOLDApp: App {
       Scenario.self,
       Cycle.self,
       Obstacle.self,
-      DepartureProcedure.self,
-      ApproachProcedure.self,
+      Procedure.self,
+      ProcedureSegment.self,
       Leg.self,
       Navaid.self
     ])
@@ -83,6 +83,7 @@ struct SF50_TOLDApp: App {
         .modelContainer(sharedModelContainer)
         .task {
           ScenarioSeeder(container: sharedModelContainer).seedDefaultScenariosIfNeeded()
+          _ = TerrainDataLoader.shared
         }
     }
   }

@@ -25,7 +25,7 @@ struct ProcedurePathGeneratorTests {
   func departurePathEmptyFixes() {
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [],
@@ -47,7 +47,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -72,7 +72,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -125,7 +125,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: fixes,
@@ -160,7 +160,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix1, fix0],
@@ -189,7 +189,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -220,7 +220,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -251,7 +251,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -283,7 +283,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -319,7 +319,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -356,7 +356,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, caFix],
@@ -390,7 +390,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, haFix],
@@ -424,7 +424,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -461,7 +461,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -496,7 +496,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix, faFix],
@@ -529,7 +529,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -551,8 +551,8 @@ struct ProcedurePathGeneratorTests {
     // Place fix1 far enough that uncapped climb would exceed 3000 ft
     // At 300 ft/NM from 62 ft, need ~10 NM to reach 3062 ft
     // Place fix1 ~15 NM away so uncapped altitude would be ~4562 ft
-    // atOrBelow(3000) caps it to 3000
-    // Then fixToAltitude(6000) should climb from 3000 (capped) → 6000 = 3000 ft / 300 = 10 NM
+    // atOrBelow(3000) should level off at 3000 during the climb, not just cap the endpoint
+    // Then fixToAltitude(6000) should climb from 3000 (capped) -> 6000 = 3000 ft / 300 = 10 NM
     let profile = Helper.createTestClimbProfile(gradientFtPerNM: 300)
 
     // ~15 NM north of takeoff (~0.25° latitude)
@@ -576,7 +576,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: profile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix1, fix2],
@@ -585,19 +585,22 @@ struct ProcedurePathGeneratorTests {
       )
     )
 
-    // Find where fix1 endpoint is (last point of first segment)
-    // and where fix2 endpoint is (last point overall)
     // The fix2 endpoint altitude should be 6000
     let lastPoint = path.points.last!
     #expect(lastPoint.altitudeFt.isApproximatelyEqual(to: 6000, absoluteTolerance: 1))
 
-    // The second segment distance (from the fix1 waypoint to fix2 endpoint)
-    // should be approximately 10 NM (3000 ft climb at 300 ft/NM)
-    // Find the fix1 waypoint - it's the last point before the altitude segment begins climbing
-    // In the stepped model, we look at the total distance of the altitude segment
-    // Fix1 is at ~15 NM, fix2 endpoint at fix1 + ~10 NM
     // Total path distance should be approximately 15 + 10 = 25 NM
     #expect(lastPoint.distanceNM.isApproximatelyEqual(to: 25, absoluteTolerance: 1.5))
+
+    // Verify all points in the first segment (including the termination fix)
+    // respect the atOrBelow cap exactly.
+    let fix1Index = path.points.firstIndex { $0.fixName == "FIX1" }!
+    let firstSegmentPoints = path.points[0...fix1Index]
+    let maxAltInFirstSegment = firstSegmentPoints.map(\.altitudeFt).max()!
+    #expect(
+      maxAltInFirstSegment <= 3000,
+      "All points including the termination fix should respect the atOrBelow cap"
+    )
   }
 
   // MARK: - Hold Patterns
@@ -617,7 +620,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -657,7 +660,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [holdFix, nextFix],
@@ -682,7 +685,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -712,7 +715,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -744,7 +747,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -780,7 +783,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [ptFix, nextFix],
@@ -800,7 +803,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix],
@@ -811,14 +814,63 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToInterceptReturnsNil() {
+  func courseToInterceptWithNextLeg() throws {
+    // CI flying course 284° mag (true 270° west), intercept CF course 14° mag (true 0° north)
+    // through fix at 37.5, -122.0. Aircraft starts east of the N-S course line and flies west.
+    let fix = CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)
+    let startCoord = CLLocationCoordinate2D(latitude: 37.4, longitude: -121.9)
+    let ciLeg = Helper.createTestLeg(
+      identifier: nil,
+      latitude: nil,
+      longitude: nil,
+      legType: .courseToIntercept(course: .init(value: 284, unit: .degrees)),
+      sequenceIndex: 0
+    )
+    let cfLeg = Helper.createTestLeg(
+      identifier: "FIX",
+      latitude: fix.latitude,
+      longitude: fix.longitude,
+      altitudeRestriction: .atOrAbove(.init(value: 10000, unit: .feet)),
+      legType: .courseToFix(course: .init(value: 14, unit: .degrees)),
+      sequenceIndex: 1
+    )
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).departurePath(
+        from: [ciLeg, cfLeg],
+        takeoffPoint: startCoord,
+        takeoffPointAltitudeFt: takeoffAltitudeFt
+      )
+    )
+    // Path should have points and end at the fix
+    #expect(path.points.count >= 3)
+    let lastPoint = path.points.last!
+    #expect(
+      lastPoint.coordinate.latitude.isApproximatelyEqual(
+        to: fix.latitude,
+        absoluteTolerance: 0.001
+      )
+    )
+    #expect(
+      lastPoint.coordinate.longitude.isApproximatelyEqual(
+        to: fix.longitude,
+        absoluteTolerance: 0.001
+      )
+    )
+  }
+
+  @Test
+  func courseToInterceptNoNextLegReturnsNil() {
     let fix = Helper.createTestLeg(
       legType: .courseToIntercept(course: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix],
@@ -829,17 +881,90 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToRadialReturnsNil() {
-    let fix = Helper.createTestLeg(
-      legType: .courseToRadial(course: .init(value: 360, unit: .degrees)),
-      sequenceIndex: 0
+  func courseToRadialTerminatesAtRadial() throws {
+    // CR flying course 284° mag (true 270° west) until intercepting the 014° magnetic
+    // radial (true 000° north) from a VOR at 37.5, -122.0.
+    // Aircraft starts east of the VOR and flies west to cross the north radial.
+    let vorCoord = CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)
+    let startCoord = CLLocationCoordinate2D(latitude: 37.4, longitude: -121.9)
+
+    let vor = Helper.createTestNavaid(
+      identifier: "TST",
+      latitude: vorCoord.latitude,
+      longitude: vorCoord.longitude
+    )
+    let crLeg = Helper.createTestLeg(
+      identifier: nil,
+      latitude: nil,
+      longitude: nil,
+      legType: .courseToRadial(course: .init(value: 284, unit: .degrees)),
+      sequenceIndex: 0,
+      navaid: vor,
+      theta: .init(value: 14, unit: .degrees)
+    )
+
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).departurePath(
+        from: [crLeg],
+        takeoffPoint: startCoord,
+        takeoffPointAltitudeFt: takeoffAltitudeFt
+      )
+    )
+
+    // The path should cross the north radial from the VOR (longitude ≈ -122.0)
+    #expect(path.points.count >= 3)
+    let lastPoint = path.points.last!
+    #expect(
+      lastPoint.coordinate.longitude.isApproximatelyEqual(
+        to: vorCoord.longitude,
+        absoluteTolerance: 0.01
+      )
+    )
+  }
+
+  @Test
+  func courseToRadialMissingNavaidReturnsNil() {
+    let crLeg = Helper.createTestLeg(
+      identifier: nil,
+      latitude: nil,
+      longitude: nil,
+      legType: .courseToRadial(course: .init(value: 284, unit: .degrees)),
+      sequenceIndex: 0,
+      theta: .init(value: 14, unit: .degrees)
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
-      from: [fix],
+      from: [crLeg],
+      takeoffPoint: takeoffPoint,
+      takeoffPointAltitudeFt: takeoffAltitudeFt
+    )
+    #expect(result == nil)
+  }
+
+  @Test
+  func courseToRadialMissingThetaReturnsNil() {
+    let vor = Helper.createTestNavaid()
+    let crLeg = Helper.createTestLeg(
+      identifier: nil,
+      latitude: nil,
+      longitude: nil,
+      legType: .courseToRadial(course: .init(value: 284, unit: .degrees)),
+      sequenceIndex: 0,
+      navaid: vor
+    )
+    let result = ProcedurePathGenerator(
+      climbProfile: climbProfile,
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+      magneticVariation: magneticVariation
+    ).departurePath(
+      from: [crLeg],
       takeoffPoint: takeoffPoint,
       takeoffPointAltitudeFt: takeoffAltitudeFt
     )
@@ -854,7 +979,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix],
@@ -865,14 +990,75 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToInterceptReturnsNil() {
+  func headingToInterceptWithNextLeg() throws {
+    // LINDZ1 pattern: VA 343° to 9100', VI 273° to intercept, CF 303° to LINDZ
+    // After VA (true 329° NNW), aircraft is north of course line.
+    // VI (true 259° WSW) crosses the 289° true course line through LINDZ.
+    let lindz = CLLocationCoordinate2D(latitude: 39.0, longitude: -107.0)
+    let startCoord = CLLocationCoordinate2D(latitude: 39.0, longitude: -106.8)
+
+    let vaLeg = Helper.createTestLeg(
+      identifier: nil,
+      latitude: nil,
+      longitude: nil,
+      altitudeRestriction: .atOrAbove(.init(value: 9100, unit: .feet)),
+      legType: .headingToAltitude(heading: .init(value: 343, unit: .degrees)),
+      sequenceIndex: 0
+    )
+    let viLeg = Helper.createTestLeg(
+      identifier: nil,
+      latitude: nil,
+      longitude: nil,
+      legType: .headingToIntercept(heading: .init(value: 273, unit: .degrees)),
+      sequenceIndex: 1
+    )
+    let cfLeg = Helper.createTestLeg(
+      identifier: "LINDZ",
+      latitude: lindz.latitude,
+      longitude: lindz.longitude,
+      altitudeRestriction: .atOrAbove(.init(value: 15000, unit: .feet)),
+      legType: .courseToFix(course: .init(value: 303, unit: .degrees)),
+      sequenceIndex: 2
+    )
+
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).departurePath(
+        from: [vaLeg, viLeg, cfLeg],
+        takeoffPoint: startCoord,
+        takeoffPointAltitudeFt: 7820
+      )
+    )
+
+    // Path should include all three legs and end at LINDZ
+    #expect(path.points.count > 5)
+    let lastPoint = path.points.last!
+    #expect(
+      lastPoint.coordinate.latitude.isApproximatelyEqual(
+        to: lindz.latitude,
+        absoluteTolerance: 0.001
+      )
+    )
+    #expect(
+      lastPoint.coordinate.longitude.isApproximatelyEqual(
+        to: lindz.longitude,
+        absoluteTolerance: 0.001
+      )
+    )
+  }
+
+  @Test
+  func headingToInterceptNoNextLegReturnsNil() {
     let fix = Helper.createTestLeg(
       legType: .headingToIntercept(heading: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix],
@@ -883,21 +1069,103 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToRadialReturnsNil() {
-    let fix = Helper.createTestLeg(
-      legType: .headingToRadial(heading: .init(value: 360, unit: .degrees)),
+  func headingToInterceptTerminatesOnCourseLine() throws {
+    // VI heading 284° mag (true 270° west) intercepting CF course 14° mag (true 0° north)
+    // through a fix due north. Aircraft starts east of the N-S course line and flies west.
+    let interceptPoint = CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)
+    let startCoord = CLLocationCoordinate2D(latitude: 37.4, longitude: -121.9)
+
+    let viLeg = Helper.createTestLeg(
+      identifier: nil,
+      latitude: nil,
+      longitude: nil,
+      legType: .headingToIntercept(heading: .init(value: 284, unit: .degrees)),
       sequenceIndex: 0
     )
-    let result = ProcedurePathGenerator(
-      climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
-      magneticVariation: magneticVariation
-    ).departurePath(
-      from: [fix],
-      takeoffPoint: takeoffPoint,
-      takeoffPointAltitudeFt: takeoffAltitudeFt
+    let cfLeg = Helper.createTestLeg(
+      identifier: "FIX",
+      latitude: interceptPoint.latitude,
+      longitude: interceptPoint.longitude,
+      altitudeRestriction: .atOrAbove(.init(value: 10000, unit: .feet)),
+      legType: .courseToFix(course: .init(value: 14, unit: .degrees)),
+      sequenceIndex: 1
     )
-    #expect(result == nil)
+
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).departurePath(
+        from: [viLeg, cfLeg],
+        takeoffPoint: startCoord,
+        takeoffPointAltitudeFt: takeoffAltitudeFt
+      )
+    )
+
+    // The VI leg terminates on the course line (true 0° through -122.0 longitude),
+    // then the CF leg continues to the fix.
+    #expect(path.points.count > 3)
+
+    // The last point should be at the fix
+    let lastPoint = path.points.last!
+    #expect(
+      lastPoint.coordinate.latitude.isApproximatelyEqual(
+        to: interceptPoint.latitude,
+        absoluteTolerance: 0.001
+      )
+    )
+    #expect(
+      lastPoint.coordinate.longitude.isApproximatelyEqual(
+        to: interceptPoint.longitude,
+        absoluteTolerance: 0.001
+      )
+    )
+  }
+
+  @Test
+  func headingToRadialTerminatesAtRadial() throws {
+    // VR heading 284° mag (true 270° west) until intercepting the 014° magnetic
+    // radial (true 000° north) from a VOR at 37.5, -122.0.
+    let vorCoord = CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)
+    let startCoord = CLLocationCoordinate2D(latitude: 37.4, longitude: -121.9)
+
+    let vor = Helper.createTestNavaid(
+      identifier: "TST",
+      latitude: vorCoord.latitude,
+      longitude: vorCoord.longitude
+    )
+    let vrLeg = Helper.createTestLeg(
+      identifier: nil,
+      latitude: nil,
+      longitude: nil,
+      legType: .headingToRadial(heading: .init(value: 284, unit: .degrees)),
+      sequenceIndex: 0,
+      navaid: vor,
+      theta: .init(value: 14, unit: .degrees)
+    )
+
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).departurePath(
+        from: [vrLeg],
+        takeoffPoint: startCoord,
+        takeoffPointAltitudeFt: takeoffAltitudeFt
+      )
+    )
+
+    // The path should cross the north radial from the VOR (longitude ≈ -122.0)
+    #expect(path.points.count >= 3)
+    let lastPoint = path.points.last!
+    #expect(
+      lastPoint.coordinate.longitude.isApproximatelyEqual(
+        to: vorCoord.longitude,
+        absoluteTolerance: 0.01
+      )
+    )
   }
 
   @Test
@@ -908,7 +1176,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix],
@@ -926,7 +1194,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix],
@@ -961,7 +1229,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [initialFix, arcFix],
@@ -998,7 +1266,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [initialFix, arcFix],
@@ -1054,7 +1322,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [initialFix, arcFix],
@@ -1087,7 +1355,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).missedApproachPath(
         from: [fix],
@@ -1106,7 +1374,7 @@ struct ProcedurePathGeneratorTests {
   func missedApproachPathEmptyFixes() {
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).missedApproachPath(
       from: [],
@@ -1152,7 +1420,7 @@ struct ProcedurePathGeneratorTests {
     let haPath = try #require(
       ProcedurePathGenerator(
         climbProfile: profile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, haFix],
@@ -1163,7 +1431,7 @@ struct ProcedurePathGeneratorTests {
     let caPath = try #require(
       ProcedurePathGenerator(
         climbProfile: profile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, caFix],
@@ -1214,7 +1482,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, haFix],
@@ -1225,7 +1493,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, haFix],
@@ -1271,7 +1539,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, haFix],
@@ -1282,7 +1550,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, haFix],
@@ -1328,7 +1596,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, haFix],
@@ -1339,7 +1607,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, haFix],
@@ -1387,7 +1655,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, caFix],
@@ -1398,7 +1666,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, caFix],
@@ -1441,7 +1709,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, caFix],
@@ -1452,7 +1720,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, caFix],
@@ -1497,7 +1765,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, caFix],
@@ -1508,7 +1776,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, caFix],
@@ -1558,7 +1826,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, dmeLeg],
@@ -1616,7 +1884,7 @@ struct ProcedurePathGeneratorTests {
     let pathWithElev = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, dmeLegWithElev],
@@ -1627,7 +1895,7 @@ struct ProcedurePathGeneratorTests {
     let pathNoElev = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, dmeLegNoElev],
@@ -1658,7 +1926,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix],
@@ -1678,7 +1946,7 @@ struct ProcedurePathGeneratorTests {
     )
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: [fix],
@@ -1717,7 +1985,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, dmeLeg],
@@ -1768,7 +2036,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, dmeLeg],
@@ -1779,7 +2047,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, dmeLeg],
@@ -1825,7 +2093,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [initialFix, fdLeg],
@@ -1862,7 +2130,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [initialFix, fcLeg],
@@ -1907,7 +2175,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [initialFix, fcLeg],
@@ -1918,7 +2186,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [initialFix, fcLeg],
@@ -1972,7 +2240,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: fixes,
@@ -2016,7 +2284,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -2046,7 +2314,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -2084,7 +2352,7 @@ struct ProcedurePathGeneratorTests {
     let windPath = try #require(
       ProcedurePathGenerator(
         climbProfile: windProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -2095,7 +2363,7 @@ struct ProcedurePathGeneratorTests {
     let noWindPath = try #require(
       ProcedurePathGenerator(
         climbProfile: noWindProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix],
@@ -2133,7 +2401,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -2180,7 +2448,7 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -2221,7 +2489,7 @@ struct ProcedurePathGeneratorTests {
     let singlePath = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(firstSegment: .enroute(antiIce: false)),
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -2234,11 +2502,13 @@ struct ProcedurePathGeneratorTests {
     let twoSegPath = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(
-          firstSegment: .enroute(antiIce: false),
-          secondSegment: .enroute(antiIce: false),
-          transition: .altitude(.init(value: 2000, unit: .feet))
-        ),
+        schedule: .init(segments: [
+          .init(
+            profile: .enroute(antiIce: false),
+            upperBound: .altitude(.init(value: 2000, unit: .feet))
+          ),
+          .init(profile: .enroute(antiIce: false))
+        ]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],
@@ -2276,11 +2546,13 @@ struct ProcedurePathGeneratorTests {
     let path = try #require(
       ProcedurePathGenerator(
         climbProfile: climbProfile,
-        schedule: .init(
-          firstSegment: .enroute(antiIce: false),
-          secondSegment: .enroute(antiIce: false),
-          transition: .time(.init(value: 60, unit: .seconds))
-        ),
+        schedule: .init(segments: [
+          .init(
+            profile: .enroute(antiIce: false),
+            upperBound: .time(.init(value: 60, unit: .seconds))
+          ),
+          .init(profile: .enroute(antiIce: false))
+        ]),
         magneticVariation: magneticVariation
       ).departurePath(
         from: [fix, faFix],

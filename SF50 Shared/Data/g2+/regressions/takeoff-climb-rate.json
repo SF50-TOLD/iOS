@@ -2,7 +2,7 @@
   "version": "1.0",
   "name": "takeoff-climb-rate",
   "description": "Takeoff initial climb rate",
-  "type": "polynomial",
+  "type": "piecewise",
   "variables": [
     "weight",
     "altitude",
@@ -10,159 +10,336 @@
   ],
   "uncertainty_key": "g2+/takeoff climb/rate",
   "equation": {
-    "intercept": 5765.94014115398,
-    "terms": [
+    "breakpoints": [
       {
-        "coefficient": -5.363334802468705e-07,
-        "powers": [
-          1,
-          0,
-          0
-        ]
+        "condition": {
+          "variable": "altitude",
+          "operator": "<=",
+          "value": 4500.0
+        },
+        "result": {
+          "type": "polynomial",
+          "intercept": 5881.68027408618,
+          "terms": [
+            {
+              "coefficient": -0.0022270124607441663,
+              "powers": [
+                1,
+                0,
+                0
+              ]
+            },
+            {
+              "coefficient": 0.010763742695918326,
+              "powers": [
+                0,
+                1,
+                0
+              ]
+            },
+            {
+              "coefficient": -0.001447172724366918,
+              "powers": [
+                0,
+                0,
+                1
+              ]
+            },
+            {
+              "coefficient": -0.0002414242871402318,
+              "powers": [
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "coefficient": 1.689251019299277e-05,
+              "powers": [
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "coefficient": -0.00480293019227384,
+              "powers": [
+                1,
+                0,
+                1
+              ]
+            },
+            {
+              "coefficient": -2.1193017088848835e-06,
+              "powers": [
+                0,
+                2,
+                0
+              ]
+            },
+            {
+              "coefficient": -0.0020258437555377594,
+              "powers": [
+                0,
+                1,
+                1
+              ]
+            },
+            {
+              "coefficient": -0.31195961577734344,
+              "powers": [
+                0,
+                0,
+                2
+              ]
+            },
+            {
+              "coefficient": 2.209547815719792e-08,
+              "powers": [
+                3,
+                0,
+                0
+              ]
+            },
+            {
+              "coefficient": -2.19812403534366e-09,
+              "powers": [
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "coefficient": 6.855972338351903e-07,
+              "powers": [
+                2,
+                0,
+                1
+              ]
+            },
+            {
+              "coefficient": -2.7923040920655103e-10,
+              "powers": [
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "coefficient": 2.7825803011133296e-07,
+              "powers": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "coefficient": 2.9151363310533567e-05,
+              "powers": [
+                1,
+                0,
+                2
+              ]
+            },
+            {
+              "coefficient": 4.694737240413779e-10,
+              "powers": [
+                0,
+                3,
+                0
+              ]
+            },
+            {
+              "coefficient": -1.446729050228153e-07,
+              "powers": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "coefficient": -2.3090693949961413e-05,
+              "powers": [
+                0,
+                1,
+                2
+              ]
+            },
+            {
+              "coefficient": -0.003234570241297796,
+              "powers": [
+                0,
+                0,
+                3
+              ]
+            }
+          ]
+        }
       },
       {
-        "coefficient": 3.730916742157501e-06,
-        "powers": [
-          0,
-          1,
-          0
-        ]
-      },
-      {
-        "coefficient": -2.5124725720572557e-06,
-        "powers": [
-          0,
-          0,
-          1
-        ]
-      },
-      {
-        "coefficient": -0.00023502285504929622,
-        "powers": [
-          2,
-          0,
-          0
-        ]
-      },
-      {
-        "coefficient": 3.1662956800757726e-05,
-        "powers": [
-          1,
-          1,
-          0
-        ]
-      },
-      {
-        "coefficient": -0.005536020530778624,
-        "powers": [
-          1,
-          0,
-          1
-        ]
-      },
-      {
-        "coefficient": -3.74916167289447e-05,
-        "powers": [
-          0,
-          2,
-          0
-        ]
-      },
-      {
-        "coefficient": -0.002493499625835331,
-        "powers": [
-          0,
-          1,
-          1
-        ]
-      },
-      {
-        "coefficient": -0.0003320853409629004,
-        "powers": [
-          0,
-          0,
-          2
-        ]
-      },
-      {
-        "coefficient": 2.178601634820378e-08,
-        "powers": [
-          3,
-          0,
-          0
-        ]
-      },
-      {
-        "coefficient": -2.757288802679241e-09,
-        "powers": [
-          2,
-          1,
-          0
-        ]
-      },
-      {
-        "coefficient": 7.829701204707807e-07,
-        "powers": [
-          2,
-          0,
-          1
-        ]
-      },
-      {
-        "coefficient": 4.701239564369379e-10,
-        "powers": [
-          1,
-          2,
-          0
-        ]
-      },
-      {
-        "coefficient": 2.527011212278034e-07,
-        "powers": [
-          1,
-          1,
-          1
-        ]
-      },
-      {
-        "coefficient": -4.045647649466067e-05,
-        "powers": [
-          1,
-          0,
-          2
-        ]
-      },
-      {
-        "coefficient": 2.1384427225906503e-09,
-        "powers": [
-          0,
-          3,
-          0
-        ]
-      },
-      {
-        "coefficient": -1.613310944485911e-08,
-        "powers": [
-          0,
-          2,
-          1
-        ]
-      },
-      {
-        "coefficient": -9.625873042892444e-07,
-        "powers": [
-          0,
-          1,
-          2
-        ]
-      },
-      {
-        "coefficient": -0.0020144865500932073,
-        "powers": [
-          0,
-          0,
-          3
-        ]
+        "condition": {
+          "variable": "altitude",
+          "operator": ">",
+          "value": 4500.0
+        },
+        "result": {
+          "type": "polynomial",
+          "intercept": 5122.824713316667,
+          "terms": [
+            {
+              "coefficient": -0.012913382402589622,
+              "powers": [
+                1,
+                0,
+                0
+              ]
+            },
+            {
+              "coefficient": 0.15173424523275386,
+              "powers": [
+                0,
+                1,
+                0
+              ]
+            },
+            {
+              "coefficient": -0.007042810003535552,
+              "powers": [
+                0,
+                0,
+                1
+              ]
+            },
+            {
+              "coefficient": -0.0002646528858096778,
+              "powers": [
+                2,
+                0,
+                0
+              ]
+            },
+            {
+              "coefficient": 6.66997676491129e-05,
+              "powers": [
+                1,
+                1,
+                0
+              ]
+            },
+            {
+              "coefficient": -0.0018891855605075386,
+              "powers": [
+                1,
+                0,
+                1
+              ]
+            },
+            {
+              "coefficient": -4.496946507690354e-05,
+              "powers": [
+                0,
+                2,
+                0
+              ]
+            },
+            {
+              "coefficient": -0.005125380951698606,
+              "powers": [
+                0,
+                1,
+                1
+              ]
+            },
+            {
+              "coefficient": -0.634846833448014,
+              "powers": [
+                0,
+                0,
+                2
+              ]
+            },
+            {
+              "coefficient": 2.5351398084796185e-08,
+              "powers": [
+                3,
+                0,
+                0
+              ]
+            },
+            {
+              "coefficient": -5.940529904087469e-09,
+              "powers": [
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "coefficient": 3.368252823907193e-07,
+              "powers": [
+                2,
+                0,
+                1
+              ]
+            },
+            {
+              "coefficient": -1.1925791094846944e-10,
+              "powers": [
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "coefficient": 3.28901005538421e-07,
+              "powers": [
+                1,
+                1,
+                1
+              ]
+            },
+            {
+              "coefficient": 3.576900329480685e-05,
+              "powers": [
+                1,
+                0,
+                2
+              ]
+            },
+            {
+              "coefficient": 1.6467762110494786e-09,
+              "powers": [
+                0,
+                3,
+                0
+              ]
+            },
+            {
+              "coefficient": 1.178994350778183e-07,
+              "powers": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "coefficient": 2.8527002655827208e-05,
+              "powers": [
+                0,
+                1,
+                2
+              ]
+            },
+            {
+              "coefficient": -0.0003010463914075018,
+              "powers": [
+                0,
+                0,
+                3
+              ]
+            }
+          ]
+        }
       }
     ]
   }

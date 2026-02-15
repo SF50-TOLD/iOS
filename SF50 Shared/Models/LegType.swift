@@ -58,6 +58,50 @@ public enum LegType: Sendable, Hashable {
 }
 
 extension LegType {
+  /// The magnetic course or heading associated with this leg type, if any.
+  public var magneticCourse: Measurement<UnitAngle>? {
+    switch self {
+      case .courseToFix(let c), .trackToFix(let c?),
+        .fixToAltitude(let c), .courseToAltitude(let c),
+        .courseToDME(let c), .courseToIntercept(let c),
+        .courseToRadial(let c), .trackFromFixDME(let c),
+        .trackFromFixDistance(let c):
+        return c
+      case .headingToAltitude(let h), .headingToDME(let h),
+        .headingToIntercept(let h), .headingToRadial(let h):
+        return h
+      default:
+        return nil
+    }
+  }
+
+  /// Whether this leg type can be resolved to a geographic path.
+  public var isPlottable: Bool {
+    switch self {
+      case .initialFix, .trackToFix, .courseToFix, .directToFix,
+        .radiusToFix, .arcToFix,
+        .holdToFix, .holdToAltitude, .holdManual,
+        .fixToAltitude, .trackFromFixDistance, .trackFromFixDME,
+        .courseToAltitude, .courseToDME, .courseToIntercept, .courseToRadial,
+        .headingToAltitude, .headingToDME, .headingToIntercept, .headingToRadial,
+        .procedureTurn:
+        return true
+    }
+  }
+
+  /// Whether this leg type can only be plotted as the terminal (last) leg.
+  ///
+  /// Hold patterns and procedure turns are plotted as a direct-to-fix only when
+  /// they are the final leg of the sequence.
+  public var isTerminalOnly: Bool {
+    switch self {
+      case .holdToFix, .holdToAltitude, .holdManual, .procedureTurn:
+        return true
+      default:
+        return false
+    }
+  }
+
   /// Creates a `LegType` from its codable representation.
   ///
   /// Converts raw `Double` values (degrees for angles, NM for distances)
@@ -150,9 +194,9 @@ extension LegType {
   private static func requireTurnDirection(
     _ codable: LegTypeCodable
   ) -> TurnDirection {
-    guard let raw = codable.turnDirection, let dir = TurnDirection(rawValue: raw) else {
+    guard let raw = codable.turnDirection, let direction = TurnDirection(rawValue: raw) else {
       fatalError("LegTypeCodable.\(codable.type) requires turnDirection")
     }
-    return dir
+    return direction
   }
 }

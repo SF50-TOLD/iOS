@@ -37,6 +37,15 @@ public class NearestAirportViewModel {
   /// Search radius in nautical miles
   private static let searchRadius = 50.0
 
+  /// Nautical miles per degree of latitude (1° = 60 NM).
+  private static let nauticalMilesPerDegree = 60.0
+
+  /// Minimum cosine of latitude to avoid divide-by-zero near poles.
+  private static let minimumCosineLatitude = 0.00001
+
+  /// Maximum number of nearest airports to return.
+  private static let maxResults = 10
+
   /// Airports sorted by distance from user's current location (max 10)
   public private(set) var airports: [Airport] = []
 
@@ -101,13 +110,14 @@ public class NearestAirportViewModel {
     let lat = capturedLocation.coordinate.latitude
     let lon = capturedLocation.coordinate.longitude
 
-    let latDelta = Self.searchRadius / 60.0
+    let latDelta = Self.searchRadius / Self.nauticalMilesPerDegree
     let clampedMinLat = max(-90.0, lat - latDelta)
     let clampedMaxLat = min(90.0, lat + latDelta)
 
     let cosLat = cos(lat * .pi / 180)
-    let  // Avoid divide-by-zero near poles
-    lonDelta = Self.searchRadius / (60.0 * max(cosLat, 0.00001))
+    // Avoid divide-by-zero near poles
+    let lonDelta =
+      Self.searchRadius / (Self.nauticalMilesPerDegree * max(cosLat, Self.minimumCosineLatitude))
     var minLon = lon - lonDelta
     var maxLon = lon + lonDelta
 
@@ -116,6 +126,7 @@ public class NearestAirportViewModel {
     if maxLon > 180.0 { maxLon -= 360.0 }
 
     let wrapAround = minLon >= maxLon
+    let maxResults = Self.maxResults
 
     fetchTask?.cancel()
     fetchTask = Task.detached {
@@ -144,7 +155,7 @@ public class NearestAirportViewModel {
           unsortedAirports
           .map { ($0, capturedLocation.distance(from: $0.location)) }
           .sorted { $0.1 < $1.1 }
-          .prefix(10)
+          .prefix(maxResults)
           .map(\.0)
 
         guard !Task.isCancelled else { return }

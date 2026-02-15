@@ -48,61 +48,61 @@ public enum ClimbProfileGenerator {
     weightLb: Double,
     source: EquationSource
   ) -> ClimbProfile.DataPoint {
-    let alt = obs.altitudeFt
-    let temp = obs.temperatureC
+    let altitude = obs.altitudeFt,
+      temperature = obs.temperatureC
 
     // Takeoff climb gradient (no anti-ice variant)
     let takeoffGradient = source.takeoffClimbGradient(
       weight: weightLb,
-      altitude: alt,
-      temperature: temp
+      altitude: altitude,
+      temperature: temperature
     )
 
     // Enroute obstacle climb gradients
     let obstacleGradient = source.enrouteObstacleClimbGradient(
       weight: weightLb,
-      altitude: alt,
-      temperature: temp,
+      altitude: altitude,
+      temperature: temperature,
       iceContaminated: false
     )
     let obstacleGradientIce = source.enrouteObstacleClimbGradient(
       weight: weightLb,
-      altitude: alt,
-      temperature: temp,
+      altitude: altitude,
+      temperature: temperature,
       iceContaminated: true
     )
 
     // Enroute climb gradients
     let enrouteGradient = source.enrouteClimbGradient(
       weight: weightLb,
-      altitude: alt,
-      temperature: temp,
+      altitude: altitude,
+      temperature: temperature,
       iceContaminated: false
     )
     let enrouteGradientIce = source.enrouteClimbGradient(
       weight: weightLb,
-      altitude: alt,
-      temperature: temp,
+      altitude: altitude,
+      temperature: temperature,
       iceContaminated: true
     )
 
     // Enroute climb speeds
     let enrouteSpeed = source.enrouteClimbSpeed(
       weight: weightLb,
-      altitude: alt,
-      temperature: temp,
+      altitude: altitude,
+      temperature: temperature,
       iceContaminated: false
     )
     let enrouteSpeedIce = source.enrouteClimbSpeed(
       weight: weightLb,
-      altitude: alt,
-      temperature: temp,
+      altitude: altitude,
+      temperature: temperature,
       iceContaminated: true
     )
 
     return ClimbProfile.DataPoint(
-      altitudeFt: alt,
-      outsideAirTemperatureC: temp,
+      altitudeFt: altitude,
+      outsideAirTemperatureC: temperature,
       windDirectionDeg: obs.windDirectionDeg,
       windSpeedKts: obs.windSpeedKts,
       takeoff: .init(
@@ -215,7 +215,7 @@ public enum ClimbProfileGenerator {
       switch result {
         case .value(let v): return v
         case .valueWithUncertainty(let v, _): return v
-        default: return 0
+        default: return .nan
       }
     }
 
@@ -269,8 +269,8 @@ public enum ClimbProfileGenerator {
       temperature: Double,
       iceContaminated: Bool
     ) -> Double {
-      let eq = iceContaminated ? enrouteGradientIceEq : enrouteGradientNormalEq
-      return eval(eq, weight: weight, altitude: altitude, temperature: temperature)
+      let equation = iceContaminated ? enrouteGradientIceEq : enrouteGradientNormalEq
+      return eval(equation, weight: weight, altitude: altitude, temperature: temperature)
     }
 
     func enrouteClimbSpeed(
@@ -279,8 +279,8 @@ public enum ClimbProfileGenerator {
       temperature: Double,
       iceContaminated: Bool
     ) -> Double {
-      let eq = iceContaminated ? enrouteSpeedIceEq : enrouteSpeedNormalEq
-      return eval(eq, weight: weight, altitude: altitude, temperature: temperature)
+      let equation = iceContaminated ? enrouteSpeedIceEq : enrouteSpeedNormalEq
+      return eval(equation, weight: weight, altitude: altitude, temperature: temperature)
     }
   }
 
@@ -323,7 +323,7 @@ public enum ClimbProfileGenerator {
       switch result {
         case .value(let v): return v
         case .valueWithUncertainty(let v, _): return v
-        default: return 0
+        default: return .nan
       }
     }
 
@@ -341,7 +341,7 @@ public enum ClimbProfileGenerator {
       switch result {
         case .value(let v): return v
         case .valueWithUncertainty(let v, _): return v
-        default: return 0
+        default: return .nan
       }
     }
 

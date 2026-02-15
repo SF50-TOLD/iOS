@@ -88,16 +88,12 @@ public struct ProcedureTerrainPathGenerator {
 
     let reader = await terrainService.makeElevationReader()
 
-    // Step 1: Fetch obstacles within the path corridor
     let obstacleData = fetchObstacles(pathPoints: pathPoints)
-
-    // Step 2: Pre-assign obstacles to nearest path point indices
     let obstaclesByIndex = assignObstaclesToPoints(
       obstacles: obstacleData,
       pathPoints: pathPoints
     )
 
-    // Step 3: Map each point with terrain samples and obstacle data in parallel
     let halfCorridorNM = corridorWidthNM / 2,
       quarterCorridorNM = corridorWidthNM / 4
 
@@ -246,21 +242,22 @@ public struct ProcedureTerrainPathGenerator {
     guard pathPoints.count >= 2 else { return [:] }
 
     let halfCorridorNM = corridorWidthNM / 2
+    let segmentGrid = buildSegmentGrid(pathPoints: pathPoints)
     var result: [Int: Double] = [:]
 
     for obstacle in obstacles {
+      let candidateSegments = segmentGrid.elements(near: obstacle.coordinate)
+      guard !candidateSegments.isEmpty else { continue }
+
       var bestPointIndex: Int?,
-        bestAlongTrackNM = 0.0,
         bestCrossTrackNM = Double.greatestFiniteMagnitude
 
-      // Find nearest segment and compute cross-track distance
-      for segIdx in 0..<(pathPoints.count - 1) {
+      for segIdx in candidateSegments {
         let segStart = pathPoints[segIdx],
           segEnd = pathPoints[segIdx + 1]
         let segLengthNM = segEnd.distanceNM - segStart.distanceNM
         guard segLengthNM > 0 else { continue }
 
-        // Project obstacle onto segment
         let totalSegDist = GeoCalculations.distanceNM(
           from: segStart.coordinate,
           to: segEnd.coordinate
@@ -272,7 +269,6 @@ public struct ProcedureTerrainPathGenerator {
           to: obstacle.coordinate
         )
 
-        // Approximate fraction along segment via bearing projection
         let segBearing =
           GeoCalculations
           .bearing(from: segStart.coordinate, to: segEnd.coordinate)
@@ -283,14 +279,11 @@ public struct ProcedureTerrainPathGenerator {
           .converted(to: .degrees).value
 
         let angleDiffRad = (obsBearing - segBearing) * .pi / 180
-        let alongTrack = distToObstacle * cos(angleDiffRad),
-          crossTrack = abs(distToObstacle * sin(angleDiffRad))
+        let alongTrack = distToObstacle * cos(angleDiffRad)
 
-        // Clamp fraction to [0, 1]
         let fraction = max(0, min(1, alongTrack / totalSegDist))
         let clampedAlongTrackNM = segStart.distanceNM + fraction * segLengthNM
 
-        // Recompute cross-track for clamped position
         let clampedCoord = GeoCalculations.interpolate(
           from: segStart.coordinate,
           to: segEnd.coordinate,
@@ -303,9 +296,6 @@ public struct ProcedureTerrainPathGenerator {
 
         if actualCrossTrack < bestCrossTrackNM {
           bestCrossTrackNM = actualCrossTrack
-          bestAlongTrackNM = clampedAlongTrackNM
-
-          // Find nearest point index by cumulative distance
           bestPointIndex = Self.nearestPointIndex(
             atDistanceNM: clampedAlongTrackNM,
             in: pathPoints
@@ -313,10 +303,8 @@ public struct ProcedureTerrainPathGenerator {
         }
       }
 
-      // Skip if outside corridor
       guard bestCrossTrackNM <= halfCorridorNM, let pointIndex = bestPointIndex else { continue }
 
-      // Update max obstacle height for this point index
       if let existing = result[pointIndex] {
         result[pointIndex] = max(existing, obstacle.heightFtMSL)
       } else {
@@ -325,6 +313,29 @@ public struct ProcedureTerrainPathGenerator {
     }
 
     return result
+  }
+
+  /// Indexes path segments into a ``CoordinateGrid`` for spatial lookup.
+  private func buildSegmentGrid(
+    pathPoints: [ProcedurePath.Point]
+  ) -> CoordinateGrid<Int> {
+    let expansionDeg = corridorWidthNM / 60.0  // 1 NM ≈ 1/60°
+    var grid = CoordinateGrid<Int>()
+
+    for segIdx in 0..<(pathPoints.count - 1) {
+      let startCoord = pathPoints[segIdx].coordinate,
+        endCoord = pathPoints[segIdx + 1].coordinate
+
+      grid.insert(
+        segIdx,
+        minLat: min(startCoord.latitude, endCoord.latitude) - expansionDeg,
+        maxLat: max(startCoord.latitude, endCoord.latitude) + expansionDeg,
+        minLon: min(startCoord.longitude, endCoord.longitude) - expansionDeg,
+        maxLon: max(startCoord.longitude, endCoord.longitude) + expansionDeg
+      )
+    }
+
+    return grid
   }
 
   // MARK: - Nested Types

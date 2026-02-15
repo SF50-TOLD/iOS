@@ -35,9 +35,6 @@ final class MappedTerrainTile: Sendable {
 
   // MARK: - Instance Properties
 
-  /// File handle for memory-mapped access.
-  private let fileHandle: FileHandle
-
   /// Memory-mapped data.
   private let mappedData: Data
 
@@ -57,14 +54,8 @@ final class MappedTerrainTile: Sendable {
 
   /// Creates a memory-mapped terrain tile from a file URL.
   init(fileURL: URL) throws {
-    // Open file for reading
-    let handle = try FileHandle(forReadingFrom: fileURL)
-    self.fileHandle = handle
-
-    // Memory-map the file
-    guard let data = handle.availableData as Data? else {
-      throw TerrainServiceError.invalidFile(fileURL)
-    }
+    // Memory-map the file (pages loaded on demand, not copied to heap)
+    let data = try Data(contentsOf: fileURL, options: .mappedIfSafe)
     self.mappedData = data
 
     // Parse header and index
@@ -160,8 +151,8 @@ final class MappedTerrainTile: Sendable {
     let exactRow = (1.0 - latOffset) * Double(resolution - 1),
       exactCol = lonOffset * Double(resolution - 1)
 
-    let (rowFrac, rowInt) = modf(exactRow),
-      (colFrac, colInt) = modf(exactCol)
+    let (rowInt, rowFrac) = modf(exactRow),
+      (colInt, colFrac) = modf(exactCol)
 
     let row0 = Int(rowInt),
       col0 = Int(colInt),
@@ -241,12 +232,6 @@ final class MappedTerrainTile: Sendable {
     let top = topLeft * (1 - colFrac) + topRight * colFrac,
       bottom = bottomLeft * (1 - colFrac) + bottomRight * colFrac
     return top * (1 - rowFrac) + bottom * rowFrac
-  }
-
-  // MARK: - Deinitializer
-
-  deinit {
-    try? fileHandle.close()
   }
 
   // MARK: - Nested Types

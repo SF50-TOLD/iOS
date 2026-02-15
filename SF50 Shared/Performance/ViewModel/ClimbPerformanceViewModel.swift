@@ -88,8 +88,8 @@ public final class ClimbPerformanceViewModel {
   public var climbMach: Value<Double> {
     climbSpeedTAS.flatMap { TAS in
       let OATC = OAT.converted(to: .celsius).value
-      let TASKts = TAS.converted(to: .knots).value
-      return .value(TASKts / speedOfSound(OATC: OATC))
+      let TAS_Kts = TAS.converted(to: .knots).value
+      return .value(TAS_Kts / speedOfSound(OATC: OATC))
     }
   }
 
@@ -213,7 +213,7 @@ public final class ClimbPerformanceViewModel {
             uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
           )
         }
-        climbGradient = m.enrouteClimbGradientFtNmi.map { value, uncertainty in
+        climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
           (
             Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
             uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
@@ -239,7 +239,7 @@ public final class ClimbPerformanceViewModel {
             uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
           )
         }
-        climbGradient = m.enrouteClimbGradientFtNmi.map { value, uncertainty in
+        climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
           (
             Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
             uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
@@ -267,7 +267,7 @@ public final class ClimbPerformanceViewModel {
             uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
           )
         }
-        climbGradient = m.enrouteClimbGradientFtNmi.map { value, uncertainty in
+        climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
           (
             Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
             uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
@@ -293,7 +293,7 @@ public final class ClimbPerformanceViewModel {
             uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
           )
         }
-        climbGradient = m.enrouteClimbGradientFtNmi.map { value, uncertainty in
+        climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
           (
             Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
             uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }

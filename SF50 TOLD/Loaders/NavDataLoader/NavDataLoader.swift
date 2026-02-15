@@ -14,8 +14,8 @@ import SwiftNASR
 ///
 /// 1. **Download**: Fetches compressed data from GitHub
 /// 2. **Decompress**: Extracts LZMA-compressed property list
-/// 3. **Import**: Populates SwiftData with `Airport`, `Runway`, `DepartureProcedure`,
-///    `ApproachProcedure`, `Leg`, and `Obstacle` models
+/// 3. **Import**: Populates SwiftData with `Airport`, `Runway`, `Procedure`,
+///    `ProcedureSegment`, `Leg`, and `Obstacle` models
 ///
 /// ## Data Source
 ///
@@ -220,8 +220,8 @@ actor NavDataLoader {
   private func resetData() throws {
     try modelContext.delete(model: SF50_Shared.Airport.self)
     try modelContext.delete(model: SF50_Shared.Runway.self)
-    try modelContext.delete(model: SF50_Shared.DepartureProcedure.self)
-    try modelContext.delete(model: SF50_Shared.ApproachProcedure.self)
+    try modelContext.delete(model: SF50_Shared.Procedure.self)
+    try modelContext.delete(model: SF50_Shared.ProcedureSegment.self)
     try modelContext.delete(model: SF50_Shared.Leg.self)
     try modelContext.delete(model: SF50_Shared.Navaid.self)
     try modelContext.delete(model: SF50_Shared.Obstacle.self)
@@ -298,63 +298,45 @@ actor NavDataLoader {
       }
     }
 
-    // Load departure procedures
-    for procedureData in airport.departureProcedures ?? [] {
-      let procedure = DepartureProcedure(
+    // Load procedures (departures and approaches)
+    for procedureData in airport.procedures ?? [] {
+      let procedureType = Procedure.ProcedureType(rawValue: procedureData.type) ?? .departure
+      let procedure = Procedure(
+        type: procedureType,
         identifier: procedureData.identifier,
-        runwayNames: procedureData.runwayNames,
+        name: procedureData.name,
+        runwayName: procedureData.runwayName,
         requiredClimbGradientFtPerNM: procedureData.requiredClimbGradientFtPerNM,
         airport: record
       )
       modelContext.insert(procedure)
 
-      // Load legs for this procedure
-      for (index, legData) in (procedureData.legs ?? []).enumerated() {
-        let altitudeRestriction = legData.altitudeRestriction.map {
-          AltitudeRestriction(from: $0)
-        }
-        let navaid = lookupNavaid(legData)
-        let leg = Leg(
-          identifier: legData.identifier,
-          latitude: legData.latitude.map { .init(value: $0, unit: .degrees) },
-          longitude: legData.longitude.map { .init(value: $0, unit: .degrees) },
-          altitudeRestriction: altitudeRestriction,
-          legType: legData.legType,
-          sequenceIndex: index,
-          departureProcedure: procedure,
-          navaid: navaid,
-          dmeDistance: legData.dmeDistanceNM.map { .init(value: $0, unit: .nauticalMiles) }
+      for segmentData in procedureData.segments ?? [] {
+        let segment = ProcedureSegment(
+          runwayNames: segmentData.runwayNames ?? [],
+          procedure: procedure
         )
-        modelContext.insert(leg)
-      }
-    }
+        modelContext.insert(segment)
 
-    // Load approach procedures
-    for procedureData in airport.approachProcedures ?? [] {
-      let procedure = ApproachProcedure(
-        identifier: procedureData.identifier,
-        name: procedureData.name,
-        airport: record
-      )
-      modelContext.insert(procedure)
-
-      for (index, legData) in (procedureData.missedApproachLegs ?? []).enumerated() {
-        let altitudeRestriction = legData.altitudeRestriction.map {
-          AltitudeRestriction(from: $0)
+        for (index, legData) in segmentData.legs.enumerated() {
+          let altitudeRestriction = legData.altitudeRestriction.map {
+            AltitudeRestriction(from: $0)
+          }
+          let navaid = lookupNavaid(legData)
+          let leg = Leg(
+            identifier: legData.identifier,
+            latitude: legData.latitude.map { .init(value: $0, unit: .degrees) },
+            longitude: legData.longitude.map { .init(value: $0, unit: .degrees) },
+            altitudeRestriction: altitudeRestriction,
+            legType: legData.legType,
+            sequenceIndex: index,
+            segment: segment,
+            navaid: navaid,
+            dmeDistance: legData.dmeDistanceNM.map { .init(value: $0, unit: .nauticalMiles) },
+            theta: legData.thetaDeg.map { .init(value: $0, unit: .degrees) }
+          )
+          modelContext.insert(leg)
         }
-        let navaid = lookupNavaid(legData)
-        let leg = Leg(
-          identifier: legData.identifier,
-          latitude: legData.latitude.map { .init(value: $0, unit: .degrees) },
-          longitude: legData.longitude.map { .init(value: $0, unit: .degrees) },
-          altitudeRestriction: altitudeRestriction,
-          legType: legData.legType,
-          sequenceIndex: index,
-          approachProcedure: procedure,
-          navaid: navaid,
-          dmeDistance: legData.dmeDistanceNM.map { .init(value: $0, unit: .nauticalMiles) }
-        )
-        modelContext.insert(leg)
       }
     }
   }

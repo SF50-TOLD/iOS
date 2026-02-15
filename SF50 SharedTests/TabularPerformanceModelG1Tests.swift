@@ -303,7 +303,7 @@ struct TabularPerformanceModelG1Tests {
         aircraftType: .g1
       )
 
-      let result = model.takeoffClimbGradientFtNmi
+      let result = model.takeoffClimbGradientFtNM
       guard case .value(let value) = result else {
         Issue.record(
           "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)"

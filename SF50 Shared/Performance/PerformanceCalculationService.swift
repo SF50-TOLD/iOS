@@ -187,7 +187,7 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
   {
     let takeoffRun = (model.takeoffRunFt * safetyFactor).toMeasurement(UnitLength.feet),
       takeoffDistance = (model.takeoffDistanceFt * safetyFactor).toMeasurement(UnitLength.feet),
-      takeoffClimbGradient = model.takeoffClimbGradientFtNmi.toMeasurement(
+      takeoffClimbGradient = model.takeoffClimbGradientFtNM.toMeasurement(
         UnitSlope.feetPerNauticalMile
       ),
       takeoffClimbRate = model.takeoffClimbRateFtMin.toMeasurement(UnitSpeed.feetPerMinute)

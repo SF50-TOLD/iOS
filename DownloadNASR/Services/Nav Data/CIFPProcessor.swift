@@ -16,27 +16,18 @@ import ZIPFoundation
 /// - ``NASRProcessor``
 /// - ``DOFProcessor``
 struct CIFPProcessor {
-  /// Path terminators that cannot be plotted because they require ATC vectors or manual input.
-  private static let unplottablePathTerminators: Set<PathTerminator> = [
-    .fromFixManual,  // FM - ATC vectors from fix
-    .headingManual,  // VM - ATC vectors / pilot discretion
-    .holdManual  // HM - hold until ATC clearance
-  ]
-
-  /// Path terminators whose endpoint is computed from course/heading + altitude,
-  /// not from a fix coordinate. These legs don't require a resolved fix.
-  private static let toAltitudePathTerminators: Set<PathTerminator> = [
-    .fixToAltitude,  // FA
-    .courseToAltitude,  // CA
-    .headingToAltitude  // VA
-  ]
-
   /// Path terminators that use DME distance for termination.
   private static let dmePathTerminators: Set<PathTerminator> = [
     .trackFromFixDME,
     .trackFromFixDistance,  // FC: routeDistanceNMOrMinutes is ground distance, not slant range
     .courseToDME,
     .headingToDME
+  ]
+
+  /// Path terminators that use a VOR radial for termination.
+  private static let radialPathTerminators: Set<PathTerminator> = [
+    .courseToRadial,
+    .headingToRadial
   ]
 
   // Progress allocation within CIFP processing (out of 100):
@@ -90,6 +81,19 @@ struct CIFPProcessor {
       return (nil, nil, nil)
     }
     return (leg.recommendedNavaid, leg.recommendedNavaidICAO, leg.routeDistanceNMOrMinutes)
+  }
+
+  /// Extracts radial-related fields from a procedure leg, if applicable.
+  ///
+  /// Returns the recommended navaid identifier, its ICAO region, and the
+  /// magnetic radial bearing for legs that terminate at a VOR radial.
+  static func radialFields(
+    from leg: ProcedureLeg
+  ) -> (navaidIdentifier: String?, navaidICAO: String?, thetaDeg: Double?) {
+    guard let pt = leg.pathTerminator, radialPathTerminators.contains(pt) else {
+      return (nil, nil, nil)
+    }
+    return (leg.recommendedNavaid, leg.recommendedNavaidICAO, leg.thetaDeg)
   }
 
   /// Converts a SwiftCIFP procedure leg to a ``LegTypeCodable``.
@@ -355,41 +359,53 @@ struct CIFPProcessor {
   func extractDepartureProcedures(
     icaoId: String,
     cifpData: CIFPData
-  ) async -> [AirportDataCodable.DepartureProcedureCodable] {
+  ) async -> [AirportDataCodable.ProcedureCodable] {
     guard let cifpAirport = await cifpData.airports[icaoId] else {
       return []
     }
 
-    var procedures = [AirportDataCodable.DepartureProcedureCodable]()
-    var processedIdentifiers = Set<String>()
+    // Group all SID records by identifier to collect runway transitions and common routes
+    let sidsByIdentifier = Dictionary(grouping: cifpAirport.sids, by: \.identifier)
 
-    for sid in cifpAirport.sids {
-      // Skip if we've already processed this SID identifier (avoid duplicates from transitions)
-      guard !processedIdentifiers.contains(sid.identifier) else { continue }
-      processedIdentifiers.insert(sid.identifier)
+    var procedures = [AirportDataCodable.ProcedureCodable]()
 
-      // Check if all legs are plottable
-      let isPlottable = sid.legs.allSatisfy { leg in
-        guard let pathTerminator = leg.pathTerminator else { return false }
-        return !Self.unplottablePathTerminators.contains(pathTerminator)
-      }
+    for (identifier, sids) in sidsByIdentifier {
+      var segments = [AirportDataCodable.SegmentCodable]()
+      var maxGradient: Double?
 
-      // Extract legs and calculate gradient if plottable
-      var legs: [AirportDataCodable.LegCodable]?
-      var requiredGradient: Double?
-      if isPlottable {
-        let (extractedLegs, gradient) = await extractLegsAndGradient(sid: sid, cifpData: cifpData)
-        if !extractedLegs.isEmpty {
-          legs = extractedLegs
+      for sid in sids {
+        // Only include runway transitions and common routes; skip enroute transitions etc.
+        let runwayNames: [String]?
+        if sid.routeType.isRunwayTransition {
+          runwayNames = sid.runwayNames.map { $0.removingRWPrefix() }.sorted()
+        } else if sid.routeType == .commonRoute || sid.routeType == .rnavCommonRoute
+          || sid.routeType == .fmsCommonRoute
+        {
+          runwayNames = nil
+        } else {
+          continue
         }
-        requiredGradient = gradient
+
+        let (extractedLegs, requiredGradient) = await extractLegsAndGradient(
+          sid: sid,
+          cifpData: cifpData
+        )
+        guard !extractedLegs.isEmpty else { continue }
+
+        if let gradient = requiredGradient {
+          maxGradient = max(maxGradient ?? 0, gradient)
+        }
+
+        segments.append(
+          AirportDataCodable.SegmentCodable(runwayNames: runwayNames, legs: extractedLegs)
+        )
       }
 
-      let procedure = AirportDataCodable.DepartureProcedureCodable(
-        identifier: sid.identifier,
-        runwayNames: Array(sid.runwayNames).sorted(),
-        legs: legs,
-        requiredClimbGradientFtPerNM: requiredGradient
+      let procedure = AirportDataCodable.ProcedureCodable(
+        type: "departure",
+        identifier: identifier,
+        requiredClimbGradientFtPerNM: maxGradient,
+        segments: segments.isEmpty ? nil : segments
       )
       procedures.append(procedure)
     }
@@ -405,12 +421,12 @@ struct CIFPProcessor {
   func extractApproachProcedures(
     icaoId: String,
     cifpData: CIFPData
-  ) async -> [AirportDataCodable.ApproachProcedureCodable] {
+  ) async -> [AirportDataCodable.ProcedureCodable] {
     guard let cifpAirport = await cifpData.airports[icaoId] else {
       return []
     }
 
-    var procedures = [AirportDataCodable.ApproachProcedureCodable]()
+    var procedures = [AirportDataCodable.ProcedureCodable]()
     var processedIdentifiers = Set<String>()
 
     for approach in cifpAirport.approaches {
@@ -429,79 +445,61 @@ struct CIFPProcessor {
         identifier: approach.identifier
       )
 
-      // Check if all missed approach legs are plottable (must have legs to be plottable).
-      // Manual terminations (FM/VM/HM) are acceptable as the final leg — e.g., "hold until
-      // ATC clears you" is a common missed approach ending with a known fix.
+      // Extract missed approach legs
       let sortedMissedApproachLegs = approach.missedApproachLegs.sorted()
-      let isMissedApproachPlottable =
-        !sortedMissedApproachLegs.isEmpty
-        && sortedMissedApproachLegs.last?.pathTerminator != nil
-        && sortedMissedApproachLegs.dropLast().allSatisfy { leg in
-          guard let pathTerminator = leg.pathTerminator else { return false }
-          return !Self.unplottablePathTerminators.contains(pathTerminator)
+      var extractedMissedLegs = [AirportDataCodable.LegCodable]()
+      for leg in sortedMissedApproachLegs {
+        let fix = await leg.fix
+        let coordinate = fix?.coordinate
+        let fixIdentifier = fix?.identifier
+
+        let altitudeRestriction = leg.altitudeConstraint.flatMap {
+          convertAltitudeConstraint($0)
         }
 
-      // Extract missed approach legs with altitude constraints if plottable
-      var missedApproachLegs: [AirportDataCodable.LegCodable]?
-      if isMissedApproachPlottable {
-        var legs = [AirportDataCodable.LegCodable]()
-        for leg in sortedMissedApproachLegs {
-          // Only include legs that have an altitude constraint
-          guard let altitudeConstraint = leg.altitudeConstraint else { continue }
+        // Convert leg type (skips unrepresentable types like FM/VM)
+        let legTypeCodable: LegTypeCodable
+        do {
+          guard let result = try Self.legType(from: leg) else { continue }
+          legTypeCodable = result
+        } catch {
+          logger.warning("Skipping missed approach leg in \(approach.identifier): \(error)")
+          continue
+        }
 
-          let fix = await leg.fix
-          let coordinate = fix?.coordinate
-          let fixIdentifier = fix?.identifier
+        // Extract DME and radial fields if applicable
+        let dme = Self.dmeFields(from: leg)
+        let radial = Self.radialFields(from: leg)
 
-          // *ToAltitude legs (FA/CA/VA) compute their endpoint from
-          // course/heading + altitude + climb profile, so they don't need
-          // a fix coordinate. All other leg types require one.
-          let isToAltitude =
-            leg.pathTerminator.map {
-              Self.toAltitudePathTerminators.contains($0)
-            } ?? false
-          if !isToAltitude {
-            guard coordinate != nil, fixIdentifier != nil else { continue }
-          }
-
-          guard let altitudeRestriction = convertAltitudeConstraint(altitudeConstraint) else {
-            continue
-          }
-
-          let legTypeCodable: LegTypeCodable
-          do {
-            guard let result = try Self.legType(from: leg) else { continue }
-            legTypeCodable = result
-          } catch {
-            logger.warning("Skipping missed approach leg in \(approach.identifier): \(error)")
-            continue
-          }
-
-          // Extract DME fields if applicable
-          let dme = Self.dmeFields(from: leg)
-
-          legs.append(
-            AirportDataCodable.LegCodable(
-              identifier: fixIdentifier,
-              latitude: coordinate?.latitudeDeg,
-              longitude: coordinate?.longitudeDeg,
-              altitudeRestriction: altitudeRestriction,
-              legType: legTypeCodable,
-              recommendedNavaidIdentifier: dme.navaidIdentifier,
-              recommendedNavaidICAO: dme.navaidICAO,
-              dmeDistanceNM: dme.distanceNM
-            )
+        extractedMissedLegs.append(
+          AirportDataCodable.LegCodable(
+            identifier: fixIdentifier,
+            latitude: coordinate?.latitudeDeg,
+            longitude: coordinate?.longitudeDeg,
+            altitudeRestriction: altitudeRestriction,
+            legType: legTypeCodable,
+            recommendedNavaidIdentifier: dme.navaidIdentifier ?? radial.navaidIdentifier,
+            recommendedNavaidICAO: dme.navaidICAO ?? radial.navaidICAO,
+            dmeDistanceNM: dme.distanceNM,
+            thetaDeg: radial.thetaDeg
           )
-        }
-        if !legs.isEmpty {
-          missedApproachLegs = legs
-        }
+        )
       }
 
-      let procedure = AirportDataCodable.ApproachProcedureCodable(
+      // Wrap missed approach legs in a segment
+      let segments: [AirportDataCodable.SegmentCodable]?
+      if !extractedMissedLegs.isEmpty {
+        segments = [AirportDataCodable.SegmentCodable(runwayNames: nil, legs: extractedMissedLegs)]
+      } else {
+        segments = nil
+      }
+
+      let procedure = AirportDataCodable.ProcedureCodable(
+        type: "approach",
         identifier: approach.identifier,
         name: name,
-        missedApproachLegs: missedApproachLegs
+        runwayName: approach.runwayId?.removingRWPrefix(),
+        segments: segments
       )
       procedures.append(procedure)
     }
@@ -521,23 +519,16 @@ struct CIFPProcessor {
     var previousAltitude: Int?
 
     for leg in sid.legs.sorted() {
-      // Get fix coordinate
       let fix = await leg.fix
-      guard let coordinate = fix?.coordinate,
-        let fixIdentifier = fix?.identifier
-      else {
-        continue
-      }
-
-      let currentLat = coordinate.latitudeDeg
-      let currentLon = coordinate.longitudeDeg
+      let coordinate = fix?.coordinate
+      let fixIdentifier = fix?.identifier
 
       // Convert altitude constraint
       let altitudeRestriction = leg.altitudeConstraint.flatMap {
         convertAltitudeConstraint($0)
       }
 
-      // Convert leg type
+      // Convert leg type (skips unrepresentable types like FM/VM)
       let legTypeCodable: LegTypeCodable
       do {
         guard let result = try Self.legType(from: leg) else { continue }
@@ -547,24 +538,30 @@ struct CIFPProcessor {
         continue
       }
 
-      // Extract DME fields if applicable
+      // Extract DME and radial fields if applicable
       let dme = Self.dmeFields(from: leg)
+      let radial = Self.radialFields(from: leg)
 
-      // Add leg to list
+      let currentLat = coordinate?.latitudeDeg
+      let currentLon = coordinate?.longitudeDeg
+
+      // Add leg to list (coordinates may be nil for *ToAltitude legs etc.)
       let legCodable = AirportDataCodable.LegCodable(
         identifier: fixIdentifier,
         latitude: currentLat,
         longitude: currentLon,
         altitudeRestriction: altitudeRestriction,
         legType: legTypeCodable,
-        recommendedNavaidIdentifier: dme.navaidIdentifier,
-        recommendedNavaidICAO: dme.navaidICAO,
-        dmeDistanceNM: dme.distanceNM
+        recommendedNavaidIdentifier: dme.navaidIdentifier ?? radial.navaidIdentifier,
+        recommendedNavaidICAO: dme.navaidICAO ?? radial.navaidICAO,
+        dmeDistanceNM: dme.distanceNM,
+        thetaDeg: radial.thetaDeg
       )
       legs.append(legCodable)
 
-      // Calculate gradient if we have altitude data
-      if let altitudeConstraint = leg.altitudeConstraint,
+      // Calculate gradient if we have coordinate + altitude data
+      if let currentLat, let currentLon,
+        let altitudeConstraint = leg.altitudeConstraint,
         let currentAltitude = extractMinAltitudeFeet(from: altitudeConstraint),
         let prevLat = previousLatitude,
         let prevLon = previousLongitude,
@@ -593,8 +590,10 @@ struct CIFPProcessor {
         previousAltitude = altitude
       }
 
-      previousLatitude = currentLat
-      previousLongitude = currentLon
+      if let currentLat, let currentLon {
+        previousLatitude = currentLat
+        previousLongitude = currentLon
+      }
     }
 
     return (legs, maxGradient)
@@ -658,6 +657,14 @@ struct CIFPProcessor {
   struct CIFPResult {
     let cycle: SwiftCIFP.Cycle?
     let data: CIFPData?
+  }
+}
+
+extension String {
+  /// Strips the "RW" prefix from a CIFP runway identifier.
+  /// For example, `"RW24L"` → `"24L"`, `"RW09"` → `"09"`.
+  func removingRWPrefix() -> String {
+    hasPrefix("RW") ? String(dropFirst(2)) : self
   }
 }
 

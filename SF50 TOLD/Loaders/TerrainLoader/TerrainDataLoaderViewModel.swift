@@ -44,7 +44,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
   var error: Error?
 
   /// The underlying terrain data loader.
-  private let loader = TerrainDataLoader()
+  private let loader = TerrainDataLoader.shared
 
   /// Cancellables for Combine subscriptions.
   private var cancellables = Set<AnyCancellable>()

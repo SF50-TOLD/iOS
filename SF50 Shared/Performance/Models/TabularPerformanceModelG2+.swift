@@ -86,7 +86,7 @@ final class TabularPerformanceModelG2Plus: BasePerformanceModel {
     return distance
   }
 
-  override var takeoffClimbGradientFtNmi: Value<Double> {
+  override var takeoffClimbGradientFtNM: Value<Double> {
     takeoffClimbGradientData.value(for: [weight, altitude, temperature])
   }
 
@@ -94,7 +94,7 @@ final class TabularPerformanceModelG2Plus: BasePerformanceModel {
     takeoffClimbRateData.value(for: [weight, altitude, temperature])
   }
 
-  var enrouteClimbGradientFtNmi: Value<Double> {
+  var enrouteClimbGradientFtNM: Value<Double> {
     let iceContaminated = configuration.iceProtection
     let data =
       iceContaminated ? enrouteClimb_gradientIceContaminatedData : enrouteClimb_gradientNormalData

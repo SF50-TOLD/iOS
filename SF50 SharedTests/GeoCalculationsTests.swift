@@ -12,7 +12,7 @@ struct GeoCalculationsTests {
   func windTriangleNoWind() {
     let result = GeoCalculations.windTriangle(
       trueHeading: .init(value: 90, unit: .degrees),
-      TASKts: 170,
+      TAS_Kts: 170,
       windFromTrue: .init(value: 0, unit: .degrees),
       windSpeedKts: 0
     )
@@ -28,7 +28,7 @@ struct GeoCalculationsTests {
     // Heading north, wind from north = headwind
     let result = GeoCalculations.windTriangle(
       trueHeading: .init(value: 0, unit: .degrees),
-      TASKts: 170,
+      TAS_Kts: 170,
       windFromTrue: .init(value: 0, unit: .degrees),
       windSpeedKts: 30
     )
@@ -45,7 +45,7 @@ struct GeoCalculationsTests {
     // Heading north, wind from south = tailwind
     let result = GeoCalculations.windTriangle(
       trueHeading: .init(value: 0, unit: .degrees),
-      TASKts: 170,
+      TAS_Kts: 170,
       windFromTrue: .init(value: 180, unit: .degrees),
       windSpeedKts: 30
     )
@@ -61,7 +61,7 @@ struct GeoCalculationsTests {
     // Heading north, wind from west (270) = pushes east
     let result = GeoCalculations.windTriangle(
       trueHeading: .init(value: 0, unit: .degrees),
-      TASKts: 170,
+      TAS_Kts: 170,
       windFromTrue: .init(value: 270, unit: .degrees),
       windSpeedKts: 30
     )

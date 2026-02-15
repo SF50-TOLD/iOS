@@ -283,6 +283,9 @@ final class RegressionEquation {
               result = Swift.min(result, max)
             }
             return result
+
+          case .polynomial(let poly):
+            return evaluatePolynomial(poly, inputs: inputs)
         }
       }
     }
@@ -484,6 +487,7 @@ private enum ComparisonOperator: String, Codable {
 private enum BreakpointResult: Codable {
   case constant(Double)
   case linear(slope: Double, intercept: Double, minValue: Double?, maxValue: Double?)
+  case polynomial(PolynomialEquation)
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -500,6 +504,11 @@ private enum BreakpointResult: Codable {
         let minValue = try container.decodeIfPresent(Double.self, forKey: .minValue)
         let maxValue = try container.decodeIfPresent(Double.self, forKey: .maxValue)
         self = .linear(slope: slope, intercept: intercept, minValue: minValue, maxValue: maxValue)
+
+      case "polynomial":
+        let intercept = try container.decode(Double.self, forKey: .intercept)
+        let terms = try container.decode([PolynomialTerm].self, forKey: .terms)
+        self = .polynomial(PolynomialEquation(intercept: intercept, terms: terms))
 
       default:
         throw DecodingError.dataCorruptedError(
@@ -524,11 +533,16 @@ private enum BreakpointResult: Codable {
         try container.encode(intercept, forKey: .intercept)
         try container.encodeIfPresent(minValue, forKey: .minValue)
         try container.encodeIfPresent(maxValue, forKey: .maxValue)
+
+      case .polynomial(let poly):
+        try container.encode("polynomial", forKey: .type)
+        try container.encode(poly.intercept, forKey: .intercept)
+        try container.encode(poly.terms, forKey: .terms)
     }
   }
 
   enum CodingKeys: String, CodingKey {
-    case type, value, slope, intercept
+    case type, value, slope, intercept, terms
     case minValue = "min_value"
     case maxValue = "max_value"
   }

@@ -223,8 +223,7 @@ struct NASRProcessor {
         variation: variationDeg,
         timeZone: timeZone,
         runways: runways,
-        departureProcedures: nil,  // Added in DataProcessor from CIFP data
-        approachProcedures: nil
+        procedures: nil  // Added in DataProcessor from CIFP data
       )
 
       codableAirports.append(codableAirport)

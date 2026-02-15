@@ -152,45 +152,6 @@ struct ProcedureTerrainPathTests {
     let path = ProcedureTerrainPath(corridorWidthNM: 0.25, points: points)
     #expect(!path.obstacleDataAvailable)
   }
-
-  @Test
-  func coordinatesMatchPointCoordinates() {
-    let coord1 = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
-      coord2 = CLLocationCoordinate2D(latitude: 37.1, longitude: -121.9)
-    let points = [
-      ProcedureTerrainPath.Point(
-        coordinate: coord1,
-        distanceNM: 0,
-        aircraftAltitudeFt: 100,
-        altitudeRestriction: nil,
-        fixName: nil,
-        terrainElevationFt: nil,
-        maxObstacleHeightFt: nil
-      ),
-      ProcedureTerrainPath.Point(
-        coordinate: coord2,
-        distanceNM: 3.0,
-        aircraftAltitudeFt: 1000,
-        altitudeRestriction: nil,
-        fixName: nil,
-        terrainElevationFt: 50,
-        maxObstacleHeightFt: nil
-      )
-    ]
-    let path = ProcedureTerrainPath(corridorWidthNM: 0.5, points: points)
-    #expect(
-      path.coordinates[0].latitude.isApproximatelyEqual(
-        to: coord1.latitude,
-        absoluteTolerance: 0.0001
-      )
-    )
-    #expect(
-      path.coordinates[1].longitude.isApproximatelyEqual(
-        to: coord2.longitude,
-        absoluteTolerance: 0.0001
-      )
-    )
-  }
 }
 
 struct ProcedureTerrainPathGeneratorTests {
@@ -211,8 +172,8 @@ struct ProcedureTerrainPathGeneratorTests {
       Scenario.self,
       Cycle.self,
       Obstacle.self,
-      DepartureProcedure.self,
-      ApproachProcedure.self,
+      Procedure.self,
+      ProcedureSegment.self,
       Leg.self,
       Navaid.self
     ])
@@ -240,7 +201,7 @@ struct ProcedureTerrainPathGeneratorTests {
     ]
     return ProcedurePathGenerator(
       climbProfile: climbProfile,
-      schedule: .init(firstSegment: .enroute(antiIce: false)),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
       magneticVariation: magneticVariation
     ).departurePath(
       from: fixes,
@@ -564,8 +525,8 @@ struct ObstacleFetchDescriptorTests {
       Scenario.self,
       Cycle.self,
       Obstacle.self,
-      DepartureProcedure.self,
-      ApproachProcedure.self,
+      Procedure.self,
+      ProcedureSegment.self,
       Leg.self,
       Navaid.self
     ])
@@ -629,33 +590,6 @@ struct ObstacleFetchDescriptorTests {
     )
     let results = try context.fetch(descriptor)
     #expect(results.isEmpty)
-  }
-}
-
-// MARK: - Obstacle: Locatable Tests
-
-struct ObstacleLocatableTests {
-
-  @Test
-  func obstacleConformsToLocatable() {
-    let obstacle = Obstacle(
-      heightMSL: .init(value: 500, unit: .feet),
-      latitude: .init(value: 37.5, unit: .degrees),
-      longitude: .init(value: -122.0, unit: .degrees)
-    )
-    let locatable: any Locatable = obstacle
-    #expect(
-      locatable.coordinate.latitude.isApproximatelyEqual(
-        to: 37.5,
-        absoluteTolerance: 0.0001
-      )
-    )
-    #expect(
-      locatable.coordinate.longitude.isApproximatelyEqual(
-        to: -122.0,
-        absoluteTolerance: 0.0001
-      )
-    )
   }
 }
 

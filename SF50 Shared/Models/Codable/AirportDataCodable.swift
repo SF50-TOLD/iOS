@@ -94,11 +94,8 @@ public struct AirportDataCodable: Codable, Sendable {
     /// Runways at this airport
     public let runways: [RunwayCodable]
 
-    /// Departure procedures (SIDs) at this airport (nil if CIFP data not available)
-    public let departureProcedures: [DepartureProcedureCodable]?
-
-    /// Approach procedures at this airport (nil if CIFP data not available)
-    public let approachProcedures: [ApproachProcedureCodable]?
+    /// Procedures (departures and approaches) at this airport (nil if CIFP data not available)
+    public let procedures: [ProcedureCodable]?
 
     public init(
       recordID: String,
@@ -113,8 +110,7 @@ public struct AirportDataCodable: Codable, Sendable {
       variation: Double,
       timeZone: String?,
       runways: [RunwayCodable],
-      departureProcedures: [DepartureProcedureCodable]?,
-      approachProcedures: [ApproachProcedureCodable]?
+      procedures: [ProcedureCodable]?
     ) {
       self.recordID = recordID
       self.locationID = locationID
@@ -128,8 +124,7 @@ public struct AirportDataCodable: Codable, Sendable {
       self.variation = variation
       self.timeZone = timeZone
       self.runways = runways
-      self.departureProcedures = departureProcedures
-      self.approachProcedures = approachProcedures
+      self.procedures = procedures
     }
   }
 
@@ -226,63 +221,68 @@ public struct AirportDataCodable: Codable, Sendable {
   }
 
   /**
-   * Codable representation of a departure procedure (SID).
+   * Codable representation of a procedure (departure SID or approach).
    *
-   * ``DepartureProcedureCodable`` stores departure procedure data extracted from CIFP.
-   * For plottable SIDs (those with deterministic path terminators), fixes are included
-   * with their coordinates and altitude constraints.
+   * ``ProcedureCodable`` stores procedure data extracted from CIFP. For departures,
+   * segments distinguish runway transitions from the common route. For approaches,
+   * a single segment holds the missed approach legs.
    */
-  public struct DepartureProcedureCodable: Codable, Sendable {
-    /// Procedure identifier (e.g., "RNAV1", "WLSON7")
+  public struct ProcedureCodable: Codable, Sendable {
+    /// Procedure type: "departure" or "approach"
+    public let type: String
+
+    /// Procedure identifier (e.g., "LINDZ1", "I23LZ")
     public let identifier: String
 
-    /// Associated runway designators (e.g., ["28L", "28R"])
-    public let runwayNames: [String]
+    /// Full approach name (e.g., "ILS Z RWY 23L") — approaches only
+    public let name: String?
 
-    /// Legs along the procedure (nil if not plottable)
-    public let legs: [LegCodable]?
+    /// Associated runway designator (e.g., "28L") — approaches only
+    public let runwayName: String?
 
-    /// Required climb gradient in feet per nautical mile (nil if not plottable or no altitude constraints)
+    /// Required climb gradient in feet per nautical mile — departures only
     public let requiredClimbGradientFtPerNM: Double?
 
+    /// Procedure segments (runway transitions, common route, missed approach)
+    public let segments: [SegmentCodable]?
+
     public init(
+      type: String,
       identifier: String,
-      runwayNames: [String],
-      legs: [LegCodable]?,
-      requiredClimbGradientFtPerNM: Double?
+      name: String? = nil,
+      runwayName: String? = nil,
+      requiredClimbGradientFtPerNM: Double? = nil,
+      segments: [SegmentCodable]?
     ) {
+      self.type = type
       self.identifier = identifier
-      self.runwayNames = runwayNames
-      self.legs = legs
+      self.name = name
+      self.runwayName = runwayName
       self.requiredClimbGradientFtPerNM = requiredClimbGradientFtPerNM
+      self.segments = segments
     }
   }
 
   /**
-   * Codable representation of an approach procedure.
+   * Codable representation of a procedure segment.
    *
-   * ``ApproachProcedureCodable`` stores approach procedure data extracted from CIFP.
-   * For approaches with plottable missed approach legs, fixes with altitude constraints
-   * are included.
+   * A segment groups legs for a specific part of a procedure: a runway transition
+   * (``runwayNames`` is non-nil and non-empty) or a common route / missed approach
+   * (``runwayNames`` is nil or empty).
    */
-  public struct ApproachProcedureCodable: Codable, Sendable {
-    /// CIFP identifier (e.g., "I23LZ")
-    public let identifier: String
+  public struct SegmentCodable: Codable, Sendable {
+    /// Runway names this segment applies to (nil/empty for common route or missed approach)
+    public let runwayNames: [String]?
 
-    /// Full approach name (e.g., "ILS Z RWY 23L")
-    public let name: String
-
-    /// Missed approach legs with altitude constraints (nil if missed approach not plottable)
-    public let missedApproachLegs: [LegCodable]?
+    /// Legs in this segment
+    public let legs: [LegCodable]
 
     public init(
-      identifier: String,
-      name: String,
-      missedApproachLegs: [LegCodable]?
+      runwayNames: [String]?,
+      legs: [LegCodable]
     ) {
-      self.identifier = identifier
-      self.name = name
-      self.missedApproachLegs = missedApproachLegs
+      self.runwayNames = runwayNames
+      self.legs = legs
     }
   }
 
@@ -314,6 +314,9 @@ public struct AirportDataCodable: Codable, Sendable {
     /// DME termination distance in nautical miles (nil if not a DME leg)
     public let dmeDistanceNM: Double?
 
+    /// Magnetic radial bearing from the navaid in degrees (nil if not a radial leg)
+    public let thetaDeg: Double?
+
     public init(
       identifier: String?,
       latitude: Double?,
@@ -322,7 +325,8 @@ public struct AirportDataCodable: Codable, Sendable {
       legType: LegTypeCodable,
       recommendedNavaidIdentifier: String? = nil,
       recommendedNavaidICAO: String? = nil,
-      dmeDistanceNM: Double? = nil
+      dmeDistanceNM: Double? = nil,
+      thetaDeg: Double? = nil
     ) {
       self.identifier = identifier
       self.latitude = latitude
@@ -332,6 +336,7 @@ public struct AirportDataCodable: Codable, Sendable {
       self.recommendedNavaidIdentifier = recommendedNavaidIdentifier
       self.recommendedNavaidICAO = recommendedNavaidICAO
       self.dmeDistanceNM = dmeDistanceNM
+      self.thetaDeg = thetaDeg
     }
   }
 
@@ -424,7 +429,7 @@ public struct AirportDataCodable: Codable, Sendable {
    * ``CycleInfo`` contains all the information needed to display cycle
    * information to users and determine if the data is still current.
    */
-  public struct CycleInfo: Codable, Sendable {
+  public struct CycleInfo: AnyCycle, Codable, Sendable {
     /// Human-readable cycle identifier (e.g., "2501" for AIRAC cycle)
     public let name: String
 

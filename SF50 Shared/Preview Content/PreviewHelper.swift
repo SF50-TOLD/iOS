@@ -77,8 +77,8 @@ public final class PreviewHelper: Sendable {
       Scenario.self,
       Cycle.self,
       Obstacle.self,
-      DepartureProcedure.self,
-      ApproachProcedure.self,
+      Procedure.self,
+      ProcedureSegment.self,
       Leg.self,
       configurations: .init(isStoredInMemoryOnly: true)
     )
@@ -89,8 +89,8 @@ public final class PreviewHelper: Sendable {
     Defaults.removeAll(suite: .init(suiteName: "group.codes.tim.TOLD")!)
 
     try mainContext.delete(model: Leg.self)
-    try mainContext.delete(model: DepartureProcedure.self)
-    try mainContext.delete(model: ApproachProcedure.self)
+    try mainContext.delete(model: Procedure.self)
+    try mainContext.delete(model: ProcedureSegment.self)
     try mainContext.delete(model: Obstacle.self)
     try mainContext.delete(model: Runway.self)
     try mainContext.delete(model: Airport.self)

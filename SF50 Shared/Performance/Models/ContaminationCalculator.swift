@@ -51,6 +51,9 @@ final class ContaminationCalculator {
   /// of contaminant is observed (FICON 4 or worse)."
   private static let minimumDepthInches: Double = 0.125
 
+  /// Wet runway landing distance factor per AFM (15% increase).
+  private static let wetRunwayFactor: Double = 1.15
+
   // MARK: - Properties
 
   private let aircraftType: AircraftType
@@ -131,7 +134,7 @@ final class ContaminationCalculator {
         // G1: No effect (tabular data doesn't include wet runway adjustment)
         guard aircraftType.hasWetRunwayLandingDistanceFactor else { return distance }
         return distance.map { value, uncertainty in
-          (value * 1.15, uncertainty.map { $0 * 1.15 })
+          (value * Self.wetRunwayFactor, uncertainty.map { $0 * Self.wetRunwayFactor })
         }
 
       case .waterOrSlush(let depth):
@@ -158,7 +161,7 @@ final class ContaminationCalculator {
       case .wetRunway:
         // Regression model: Apply 15% increase for all aircraft types
         return distance.map { value, uncertainty in
-          (value * 1.15, uncertainty.map { $0 * 1.15 })
+          (value * Self.wetRunwayFactor, uncertainty.map { $0 * Self.wetRunwayFactor })
         }
 
       case .waterOrSlush(let depth):

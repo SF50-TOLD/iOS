@@ -49,13 +49,19 @@ public final class Airport {
   @Relationship(deleteRule: .cascade)
   public var runways: [Runway]
 
-  /// Departure procedures available at this airport
+  /// All procedures (departures and approaches) available at this airport
   @Relationship(deleteRule: .cascade)
-  public var departureProcedures: [DepartureProcedure]
+  public var procedures: [Procedure]
+
+  /// Departure procedures available at this airport
+  public var departureProcedures: [Procedure] {
+    procedures.filter { $0.type == .departure }
+  }
 
   /// Approach procedures available at this airport
-  @Relationship(deleteRule: .cascade)
-  public var approachProcedures: [ApproachProcedure]
+  public var approachProcedures: [Procedure] {
+    procedures.filter { $0.type == .approach }
+  }
 
   /// Airport latitude in degrees
   public var latitude: Measurement<UnitAngle> {
@@ -84,8 +90,8 @@ public final class Airport {
   /// Airport timezone
   public var timeZone: TimeZone? {
     get {
-      guard let identifier = _timeZone else { return nil }
-      return TimeZone(identifier: identifier)
+      guard let _timeZone else { return nil }
+      return TimeZone(identifier: _timeZone)
     }
     set { _timeZone = newValue?.identifier }
   }
@@ -155,7 +161,6 @@ public final class Airport {
     _variation = variation.converted(to: .degrees).value
     _timeZone = timeZone?.identifier
     self.runways = []
-    self.departureProcedures = []
-    self.approachProcedures = []
+    self.procedures = []
   }
 }

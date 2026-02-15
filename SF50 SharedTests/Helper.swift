@@ -91,7 +91,8 @@ enum Helper {
     legType: LegType = .initialFix,
     sequenceIndex: Int = 0,
     navaid: Navaid? = nil,
-    dmeDistance: Measurement<UnitLength>? = nil
+    dmeDistance: Measurement<UnitLength>? = nil,
+    theta: Measurement<UnitAngle>? = nil
   ) -> Leg {
     Leg(
       identifier: identifier,
@@ -101,7 +102,8 @@ enum Helper {
       legType: legType,
       sequenceIndex: sequenceIndex,
       navaid: navaid,
-      dmeDistance: dmeDistance
+      dmeDistance: dmeDistance,
+      theta: theta
     )
   }
 

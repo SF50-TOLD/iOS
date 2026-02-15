@@ -30,16 +30,15 @@ public final class Leg {
   // DME distance stored as raw value for SwiftData persistence
   private var _dmeDistanceNM: Double?  // nautical miles
 
+  // Radial bearing stored as raw value for SwiftData persistence
+  private var _thetaDeg: Double?  // magnetic degrees from navaid
+
   /// Position in the procedure leg sequence (0-indexed)
   public var sequenceIndex: Int
 
-  /// The departure procedure this leg belongs to
-  @Relationship(deleteRule: .nullify, inverse: \DepartureProcedure.legs)
-  public var departureProcedure: DepartureProcedure?
-
-  /// The approach procedure this leg belongs to (for missed approach legs)
-  @Relationship(deleteRule: .nullify, inverse: \ApproachProcedure.missedApproachLegs)
-  public var approachProcedure: ApproachProcedure?
+  /// The procedure segment this leg belongs to
+  @Relationship(deleteRule: .nullify, inverse: \ProcedureSegment.legs)
+  public var segment: ProcedureSegment?
 
   /// The recommended DME navaid for this leg (nil if not a DME leg)
   @Relationship(deleteRule: .noAction, inverse: \Navaid.legs)
@@ -59,14 +58,20 @@ public final class Leg {
 
   /// CoreLocation coordinate for the fix. Nil for legs with no fix.
   public var coordinate: CLLocationCoordinate2D? {
-    guard let lat = _latitude, let lon = _longitude else { return nil }
-    return .init(latitude: lat, longitude: lon)
+    guard let _latitude, let _longitude else { return nil }
+    return .init(latitude: _latitude, longitude: _longitude)
   }
 
   /// DME termination distance from the recommended navaid (nil if not a DME leg)
   public var dmeDistance: Measurement<UnitLength>? {
     get { _dmeDistanceNM.map { .init(value: $0, unit: .nauticalMiles) } }
     set { _dmeDistanceNM = newValue?.converted(to: .nauticalMiles).value }
+  }
+
+  /// Magnetic radial bearing from the navaid (nil if not a radial leg)
+  public var theta: Measurement<UnitAngle>? {
+    get { _thetaDeg.map { .init(value: $0, unit: .degrees) } }
+    set { _thetaDeg = newValue?.converted(to: .degrees).value }
   }
 
   /// Altitude restriction at this leg's termination point
@@ -109,6 +114,31 @@ public final class Leg {
     }
   }
 
+  /// Whether this leg has the data needed for its leg type to be resolved to a path.
+  ///
+  /// Checks that required fields (coordinates, navaid, DME distance, altitude restriction)
+  /// are present for the specific leg type geometry.
+  var hasRequiredData: Bool {
+    switch legType {
+      case .initialFix, .trackToFix, .courseToFix, .directToFix,
+        .holdToFix, .holdToAltitude, .holdManual, .procedureTurn,
+        .radiusToFix, .arcToFix:
+        return coordinate != nil
+      case .fixToAltitude, .courseToAltitude, .headingToAltitude:
+        return altitudeRestriction != nil
+      case .courseToDME, .headingToDME:
+        return navaid != nil && dmeDistance != nil
+      case .trackFromFixDME:
+        return coordinate != nil && navaid != nil && dmeDistance != nil
+      case .trackFromFixDistance:
+        return coordinate != nil && dmeDistance != nil
+      case .courseToIntercept, .headingToIntercept:
+        return true
+      case .courseToRadial, .headingToRadial:
+        return navaid != nil && theta != nil
+    }
+  }
+
   /// Creates a new leg.
   ///
   /// - Parameters:
@@ -118,8 +148,7 @@ public final class Leg {
   ///   - altitudeRestriction: Altitude restriction at this leg's termination point, if any.
   ///   - legType: Leg type geometry for plotting.
   ///   - sequenceIndex: Position in the procedure leg sequence.
-  ///   - departureProcedure: The departure procedure this leg belongs to.
-  ///   - approachProcedure: The approach procedure this leg belongs to.
+  ///   - segment: The procedure segment this leg belongs to.
   ///   - navaid: The recommended DME navaid, if applicable.
   ///   - dmeDistance: DME termination distance, if applicable.
   public init(
@@ -129,10 +158,10 @@ public final class Leg {
     altitudeRestriction: AltitudeRestriction? = nil,
     legType: LegType,
     sequenceIndex: Int,
-    departureProcedure: DepartureProcedure? = nil,
-    approachProcedure: ApproachProcedure? = nil,
+    segment: ProcedureSegment? = nil,
     navaid: Navaid? = nil,
-    dmeDistance: Measurement<UnitLength>? = nil
+    dmeDistance: Measurement<UnitLength>? = nil,
+    theta: Measurement<UnitAngle>? = nil
   ) {
     self.identifier = identifier
     _latitude = latitude?.converted(to: .degrees).value
@@ -141,6 +170,7 @@ public final class Leg {
     _altitudeMin = altitudeRestriction?.altitudeMin
     _altitudeMax = altitudeRestriction?.altitudeMax
     _dmeDistanceNM = dmeDistance?.converted(to: .nauticalMiles).value
+    _thetaDeg = theta?.converted(to: .degrees).value
     // Decompose legType into backing fields inline (can't use computed setter before init completes)
     let decomposed = Self.decomposeLegType(legType)
     _legType = decomposed.type
@@ -148,8 +178,7 @@ public final class Leg {
     _legTurnDirection = decomposed.turnDirection
     _legArcRadius = decomposed.arcRadius
     self.sequenceIndex = sequenceIndex
-    self.departureProcedure = departureProcedure
-    self.approachProcedure = approachProcedure
+    self.segment = segment
     self.navaid = navaid
   }
 
@@ -163,10 +192,10 @@ public final class Leg {
     altitudeRestriction: AltitudeRestriction? = nil,
     legType: LegTypeCodable,
     sequenceIndex: Int,
-    departureProcedure: DepartureProcedure? = nil,
-    approachProcedure: ApproachProcedure? = nil,
+    segment: ProcedureSegment? = nil,
     navaid: Navaid? = nil,
-    dmeDistance: Measurement<UnitLength>? = nil
+    dmeDistance: Measurement<UnitLength>? = nil,
+    theta: Measurement<UnitAngle>? = nil
   ) {
     self.init(
       identifier: identifier,
@@ -175,10 +204,10 @@ public final class Leg {
       altitudeRestriction: altitudeRestriction,
       legType: LegType(from: legType),
       sequenceIndex: sequenceIndex,
-      departureProcedure: departureProcedure,
-      approachProcedure: approachProcedure,
+      segment: segment,
       navaid: navaid,
-      dmeDistance: dmeDistance
+      dmeDistance: dmeDistance,
+      theta: theta
     )
   }
 

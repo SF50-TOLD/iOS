@@ -13,7 +13,7 @@
 
 - ``takeoffRunFt``
 - ``takeoffDistanceFt``
-- ``takeoffClimbGradientFtNmi``
+- ``takeoffClimbGradientFtNM``
 - ``takeoffClimbRateFtMin``
 
 ### Landing Performance

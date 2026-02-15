@@ -92,7 +92,7 @@ final class RegressionPerformanceModelG2Plus: BaseSF50RegressionPerformanceModel
     return distance
   }
 
-  override var takeoffClimbGradientFtNmi: Value<Double> {
+  override var takeoffClimbGradientFtNM: Value<Double> {
     evaluate(takeoffClimbGradientEquation)
   }
 
@@ -103,7 +103,7 @@ final class RegressionPerformanceModelG2Plus: BaseSF50RegressionPerformanceModel
   // MARK: - En Route Climb
   // Note: G2+ uses G2 enroute climb data (no supplement data available)
 
-  override var enrouteClimbGradientFtNmi_normal: Value<Double> {
+  override var enrouteClimbGradientFtNM_normal: Value<Double> {
     evaluate(enrouteClimbGradientNormalEquation)
   }
 
@@ -115,7 +115,7 @@ final class RegressionPerformanceModelG2Plus: BaseSF50RegressionPerformanceModel
     evaluate(enrouteClimbSpeedNormalEquation)
   }
 
-  override var enrouteClimbGradientFtNmi_iceContaminated: Value<Double> {
+  override var enrouteClimbGradientFtNM_iceContaminated: Value<Double> {
     evaluate(enrouteClimbGradientIceEquation)
   }
 
@@ -129,7 +129,7 @@ final class RegressionPerformanceModelG2Plus: BaseSF50RegressionPerformanceModel
 
   // MARK: - En Route Obstacle Climb
 
-  override var enrouteObstacleClimbGradientFtNmi_normal: Value<Double> {
+  override var enrouteObstacleClimbGradientFtNM_normal: Value<Double> {
     evaluate(enrouteObstacleClimbGradientNormalEquation)
   }
 
@@ -137,7 +137,7 @@ final class RegressionPerformanceModelG2Plus: BaseSF50RegressionPerformanceModel
     evaluate(enrouteObstacleClimbRateNormalEquation)
   }
 
-  override var enrouteObstacleClimbGradientFtNmi_iceContaminated: Value<Double> {
+  override var enrouteObstacleClimbGradientFtNM_iceContaminated: Value<Double> {
     evaluateDelta(
       base: enrouteObstacleClimbGradientNormalEquation,
       delta: enrouteObstacleClimbGradientIceEquation

@@ -108,6 +108,16 @@ public enum AltitudeRestriction: Sendable, Hashable {
 }
 
 extension AltitudeRestriction {
+  /// Whether this restriction can serve as a climb target altitude.
+  ///
+  /// `atOrBelow` restrictions define a ceiling, not a climb target.
+  var isClimbTarget: Bool {
+    switch self {
+      case .at, .atOrAbove, .between: true
+      case .atOrBelow: false
+    }
+  }
+
   /// Creates from Codable representation (values in feet).
   public init(from codable: AirportDataCodable.AltitudeRestrictionCodable) {
     switch codable {
@@ -122,6 +132,20 @@ extension AltitudeRestriction {
           min: .init(value: Double(minFeet), unit: .feet),
           max: .init(value: Double(maxFeet), unit: .feet)
         )
+    }
+  }
+
+  func isViolated(byAltitudeFt altitudeFt: Double) -> Bool {
+    switch self {
+      case .atOrAbove(let altitude):
+        altitudeFt < altitude.converted(to: .feet).value
+      case .atOrBelow(let altitude):
+        altitudeFt > altitude.converted(to: .feet).value
+      case .at(let altitude):
+        abs(altitudeFt - altitude.converted(to: .feet).value) > 100
+      case .between(let minAlt, let maxAlt):
+        altitudeFt < minAlt.converted(to: .feet).value
+          || altitudeFt > maxAlt.converted(to: .feet).value
     }
   }
 }

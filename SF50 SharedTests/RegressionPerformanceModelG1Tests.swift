@@ -72,7 +72,7 @@ struct RegressionPerformanceModelG1Tests {
           aircraftType: .g1
         )
       },
-      valueExtractor: { $0.takeoffClimbGradientFtNmi },
+      valueExtractor: { $0.takeoffClimbGradientFtNM },
       testName: "takeoffClimbGradient"
     )
   }
@@ -282,7 +282,7 @@ struct RegressionPerformanceModelG1Tests {
           aircraftType: .g1
         )
       },
-      valueExtractor: { $0.enrouteClimbGradientFtNmi },
+      valueExtractor: { $0.enrouteClimbGradientFtNM },
       testName: "enrouteClimbGradient_normal"
     )
   }
@@ -364,7 +364,7 @@ struct RegressionPerformanceModelG1Tests {
           aircraftType: .g1
         )
       },
-      valueExtractor: { $0.enrouteClimbGradientFtNmi },
+      valueExtractor: { $0.enrouteClimbGradientFtNM },
       testName: "enrouteClimbGradient_iceContaminated"
     )
   }
@@ -445,7 +445,7 @@ struct RegressionPerformanceModelG1Tests {
           aircraftType: .g1
         )
       },
-      valueExtractor: { $0.enrouteObstacleClimbGradientFtNmi },
+      valueExtractor: { $0.enrouteObstacleClimbGradientFtNM },
       testName: "enrouteObstacleClimbGradient_normal"
     )
   }
@@ -501,7 +501,7 @@ struct RegressionPerformanceModelG1Tests {
           aircraftType: .g1
         )
       },
-      valueExtractor: { $0.enrouteObstacleClimbGradientFtNmi },
+      valueExtractor: { $0.enrouteObstacleClimbGradientFtNM },
       testName: "enrouteObstacleClimbGradient_iceContaminated"
     )
   }

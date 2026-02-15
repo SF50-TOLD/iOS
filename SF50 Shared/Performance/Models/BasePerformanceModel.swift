@@ -13,7 +13,7 @@ import Foundation
 /// and must be overridden by concrete subclasses:
 /// - ``takeoffRunFt``
 /// - ``takeoffDistanceFt``
-/// - ``takeoffClimbGradientFtNmi``
+/// - ``takeoffClimbGradientFtNM``
 /// - ``takeoffClimbRateFtMin``
 /// - ``VrefKts``
 /// - ``landingRunFt``
@@ -37,8 +37,8 @@ open class BasePerformanceModel: PerformanceModel {
     fatalError("Subclasses must implement takeoffDistanceFt")
   }
 
-  open var takeoffClimbGradientFtNmi: Value<Double> {
-    fatalError("Subclasses must implement takeoffClimbGradientFtNmi")
+  open var takeoffClimbGradientFtNM: Value<Double> {
+    fatalError("Subclasses must implement takeoffClimbGradientFtNM")
   }
 
   open var takeoffClimbRateFtMin: Value<Double> {

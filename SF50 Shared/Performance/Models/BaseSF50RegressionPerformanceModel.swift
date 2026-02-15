@@ -27,10 +27,10 @@ class BaseSF50RegressionPerformanceModel: BaseRegressionPerformanceModel {
 
   // MARK: - En Route Climb
 
-  var enrouteClimbGradientFtNmi: Value<Double> {
+  var enrouteClimbGradientFtNM: Value<Double> {
     let iceContaminated = configuration.iceProtection
     return iceContaminated
-      ? enrouteClimbGradientFtNmi_iceContaminated : enrouteClimbGradientFtNmi_normal
+      ? enrouteClimbGradientFtNM_iceContaminated : enrouteClimbGradientFtNM_normal
   }
 
   var enrouteClimbRateFtMin: Value<Double> {
@@ -44,8 +44,8 @@ class BaseSF50RegressionPerformanceModel: BaseRegressionPerformanceModel {
   }
 
   // Abstract properties - subclasses must override
-  var enrouteClimbGradientFtNmi_normal: Value<Double> {
-    fatalError("Subclasses must implement enrouteClimbGradientFtNmi_normal")
+  var enrouteClimbGradientFtNM_normal: Value<Double> {
+    fatalError("Subclasses must implement enrouteClimbGradientFtNM_normal")
   }
 
   var enrouteClimbRateFtMin_normal: Value<Double> {
@@ -56,8 +56,8 @@ class BaseSF50RegressionPerformanceModel: BaseRegressionPerformanceModel {
     fatalError("Subclasses must implement enrouteClimbSpeedKIAS_normal")
   }
 
-  var enrouteClimbGradientFtNmi_iceContaminated: Value<Double> {
-    fatalError("Subclasses must implement enrouteClimbGradientFtNmi_iceContaminated")
+  var enrouteClimbGradientFtNM_iceContaminated: Value<Double> {
+    fatalError("Subclasses must implement enrouteClimbGradientFtNM_iceContaminated")
   }
 
   var enrouteClimbRateFtMin_iceContaminated: Value<Double> {
@@ -70,11 +70,11 @@ class BaseSF50RegressionPerformanceModel: BaseRegressionPerformanceModel {
 
   // MARK: - En Route Obstacle Climb
 
-  var enrouteObstacleClimbGradientFtNmi: Value<Double> {
+  var enrouteObstacleClimbGradientFtNM: Value<Double> {
     let iceContaminated = configuration.iceProtection
     return iceContaminated
-      ? enrouteObstacleClimbGradientFtNmi_iceContaminated
-      : enrouteObstacleClimbGradientFtNmi_normal
+      ? enrouteObstacleClimbGradientFtNM_iceContaminated
+      : enrouteObstacleClimbGradientFtNM_normal
   }
 
   var enrouteObstacleClimbRateFtMin: Value<Double> {
@@ -85,16 +85,16 @@ class BaseSF50RegressionPerformanceModel: BaseRegressionPerformanceModel {
   }
 
   // Abstract properties - subclasses must override
-  var enrouteObstacleClimbGradientFtNmi_normal: Value<Double> {
-    fatalError("Subclasses must implement enrouteObstacleClimbGradientFtNmi_normal")
+  var enrouteObstacleClimbGradientFtNM_normal: Value<Double> {
+    fatalError("Subclasses must implement enrouteObstacleClimbGradientFtNM_normal")
   }
 
   var enrouteObstacleClimbRateFtMin_normal: Value<Double> {
     fatalError("Subclasses must implement enrouteObstacleClimbRateFtMin_normal")
   }
 
-  var enrouteObstacleClimbGradientFtNmi_iceContaminated: Value<Double> {
-    fatalError("Subclasses must implement enrouteObstacleClimbGradientFtNmi_iceContaminated")
+  var enrouteObstacleClimbGradientFtNM_iceContaminated: Value<Double> {
+    fatalError("Subclasses must implement enrouteObstacleClimbGradientFtNM_iceContaminated")
   }
 
   var enrouteObstacleClimbRateFtMin_iceContaminated: Value<Double> {

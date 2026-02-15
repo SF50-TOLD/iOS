@@ -27,7 +27,7 @@ public protocol PerformanceModel {
   var takeoffDistanceFt: Value<Double> { get }
 
   /// Takeoff climb gradient at Vx in feet per nautical mile.
-  var takeoffClimbGradientFtNmi: Value<Double> { get }
+  var takeoffClimbGradientFtNM: Value<Double> { get }
 
   /// Takeoff climb rate at Vx in feet per minute.
   var takeoffClimbRateFtMin: Value<Double> { get }

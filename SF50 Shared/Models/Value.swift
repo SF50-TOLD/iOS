@@ -183,27 +183,36 @@ extension Value where T: FloatingPoint, T: Comparable {
 }
 
 extension Value where T == Double {
+
+  /// Confidence level threshold for 1σ (68% of normal distribution).
+  private static var oneSigmaConfidence: Double { 0.68 }
+
+  /// Confidence level threshold for 2σ (95% of normal distribution).
+  private static var twoSigmaConfidence: Double { 0.95 }
+
+  /// z-score multiplier for 95% confidence interval.
+  private static var zScore95: Double { 1.96 }
+
+  /// z-score multiplier for 99% confidence interval.
+  private static var zScore99: Double { 2.58 }
+
   /// Check if a value falls within the uncertainty bounds at the specified confidence level
   /// - Parameters:
   ///   - value: The value to test
   ///   - confidenceLevel: The confidence level (0.68 for 1σ, 0.95 for 2σ, etc.)
   /// - Returns: True if the value is within the confidence interval
-  func contains(_ value: Double, confidenceLevel: Double = 0.68) -> Bool {
+  func contains(_ value: Double, confidenceLevel: Double = oneSigmaConfidence) -> Bool {
     switch self {
       case .value(let v):
         return value == v
       case .valueWithUncertainty(let centerValue, let uncertainty):
-        // For normal distribution, confidence intervals are:
-        // 68% ≈ 1.0σ, 95% ≈ 1.96σ, 99% ≈ 2.58σ
         let multiplier =
-          if confidenceLevel <= 0.68 {
+          if confidenceLevel <= Self.oneSigmaConfidence {
             uncertainty  // 1σ
-          } else if confidenceLevel <= 0.95 {
-            // For 95% confidence, use 1.96σ
-            uncertainty * 1.96
+          } else if confidenceLevel <= Self.twoSigmaConfidence {
+            uncertainty * Self.zScore95
           } else {
-            // For 99% confidence, use 2.58σ
-            uncertainty * 2.58
+            uncertainty * Self.zScore99
           }
 
         let lowerBound = centerValue - multiplier,
@@ -219,6 +228,6 @@ extension Value where T == Double {
 
   /// Legacy method for backward compatibility - uses 68% confidence level
   func contains(_ value: Double) -> Bool {
-    return contains(value, confidenceLevel: 0.68)
+    return contains(value, confidenceLevel: Self.oneSigmaConfidence)
   }
 }

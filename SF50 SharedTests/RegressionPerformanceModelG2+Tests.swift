@@ -72,7 +72,7 @@ struct RegressionPerformanceModelG2PlusTests {
           aircraftType: .g2Plus
         )
       },
-      valueExtractor: { $0.takeoffClimbGradientFtNmi },
+      valueExtractor: { $0.takeoffClimbGradientFtNM },
       testName: "takeoffClimbGradient"
     )
   }

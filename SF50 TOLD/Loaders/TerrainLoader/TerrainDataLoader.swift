@@ -24,8 +24,16 @@ import StreamingLZMA
 ///     try await loader.downloadRegion(.europe)
 /// }
 /// ```
+extension Notification.Name {
+  static let terrainRegionsDidChange = Notification.Name("terrainRegionsDidChange")
+}
+
 @MainActor
 final class TerrainDataLoader: ObservableObject {
+
+  // MARK: - Type Properties
+
+  static let shared = TerrainDataLoader()
 
   // MARK: - Instance Properties
 
@@ -53,7 +61,7 @@ final class TerrainDataLoader: ObservableObject {
   /// App group identifier for shared storage.
   private let appGroupID = "group.codes.tim.TOLD"
 
-  /// Base URL for terrain data downloads (updated from manifest).
+  /// Base URL for terrain data downloads.
   private var baseURL = "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/"
 
   /// Manifest URL for terrain data.
@@ -185,6 +193,8 @@ final class TerrainDataLoader: ObservableObject {
 
     availableRegions = available
     logger.info("Available terrain regions: \(available.map(\.rawValue))")
+
+    loadAvailableRegionsIntoService()
 
     // Decompress any files left by the Background Assets extension
     for region in pendingDecompression {
@@ -364,6 +374,7 @@ final class TerrainDataLoader: ObservableObject {
       }.value
       decompressingRegions.remove(region)
       availableRegions.insert(region)
+      loadAvailableRegionsIntoService()
       logger.info("BA terrain for \(region.rawValue) is now available")
     } catch {
       decompressingRegions.remove(region)
@@ -408,6 +419,32 @@ final class TerrainDataLoader: ObservableObject {
     try await Task.detached(priority: .userInitiated) {
       try Self.streamingDecompress(from: compressedURL, to: decompressedURL)
     }.value
+  }
+
+  /// Loads any available-but-not-yet-loaded regions into ``TerrainService/shared``
+  /// and posts ``Notification.Name/terrainRegionsDidChange`` when new data is loaded.
+  private func loadAvailableRegionsIntoService() {
+    Task {
+      var didLoadNew = false
+      for region in availableRegions {
+        guard let url = terrainFileURL(for: region) else { continue }
+        let alreadyLoaded = await TerrainService.shared.isRegionLoaded(region)
+        if !alreadyLoaded {
+          do {
+            try await TerrainService.shared.loadRegion(region, from: url)
+            didLoadNew = true
+            logger.info("Loaded \(region.rawValue) into TerrainService")
+          } catch {
+            logger.error(
+              "Failed to load \(region.rawValue) into TerrainService: \(error.localizedDescription)"
+            )
+          }
+        }
+      }
+      if didLoadNew {
+        NotificationCenter.default.post(name: .terrainRegionsDidChange, object: nil)
+      }
+    }
   }
 
   /// Sets up notification observer for download completion.

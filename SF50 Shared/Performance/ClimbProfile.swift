@@ -7,6 +7,12 @@ import Foundation
 /// provides interpolated access by altitude.
 public struct ClimbProfile: Sendable {
 
+  /// Step size in nautical miles for distance-based integration.
+  private static let distanceStepNM = 0.1
+
+  /// Step size in feet for altitude-based integration.
+  private static let altitudeStepFt = 50.0
+
   /// Sea-level pressure for TAS computation.
   public let seaLevelPressureInHg: Double
 
@@ -40,15 +46,26 @@ public struct ClimbProfile: Sendable {
   }
 
   /// Interpolated gradient at a given altitude for a specific profile.
+  /// Returns nil if the profile is empty or if data contains out-of-bounds values.
   public func gradient(at altitudeFt: Double, profile: ProfileType) -> Double? {
-    interpolate(at: altitudeFt) { $0.climbData(for: profile).gradientFtPerNM }
+    guard let value = interpolate(at: altitudeFt, { $0.climbData(for: profile).gradientFtPerNM }),
+      !value.isNaN
+    else { return nil }
+    return value
   }
 
   /// Interpolated true airspeed at a given altitude for a specific profile.
+  /// Returns nil if the profile is empty or if data contains out-of-bounds values.
   public func trueAirspeed(at altitudeFt: Double, profile: ProfileType) -> Double? {
-    interpolate(at: altitudeFt) {
-      $0.trueAirspeedKts(profile: profile, seaLevelPressureInHg: seaLevelPressureInHg)
-    }
+    guard
+      let value = interpolate(
+        at: altitudeFt,
+        {
+          $0.trueAirspeedKts(profile: profile, seaLevelPressureInHg: seaLevelPressureInHg)
+        }
+      ), !value.isNaN
+    else { return nil }
+    return value
   }
 
   /// Interpolated wind direction (true, FROM) at a given altitude.
@@ -72,12 +89,11 @@ public struct ClimbProfile: Sendable {
     guard distanceNM >= 0, !dataPoints.isEmpty else { return nil }
     guard distanceNM > 0 else { return startAltitudeFt }
 
-    let stepNM = 0.1
-    var remainingNM = distanceNM
-    var currentAltitudeFt = startAltitudeFt
+    var remainingNM = distanceNM,
+      currentAltitudeFt = startAltitudeFt
 
     while remainingNM > 0 {
-      let step = min(stepNM, remainingNM)
+      let step = min(Self.distanceStepNM, remainingNM)
       guard let g1 = gradient(at: currentAltitudeFt, profile: profile) else {
         fatalError("Non-empty profile returned nil gradient")
       }
@@ -100,13 +116,12 @@ public struct ClimbProfile: Sendable {
   {
     guard endAltitudeFt > startAltitudeFt, !dataPoints.isEmpty else { return nil }
 
-    let stepFt = 50.0
-    var remainingFt = endAltitudeFt - startAltitudeFt
-    var currentAltitudeFt = startAltitudeFt
-    var totalNM = 0.0
+    var remainingFt = endAltitudeFt - startAltitudeFt,
+      currentAltitudeFt = startAltitudeFt,
+      totalNM = 0.0
 
     while remainingFt > 0 {
-      let step = min(stepFt, remainingFt)
+      let step = min(Self.altitudeStepFt, remainingFt)
       guard let g1 = gradient(at: currentAltitudeFt, profile: profile) else {
         fatalError("Non-empty profile returned nil gradient")
       }
