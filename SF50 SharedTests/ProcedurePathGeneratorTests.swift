@@ -1384,6 +1384,247 @@ struct ProcedurePathGeneratorTests {
     #expect(result == nil)
   }
 
+  // MARK: - Missed Approach Extended Tests
+
+  @Test
+  func missedApproachMultiLegPath() throws {
+    let legs = [
+      Helper.createTestLeg(
+        identifier: "RW28R",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        legType: .initialFix,
+        sequenceIndex: 0
+      ),
+      Helper.createTestLeg(
+        identifier: "HA",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        altitudeRestriction: .atOrAbove(.init(value: 2000, unit: .feet)),
+        legType: .headingToAltitude(heading: .init(value: 278, unit: .degrees)),
+        sequenceIndex: 1
+      ),
+      Helper.createTestLeg(
+        identifier: "GROVE",
+        latitude: 37.40,
+        longitude: -122.05,
+        legType: .trackToFix(course: .init(value: 330, unit: .degrees)),
+        sequenceIndex: 2
+      )
+    ]
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).missedApproachPath(
+        from: legs,
+        startCoordinate: takeoffPoint,
+        startAltitudeFt: takeoffAltitudeFt
+      )
+    )
+
+    #expect(path.points.count >= 3)
+    #expect(path.totalDistanceNM > 0)
+
+    // Altitude should increase along the path
+    for i in 1..<path.points.count {
+      #expect(path.points[i].altitudeFt >= path.points[i - 1].altitudeFt)
+    }
+
+    // Distance should be monotonically non-decreasing
+    for i in 1..<path.points.count {
+      #expect(path.points[i].distanceNM >= path.points[i - 1].distanceNM)
+    }
+  }
+
+  @Test
+  func missedApproachAltitudeRestriction() throws {
+    let legs = [
+      Helper.createTestLeg(
+        identifier: "RW28R",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        legType: .initialFix,
+        sequenceIndex: 0
+      ),
+      Helper.createTestLeg(
+        identifier: "HA",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        altitudeRestriction: .atOrAbove(.init(value: 2000, unit: .feet)),
+        legType: .headingToAltitude(heading: .init(value: 278, unit: .degrees)),
+        sequenceIndex: 1
+      ),
+      Helper.createTestLeg(
+        identifier: "GROVE",
+        latitude: 37.40,
+        longitude: -122.05,
+        legType: .trackToFix(course: .init(value: 330, unit: .degrees)),
+        sequenceIndex: 2
+      )
+    ]
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).missedApproachPath(
+        from: legs,
+        startCoordinate: takeoffPoint,
+        startAltitudeFt: takeoffAltitudeFt
+      )
+    )
+
+    // Find the last point before the trackToFix leg begins (altitude at end of heading leg)
+    // The heading-to-altitude leg should climb to at least 2000 ft
+    let headingLegEndAltitude = path.points.last(where: { $0.altitudeFt <= 2100 })?.altitudeFt ?? 0
+    #expect(headingLegEndAltitude >= 2000)
+  }
+
+  @Test
+  func missedApproachAltitudeCeiling() throws {
+    let legs = [
+      Helper.createTestLeg(
+        identifier: "RW28R",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        legType: .initialFix,
+        sequenceIndex: 0
+      ),
+      Helper.createTestLeg(
+        identifier: "HA",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        altitudeRestriction: .atOrAbove(.init(value: 3000, unit: .feet)),
+        legType: .headingToAltitude(heading: .init(value: 278, unit: .degrees)),
+        sequenceIndex: 1
+      ),
+      Helper.createTestLeg(
+        identifier: "FARFIX",
+        latitude: 37.60,
+        longitude: -122.30,
+        legType: .trackToFix(course: .init(value: 330, unit: .degrees)),
+        sequenceIndex: 2
+      )
+    ]
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).missedApproachPath(
+        from: legs,
+        startCoordinate: takeoffPoint,
+        startAltitudeFt: takeoffAltitudeFt
+      )
+    )
+
+    // Ceiling = highest restriction (3000) + ceilingBufferAboveRestrictionFt (1000) = 4000
+    let maxAltitude = path.points.map(\.altitudeFt).max() ?? 0
+    #expect(maxAltitude <= 4000)
+  }
+
+  @Test
+  func missedApproachWithHeadwind() throws {
+    let headwindProfile = Helper.createTestClimbProfile(
+      windDirectionDeg: 278,
+      windSpeedKts: 20
+    )
+    let noWindProfile = Helper.createTestClimbProfile()
+
+    let legs = [
+      Helper.createTestLeg(
+        identifier: "RW28R",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        legType: .initialFix,
+        sequenceIndex: 0
+      ),
+      Helper.createTestLeg(
+        identifier: "HA",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        altitudeRestriction: .atOrAbove(.init(value: 3000, unit: .feet)),
+        legType: .headingToAltitude(heading: .init(value: 278, unit: .degrees)),
+        sequenceIndex: 1
+      )
+    ]
+
+    let headwindPath = try #require(
+      ProcedurePathGenerator(
+        climbProfile: headwindProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).missedApproachPath(
+        from: legs,
+        startCoordinate: takeoffPoint,
+        startAltitudeFt: takeoffAltitudeFt
+      )
+    )
+    let noWindPath = try #require(
+      ProcedurePathGenerator(
+        climbProfile: noWindProfile,
+        schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+        magneticVariation: magneticVariation
+      ).missedApproachPath(
+        from: legs,
+        startCoordinate: takeoffPoint,
+        startAltitudeFt: takeoffAltitudeFt
+      )
+    )
+
+    let headwindTime = headwindPath.points.last!.elapsedTimeSeconds
+    let noWindTime = noWindPath.points.last!.elapsedTimeSeconds
+    #expect(headwindTime > noWindTime)
+  }
+
+  @Test
+  func missedApproachGoAroundSchedule() throws {
+    let schedule = ProcedurePathGenerator.ClimbSchedule(segments: [
+      .init(profile: .takeoff, upperBound: .time(.init(value: 2, unit: .minutes))),
+      .init(profile: .enrouteObstacle(antiIce: false))
+    ])
+    let legs = [
+      Helper.createTestLeg(
+        identifier: "RW28R",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        legType: .initialFix,
+        sequenceIndex: 0
+      ),
+      Helper.createTestLeg(
+        identifier: "HA",
+        latitude: 37.3626,
+        longitude: -121.9291,
+        altitudeRestriction: .atOrAbove(.init(value: 2000, unit: .feet)),
+        legType: .headingToAltitude(heading: .init(value: 278, unit: .degrees)),
+        sequenceIndex: 1
+      ),
+      Helper.createTestLeg(
+        identifier: "GROVE",
+        latitude: 37.40,
+        longitude: -122.05,
+        legType: .trackToFix(course: .init(value: 330, unit: .degrees)),
+        sequenceIndex: 2
+      )
+    ]
+    let path = try #require(
+      ProcedurePathGenerator(
+        climbProfile: climbProfile,
+        schedule: schedule,
+        magneticVariation: magneticVariation
+      ).missedApproachPath(
+        from: legs,
+        startCoordinate: takeoffPoint,
+        startAltitudeFt: takeoffAltitudeFt
+      )
+    )
+
+    #expect(path.points.count >= 2)
+    #expect(path.totalDistanceNM > 0)
+  }
+
   // MARK: - Heading-To-Altitude Wind Correction
 
   @Test

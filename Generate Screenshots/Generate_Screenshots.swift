@@ -204,6 +204,32 @@ final class Generate_Screenshots: XCTestCase {
     // Wait for sheet to fully dismiss
     Thread.sleep(forTimeInterval: 2.0)
 
+    // Show climb profile
+    let showClimbButton = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["showClimbProfileButton"]
+    )
+    if let showClimbButton, showClimbButton.isEnabled {
+      showClimbButton.tap()
+      waitForNavigation()
+
+      // Wait for terrain chart to render
+      let climbNavBar = app.navigationBars["Climb Profile"]
+      XCTAssertTrue(
+        climbNavBar.waitForExistence(timeout: 30),
+        "Climb Profile nav bar should appear"
+      )
+
+      let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
+      _ = terrainChart.waitForExistence(timeout: 30)
+
+      Thread.sleep(forTimeInterval: 2.0)
+      snapshot("06a-climb-profile")
+
+      // Navigate back
+      app.navigationBars.buttons.element(boundBy: 0).tap()
+      waitForNavigation()
+    }
+
     // Navigate to Landing tab
     app.tapTab("Landing")
     waitForNavigation()
@@ -333,6 +359,32 @@ final class Generate_Screenshots: XCTestCase {
       let start = landingSheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1))
       let end = landingSheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
       start.press(forDuration: 0.1, thenDragTo: end)
+    }
+
+    // Show go-around profile
+    let showGoAroundButton = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["showGoAroundProfileButton"]
+    )
+    if let showGoAroundButton, showGoAroundButton.isEnabled {
+      showGoAroundButton.tap()
+      waitForNavigation()
+
+      // Wait for terrain chart to render
+      let goAroundNavBar = app.navigationBars["Go-Around Profile"]
+      XCTAssertTrue(
+        goAroundNavBar.waitForExistence(timeout: 30),
+        "Go-Around Profile nav bar should appear"
+      )
+
+      let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
+      _ = terrainChart.waitForExistence(timeout: 30)
+
+      Thread.sleep(forTimeInterval: 2.0)
+      snapshot("09a-go-around-profile")
+
+      // Navigate back
+      app.navigationBars.buttons.element(boundBy: 0).tap()
+      waitForNavigation()
     }
 
     // Navigate to Climb tab

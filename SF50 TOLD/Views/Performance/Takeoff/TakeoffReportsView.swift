@@ -21,9 +21,11 @@ struct TakeoffReportsView: View {
       NavigationLink("Show Climb…") {
         ClimbProfileView()
       }
+      .accessibilityIdentifier("showClimbProfileButton")
     } else {
       Text("Show Climb…")
         .foregroundStyle(.tertiary)
+        .accessibilityIdentifier("showClimbProfileButton")
     }
   }
 }

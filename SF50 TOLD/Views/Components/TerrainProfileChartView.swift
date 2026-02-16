@@ -40,6 +40,7 @@ struct TerrainProfileChartView: View {
         }
       }
     }
+    .accessibilityIdentifier("terrainProfileChart")
   }
 
   // MARK: - Layers

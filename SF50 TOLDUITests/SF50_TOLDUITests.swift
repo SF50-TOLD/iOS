@@ -61,6 +61,9 @@ final class SF50_TOLDUITests: XCTestCase {
     )
     emptyWeightField.clearAndType(emptyWeight, app: app)
 
+    // Dismiss keyboard so it doesn't obscure the continue button
+    app.swipeDown()
+
     app.buttons["continueButton"].tap()
 
     // Wait for main view to appear
@@ -1499,6 +1502,165 @@ final class SF50_TOLDUITests: XCTestCase {
       updatedSpeedLabel,
       "Climb speed should update when altitude changes"
     )
+  }
+
+  // MARK: - Profile View Tests
+
+  @MainActor
+  func testClimbProfileView() throws {
+    let app = XCUIApplication()
+    app.launchArguments = ["UI-TESTING"]
+    app.launch()
+
+    completeInitialSetup(app: app, emptyWeight: "4550")
+
+    // Navigate to Takeoff tab
+    let takeoffTab = app.tabBars.buttons["Takeoff"]
+    if !takeoffTab.isSelected {
+      app.tapTab("Takeoff")
+    }
+
+    // Set payload and fuel
+    let payloadField = app.textFields["Payload"].firstMatch
+    payloadField.clearAndType("450", app: app)
+
+    let fuelField = app.textFields["Takeoff Fuel"].firstMatch
+    fuelField.clearAndType("100", app: app)
+
+    // Select OAK airport
+    let airportSelector = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["airportSelector"]
+    )
+    XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
+
+    let airportPicker = app.segmentedControls["airportListPicker"]
+    tapAndEnsureNavigation(
+      element: airportSelector!,
+      expectedElement: airportPicker
+    )
+    airportPicker.buttons["Search"].tap()
+
+    let searchField = app.searchFields.firstMatch
+    searchField.tap()
+    searchField.typeText("OAK")
+
+    app.buttons["airportRow-OAK"].firstMatch.tap()
+    waitForNavigation()
+
+    // Select runway 28R
+    let runwaySelector = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["runwaySelector"]
+    )
+    XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
+    runwaySelector!.tap()
+    waitForNavigation()
+
+    app.buttons["runwayRow-28R"].firstMatch.tap()
+    waitForNavigation()
+
+    // Navigate to Climb Profile
+    let showClimbButton = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["showClimbProfileButton"]
+    )
+    XCTAssertNotNil(showClimbButton, "Show Climb button should be accessible")
+    XCTAssertTrue(showClimbButton!.isEnabled, "Show Climb button should be enabled")
+    showClimbButton!.tap()
+    waitForNavigation()
+
+    // Verify Climb Profile view
+    XCTAssertTrue(
+      app.navigationBars["Climb Profile"].waitForExistence(timeout: 5),
+      "Climb Profile nav bar should appear"
+    )
+
+    // Wait for terrain chart to render (may take time to compute)
+    let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
+    XCTAssertTrue(
+      terrainChart.waitForExistence(timeout: 30),
+      "Terrain profile chart should appear"
+    )
+
+    // Navigate back
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+    waitForNavigation()
+  }
+
+  @MainActor
+  func testGoAroundProfileView() throws {
+    let app = XCUIApplication()
+    app.launchArguments = ["UI-TESTING"]
+    app.launch()
+
+    completeInitialSetup(app: app, emptyWeight: "4550")
+
+    // Navigate to Landing tab
+    app.tapTab("Landing")
+    waitForNavigation()
+
+    // Set payload and fuel
+    let payloadField = app.textFields["Payload"].firstMatch
+    payloadField.clearAndType("450", app: app)
+
+    let fuelField = app.textFields["Landing Fuel"].firstMatch
+    fuelField.clearAndType("100", app: app)
+
+    // Select OAK airport
+    let airportSelector = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["airportSelector"]
+    )
+    XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
+
+    let airportPicker = app.segmentedControls["airportListPicker"]
+    tapAndEnsureNavigation(
+      element: airportSelector!,
+      expectedElement: airportPicker
+    )
+    airportPicker.buttons["Search"].tap()
+
+    let searchField = app.searchFields.firstMatch
+    searchField.tap()
+    searchField.typeText("OAK")
+
+    app.buttons["airportRow-OAK"].firstMatch.tap()
+    waitForNavigation()
+
+    // Select runway 28R
+    let runwaySelector = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["runwaySelector"]
+    )
+    XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
+    runwaySelector!.tap()
+    waitForNavigation()
+
+    app.buttons["runwayRow-28R"].firstMatch.tap()
+    waitForNavigation()
+
+    // Navigate to Go-Around Profile
+    let showGoAroundButton = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["showGoAroundProfileButton"]
+    )
+    XCTAssertNotNil(showGoAroundButton, "Show Go-Around button should be accessible")
+    XCTAssertTrue(showGoAroundButton!.isEnabled, "Show Go-Around button should be enabled")
+    showGoAroundButton!.tap()
+    waitForNavigation()
+
+    // Verify Go-Around Profile view
+    XCTAssertTrue(
+      app.navigationBars["Go-Around Profile"].waitForExistence(timeout: 5),
+      "Go-Around Profile nav bar should appear"
+    )
+
+    // Verify defaults to Vectors (since no plottable approaches in test data)
+    // Wait for terrain chart
+    let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
+    XCTAssertTrue(
+      terrainChart.waitForExistence(timeout: 30),
+      "Terrain profile chart should appear"
+    )
+
+    // Navigate back
+    app.navigationBars.buttons.element(boundBy: 0).tap()
+    waitForNavigation()
   }
 
   // MARK: - Welcome Flow Variations Tests

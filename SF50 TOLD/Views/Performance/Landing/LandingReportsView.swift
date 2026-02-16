@@ -21,9 +21,11 @@ struct LandingReportsView: View {
       NavigationLink("Show Go-Around…") {
         GoAroundProfileView()
       }
+      .accessibilityIdentifier("showGoAroundProfileButton")
     } else {
       Text("Show Go-Around…")
         .foregroundStyle(.tertiary)
+        .accessibilityIdentifier("showGoAroundProfileButton")
     }
   }
 }
