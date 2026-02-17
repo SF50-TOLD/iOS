@@ -52,6 +52,9 @@ final class TerrainDataLoader: ObservableObject {
   /// Regions currently being decompressed.
   @Published private(set) var decompressingRegions: Set<TerrainRegion> = []
 
+  /// Regions whose files exist on disk but failed to load (corrupt or unreadable).
+  @Published private(set) var corruptedRegions: Set<TerrainRegion> = []
+
   /// Logger for debug output.
   private let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",
@@ -179,6 +182,8 @@ final class TerrainDataLoader: ObservableObject {
     var pendingDecompression = [TerrainRegion]()
 
     for region in TerrainRegion.allCases {
+      if corruptedRegions.contains(region) { continue }
+
       if let url = decompressedFileURL(for: region),
         FileManager.default.fileExists(atPath: url.path)
       {
@@ -206,6 +211,23 @@ final class TerrainDataLoader: ObservableObject {
     }
   }
 
+  /// Deletes terrain data files for a region from disk and clears all tracking state.
+  func deleteRegion(_ region: TerrainRegion) async {
+    if let decompressedURL = decompressedFileURL(for: region) {
+      try? FileManager.default.removeItem(at: decompressedURL)
+    }
+    if let compressedURL = compressedFileURL(for: region) {
+      try? FileManager.default.removeItem(at: compressedURL)
+    }
+
+    availableRegions.remove(region)
+    corruptedRegions.remove(region)
+
+    await TerrainService.shared.unloadRegion(region)
+
+    logger.info("Deleted terrain files for \(region.rawValue)")
+  }
+
   /// Downloads terrain data for a region.
   ///
   /// This method first attempts to use Background Assets for the download.
@@ -213,6 +235,10 @@ final class TerrainDataLoader: ObservableObject {
   ///
   /// - Parameter region: The region to download
   func downloadRegion(_ region: TerrainRegion) async throws {
+    if corruptedRegions.contains(region) {
+      await deleteRegion(region)
+    }
+
     guard !isRegionAvailable(region) else {
       logger.info("Region \(region.rawValue) already available")
       return
@@ -236,11 +262,27 @@ final class TerrainDataLoader: ObservableObject {
       // fall back to direct download
       try await performDirectDownload(for: region)
 
+      // Load the freshly downloaded file into TerrainService. If the file
+      // downloaded OK but can't be loaded, mark it as corrupted so the UI
+      // shows "Corrupted" rather than a misleading "Download" button.
+      if let fileURL = decompressedFileURL(for: region) {
+        do {
+          try await TerrainService.shared.loadRegion(region, from: fileURL)
+        } catch {
+          logger.error(
+            "Downloaded \(region.rawValue) but failed to load into TerrainService: \(error.localizedDescription)"
+          )
+          corruptedRegions.insert(region)
+          throw error
+        }
+      }
+
+      availableRegions.insert(region)
       downloadingRegions.remove(region)
       state = .completed(region: region)
 
-      // Refresh available regions
-      refreshAvailableRegions()
+      NotificationCenter.default.post(name: .terrainRegionsDidChange, object: nil)
+      logger.info("Region \(region.rawValue) downloaded and loaded")
     } catch {
       downloadingRegions.remove(region)
       state = .failed(region: region, message: error.localizedDescription)
@@ -427,23 +469,26 @@ final class TerrainDataLoader: ObservableObject {
   /// and posts ``Notification.Name/terrainRegionsDidChange`` when new data is loaded.
   private func loadAvailableRegionsIntoService() {
     Task {
-      var didLoadNew = false
+      var didChange = false
       for region in availableRegions {
         guard let url = terrainFileURL(for: region) else { continue }
         let alreadyLoaded = await TerrainService.shared.isRegionLoaded(region)
         if !alreadyLoaded {
           do {
             try await TerrainService.shared.loadRegion(region, from: url)
-            didLoadNew = true
+            didChange = true
             logger.info("Loaded \(region.rawValue) into TerrainService")
           } catch {
             logger.error(
               "Failed to load \(region.rawValue) into TerrainService: \(error.localizedDescription)"
             )
+            availableRegions.remove(region)
+            corruptedRegions.insert(region)
+            didChange = true
           }
         }
       }
-      if didLoadNew {
+      if didChange {
         NotificationCenter.default.post(name: .terrainRegionsDidChange, object: nil)
       }
     }

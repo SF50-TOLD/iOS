@@ -62,6 +62,7 @@ struct ClimbProfileView: View {
         if let terrainPath {
           TerrainDataStatusButton(
             terrainDataAvailable: terrainPath.terrainDataAvailable,
+            terrainDataCorrupted: !TerrainDataLoader.shared.corruptedRegions.isEmpty,
             obstacleDataAvailable: terrainPath.obstacleDataAvailable
           )
         }

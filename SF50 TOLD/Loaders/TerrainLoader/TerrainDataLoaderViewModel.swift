@@ -49,11 +49,17 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
   /// Cancellables for Combine subscriptions.
   private var cancellables = Set<AnyCancellable>()
 
-  /// Total size of downloaded terrain data in bytes.
+  /// Total size of downloaded terrain data on disk in bytes.
   var totalDownloadedSize: Int64 {
     allRegions
       .filter { isAvailable($0) }
-      .reduce(0) { $0 + Int64($1.sizeBytes) }
+      .compactMap { loader.terrainFileURL(for: $0) }
+      .reduce(into: Int64(0)) { total, url in
+        let size =
+          (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int64)
+          ?? 0
+        total += size
+      }
   }
 
   // MARK: - Initializers
@@ -89,6 +95,25 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
         self?.objectWillChange.send()
       }
       .store(in: &cancellables)
+
+    loader.$corruptedRegions
+      .sink { [weak self] _ in
+        self?.objectWillChange.send()
+      }
+      .store(in: &cancellables)
+
+    // Surface corruption errors when new corrupted regions appear
+    loader.$corruptedRegions
+      .removeDuplicates()
+      .dropFirst()
+      .filter { !$0.isEmpty }
+      .sink { [weak self] regions in
+        self?.error = TerrainCorruptionError(regions: regions)
+      }
+      .store(in: &cancellables)
+
+    // Sync with loader's current state in case a download is already in progress
+    handleStateChange(loader.state)
   }
 
   // MARK: - Public API
@@ -109,6 +134,9 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     if isAvailable(region) {
       return .available
     }
+    if loader.corruptedRegions.contains(region) {
+      return .corrupted
+    }
     if isDownloading(region) {
       if case .downloading(let r, let progress) = downloadState, r == region {
         return .downloading(progress: progress)
@@ -124,6 +152,22 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
   /// Downloads terrain data for a region.
   func downloadRegion(_ region: TerrainRegion) {
     guard !isAvailable(region) && !isDownloading(region) else { return }
+    error = nil
+
+    Task {
+      do {
+        try await loader.downloadRegion(region)
+        downloadState = .idle
+      } catch {
+        self.error = error
+        downloadState = .idle
+      }
+    }
+  }
+
+  /// Re-downloads a corrupted terrain region, deleting the bad file first.
+  func redownloadRegion(_ region: TerrainRegion) {
+    error = nil
 
     Task {
       do {
@@ -191,6 +235,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
   /// Status of a single region.
   enum RegionDownloadStatus: Equatable {
     case available
+    case corrupted
     case notDownloaded
     case downloading(progress: Float?)
   }
@@ -209,6 +254,27 @@ struct TerrainDownloadError: LocalizedError {
   let message: String
 
   var errorDescription: String? { message }
+}
+
+/// Error surfaced when terrain files on disk are unreadable.
+struct TerrainCorruptionError: LocalizedError {
+  let regions: Set<TerrainRegion>
+
+  var errorDescription: String? {
+    String(localized: "Terrain data couldn\u{2019}t be loaded.")
+  }
+
+  var failureReason: String? {
+    let names = regions.map(\.displayName).sorted().formatted(.list(type: .and))
+    return String(localized: "The downloaded terrain data for \(names) appears to be corrupted.")
+  }
+
+  var recoverySuggestion: String? {
+    String(
+      localized:
+        "Go to Settings \u{2192} Terrain Data and tap \u{201C}Re-download\u{201D} to replace the corrupted files."
+    )
+  }
 }
 
 // MARK: - Preview Support

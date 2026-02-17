@@ -4,6 +4,7 @@ import SwiftUI
 
 struct TerrainDataStatusButton: View {
   let terrainDataAvailable: Bool
+  let terrainDataCorrupted: Bool
   let obstacleDataAvailable: Bool
 
   @Query private var cycles: [Cycle]
@@ -46,11 +47,13 @@ struct TerrainDataStatusButton: View {
           ExpiringStatusRow(label: String(localized: "FAA DOF Effectivity"), cycle: dofCycle)
           PresenceStatusRow(
             label: String(localized: "FAA DOF Coverage"),
-            isAvailable: obstacleDataAvailable
+            status: obstacleDataAvailable ? .available : .unavailable
           )
           PresenceStatusRow(
             label: String(localized: "SRTM Terrain Coverage"),
-            isAvailable: terrainDataAvailable
+            status: terrainDataCorrupted
+              ? .corrupted
+              : terrainDataAvailable ? .available : .unavailable
           )
         }
         .navigationTitle("Navigation Data")
@@ -67,10 +70,12 @@ struct TerrainDataStatusButton: View {
 
   init(
     terrainDataAvailable: Bool,
+    terrainDataCorrupted: Bool = false,
     obstacleDataAvailable: Bool,
     showingSheet: Bool = false
   ) {
     self.terrainDataAvailable = terrainDataAvailable
+    self.terrainDataCorrupted = terrainDataCorrupted
     self.obstacleDataAvailable = obstacleDataAvailable
     self._showingSheet = State(initialValue: showingSheet)
   }
@@ -107,23 +112,36 @@ struct TerrainDataStatusButton: View {
 
   private struct PresenceStatusRow: View {
     let label: String
-    let isAvailable: Bool
+    let status: DataStatus
 
     var body: some View {
       LabeledContent(label) {
         HStack {
-          if isAvailable {
-            Text("Available")
-            Image(systemName: "checkmark.circle.fill")
-              .accessibilityHidden(true)
-          } else {
-            Text("Not Available")
-            Image(systemName: "xmark.circle.fill")
-              .accessibilityHidden(true)
+          switch status {
+            case .available:
+              Text("Available")
+              Image(systemName: "checkmark.circle.fill")
+                .accessibilityHidden(true)
+            case .corrupted:
+              Text("Corrupted")
+                .foregroundStyle(.red)
+              Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.red)
+                .accessibilityHidden(true)
+            case .unavailable:
+              Text("Not Available")
+              Image(systemName: "xmark.circle.fill")
+                .accessibilityHidden(true)
           }
         }
       }
     }
+  }
+
+  enum DataStatus {
+    case available
+    case corrupted
+    case unavailable
   }
 }
 
@@ -156,6 +174,26 @@ struct TerrainDataStatusButton: View {
             TerrainDataStatusButton(
               terrainDataAvailable: false,
               obstacleDataAvailable: true
+            )
+          }
+        }
+    }
+  }
+}
+
+#Preview("Terrain Corrupted") {
+  PreviewView { helper in
+    helper.insertCurrentCycle(.cifp, name: "AIRAC 2601")
+    helper.insertCurrentCycle(.dof, name: "20260101")
+    return NavigationStack {
+      Text("Climb Profile")
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            TerrainDataStatusButton(
+              terrainDataAvailable: false,
+              terrainDataCorrupted: true,
+              obstacleDataAvailable: true,
+              showingSheet: true
             )
           }
         }

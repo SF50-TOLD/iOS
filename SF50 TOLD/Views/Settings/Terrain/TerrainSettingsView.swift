@@ -17,6 +17,9 @@ struct TerrainSettingsView: View {
             status: viewModel.status(for: region),
             onDownload: {
               viewModel.downloadRegion(region)
+            },
+            onRedownload: {
+              viewModel.redownloadRegion(region)
             }
           )
         }

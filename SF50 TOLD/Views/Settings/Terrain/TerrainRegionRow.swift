@@ -6,11 +6,12 @@ struct TerrainRegionRow: View {
   let region: TerrainRegion
   let status: TerrainDataLoaderViewModel.RegionDownloadStatus
   let onDownload: () -> Void
+  let onRedownload: () -> Void
 
   var body: some View {
     LabeledContent(
       content: {
-        RegionStatusView(status: status, onDownload: onDownload)
+        RegionStatusView(status: status, onDownload: onDownload, onRedownload: onRedownload)
       },
       label: {
         VStack(alignment: .leading) {
@@ -33,7 +34,17 @@ struct TerrainRegionRow: View {
       TerrainRegionRow(
         region: .northAmerica,
         status: .available,
-        onDownload: {}
+        onDownload: {},
+        onRedownload: {}
+      )
+    }
+
+    Section("Corrupted") {
+      TerrainRegionRow(
+        region: .northAmerica,
+        status: .corrupted,
+        onDownload: {},
+        onRedownload: {}
       )
     }
 
@@ -41,7 +52,8 @@ struct TerrainRegionRow: View {
       TerrainRegionRow(
         region: .europe,
         status: .notDownloaded,
-        onDownload: {}
+        onDownload: {},
+        onRedownload: {}
       )
     }
 
@@ -49,7 +61,8 @@ struct TerrainRegionRow: View {
       TerrainRegionRow(
         region: .asia,
         status: .downloading(progress: nil),
-        onDownload: {}
+        onDownload: {},
+        onRedownload: {}
       )
     }
 
@@ -57,7 +70,8 @@ struct TerrainRegionRow: View {
       TerrainRegionRow(
         region: .southAmerica,
         status: .downloading(progress: 0.65),
-        onDownload: {}
+        onDownload: {},
+        onRedownload: {}
       )
     }
   }
