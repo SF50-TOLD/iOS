@@ -1,16 +1,18 @@
 import Foundation
+import os
 
-/// Memory-mapped access to a terrain data file.
+/// Provides O(1) coordinate-to-elevation lookups from a terrain data file.
 ///
-/// ``MappedTerrainTile`` provides efficient, O(1) coordinate-to-elevation lookups
-/// by memory-mapping the terrain binary file. This avoids loading the entire file
-/// into memory while still providing fast random access.
+/// The terrain file is opened once at initialization and individual elevation
+/// samples are read on demand via `pread`. Only the header and tile index
+/// (~100 KB) are held in memory — the multi-gigabyte elevation data stays on
+/// disk, avoiding virtual-memory limits on iOS.
 ///
 /// ## File Format
 ///
 /// The terrain file format is:
 /// ```
-/// Header (28 bytes):
+/// Header (20 bytes):
 ///   - Magic: "SRTM" (4 bytes)
 ///   - Version: UInt16
 ///   - Resolution: UInt16 (samples per tile side, e.g., 1201 for SRTM3)
@@ -33,10 +35,19 @@ final class MappedTerrainTile: Sendable {
   /// SRTM void/no-data sentinel value.
   private static let voidValue: Int16 = -32768
 
+  /// Logger for debug output.
+  private static let logger = Logger(
+    subsystem: "codes.tim.SF50-TOLD",
+    category: "MappedTerrainTile"
+  )
+
   // MARK: - Instance Properties
 
-  /// Memory-mapped data.
-  private let mappedData: Data
+  /// Open file descriptor for the terrain data file.
+  private let file: FileDescriptorBox
+
+  /// Total size of the terrain file in bytes.
+  private let fileSize: Int
 
   /// Resolution (samples per tile side).
   let resolution: Int
@@ -52,21 +63,38 @@ final class MappedTerrainTile: Sendable {
 
   // MARK: - Initializers
 
-  /// Creates a memory-mapped terrain tile from a file URL.
+  /// Creates a terrain tile reader from a file URL.
   init(fileURL: URL) throws {
-    // Memory-map the file (pages loaded on demand, not copied to heap)
-    let data = try Data(contentsOf: fileURL, options: .mappedIfSafe)
-    self.mappedData = data
+    let fd = Darwin.open(fileURL.path, O_RDONLY)
+    guard fd >= 0 else {
+      let posixErrno = errno
+      Self.logger.error(
+        "Failed to open \(fileURL.lastPathComponent): errno \(posixErrno) (\(String(cString: strerror(posixErrno))))"
+      )
+      throw TerrainServiceError.fileReadError(
+        NSError(domain: NSPOSIXErrorDomain, code: Int(posixErrno))
+      )
+    }
+    self.file = FileDescriptorBox(fd)
 
-    // Parse header and index
-    var reader = BinaryDataReader(data: data)
+    // File size for bounds checking
+    var sb = stat()
+    guard fstat(fd, &sb) == 0 else {
+      throw TerrainServiceError.fileReadError(
+        NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
+      )
+    }
+    self.fileSize = Int(sb.st_size)
 
-    // Verify magic
+    // Read and parse header (20 bytes)
+    guard let headerData = Self.preadData(fd: fd, count: 20, offset: 0) else {
+      throw TerrainServiceError.invalidFile(fileURL)
+    }
+    var reader = BinaryDataReader(data: headerData)
+
     guard (try? reader.readASCII(4)) == "SRTM" else {
       throw TerrainServiceError.invalidFile(fileURL)
     }
-
-    // Parse header fields
     guard let version = try? reader.readUInt16(), version == 1 || version == 2 else {
       throw TerrainServiceError.invalidFile(fileURL)
     }
@@ -80,25 +108,33 @@ final class MappedTerrainTile: Sendable {
       maxLon: try Int(reader.readInt16())
     )
 
-    // Parse tile index
+    // Read tile index
     // Version 1: 12 bytes per entry (lat:2 + lon:2 + offset:4 + length:4)
     // Version 2: 16 bytes per entry (lat:2 + lon:2 + offset:8 + length:4)
+    let entrySize = version == 1 ? 12 : 16
+    let indexSize = tileCount * entrySize
+    let headerSize = off_t(reader.offset)
+    guard let indexData = Self.preadData(fd: fd, count: indexSize, offset: headerSize) else {
+      throw TerrainServiceError.invalidFile(fileURL)
+    }
+
+    var indexReader = BinaryDataReader(data: indexData)
     var index = [TileIndexEntry]()
     index.reserveCapacity(tileCount)
 
     for _ in 0..<tileCount {
-      let lat = try reader.readInt16()
-      let lon = try reader.readInt16()
+      let lat = try indexReader.readInt16()
+      let lon = try indexReader.readInt16()
 
       let dataOffset: UInt64
       let dataLength: UInt32
 
       if version == 1 {
-        dataOffset = try UInt64(reader.readUInt32())
-        dataLength = try reader.readUInt32()
+        dataOffset = try UInt64(indexReader.readUInt32())
+        dataLength = try indexReader.readUInt32()
       } else {
-        dataOffset = try reader.readUInt64()
-        dataLength = try reader.readUInt32()
+        dataOffset = try indexReader.readUInt64()
+        dataLength = try indexReader.readUInt32()
       }
 
       index.append(
@@ -112,6 +148,20 @@ final class MappedTerrainTile: Sendable {
     }
 
     self.tileIndex = index
+
+    Self.logger.info(
+      "Opened \(fileURL.lastPathComponent): \(self.tileCount) tiles, resolution \(self.resolution), \(self.fileSize) bytes"
+    )
+  }
+
+  // MARK: - Type Methods
+
+  /// Reads `count` bytes from a file descriptor at the given offset.
+  private static func preadData(fd: CInt, count: Int, offset: off_t) -> Data? {
+    var buffer = [UInt8](repeating: 0, count: count)
+    let bytesRead = pread(fd, &buffer, count, offset)
+    guard bytesRead == count else { return nil }
+    return Data(buffer)
   }
 
   // MARK: - Public API
@@ -199,16 +249,17 @@ final class MappedTerrainTile: Sendable {
     return (entry, latOffset, lonOffset)
   }
 
-  /// Samples elevation at a specific row and column within a tile.
+  /// Reads a single elevation sample from disk at the given row and column.
   private func sample(row: Int, col: Int, in entry: TileIndexEntry) -> Int16? {
     let sampleIndex = row * resolution + col,
       byteOffset = Int(entry.dataOffset) + sampleIndex * 2
 
-    guard byteOffset + 2 <= mappedData.count else {
-      return nil
-    }
+    guard byteOffset + 2 <= fileSize else { return nil }
 
-    let value = mappedData.withUnsafeBytes { $0.load(fromByteOffset: byteOffset, as: Int16.self) }
+    var value: Int16 = 0
+    let bytesRead = pread(file.fd, &value, 2, off_t(byteOffset))
+    guard bytesRead == 2 else { return nil }
+
     return value == Self.voidValue ? nil : value
   }
 
@@ -243,5 +294,14 @@ final class MappedTerrainTile: Sendable {
     /// Data offset from start of file
     let dataOffset: UInt64
     let dataLength: UInt32
+  }
+
+  /// Wraps a POSIX file descriptor with automatic close on deallocation.
+  private final class FileDescriptorBox: Sendable {
+
+    let fd: CInt
+
+    init(_ fd: CInt) { self.fd = fd }
+    deinit { Darwin.close(fd) }
   }
 }

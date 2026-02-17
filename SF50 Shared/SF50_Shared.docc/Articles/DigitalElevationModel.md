@@ -8,7 +8,7 @@ SF50 TOLD uses SRTM (Shuttle Radar Topography Mission) elevation data to analyze
 
 The terrain system consists of:
 - **Downloadable region files** - LZMA-compressed binary files containing elevation data
-- **Memory-mapped access** - Efficient O(1) coordinate lookups without loading entire files
+- **On-demand file access** - Efficient O(1) coordinate lookups via `pread` without loading entire files into memory
 - **Route profiling** - Generate elevation profiles along flight paths
 
 ## Binary File Format
@@ -98,12 +98,13 @@ if let elevation = await service.elevation(at: coordinate) {
 
 ### MappedTerrainTile
 
-`MappedTerrainTile` provides memory-mapped file access for O(1) coordinate lookups. Rather than loading the entire file into memory, it maps the file and accesses samples directly via pointer arithmetic.
+`MappedTerrainTile` provides on-demand file access for O(1) coordinate lookups. Rather than loading the entire file into memory, it opens a file descriptor at initialization and reads individual elevation samples via `pread` (POSIX positional read). Only the header and tile index (~100 KB) are held in memory.
 
 This enables:
 - Fast random access to any coordinate
-- Low memory footprint (only accessed pages are loaded)
+- Minimal memory footprint regardless of file size (regional files can exceed 18 GB)
 - Bilinear interpolation for sub-sample precision
+- Thread-safe concurrent queries (`pread` is inherently thread-safe)
 
 ### TerrainRegion
 

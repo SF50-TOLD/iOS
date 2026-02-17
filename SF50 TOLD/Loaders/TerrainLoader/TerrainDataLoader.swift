@@ -123,6 +123,8 @@ final class TerrainDataLoader: ObservableObject {
         to: outputHandle,
         configuration: .highThroughput
       )
+      // Flush to disk before closing so the file is ready for pread
+      try outputHandle.synchronize()
     } catch {
       try? outputHandle.close()
       try? FileManager.default.removeItem(at: destinationURL)

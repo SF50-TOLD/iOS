@@ -85,7 +85,7 @@ All tiles for a region are combined into a single binary file with:
 - Tile index (16 bytes per tile: coordinates + offset + length)
 - Contiguous elevation data
 
-The file format uses little-endian byte order for efficient memory-mapped access on Apple platforms.
+The file format uses little-endian byte order (native to Apple platforms) for efficient on-demand access via `pread`.
 
 ### 5. LZMA Compression
 
@@ -121,7 +121,7 @@ The output binary format is documented in detail in the SF50 Shared framework's 
 - **Version 2**: Uses 64-bit file offsets for large regions
 - **Resolution**: 1201 samples per tile side (SRTM3)
 - **Byte order**: Little-endian (native to Apple platforms)
-- **Compression**: LZMA (decompressed at runtime before memory-mapping)
+- **Compression**: LZMA (decompressed at runtime before use)
 
 ## Key Components
 

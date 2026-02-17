@@ -131,7 +131,7 @@ struct BinaryDataReader {
     }
 
     let value = data.withUnsafeBytes { buffer in
-      buffer.load(fromByteOffset: offset, as: T.self)
+      buffer.loadUnaligned(fromByteOffset: offset, as: T.self)
     }
     offset += size
     return T(littleEndian: value)
