@@ -15,6 +15,8 @@ import ZIPFoundation
 /// - ``NASRProcessor``
 /// - ``CIFPProcessor``
 struct DOFProcessor {
+  private static let dofURL = URL(string: "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_DAT.ZIP")!
+
   // Progress allocation within DOF processing (out of 100):
   // - Download: 0-50
   // - Parse: 50-100
@@ -32,16 +34,10 @@ struct DOFProcessor {
   ) async throws -> DOFResult {
     await onProgress?(0, 100)
 
-    // DOF data URL - the FAA provides this as a ZIP file
-    let dofURLString = "https://aeronav.faa.gov/Obst_Data/DAILY_DOF_DAT.ZIP"
-    guard let dofURL = URL(string: dofURLString) else {
-      throw DOFProcessorError.invalidURL(dofURLString)
-    }
-
-    logger.notice("Downloading DOF data from \(dofURL)…")
+    logger.notice("Downloading DOF data from \(Self.dofURL)…")
 
     // Download the ZIP file
-    let (downloadedData, response) = try await URLSession.shared.data(from: dofURL)
+    let (downloadedData, response) = try await URLSession.shared.data(from: Self.dofURL)
     await onProgress?(Self.downloadProgressEnd, 100)
 
     if let httpResponse = response as? HTTPURLResponse,

@@ -25,6 +25,10 @@ public struct TerrainManifest: Codable, Sendable {
     }
   }()
 
+  public static let defaultBaseURL = URL(
+    string: "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/"
+  )!
+
   // MARK: - Instance Properties
 
   public let baseURL: String
@@ -37,7 +41,7 @@ public struct TerrainManifest: Codable, Sendable {
     if !baseURL.isEmpty {
       return baseURL.hasSuffix("/") ? baseURL : baseURL + "/"
     }
-    return "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/"
+    return Self.defaultBaseURL.absoluteString
   }
 
   // MARK: - Instance Methods

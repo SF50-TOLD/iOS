@@ -35,6 +35,11 @@ final class TerrainDataLoader: ObservableObject {
 
   static let shared = TerrainDataLoader()
 
+  /// Manifest URL for terrain data.
+  private static let manifestURL = URL(
+    string: TerrainManifest.defaultBaseURL.absoluteString + "terrain-manifest.json"
+  )!
+
   // MARK: - Instance Properties
 
   /// Current download state.
@@ -65,12 +70,7 @@ final class TerrainDataLoader: ObservableObject {
   private let appGroupID = "group.codes.tim.TOLD"
 
   /// Base URL for terrain data downloads.
-  private var baseURL = "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/"
-
-  /// Manifest URL for terrain data.
-  private let manifestURL = URL(
-    string: "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/terrain-manifest.json"
-  )!
+  private var baseURL = TerrainManifest.defaultBaseURL.absoluteString
 
   /// URL session for downloads.
   private lazy var urlSession: URLSession = {
@@ -378,7 +378,7 @@ final class TerrainDataLoader: ObservableObject {
     let bundled = TerrainManifest.bundled
 
     do {
-      let (data, _) = try await urlSession.data(from: manifestURL)
+      let (data, _) = try await urlSession.data(from: Self.manifestURL)
       let decoder = JSONDecoder()
       decoder.dateDecodingStrategy = .iso8601
       let remote = try decoder.decode(TerrainManifest.self, from: data)

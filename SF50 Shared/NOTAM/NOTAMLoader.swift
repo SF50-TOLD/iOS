@@ -45,6 +45,9 @@ public actor NOTAMLoader {
   /// Shared singleton instance
   public static let shared = NOTAMLoader()
 
+  /// Default base URL for the NOTAM API.
+  private static let defaultBaseURL = URL(string: "https://notams.fly.dev")!
+
   /// Logger for NOTAM operations
   private static let logger = Logger(label: "codes.tim.SF50-TOLD.NOTAMLoader")
 
@@ -100,7 +103,7 @@ public actor NOTAMLoader {
       self.apiToken = token
     } else {
       // Fallback for development/testing
-      self.baseURL = "https://notams.fly.dev"
+      self.baseURL = Self.defaultBaseURL.absoluteString
       self.apiToken = ""
       Self.logger.warning(
         "NOTAM API configuration not found in bundle. Using defaults. API calls will fail."

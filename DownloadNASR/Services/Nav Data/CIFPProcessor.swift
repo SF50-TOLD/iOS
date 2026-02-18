@@ -30,6 +30,8 @@ struct CIFPProcessor {
     .headingToRadial
   ]
 
+  private static let cifpURLTemplate = "https://aeronav.faa.gov/Upload_313-d/cifp/CIFP_%@.zip"
+
   // Progress allocation within CIFP processing (out of 100):
   // - Download: 0-30
   // - Parse: 30-90
@@ -249,7 +251,7 @@ struct CIFPProcessor {
     // CIFP data is available from the FAA at this URL pattern
     // Format: CIFP_YYMMDD.zip (e.g., CIFP_250102.zip for January 2, 2025)
     let dateString = formatCIFPDate(cycle)
-    let cifpURLString = "https://aeronav.faa.gov/Upload_313-d/cifp/CIFP_\(dateString).zip"
+    let cifpURLString = String(format: Self.cifpURLTemplate, dateString)
     guard let cifpURL = URL(string: cifpURLString) else {
       throw CIFPProcessorError.invalidURL(cifpURLString)
     }

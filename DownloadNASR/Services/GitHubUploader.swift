@@ -30,10 +30,11 @@ import Logging
 /// - `GitHubAPIError.permissionDenied`: Token lacks write access
 /// - `GitHubAPIError.repositoryNotFound`: Repo not found or not accessible
 class GitHubUploader {
+  private static let baseURL = URL(string: "https://api.github.com")!
+
   private let token: String
   private let repo: String
   private let owner: String
-  private let baseURL = "https://api.github.com"
   private let logger: Logger
 
   /// Initialize uploader with GitHub credentials
@@ -59,7 +60,7 @@ class GitHubUploader {
   /// - Returns: true if token is valid
   /// - Throws: GitHubAPIError if validation fails
   func validateToken() async throws -> Bool {
-    let url = URL(string: "\(baseURL)/user")!
+    let url = URL(string: "\(Self.baseURL)/user")!
     var request = URLRequest(url: url)
     configureRequest(&request)
 
@@ -108,7 +109,7 @@ class GitHubUploader {
     }
 
     // Construct API request
-    let url = URL(string: "\(baseURL)/repos/\(owner)/\(repo)/contents/\(targetPath)")!
+    let url = URL(string: "\(Self.baseURL)/repos/\(owner)/\(repo)/contents/\(targetPath)")!
     var request = URLRequest(url: url)
     request.httpMethod = "PUT"
     configureRequest(&request)
@@ -165,7 +166,7 @@ class GitHubUploader {
   private func getFileSHA(path: String, branch: String) async throws -> String {
     let encodedPath = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? path
     let url = URL(
-      string: "\(baseURL)/repos/\(owner)/\(repo)/contents/\(encodedPath)?ref=\(branch)"
+      string: "\(Self.baseURL)/repos/\(owner)/\(repo)/contents/\(encodedPath)?ref=\(branch)"
     )!
 
     var request = URLRequest(url: url)

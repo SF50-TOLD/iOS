@@ -75,21 +75,22 @@ import SwiftNASR
 /// - ``State``
 @ModelActor
 actor NavDataLoader {
+  private static let dataURLTemplate =
+    "https://github.com/SF50-TOLD/Airport-Data/blob/main/3.0/%@.plist.lzma?raw=true"
+
   var state: State = .idle
 
   private let decoder = PropertyListDecoder()
-  private var navaidLookup: [String: SF50_Shared.Navaid] = [:]
 
   private let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",
     category: "NavDataLoader"
   )
 
+  private var navaidLookup: [String: SF50_Shared.Navaid] = [:]
+
   private var dataURL: URL {
-    URL(
-      string:
-        "https://github.com/SF50-TOLD/Airport-Data/blob/main/3.0/\(Cycle.effective).plist.lzma?raw=true"
-    )!
+    URL(string: String(format: Self.dataURLTemplate, "\(Cycle.effective)"))!
   }
 
   func load() async throws -> LoadResult {
