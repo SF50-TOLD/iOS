@@ -1,61 +1,61 @@
 {
   "baseURL" : "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/",
-  "generatedAt" : "2026-02-05T17:07:25Z",
+  "generatedAt" : "2026-02-18T11:31:38Z",
   "regions" : [
     {
       "filename" : "terrain-io.srtm.lzma",
       "id" : "io",
-      "sizeBytes" : 47999441
+      "sizeBytes" : 90709545
     },
     {
       "filename" : "terrain-ma.srtm.lzma",
       "id" : "ma",
-      "sizeBytes" : 27450213
+      "sizeBytes" : 51090845
     },
     {
       "filename" : "terrain-aq.srtm.lzma",
       "id" : "aq",
-      "sizeBytes" : 1883769413
+      "sizeBytes" : 3001423409
     },
     {
       "filename" : "terrain-oc.srtm.lzma",
       "id" : "oc",
-      "sizeBytes" : 581784525
+      "sizeBytes" : 1103840505
     },
     {
       "filename" : "terrain-me.srtm.lzma",
       "id" : "me",
-      "sizeBytes" : 774311461
+      "sizeBytes" : 1119452649
     },
     {
       "filename" : "terrain-au.srtm.lzma",
       "id" : "au",
-      "sizeBytes" : 953214337
+      "sizeBytes" : 1523799081
     },
     {
       "filename" : "terrain-sa.srtm.lzma",
       "id" : "sa",
-      "sizeBytes" : 1820462469
+      "sizeBytes" : 2726074617
     },
     {
       "filename" : "terrain-eu.srtm.lzma",
       "id" : "eu",
-      "sizeBytes" : 1821795729
+      "sizeBytes" : 2781641469
     },
     {
       "filename" : "terrain-af.srtm.lzma",
       "id" : "af",
-      "sizeBytes" : 3198851841
+      "sizeBytes" : 4814839165
     },
     {
       "filename" : "terrain-as.srtm.lzma",
       "id" : "as",
-      "sizeBytes" : 5796635437
+      "sizeBytes" : 9158120265
     },
     {
       "filename" : "terrain-na.srtm.lzma",
       "id" : "na",
-      "sizeBytes" : 3227504865
+      "sizeBytes" : 5108571405
     }
   ],
   "version" : 2

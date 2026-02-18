@@ -1,3 +1,4 @@
+import Compression
 import Foundation
 import Logging
 import SF50_Shared
@@ -73,8 +74,8 @@ actor SRTMProcessor {
   /// Magic bytes identifying the SRTM binary format: "SRTM" in ASCII.
   private static let magic: [UInt8] = [0x53, 0x52, 0x54, 0x4D]
 
-  /// File format version (2 = 64-bit offsets).
-  private static let formatVersion: UInt16 = 2
+  /// File format version (3 = per-tile LZFSE compression).
+  private static let formatVersion: UInt16 = 3
 
   // MARK: - Instance Properties
 
@@ -115,6 +116,122 @@ actor SRTMProcessor {
     self.regions = regions
     self.outputLocation = outputLocation
     self.logger = logger
+  }
+
+  // MARK: - Type Methods
+
+  /// Parses a tile and compresses its elevation data with LZFSE.
+  ///
+  /// This is a static (non-isolated) function to enable true parallelism in TaskGroup.
+  private static func parseAndCompressTile(
+    _ tileRef: TileReference,
+    index: Int,
+    outputResolution: HGTParser.Resolution
+  ) -> CompressedTile {
+    let parsed = TileProcessing.parseTile(tileRef, index: index, outputResolution: outputResolution)
+
+    guard let elevations = parsed.elevations else {
+      return CompressedTile(
+        index: index,
+        latitude: parsed.latitude,
+        longitude: parsed.longitude,
+        compressedData: nil,
+        uncompressedLength: 0,
+        isVoid: false,
+        error: parsed.error
+      )
+    }
+
+    // Check for all-void tile (ocean)
+    let isAllVoid = elevations.withUnsafeBufferPointer { buffer in
+      buffer.allSatisfy { $0 == Elevations.voidValue }
+    }
+
+    if isAllVoid {
+      return CompressedTile(
+        index: index,
+        latitude: parsed.latitude,
+        longitude: parsed.longitude,
+        compressedData: nil,
+        uncompressedLength: 0,
+        isVoid: true,
+        error: nil
+      )
+    }
+
+    // Serialize elevation data to raw bytes
+    let rawData = elevations.withUnsafeBufferPointer { buffer in
+      Data(buffer: buffer)
+    }
+    let uncompressedLength = UInt32(rawData.count)
+
+    // Compress with LZFSE
+    guard let compressedData = compressWithLZFSE(rawData) else {
+      return CompressedTile(
+        index: index,
+        latitude: parsed.latitude,
+        longitude: parsed.longitude,
+        compressedData: nil,
+        uncompressedLength: 0,
+        isVoid: false,
+        error: SRTMProcessorError.compressionFailed(
+          NSError(
+            domain: "LZFSE",
+            code: -1,
+            userInfo: [NSLocalizedDescriptionKey: "LZFSE compression returned 0 bytes"]
+          )
+        )
+      )
+    }
+
+    return CompressedTile(
+      index: index,
+      latitude: parsed.latitude,
+      longitude: parsed.longitude,
+      compressedData: compressedData,
+      uncompressedLength: uncompressedLength,
+      isVoid: false,
+      error: nil
+    )
+  }
+
+  /// Compresses data using LZFSE.
+  private static func compressWithLZFSE(_ data: Data) -> Data? {
+    let srcSize = data.count
+    var dstBuffer = [UInt8](repeating: 0, count: srcSize)
+
+    let compressedSize = data.withUnsafeBytes { srcBuffer -> Int in
+      guard let srcPointer = srcBuffer.baseAddress else { return 0 }
+      return compression_encode_buffer(
+        &dstBuffer,
+        srcSize,
+        srcPointer.assumingMemoryBound(to: UInt8.self),
+        srcSize,
+        nil,
+        COMPRESSION_LZFSE
+      )
+    }
+
+    // If output wouldn't fit in source-sized buffer, retry with a larger one
+    if compressedSize == 0 {
+      let largerSize = srcSize * 2
+      dstBuffer = [UInt8](repeating: 0, count: largerSize)
+      let retrySize = data.withUnsafeBytes { srcBuffer -> Int in
+        guard let srcPointer = srcBuffer.baseAddress else { return 0 }
+        return compression_encode_buffer(
+          &dstBuffer,
+          largerSize,
+          srcPointer.assumingMemoryBound(to: UInt8.self),
+          srcSize,
+          nil,
+          COMPRESSION_LZFSE
+        )
+      }
+      guard retrySize > 0 else { return nil }
+      return Data(dstBuffer.prefix(retrySize))
+    }
+
+    return Data(dstBuffer.prefix(compressedSize))
   }
 
   // MARK: - Methods
@@ -414,7 +531,7 @@ actor SRTMProcessor {
     return url
   }
 
-  /// Combines tiles into a single optimized binary file, streaming from disk to minimize memory.
+  /// Combines tiles into a single v3 binary file with per-tile LZFSE compression.
   private func combineAndCompress(
     tiles: [TileReference],
     region: TerrainRegion
@@ -427,17 +544,11 @@ actor SRTMProcessor {
       throw SRTMProcessorError.noTilesFound(region: region.displayName)
     }
 
-    // Create optimized binary format
-    // Header: magic (4 bytes) + version (2) + resolution (2) + tileCount (4) + boundingBox (16)
-    // Then for each tile: lat (2) + lon (2) + dataOffset (4) + dataLength (4)
-    // Then all elevation data
-
     let boundingBox = region.overallBoundingBox
 
     // Always output SRTM3 resolution for manageable file sizes
     // SRTM1 (~30m) tiles will be downsampled to SRTM3 (~90m)
     let outputResolution = HGTParser.Resolution.srtm3
-    let bytesPerTile = outputResolution.samplesPerSide * outputResolution.samplesPerSide * 2
 
     // Build header: magic (4) + version (2) + resolution (2) + tileCount (4) + boundingBox (8)
     let headerData = try BinaryFileWriter.buildData { writer in
@@ -451,11 +562,10 @@ actor SRTMProcessor {
       writer.writeInt16(Int16(boundingBox.maxLon))
     }
 
-    // Calculate tile index size
-    // Version 2 format: lat(2) + lon(2) + offset(8) + length(4) = 16 bytes per entry
-    let tileIndexEntrySize = 16
+    // Version 3 format: lat(2) + lon(2) + offset(8) + compressedLength(4) + uncompressedLength(4) = 20 bytes
+    let tileIndexEntrySize = 20
     let tileIndexSize = tiles.count * tileIndexEntrySize
-    let dataStartOffset = Int64(headerData.count + tileIndexSize)
+    let dataStartOffset = UInt64(headerData.count + tileIndexSize)
 
     // Write to a temporary file to avoid holding everything in memory
     let tempOutputFile = outputLocation.appendingPathComponent("\(region.rawValue)-temp.srtm")
@@ -466,37 +576,48 @@ actor SRTMProcessor {
       try? fileHandle.close()
     }
 
-    // Build tile index: lat(2) + lon(2) + offset(8) + length(4) = 16 bytes per entry
-    var currentDataOffset = dataStartOffset
-    let tileIndex = try BinaryFileWriter.buildData { writer in
-      for tileRef in tiles {
-        writer.writeInt16(Int16(tileRef.latitude))
-        writer.writeInt16(Int16(tileRef.longitude))
-        writer.writeUInt64(UInt64(currentDataOffset))
-        writer.writeUInt32(UInt32(bytesPerTile))
-        currentDataOffset += Int64(bytesPerTile)
-      }
-    }
-
-    // Write header and index
+    // Write header + placeholder index (will be overwritten after compression)
     try fileHandle.write(contentsOf: headerData)
-    try fileHandle.write(contentsOf: tileIndex)
+    try fileHandle.write(contentsOf: Data(count: tileIndexSize))
 
-    // Parse tiles in parallel, write sequentially
-    let failedTiles = try await parseAndWriteTiles(
+    // Parse, compress, and write tiles; returns actual index entries and stats
+    let result = try await parseCompressAndWriteTiles(
       tiles: tiles,
       region: region,
       outputResolution: outputResolution,
-      bytesPerTile: bytesPerTile,
+      dataStartOffset: dataStartOffset,
       fileHandle: fileHandle
     )
 
-    if failedTiles > 0 {
+    // Seek back and write the actual tile index
+    try fileHandle.seek(toOffset: UInt64(headerData.count))
+    let tileIndex = try BinaryFileWriter.buildData { writer in
+      for entry in result.indexEntries {
+        writer.writeInt16(Int16(entry.latitude))
+        writer.writeInt16(Int16(entry.longitude))
+        writer.writeUInt64(entry.dataOffset)
+        writer.writeUInt32(entry.compressedLength)
+        writer.writeUInt32(entry.uncompressedLength)
+      }
+    }
+    try fileHandle.write(contentsOf: tileIndex)
+
+    let stats = result.stats
+    if stats.failedTiles > 0 {
       await reportLog(
         level: .warning,
-        message: "Skipped \(failedTiles) tiles due to parsing errors"
+        message: "Skipped \(stats.failedTiles) tiles due to parsing errors"
       )
     }
+
+    await reportLog(
+      level: .info,
+      message: """
+        LZFSE compression for \(region.displayName): \(stats.voidTiles) void tiles, \
+        \(formatBytes(stats.totalUncompressedBytes)) → \(formatBytes(stats.totalCompressedBytes)) \
+        (\(String(format: "%.1f%%", stats.compressionRatio * 100)))
+        """
+    )
 
     try fileHandle.synchronize()
     try fileHandle.close()
@@ -562,58 +683,74 @@ actor SRTMProcessor {
     return compressedFile
   }
 
-  /// Parses tiles in parallel using a throttled TaskGroup, writes sequentially in order.
+  /// Parses and LZFSE-compresses tiles in parallel, writes sequentially in order.
   ///
-  /// This approach parallelizes the CPU-bound parsing while maintaining sequential writes
-  /// to the output file. The `for try await` loop naturally yields to the actor between
-  /// iterations, allowing progress reads from the polling task.
-  private func parseAndWriteTiles(
+  /// This approach parallelizes both CPU-bound parsing and compression while maintaining
+  /// sequential writes to the output file. Returns the actual tile index entries (with
+  /// compressed sizes) and compression statistics.
+  private func parseCompressAndWriteTiles(
     tiles: [TileReference],
     region: TerrainRegion,
     outputResolution: HGTParser.Resolution,
-    bytesPerTile: Int,
+    dataStartOffset: UInt64,
     fileHandle: FileHandle
-  ) async throws -> Int {
+  ) async throws -> CompressedWriteResult {
     let total = tiles.count
 
-    // Void data for failed tiles (pre-allocate once)
-    let voidData = try BinaryFileWriter.buildData { writer in
-      let voidValues = [Int16](repeating: Elevations.voidValue, count: bytesPerTile / 2)
-      writer.writeInt16Array(voidValues)
-    }
+    var indexEntries: [TileIndexInfo] = []
+    indexEntries.reserveCapacity(total)
 
-    var failedTiles = 0
-    var buffer: [Int: ParsedTile] = [:]  // index -> parsed result
+    var stats = CompressionStats()
+    var buffer: [Int: CompressedTile] = [:]
     var nextToWrite = 0
-    var parsed = 0
+    var currentDataOffset = dataStartOffset
 
-    try await withThrowingTaskGroup(of: ParsedTile.self) { group in
+    try await withThrowingTaskGroup(of: CompressedTile.self) { group in
       var index = 0
 
-      // Seed initial batch of concurrent parsing tasks
+      // Seed initial batch of concurrent parsing + compression tasks
       while index < min(Self.maxConcurrentParsing, tiles.count) {
         let i = index
         let tile = tiles[i]
         group.addTask {
-          TileProcessing.parseTile(tile, index: i, outputResolution: outputResolution)
+          Self.parseAndCompressTile(tile, index: i, outputResolution: outputResolution)
         }
         index += 1
       }
 
       // Process results as they complete
       for try await result in group {
-        parsed += 1
         buffer[result.index] = result
 
         // Write any consecutive ready tiles to maintain file order
         while let tile = buffer.removeValue(forKey: nextToWrite) {
-          if let elevations = tile.elevations {
-            let tileData = elevations.withUnsafeBufferPointer { buffer in
-              Data(buffer: buffer)
-            }
-            try fileHandle.write(contentsOf: tileData)
+          let entry: TileIndexInfo
+
+          if tile.isVoid {
+            // Void tile: no data written, lengths are zero
+            entry = TileIndexInfo(
+              latitude: tile.latitude,
+              longitude: tile.longitude,
+              dataOffset: currentDataOffset,
+              compressedLength: 0,
+              uncompressedLength: 0
+            )
+            stats.voidTiles += 1
+          } else if let compressedData = tile.compressedData {
+            // Successfully compressed tile
+            try fileHandle.write(contentsOf: compressedData)
+            entry = TileIndexInfo(
+              latitude: tile.latitude,
+              longitude: tile.longitude,
+              dataOffset: currentDataOffset,
+              compressedLength: UInt32(compressedData.count),
+              uncompressedLength: tile.uncompressedLength
+            )
+            currentDataOffset += UInt64(compressedData.count)
+            stats.totalCompressedBytes += compressedData.count
+            stats.totalUncompressedBytes += Int(tile.uncompressedLength)
           } else {
-            // Write void data for failed tiles
+            // Failed tile: treat as void
             if let error = tile.error {
               await reportLog(
                 level: .warning,
@@ -621,9 +758,17 @@ actor SRTMProcessor {
                   "Failed to parse tile at \(tile.latitude),\(tile.longitude): \(error.localizedDescription)"
               )
             }
-            failedTiles += 1
-            try fileHandle.write(contentsOf: voidData)
+            entry = TileIndexInfo(
+              latitude: tile.latitude,
+              longitude: tile.longitude,
+              dataOffset: currentDataOffset,
+              compressedLength: 0,
+              uncompressedLength: 0
+            )
+            stats.failedTiles += 1
           }
+
+          indexEntries.append(entry)
           nextToWrite += 1
         }
 
@@ -631,12 +776,12 @@ actor SRTMProcessor {
         await reportProgress(.parsing(region: region, completed: nextToWrite, total: total))
         try Task.checkCancellation()
 
-        // Add next parsing task if more tiles remain
+        // Add next task if more tiles remain
         if index < tiles.count {
           let i = index
           let tile = tiles[i]
           group.addTask {
-            TileProcessing.parseTile(tile, index: i, outputResolution: outputResolution)
+            Self.parseAndCompressTile(tile, index: i, outputResolution: outputResolution)
           }
           index += 1
         }
@@ -645,22 +790,40 @@ actor SRTMProcessor {
       // Write any remaining buffered tiles
       while nextToWrite < total {
         if let tile = buffer.removeValue(forKey: nextToWrite) {
-          if let elevations = tile.elevations {
-            let tileData = elevations.withUnsafeBufferPointer { buffer in
-              Data(buffer: buffer)
-            }
-            try fileHandle.write(contentsOf: tileData)
+          let entry: TileIndexInfo
+
+          if tile.isVoid || tile.compressedData == nil {
+            entry = TileIndexInfo(
+              latitude: tile.latitude,
+              longitude: tile.longitude,
+              dataOffset: currentDataOffset,
+              compressedLength: 0,
+              uncompressedLength: 0
+            )
+            if !tile.isVoid { stats.failedTiles += 1 } else { stats.voidTiles += 1 }
           } else {
-            failedTiles += 1
-            try fileHandle.write(contentsOf: voidData)
+            let compressedData = tile.compressedData!
+            try fileHandle.write(contentsOf: compressedData)
+            entry = TileIndexInfo(
+              latitude: tile.latitude,
+              longitude: tile.longitude,
+              dataOffset: currentDataOffset,
+              compressedLength: UInt32(compressedData.count),
+              uncompressedLength: tile.uncompressedLength
+            )
+            currentDataOffset += UInt64(compressedData.count)
+            stats.totalCompressedBytes += compressedData.count
+            stats.totalUncompressedBytes += Int(tile.uncompressedLength)
           }
+
+          indexEntries.append(entry)
         }
         nextToWrite += 1
         await reportProgress(.parsing(region: region, completed: nextToWrite, total: total))
       }
     }
 
-    return failedTiles
+    return CompressedWriteResult(indexEntries: indexEntries, stats: stats)
   }
 
   // MARK: - Manifest Generation
@@ -822,5 +985,46 @@ actor SRTMProcessor {
     let region: TerrainRegion
     let outputFile: URL
     let tileCount: Int
+  }
+
+  /// Result of a single tile's parse-and-compress operation.
+  private struct CompressedTile: Sendable {
+    let index: Int
+    let latitude: Int
+    let longitude: Int
+    /// LZFSE-compressed tile data, or nil if parsing/compression failed.
+    let compressedData: Data?
+    /// Uncompressed size in bytes (0 for void tiles).
+    let uncompressedLength: UInt32
+    let isVoid: Bool
+    let error: Error?
+  }
+
+  /// Tile index information for a single compressed tile.
+  private struct TileIndexInfo {
+    let latitude: Int
+    let longitude: Int
+    let dataOffset: UInt64
+    let compressedLength: UInt32
+    let uncompressedLength: UInt32
+  }
+
+  /// Result of the parse-compress-write pipeline for all tiles in a region.
+  private struct CompressedWriteResult {
+    let indexEntries: [TileIndexInfo]
+    let stats: CompressionStats
+  }
+
+  /// Statistics about per-tile LZFSE compression for a region.
+  private struct CompressionStats {
+    var voidTiles: Int = 0
+    var failedTiles: Int = 0
+    var totalUncompressedBytes: Int = 0
+    var totalCompressedBytes: Int = 0
+
+    var compressionRatio: Double {
+      guard totalUncompressedBytes > 0 else { return 0 }
+      return Double(totalCompressedBytes) / Double(totalUncompressedBytes)
+    }
   }
 }

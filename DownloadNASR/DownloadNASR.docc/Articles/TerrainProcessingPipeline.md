@@ -6,7 +6,7 @@ How terrain data is downloaded, processed, and distributed.
 
 The terrain processing pipeline downloads SRTM elevation data, combines it into optimized regional files, and uploads to CloudFlare R2 for distribution. This build-time tool generates the terrain files that `TerrainService` loads at runtime.
 
-The pipeline processes ~14,000 individual 1×1 degree tiles into 11 regional files, with LZMA compression reducing total size from ~40 GB to ~3 GB.
+The pipeline processes ~14,000 individual 1×1 degree tiles into 11 regional files. Each tile is individually compressed with LZFSE, then the regional files are LZMA-compressed for download, reducing total download size from ~40 GB (raw) to ~3 GB.
 
 ## Data Sources
 
@@ -77,21 +77,34 @@ Downloaded tiles are parsed to extract elevation data:
 
 SRTM1 data (3601×3601) is downsampled to SRTM3 resolution (1201×1201) using 3×3 block averaging. This reduces file sizes by 9× while maintaining adequate resolution for departure obstacle analysis (~90m).
 
-### 4. Combine into Regional Binary
+### 4. Per-Tile LZFSE Compression
 
-All tiles for a region are combined into a single binary file with:
+Each tile's elevation data is individually compressed using LZFSE (Apple's Compression framework):
 
-- 20-byte header (magic, version, resolution, tile count, bounding box)
-- Tile index (16 bytes per tile: coordinates + offset + length)
-- Contiguous elevation data
+- **Void tile detection**: Tiles where all 1,442,401 samples are -32768 (ocean) are stored with zero length, writing no data to the file. This eliminates ~40-50% of tile data for regions with significant ocean coverage.
+- **LZFSE compression**: Non-void tiles are compressed with LZFSE, typically achieving 60-70% compression ratio on land tiles. Elevation data compresses well due to spatial correlation between adjacent samples.
+- **Variable-size tiles**: Unlike v2 (where all tiles were the same size), v3 tiles have variable compressed sizes. The tile index records each tile's actual compressed and uncompressed lengths.
+
+Expected compression results for North America (~6,700 tiles):
+- ~40-50% void tiles (ocean) → 0 bytes each
+- ~50-60% land tiles → ~30-40% of original size
+- **Overall: ~19 GB uncompressed → ~5-6 GB with LZFSE**
+
+### 5. Combine into Regional Binary
+
+All tiles for a region are combined into a single v3 binary file with:
+
+- 20-byte header (magic, version 3, resolution, tile count, bounding box)
+- Tile index (20 bytes per tile: coordinates + offset + compressed length + uncompressed length)
+- Contiguous LZFSE-compressed tile data (variable size per tile)
 
 The file format uses little-endian byte order (native to Apple platforms) for efficient on-demand access via `pread`.
 
-### 5. LZMA Compression
+### 6. LZMA Compression
 
-The combined binary is compressed using LZMA, achieving ~12× compression:
+The combined v3 binary is further compressed using LZMA for download distribution. LZMA compression on top of LZFSE still achieves meaningful additional compression, since LZFSE is a lightweight algorithm that leaves room for LZMA to find further patterns.
 
-### 6. Generate Manifest
+### 7. Generate Manifest
 
 A JSON manifest is generated containing:
 
@@ -110,7 +123,7 @@ A JSON manifest is generated containing:
 }
 ```
 
-### 7. Upload to R2
+### 8. Upload to R2
 
 Compressed files and manifest are uploaded to CloudFlare R2 for CDN distribution. The app downloads terrain data from this URL at runtime.
 
@@ -118,10 +131,11 @@ Compressed files and manifest are uploaded to CloudFlare R2 for CDN distribution
 
 The output binary format is documented in detail in the SF50 Shared framework's Digital Elevation Model article. Key points:
 
-- **Version 2**: Uses 64-bit file offsets for large regions
+- **Version 3**: Per-tile LZFSE compression with 64-bit file offsets
 - **Resolution**: 1201 samples per tile side (SRTM3)
 - **Byte order**: Little-endian (native to Apple platforms)
-- **Compression**: LZMA (decompressed at runtime before use)
+- **On-disk compression**: LZFSE per tile (decompressed on demand at runtime)
+- **Download compression**: LZMA on top of v3 (decompressed once after download)
 
 ## Key Components
 

@@ -20,7 +20,7 @@ Terrain data is stored in a custom binary format optimized for mobile devices. F
 | Offset | Type | Description |
 |--------|------|-------------|
 | 0 | 4 bytes | Magic: `SRTM` (ASCII) |
-| 4 | UInt16 | Version (1 or 2) |
+| 4 | UInt16 | Version (1, 2, or 3) |
 | 6 | UInt16 | Resolution (samples per tile side, e.g., 1201) |
 | 8 | UInt32 | Tile count |
 | 12 | Int16 | Minimum latitude |
@@ -50,13 +50,30 @@ Following the header is an index entry for each tile. Entry size depends on file
 
 Version 2 uses 64-bit offsets to support files larger than 4 GB.
 
+**Version 3 (20 bytes per entry):**
+| Offset | Type | Description |
+|--------|------|-------------|
+| 0 | Int16 | Tile latitude (SW corner) |
+| 2 | Int16 | Tile longitude (SW corner) |
+| 4 | UInt64 | Data offset from file start |
+| 12 | UInt32 | Compressed length in bytes |
+| 16 | UInt32 | Uncompressed length in bytes |
+
+Version 3 adds per-tile LZFSE compression. Each tile's elevation data is independently compressed, enabling on-demand decompression without loading the entire file into memory.
+
 ### Tile Data
 
-Each tile contains elevation samples as signed 16-bit integers (Int16) in meters. Data is arranged row-major from north to south, with the first sample at the northwest corner.
+**Version 1/2:** Each tile contains elevation samples as signed 16-bit integers (Int16) in meters, stored uncompressed. Data is arranged row-major from north to south, with the first sample at the northwest corner.
 
-For SRTM3 resolution (1201×1201 samples), each tile covers 1×1 degree and contains 1,442,401 samples (2,884,802 bytes).
+**Version 3:** Each tile's Int16 elevation data is compressed with LZFSE (Apple's Compression framework). Tiles are decompressed individually on demand into a small LRU cache (~30 MB / 10 tiles).
+
+For SRTM3 resolution (1201×1201 samples), each uncompressed tile contains 1,442,401 samples (2,884,802 bytes). With LZFSE compression, land tiles typically compress to 30-40% of their original size.
+
+### Void Tile Optimization (v3)
 
 The void/no-data sentinel value is **-32768**. This indicates ocean, lakes, or areas where radar data was unavailable.
+
+In v3 files, tiles where all samples are void (pure ocean) are stored with `compressedLength = 0` and `uncompressedLength = 0`, with no data written to the file. On read, any coordinate in such a tile returns the void value. This eliminates ~40-50% of tile data for regions with significant ocean coverage.
 
 ## Regions
 
@@ -100,11 +117,13 @@ if let elevation = await service.elevation(at: coordinate) {
 
 `MappedTerrainTile` provides on-demand file access for O(1) coordinate lookups. Rather than loading the entire file into memory, it opens a file descriptor at initialization and reads individual elevation samples via `pread` (POSIX positional read). Only the header and tile index (~100 KB) are held in memory.
 
+For v3 files, tile data is LZFSE-compressed on disk. On first access, a tile is decompressed into an LRU cache (up to ~30 MB / 10 tiles). Subsequent reads from the same tile are served directly from the cache. Since terrain profile queries are spatially localized (typically touching 1-3 tiles), the cache hit rate is very high after the first query in a tile.
+
 This enables:
 - Fast random access to any coordinate
-- Minimal memory footprint regardless of file size (regional files can exceed 18 GB)
+- Minimal memory footprint regardless of file size
 - Bilinear interpolation for sub-sample precision
-- Thread-safe concurrent queries (`pread` is inherently thread-safe)
+- Thread-safe concurrent queries (cache protected by `OSAllocatedUnfairLock`)
 
 ### TerrainRegion
 
