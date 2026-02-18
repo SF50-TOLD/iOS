@@ -39,6 +39,11 @@ actor R2Uploader {
   private let logger: Logger
   private let client: R2Client
   private let uploadManager: MultipartUploadManager
+  private let byteCountFormatter: ByteCountFormatter = {
+    let formatter = ByteCountFormatter()
+    formatter.countStyle = .file
+    return formatter
+  }()
 
   // MARK: - Initializers
 
@@ -81,7 +86,7 @@ actor R2Uploader {
   ) async throws {
     let fileSize =
       try FileManager.default.attributesOfItem(atPath: localURL.path)[.size] as? Int64 ?? 0
-    logger.info("Uploading \(key) (\(formatBytes(Int(fileSize)))) to R2…")
+    logger.info("Uploading \(key) (\(byteCountFormatter.string(fromByteCount: fileSize))) to R2…")
 
     do {
       if fileSize <= Self.partSize {
@@ -97,7 +102,9 @@ actor R2Uploader {
         await onProgress?(1.0)
       } else {
         // Large file: use multipart upload
-        logger.debug("Using multipart upload for \(formatBytes(Int(fileSize))) file")
+        logger.debug(
+          "Using multipart upload for \(byteCountFormatter.string(fromByteCount: fileSize)) file"
+        )
         _ = try await uploadManager.upload(
           bucket: config.bucketName,
           key: key,
@@ -115,12 +122,6 @@ actor R2Uploader {
       logger.error("R2 upload failed: \(error)")
       throw R2Error.uploadFailed(localURL.lastPathComponent, statusCode: nil)
     }
-  }
-
-  private func formatBytes(_ bytes: Int) -> String {
-    let formatter = ByteCountFormatter()
-    formatter.countStyle = .file
-    return formatter.string(fromByteCount: Int64(bytes))
   }
 
   // MARK: - Nested Types

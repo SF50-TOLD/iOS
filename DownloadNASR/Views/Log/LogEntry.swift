@@ -2,6 +2,12 @@ import Foundation
 import Logging
 
 struct LogEntry: Identifiable, Sendable {
+  private static let timestampFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "HH:mm:ss"
+    return formatter
+  }()
+
   let id = UUID()
   let timestamp: Date
   let level: Logger.Level
@@ -10,9 +16,7 @@ struct LogEntry: Identifiable, Sendable {
   let metadata: [String: String]?
 
   var formattedTimestamp: String {
-    let formatter = DateFormatter()
-    formatter.dateFormat = "HH:mm:ss"
-    return formatter.string(from: timestamp)
+    Self.timestampFormatter.string(from: timestamp)
   }
 
   var levelString: String {

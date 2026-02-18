@@ -41,6 +41,13 @@ struct NOTAMTimeBadge: View {
     case warning(timeInterval: TimeInterval)
     case future(timeInterval: TimeInterval)
 
+    nonisolated(unsafe) private static let relativeDateFormatter: RelativeDateTimeFormatter = {
+      let formatter = RelativeDateTimeFormatter()
+      formatter.unitsStyle = .abbreviated
+      formatter.formattingContext = .standalone
+      return formatter
+    }()
+
     var foregroundColor: Color {
       switch self {
         case .expired: return .gray
@@ -74,12 +81,8 @@ struct NOTAMTimeBadge: View {
     }
 
     private static func formatTimeInterval(_ interval: TimeInterval) -> String {
-      let formatter = RelativeDateTimeFormatter()
-      formatter.unitsStyle = .abbreviated
-      formatter.formattingContext = .standalone
-
       let futureDate = Date().addingTimeInterval(interval)
-      return formatter.localizedString(for: futureDate, relativeTo: Date())
+      return relativeDateFormatter.localizedString(for: futureDate, relativeTo: Date())
     }
   }
 }

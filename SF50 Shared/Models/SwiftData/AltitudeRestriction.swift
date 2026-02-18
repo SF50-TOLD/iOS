@@ -22,6 +22,13 @@ public enum AltitudeRestriction: Sendable, Hashable {
   /// Must cross between minimum and maximum altitudes
   case between(min: Measurement<UnitLength>, max: Measurement<UnitLength>)
 
+  nonisolated(unsafe) private static let measurementFormatter: MeasurementFormatter = {
+    let formatter = MeasurementFormatter()
+    formatter.unitOptions = .providedUnit
+    formatter.numberFormatter.maximumFractionDigits = 0
+    return formatter
+  }()
+
   /// Raw type string for persistence.
   var type: String {
     switch self {
@@ -54,9 +61,7 @@ public enum AltitudeRestriction: Sendable, Hashable {
 
   /// Human-readable description of the altitude restriction.
   public var description: String {
-    let formatter = MeasurementFormatter()
-    formatter.unitOptions = .providedUnit
-    formatter.numberFormatter.maximumFractionDigits = 0
+    let formatter = Self.measurementFormatter
 
     switch self {
       case .at(let altitude):

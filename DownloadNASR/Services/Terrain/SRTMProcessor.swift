@@ -102,6 +102,14 @@ actor SRTMProcessor {
   /// Callback invoked for each log entry.
   var onLog: (@MainActor @Sendable (LogEntry) -> Void)?
 
+  private let byteCountFormatter: ByteCountFormatter = {
+    let formatter = ByteCountFormatter()
+    formatter.countStyle = .file
+    return formatter
+  }()
+
+  private let iso8601Formatter = ISO8601DateFormatter()
+
   /// URL session for downloads (cached to avoid creating new sessions per request).
   private let urlSession: URLSession = {
     let config = URLSessionConfiguration.default
@@ -614,7 +622,8 @@ actor SRTMProcessor {
       level: .info,
       message: """
         LZFSE compression for \(region.displayName): \(stats.voidTiles) void tiles, \
-        \(formatBytes(stats.totalUncompressedBytes)) → \(formatBytes(stats.totalCompressedBytes)) \
+        \(byteCountFormatter.string(fromByteCount: Int64(stats.totalUncompressedBytes))) → \
+        \(byteCountFormatter.string(fromByteCount: Int64(stats.totalCompressedBytes))) \
         (\(String(format: "%.1f%%", stats.compressionRatio * 100)))
         """
     )
@@ -675,8 +684,10 @@ actor SRTMProcessor {
     await reportLog(
       level: .notice,
       message: """
-        Compressed \(region.displayName): \(formatBytes(uncompressedSize)) → \
-        \(formatBytes(compressedSize)) (\(String(format: "%.1f", ratio))%)
+        Compressed \(region.displayName): \
+        \(byteCountFormatter.string(fromByteCount: Int64(uncompressedSize))) → \
+        \(byteCountFormatter.string(fromByteCount: Int64(compressedSize))) \
+        (\(String(format: "%.1f", ratio))%)
         """
     )
 
@@ -884,7 +895,7 @@ actor SRTMProcessor {
 
     var manifest: [String: Any] = [
       "version": 2,
-      "generatedAt": ISO8601DateFormatter().string(from: Date())
+      "generatedAt": iso8601Formatter.string(from: Date())
     ]
 
     if let baseURL {
@@ -968,14 +979,6 @@ actor SRTMProcessor {
         await onUploadError(error)
       }
     }
-  }
-
-  // MARK: - Helpers
-
-  private func formatBytes(_ bytes: Int) -> String {
-    let formatter = ByteCountFormatter()
-    formatter.countStyle = .file
-    return formatter.string(fromByteCount: Int64(bytes))
   }
 
   // MARK: - Nested Types
