@@ -3,6 +3,7 @@ import SwiftUI
 /// Status indicator for a terrain region download.
 struct RegionStatusView: View {
   let status: TerrainDataLoaderViewModel.RegionDownloadStatus
+  let regionCode: String
   let onDownload: () -> Void
   let onRedownload: () -> Void
 
@@ -12,6 +13,7 @@ struct RegionStatusView: View {
         Image(systemName: "checkmark.circle.fill")
           .foregroundStyle(.green)
           .accessibilityLabel(Text("Downloaded"))
+          .accessibilityIdentifier("terrainDownloaded-\(regionCode)")
 
       case .corrupted:
         HStack {
@@ -28,6 +30,7 @@ struct RegionStatusView: View {
           .buttonStyle(.bordered)
           .foregroundStyle(.primary)
           .controlSize(.small)
+          .accessibilityIdentifier("terrainDownload-\(regionCode)")
 
       case .downloading(let progress):
         if let progress {
@@ -44,23 +47,33 @@ struct RegionStatusView: View {
 #Preview {
   List {
     LabeledContent("Available") {
-      RegionStatusView(status: .available, onDownload: {}, onRedownload: {})
+      RegionStatusView(status: .available, regionCode: "na", onDownload: {}, onRedownload: {})
     }
 
     LabeledContent("Corrupted") {
-      RegionStatusView(status: .corrupted, onDownload: {}, onRedownload: {})
+      RegionStatusView(status: .corrupted, regionCode: "na", onDownload: {}, onRedownload: {})
     }
 
     LabeledContent("Not Downloaded") {
-      RegionStatusView(status: .notDownloaded, onDownload: {}, onRedownload: {})
+      RegionStatusView(status: .notDownloaded, regionCode: "eu", onDownload: {}, onRedownload: {})
     }
 
     LabeledContent("Downloading (Indeterminate)") {
-      RegionStatusView(status: .downloading(progress: nil), onDownload: {}, onRedownload: {})
+      RegionStatusView(
+        status: .downloading(progress: nil),
+        regionCode: "as",
+        onDownload: {},
+        onRedownload: {}
+      )
     }
 
     LabeledContent("Downloading (45%)") {
-      RegionStatusView(status: .downloading(progress: 0.45), onDownload: {}, onRedownload: {})
+      RegionStatusView(
+        status: .downloading(progress: 0.45),
+        regionCode: "sa",
+        onDownload: {},
+        onRedownload: {}
+      )
     }
   }
 }

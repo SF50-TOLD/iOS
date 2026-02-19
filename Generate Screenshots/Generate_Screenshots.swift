@@ -78,6 +78,35 @@ final class Generate_Screenshots: XCTestCase {
       }
     }
 
+    // Download NA terrain data
+    app.tapTab("Settings")
+    waitForNavigation()
+
+    // Terrain link may be below the fold — scroll to find it
+    let terrainLink = app.collectionViews.firstMatch.makeVisible(
+      element: app.buttons["terrainNavigationLink"]
+    )
+    XCTAssertNotNil(terrainLink, "Terrain navigation link should be accessible")
+    terrainLink!.tap()
+    waitForNavigation()
+
+    // Tap Download for North America (skip if already downloaded)
+    let naDownloadButton = app.buttons["terrainDownload-na"]
+    if naDownloadButton.waitForExistence(timeout: 5) {
+      naDownloadButton.tap()
+
+      // Wait for download to complete (can take 20+ minutes on erased simulators)
+      let naDownloadedCheckmark = app.images["terrainDownloaded-na"]
+      XCTAssertTrue(
+        naDownloadedCheckmark.waitForExistence(timeout: 1800),
+        "North America terrain should finish downloading"
+      )
+    }
+
+    // Navigate back to Takeoff tab
+    app.tapTab("Takeoff")
+    waitForNavigation()
+
     // Configure takeoff parameters
     let payloadField = app.textFields["payloadField"].firstMatch
     XCTAssertTrue(payloadField.waitForExistence(timeout: 5), "Payload field should be accessible")

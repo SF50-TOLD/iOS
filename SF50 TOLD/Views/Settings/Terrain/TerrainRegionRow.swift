@@ -11,7 +11,12 @@ struct TerrainRegionRow: View {
   var body: some View {
     LabeledContent(
       content: {
-        RegionStatusView(status: status, onDownload: onDownload, onRedownload: onRedownload)
+        RegionStatusView(
+          status: status,
+          regionCode: region.rawValue,
+          onDownload: onDownload,
+          onRedownload: onRedownload
+        )
       },
       label: {
         VStack(alignment: .leading) {
