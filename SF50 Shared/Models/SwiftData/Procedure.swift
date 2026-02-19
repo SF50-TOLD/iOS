@@ -115,6 +115,15 @@ public final class Procedure {
   public func isPlottable(forRunway runway: String) -> Bool {
     let legs = composedLegs(forRunway: runway)
     guard !legs.isEmpty else { return false }
+
+    // Check for vectoring gaps: a non-intercept heading leg followed by
+    // courseToFix means ATC must vector the aircraft onto the course.
+    for i in 0..<(legs.count - 1) {
+      if legs[i].legType.isNonInterceptHeading && legs[i + 1].legType.isCourseToFix {
+        return false
+      }
+    }
+
     return legs.enumerated().allSatisfy { index, leg in
       leg.legType.isPlottable
         && (!leg.legType.isTerminalOnly || index == legs.count - 1)

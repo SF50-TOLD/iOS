@@ -102,6 +102,29 @@ extension LegType {
     }
   }
 
+  /// Whether this is a heading-based leg that does not establish a course intercept.
+  ///
+  /// After these legs the aircraft is at a position but not on any specific course,
+  /// so a following `courseToFix` implies ATC radar vectoring.
+  public var isNonInterceptHeading: Bool {
+    switch self {
+      case .headingToAltitude, .headingToDME, .headingToRadial:
+        return true
+      default:
+        return false
+    }
+  }
+
+  /// Whether this is a course-to-fix leg type.
+  public var isCourseToFix: Bool {
+    switch self {
+      case .courseToFix:
+        return true
+      default:
+        return false
+    }
+  }
+
   /// Creates a `LegType` from its codable representation.
   ///
   /// Converts raw `Double` values (degrees for angles, NM for distances)
