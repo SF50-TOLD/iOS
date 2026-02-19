@@ -25,6 +25,9 @@ public struct AirportDataCodable: Codable, Sendable {
   /// Data source cycle information with effective and expiration dates.
   public let cycles: DataCycles
 
+  /// Backwards-compatible NASR cycle for older app versions that decode `nasrCycle`.
+  public let nasrCycle: NASRCycleCodable?
+
   /// Date when OurAirports data was last updated
   public let ourAirportsLastUpdated: Date?
 
@@ -39,12 +42,14 @@ public struct AirportDataCodable: Codable, Sendable {
 
   public init(
     cycles: DataCycles,
+    nasrCycle: NASRCycleCodable? = nil,
     ourAirportsLastUpdated: Date?,
     airports: [AirportCodable],
     obstacles: [ObstacleCodable],
     navaids: [NavaidCodable]? = nil
   ) {
     self.cycles = cycles
+    self.nasrCycle = nasrCycle
     self.ourAirportsLastUpdated = ourAirportsLastUpdated
     self.airports = airports
     self.obstacles = obstacles
@@ -399,6 +404,22 @@ public struct AirportDataCodable: Codable, Sendable {
   }
 
   // MARK: - Cycle Information
+
+  /// Backwards-compatible representation of a NASR cycle.
+  ///
+  /// Mirrors `SwiftNASR.Cycle`'s encoding format so that older app versions
+  /// (which expect a `nasrCycle` key) can decode the data correctly.
+  public struct NASRCycleCodable: Codable, Sendable {
+    public let year: UInt
+    public let month: UInt8
+    public let day: UInt8
+
+    public init(year: UInt, month: UInt8, day: UInt8) {
+      self.year = year
+      self.month = month
+      self.day = day
+    }
+  }
 
   /**
    * Container for all data source cycle information.

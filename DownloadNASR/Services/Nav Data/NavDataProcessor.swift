@@ -150,6 +150,7 @@ struct NavDataProcessor {
     // Create combined codable data structure with airports, obstacles, and navaids
     let codableData = AirportDataCodable(
       cycles: cycles,
+      nasrCycle: .init(year: cycle.year, month: cycle.month, day: cycle.day),
       ourAirportsLastUpdated: loadedData.ourAirportsLastUpdated,
       airports: loadedData.airports,
       obstacles: loadedData.obstacles,

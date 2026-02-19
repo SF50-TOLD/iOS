@@ -624,8 +624,9 @@ struct CIFPProcessor {
         .atToAtOrBelow(let lower, let upper),
         .atToAtOrAbove(let lower, let upper),
         .atOrBelowToAtOrAbove(let lower, let upper):
-        guard let minFeet = lower.feetValue, let maxFeet = upper.feetValue else { return nil }
-        return .between(min: minFeet, max: maxFeet)
+        guard let feet1 = lower.feetValue, let feet2 = upper.feetValue else { return nil }
+        // ARINC 424 altitude ordering varies by descriptor; normalize so min < max
+        return .between(min: Swift.min(feet1, feet2), max: Swift.max(feet1, feet2))
 
       case .glideSlopeIntercept, .glidePathIntercept:
         // These are approach-specific, not relevant for departure procedures
