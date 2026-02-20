@@ -29,6 +29,8 @@ struct NOTAMBadge: View {
         Image(systemName: "pencil")
           .accessibilityLabel("Configured NOTAMs")
         Text("\(localCount, format: .number)")
+          .contentTransition(.numericText())
+          .animation(.default, value: localCount)
 
         // Only show download count if we've attempted to fetch
         if hasAttemptedFetch {
@@ -36,6 +38,8 @@ struct NOTAMBadge: View {
             .accessibilityLabel("Downloaded NOTAMs")
             .padding(.leading, 6)
           Text("\(downloadedCount, format: .number)")
+            .contentTransition(.numericText())
+            .animation(.default, value: downloadedCount)
         }
       }
     }

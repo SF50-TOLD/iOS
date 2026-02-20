@@ -42,6 +42,7 @@ struct VxClimbView: View {
           displayValue: { Text($0.asGradient, format: .gradient).fontWeight(.semibold) },
           displayUncertainty: { Text("±\($0.asGradient, format: .gradient)") }
         )
+        .animation(.default, value: performance.takeoffClimbGradient)
       },
       label: {
         Text("\(vxText) Climb Gradient")
@@ -68,6 +69,7 @@ struct VxClimbView: View {
           displayValue: { Text($0, format: .rateOfClimb).fontWeight(.semibold) },
           displayUncertainty: { Text("±\($0, format: .rateOfClimb)") }
         )
+        .animation(.default, value: performance.takeoffClimbRate)
       },
       label: {
         Text("\(vxText) Climb Rate")

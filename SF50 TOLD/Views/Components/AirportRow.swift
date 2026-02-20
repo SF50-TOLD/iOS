@@ -34,6 +34,8 @@ struct AirportRow: View {
             favoriteAirports.insert(airport.recordID)
           }
         }
+        .contentTransition(.symbolEffect(.replace))
+        .animation(.default, value: isFavorite)
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("Toggle favorite")
         .accessibilityIdentifier("airportFaveButton")

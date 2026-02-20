@@ -54,6 +54,7 @@ public struct WindComponents: View {
             .foregroundStyle(.green)
             .accessibilityLabel("headwind")
           Text(headwind.converted(to: speedUnit).value.magnitude, format: .speed)
+            .contentTransition(.numericText())
             .fixedSize(horizontal: true, vertical: false)
             .foregroundStyle(.primary)
             .accessibilityIdentifier("headwind")
@@ -64,6 +65,7 @@ public struct WindComponents: View {
             .foregroundStyle(.red)
             .accessibilityLabel("tailwind")
           Text(headwind.converted(to: speedUnit).value.magnitude, format: .speed)
+            .contentTransition(.numericText())
             .foregroundStyle(exceedsTailwindLimits ? .red : .primary)
             .fixedSize(horizontal: true, vertical: false)
             .accessibilityIdentifier("headwind")
@@ -75,6 +77,7 @@ public struct WindComponents: View {
             .foregroundStyle(.gray)
             .accessibilityLabel("left crosswind")
           Text(crosswind.converted(to: speedUnit).value.magnitude, format: .speed)
+            .contentTransition(.numericText())
             .foregroundStyle(exceedsCrosswindLimits ? .red : .primary)
             .fixedSize(horizontal: true, vertical: false)
             .accessibilityIdentifier("crosswind")
@@ -85,12 +88,15 @@ public struct WindComponents: View {
             .foregroundStyle(.gray)
             .accessibilityLabel("right crosswind")
           Text(crosswind.converted(to: speedUnit).value.magnitude, format: .speed)
+            .contentTransition(.numericText())
             .foregroundStyle(exceedsCrosswindLimits ? .red : .primary)
             .fixedSize(horizontal: true, vertical: false)
             .accessibilityIdentifier("crosswind")
         }
       }
     }
+    .animation(.default, value: headwind)
+    .animation(.default, value: crosswind)
   }
 
   public init(

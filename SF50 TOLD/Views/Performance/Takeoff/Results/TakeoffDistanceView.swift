@@ -20,6 +20,7 @@ struct TakeoffDistanceView: View {
           },
           displayUncertainty: { Text("±\($0.converted(to: runwayLengthUnit), format: .length)") }
         )
+        .animation(.default, value: performance.takeoffDistance)
         .accessibilityIdentifier("takeoffDistanceValue")
       },
       label: {

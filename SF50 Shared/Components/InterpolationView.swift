@@ -83,6 +83,7 @@ public struct InterpolationView<ValueType, Content: View>: View {
             .bold()
       }
     }
+    .contentTransition(.numericText())
   }
 
   private init(

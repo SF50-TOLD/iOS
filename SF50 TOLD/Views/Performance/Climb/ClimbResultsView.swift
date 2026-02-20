@@ -48,6 +48,7 @@ struct ClimbResultsView: View {
               .accessibilityIdentifier("climbSpeedValue")
             }
           )
+          .animation(.default, value: performance.climbMach)
         } else {
           // Standard IAS display
           InterpolationView(
@@ -58,6 +59,7 @@ struct ClimbResultsView: View {
                 .accessibilityIdentifier("climbSpeedValue")
             }
           )
+          .animation(.default, value: performance.climbSpeed)
         }
       }
       .frame(maxWidth: .infinity)
@@ -78,6 +80,7 @@ struct ClimbResultsView: View {
                 .accessibilityIdentifier("climbRateValue")
             }
           )
+          .animation(.default, value: performance.climbRate)
         }
 
         VStack {
@@ -94,6 +97,7 @@ struct ClimbResultsView: View {
                 .accessibilityIdentifier("climbGradientValue")
             }
           )
+          .animation(.default, value: performance.climbGradient)
         }
       }
       .frame(maxWidth: .infinity)

@@ -19,6 +19,7 @@ struct LandingDistanceView: View {
           },
           displayUncertainty: { Text("±\($0.converted(to: runwayLengthUnit), format: .length)") }
         )
+        .animation(.default, value: performance.landingDistance)
         .accessibilityIdentifier("landingDistanceValue")
       },
       label: {

@@ -19,6 +19,7 @@ struct TakeoffGroundRunView: View {
         },
         displayUncertainty: { Text("±\($0.converted(to: runwayLengthUnit), format: .length)") }
       )
+      .animation(.default, value: performance.takeoffRun)
       .accessibilityIdentifier("takeoffGroundRunValue")
     }
   }
