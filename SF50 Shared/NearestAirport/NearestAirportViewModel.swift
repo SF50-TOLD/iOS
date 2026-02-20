@@ -51,11 +51,14 @@ public class NearestAirportViewModel {
   /// Location service provider
   private let streamer: any LocationStreamer
 
-  /// Reusable model context for airport queries
-  private let context: ModelContext
+  /// SwiftData container for airport queries
+  private let container: ModelContainer
 
   /// Background task for location updates
   private var updateTask: Task<Void, Never>?
+
+  /// Background task for airport fetch
+  private var fetchTask: Task<Void, Never>?
 
   /**
    * Creates a view model with the specified data container and location streamer.
@@ -66,7 +69,7 @@ public class NearestAirportViewModel {
    */
   public init(container: ModelContainer, locationStreamer: any LocationStreamer) {
     self.streamer = locationStreamer
-    self.context = ModelContext(container)
+    self.container = container
 
     updateTask = Task {
       await streamer.start()
@@ -86,26 +89,17 @@ public class NearestAirportViewModel {
   }
 
   private func updateAirports() {
-    do {
-      guard let predicate = makePredicate() else {
-        airports = []
-        return
-      }
-      let descriptor = FetchDescriptor(predicate: predicate)
-      let unsortedAirports = try context.fetch(descriptor)
-
-      airports = sort(airports: unsortedAirports)
-    } catch {
-      SentrySDK.capture(error: error)
-      self.error = error
+    guard let location else {
+      airports = []
+      return
     }
-  }
 
-  private func makePredicate() -> Predicate<Airport>? {
-    guard let location else { return nil }
+    let capturedLocation = location
+    let container = self.container
 
-    let lat = location.coordinate.latitude
-    let lon = location.coordinate.longitude
+    // Build predicate bounds on main thread (cheap math)
+    let lat = capturedLocation.coordinate.latitude
+    let lon = capturedLocation.coordinate.longitude
 
     let latDelta = Self.searchRadius / 60.0
     let clampedMinLat = max(-90.0, lat - latDelta)
@@ -121,27 +115,49 @@ public class NearestAirportViewModel {
     if minLon < -180.0 { minLon += 360.0 }
     if maxLon > 180.0 { maxLon -= 360.0 }
 
-    if minLon < maxLon {
-      // Normal case: no wrap-around
-      return #Predicate { airport in
-        airport._latitude >= clampedMinLat && airport._latitude <= clampedMaxLat
-          && airport._longitude >= minLon && airport._longitude <= maxLon
+    let wrapAround = minLon >= maxLon
+
+    fetchTask?.cancel()
+    fetchTask = Task.detached {
+      do {
+        let context = ModelContext(container)
+
+        let predicate: Predicate<Airport>
+        if wrapAround {
+          // Wrap-around case: split longitude range
+          predicate = #Predicate { airport in
+            airport._latitude >= clampedMinLat && airport._latitude <= clampedMaxLat
+              && (airport._longitude >= minLon || airport._longitude <= maxLon)
+          }
+        } else {
+          // Normal case: no wrap-around
+          predicate = #Predicate { airport in
+            airport._latitude >= clampedMinLat && airport._latitude <= clampedMaxLat
+              && airport._longitude >= minLon && airport._longitude <= maxLon
+          }
+        }
+
+        let descriptor = FetchDescriptor(predicate: predicate)
+        let unsortedAirports = try context.fetch(descriptor)
+
+        let sorted =
+          unsortedAirports
+          .map { ($0, capturedLocation.distance(from: $0.location)) }
+          .sorted { $0.1 < $1.1 }
+          .prefix(10)
+          .map(\.0)
+
+        guard !Task.isCancelled else { return }
+        await MainActor.run {
+          self.airports = sorted
+        }
+      } catch {
+        guard !Task.isCancelled else { return }
+        await MainActor.run {
+          SentrySDK.capture(error: error)
+          self.error = error
+        }
       }
     }
-    // Wrap-around case: split longitude range
-    return #Predicate { airport in
-      airport._latitude >= clampedMinLat && airport._latitude <= clampedMaxLat
-        && (airport._longitude >= minLon || airport._longitude <= maxLon)
-    }
-  }
-
-  private func sort(airports: [Airport]) -> [Airport] {
-    guard let location else { return airports }
-    return
-      airports
-      .map { ($0, location.distance(from: $0.location)) }
-      .sorted { $0.1 < $1.1 }
-      .prefix(10)
-      .map(\.0)
   }
 }
