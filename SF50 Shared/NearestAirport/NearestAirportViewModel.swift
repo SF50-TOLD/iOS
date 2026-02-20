@@ -51,8 +51,8 @@ public class NearestAirportViewModel {
   /// Location service provider
   private let streamer: any LocationStreamer
 
-  /// SwiftData container for airport queries
-  private let container: ModelContainer
+  /// Reusable model context for airport queries
+  private let context: ModelContext
 
   /// Background task for location updates
   private var updateTask: Task<Void, Never>?
@@ -66,7 +66,7 @@ public class NearestAirportViewModel {
    */
   public init(container: ModelContainer, locationStreamer: any LocationStreamer) {
     self.streamer = locationStreamer
-    self.container = container
+    self.context = ModelContext(container)
 
     updateTask = Task {
       await streamer.start()
@@ -87,8 +87,6 @@ public class NearestAirportViewModel {
 
   private func updateAirports() {
     do {
-      let context = ModelContext(container)
-
       guard let predicate = makePredicate() else {
         airports = []
         return
