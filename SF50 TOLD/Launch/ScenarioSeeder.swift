@@ -1,10 +1,16 @@
 import Defaults
+import os
 import SF50_Shared
 import Sentry
 import SwiftData
 
 @MainActor
 struct ScenarioSeeder {
+  private static let logger = Logger(
+    subsystem: "codes.tim.SF50-TOLD",
+    category: "ScenarioSeeder"
+  )
+
   let container: ModelContainer
 
   func seedDefaultScenariosIfNeeded() {
@@ -35,8 +41,7 @@ struct ScenarioSeeder {
         )
       }
 
-      // Log error but don't crash - scenarios are not critical for app function
-      print("Failed to seed default scenarios: \(error)")
+      Self.logger.error("Failed to seed default scenarios: \(error.localizedDescription)")
     }
   }
 }
