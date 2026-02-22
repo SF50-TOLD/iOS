@@ -100,12 +100,7 @@ struct SF50_TOLDApp: App {
       options.dsn =
         "https://18ccb9d2342467fafcaebcc33cc676e5@o4510156629475328.ingest.us.sentry.io/4510161674502144"
 
-      #if targetEnvironment(simulator)
-        // Disable debug logging in simulator
-        options.debug = false
-      #else
-        options.debug = true  // Enabled debug when first installing is always helpful
-      #endif
+      options.debug = false
 
       // Adds IP for users.
       // For more information, visit: https://docs.sentry.io/platforms/apple/data-management/data-collected/
