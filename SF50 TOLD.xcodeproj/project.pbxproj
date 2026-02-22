@@ -526,8 +526,8 @@
 				0163BC682DDEE9D3008FEE8F /* Resources */,
 				012B1E552DE2F272000D9ADC /* Embed Frameworks */,
 				012837602E5B8BB9002195A0 /* Embed Foundation Extensions */,
-				CC70812E05EB4C6A9C28744E /* Upload Debug Symbols to Sentry */,
 				01714CB22F2451D9003DADCF /* Embed ExtensionKit Extensions */,
+				CC70812E05EB4C6A9C28744E /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
