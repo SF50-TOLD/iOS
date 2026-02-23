@@ -160,8 +160,6 @@ final class Generate_Screenshots: XCTestCase {
     runwaySelector!.tap()
     waitForNavigation()
 
-    snapshot("03-runway-selection")
-
     // Select runway 33
     let takeoffRunwayRow = app.buttons["runwayRow-33"].firstMatch
     XCTAssertTrue(takeoffRunwayRow.waitForExistence(timeout: 2), "Runway 33 should appear")
@@ -181,8 +179,7 @@ final class Generate_Screenshots: XCTestCase {
     weatherSelector!.tap()
     waitForNavigation()
 
-    // Screenshot the weather view with download option
-    snapshot("04-weather-download")
+    snapshot("10-weather")
 
     // Go back from weather
     app.navigationBars.buttons.element(boundBy: 0).tap()
@@ -210,7 +207,7 @@ final class Generate_Screenshots: XCTestCase {
       "Takeoff distance should be displayed"
     )
 
-    snapshot("05-takeoff-results")
+    snapshot("03-takeoff-results")
 
     // Generate takeoff report
     let takeoffReportButton = app.collectionViews.firstMatch.makeVisible(
@@ -219,7 +216,7 @@ final class Generate_Screenshots: XCTestCase {
     XCTAssertNotNil(takeoffReportButton, "Generate takeoff report button should be accessible")
     takeoffReportButton!.tap()
 
-    snapshot("06-takeoff-report")
+    snapshot("04-takeoff-report")
 
     // Close the report sheet by swiping down from top
     let sheet = app.otherElements.containing(.webView, identifier: nil).firstMatch
@@ -252,7 +249,7 @@ final class Generate_Screenshots: XCTestCase {
       _ = terrainChart.waitForExistence(timeout: 30)
 
       Thread.sleep(forTimeInterval: 2.0)
-      snapshot("06a-climb-profile")
+      snapshot("05-climb-profile")
 
       // Navigate back
       app.navigationBars.buttons.element(boundBy: 0).tap()
@@ -327,7 +324,7 @@ final class Generate_Screenshots: XCTestCase {
     app.scrollToTop()
     Thread.sleep(forTimeInterval: 0.5)
 
-    snapshot("07-landing-params")
+    snapshot("06-landing-params")
 
     // Verify landing distance is displayed
     let landingDistance = app.staticTexts["landingDistanceValue"]
@@ -346,7 +343,7 @@ final class Generate_Screenshots: XCTestCase {
       "Landing distance should be displayed"
     )
 
-    snapshot("08-landing-results")
+    snapshot("07-landing-results")
 
     // Show landing map view
     let showLandingMapButton = collectionView.makeVisible(
@@ -363,7 +360,7 @@ final class Generate_Screenshots: XCTestCase {
     // Wait for map to render
     Thread.sleep(forTimeInterval: 2.0)
 
-    snapshot("08a-landing-map")
+    snapshot("08-landing-map")
 
     // Go back from map view
     let mapBackButton = app.navigationBars.buttons.element(boundBy: 0)
@@ -371,61 +368,10 @@ final class Generate_Screenshots: XCTestCase {
     mapBackButton.tap()
     waitForNavigation()
 
-    // Generate landing report
-    let landingReportButton = collectionView.makeVisible(
-      element: app.buttons["generateLandingReportButton"]
-    )
-    XCTAssertNotNil(landingReportButton, "Generate landing report button should be accessible")
-    landingReportButton!.tap()
-
-    Thread.sleep(forTimeInterval: 1.0)
-    snapshot("09-landing-report")
-
-    // Close the report sheet by swiping down
-    let landingSheet = app.otherElements.containing(.webView, identifier: nil).firstMatch
-    if landingSheet.exists {
-      // Swipe down to dismiss
-      let start = landingSheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1))
-      let end = landingSheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
-      start.press(forDuration: 0.1, thenDragTo: end)
-    }
-
-    // Show go-around profile
-    let showGoAroundButton = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["showGoAroundProfileButton"]
-    )
-    if let showGoAroundButton, showGoAroundButton.isEnabled {
-      showGoAroundButton.tap()
-      waitForNavigation()
-
-      // Wait for terrain chart to render
-      let goAroundNavBar = app.navigationBars["Go-Around Profile"]
-      XCTAssertTrue(
-        goAroundNavBar.waitForExistence(timeout: 30),
-        "Go-Around Profile nav bar should appear"
-      )
-
-      let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
-      _ = terrainChart.waitForExistence(timeout: 30)
-
-      Thread.sleep(forTimeInterval: 2.0)
-      snapshot("09a-go-around-profile")
-
-      // Navigate back
-      app.navigationBars.buttons.element(boundBy: 0).tap()
-      waitForNavigation()
-    }
-
     // Navigate to Climb tab
     app.tapTab("Climb")
     waitForNavigation()
 
-    snapshot("10-climb")
-
-    // Navigate to Settings tab
-    app.tapTab("Settings")
-    waitForNavigation()
-
-    snapshot("11-settings")
+    snapshot("09-climb")
   }
 }

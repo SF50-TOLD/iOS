@@ -87,8 +87,7 @@ final class SF50_TOLDUITests: XCTestCase {
     completeInitialSetup(app: app, emptyWeight: "4550")
 
     // Navigate to Takeoff tab
-    let takeoffTab = app.tabBars.buttons["Takeoff"]
-    if !takeoffTab.isSelected {
+    if !app.tabButton("Takeoff").isSelected {
       app.tapTab("Takeoff")
     }
 
@@ -104,7 +103,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select airport
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -136,7 +135,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select runway
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -153,11 +152,12 @@ final class SF50_TOLDUITests: XCTestCase {
     // Set custom weather - scroll to top first since view may be scrolled down after runway selection
     app.scrollToTop()
     let weatherSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["weatherSelector"]
+      element: app.descendants(matching: .any)["weatherSelector"].firstMatch
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
     weatherSelector!.tap()
     waitForNavigation()
+    app.ensureWeatherPickerISA()
 
     // Set wind direction
     let windDirectionField = app.collectionViews.firstMatch.makeVisible(
@@ -263,7 +263,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select airport
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -295,7 +295,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select runway
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -312,11 +312,12 @@ final class SF50_TOLDUITests: XCTestCase {
     // Set custom weather - scroll to top first since view may be scrolled down after runway selection
     app.scrollToTop()
     let weatherSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["weatherSelector"]
+      element: app.descendants(matching: .any)["weatherSelector"].firstMatch
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
     weatherSelector!.tap()
     waitForNavigation()
+    app.ensureWeatherPickerISA()
 
     // Set wind direction
     let windDirectionField = app.collectionViews.firstMatch.makeVisible(
@@ -394,8 +395,7 @@ final class SF50_TOLDUITests: XCTestCase {
     completeInitialSetup(app: app, emptyWeight: "4550")
 
     // Navigate to Takeoff tab
-    let takeoffTab = app.tabBars.buttons["Takeoff"]
-    if !takeoffTab.isSelected {
+    if !app.tabButton("Takeoff").isSelected {
       app.tapTab("Takeoff")
     }
 
@@ -411,7 +411,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select airport (use SQL this time)
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -443,7 +443,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select runway
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -459,11 +459,12 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Set custom weather for deterministic results
     let weatherSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["weatherSelector"]
+      element: app.descendants(matching: .any)["weatherSelector"].firstMatch
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
     weatherSelector!.tap()
     waitForNavigation()
+    app.ensureWeatherPickerISA()
 
     // Set wind direction
     let windDirectionField = app.collectionViews.firstMatch.makeVisible(
@@ -552,8 +553,7 @@ final class SF50_TOLDUITests: XCTestCase {
     completeInitialSetup(app: app, emptyWeight: "4550")
 
     // Navigate to Takeoff tab
-    let takeoffTab = app.tabBars.buttons["Takeoff"]
-    if !takeoffTab.isSelected {
+    if !app.tabButton("Takeoff").isSelected {
       app.tapTab("Takeoff")
     }
 
@@ -566,7 +566,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select airport and runway (OAK 28R)
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -586,7 +586,7 @@ final class SF50_TOLDUITests: XCTestCase {
     waitForNavigation()
 
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -737,14 +737,13 @@ final class SF50_TOLDUITests: XCTestCase {
     completeInitialSetup(app: app, emptyWeight: "4550")
 
     // Navigate to Takeoff tab
-    let takeoffTab = app.tabBars.buttons["Takeoff"]
-    if !takeoffTab.isSelected {
+    if !app.tabButton("Takeoff").isSelected {
       app.tapTab("Takeoff")
     }
 
     // Open airport picker
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
     airportSelector!.tap()
@@ -898,7 +897,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select airport and runway
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -918,7 +917,7 @@ final class SF50_TOLDUITests: XCTestCase {
     waitForNavigation()
 
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -929,11 +928,12 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Set custom weather for deterministic results
     let weatherSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["weatherSelector"]
+      element: app.descendants(matching: .any)["weatherSelector"].firstMatch
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
     weatherSelector!.tap()
     waitForNavigation()
+    app.ensureWeatherPickerISA()
 
     // Set wind direction
     let windDirectionField = app.collectionViews.firstMatch.makeVisible(
@@ -976,7 +976,7 @@ final class SF50_TOLDUITests: XCTestCase {
     let baselineDistance = extractNumericValue(from: landingDistance.label)
 
     // Open NOTAMs - need to scroll to find it
-    let notamButton = app.buttons["NOTAMsSelector"]
+    let notamButton = app.descendants(matching: .any)["NOTAMsSelector"].firstMatch
 
     // Scroll down multiple times to find the NOTAM selector
     var attempts = 0
@@ -1031,7 +1031,7 @@ final class SF50_TOLDUITests: XCTestCase {
     }
 
     // Verify NOTAM count increased
-    let notamButtonAfter = app.buttons["NOTAMsSelector"]
+    let notamButtonAfter = app.descendants(matching: .any)["NOTAMsSelector"].firstMatch
     _ = app.collectionViews.firstMatch.makeVisible(element: notamButtonAfter)
 
     // The button label should include a configured NOTAM count of 1
@@ -1041,7 +1041,7 @@ final class SF50_TOLDUITests: XCTestCase {
     )
 
     // Clear NOTAMs
-    let notamButton2 = app.buttons["NOTAMsSelector"]
+    let notamButton2 = app.descendants(matching: .any)["NOTAMsSelector"].firstMatch
 
     // Scroll down to find the NOTAM selector again
     var attempts2 = 0
@@ -1089,8 +1089,7 @@ final class SF50_TOLDUITests: XCTestCase {
     completeInitialSetup(app: app, emptyWeight: "4550")
 
     // Set up basic takeoff calculation
-    let takeoffTab = app.tabBars.buttons["Takeoff"]
-    if !takeoffTab.isSelected {
+    if !app.tabButton("Takeoff").isSelected {
       app.tapTab("Takeoff")
     }
 
@@ -1102,7 +1101,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select airport and runway
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -1122,7 +1121,7 @@ final class SF50_TOLDUITests: XCTestCase {
     waitForNavigation()
 
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -1133,11 +1132,12 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Set custom weather for deterministic results
     let weatherSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["weatherSelector"]
+      element: app.descendants(matching: .any)["weatherSelector"].firstMatch
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
     weatherSelector!.tap()
     waitForNavigation()
+    app.ensureWeatherPickerISA()
 
     // Set wind direction
     let windDirectionField = app.collectionViews.firstMatch.makeVisible(
@@ -1198,16 +1198,16 @@ final class SF50_TOLDUITests: XCTestCase {
       app.navigationBars.firstMatch.tap()
     }
 
-    // Return to Takeoff tab - wait for tab bar to be ready
-    let takeoffTabButton = app.tabBars.buttons["Takeoff"]
+    // Return to Takeoff tab
+    let takeoffTabButton = app.tabButton("Takeoff")
     XCTAssertTrue(
       takeoffTabButton.waitForExistence(timeout: 2),
-      "Takeoff tab button should exist in tab bar"
+      "Takeoff tab button should exist"
     )
     takeoffTabButton.tap()
     waitForNavigation()
 
-    // Verify we're actually on the Takeoff tab by checking for tab bar selection
+    // Verify we're actually on the Takeoff tab by checking for tab selection
     XCTAssertTrue(takeoffTabButton.isSelected, "Should be on Takeoff tab")
 
     // Re-query the takeoff distance element after tab switch
@@ -1267,7 +1267,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select airport and runway
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -1287,7 +1287,7 @@ final class SF50_TOLDUITests: XCTestCase {
     waitForNavigation()
 
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -1298,11 +1298,12 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Set custom weather for deterministic results
     let weatherSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["weatherSelector"]
+      element: app.descendants(matching: .any)["weatherSelector"].firstMatch
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
     weatherSelector!.tap()
     waitForNavigation()
+    app.ensureWeatherPickerISA()
 
     // Set wind direction
     let windDirectionField = app.collectionViews.firstMatch.makeVisible(
@@ -1515,8 +1516,7 @@ final class SF50_TOLDUITests: XCTestCase {
     completeInitialSetup(app: app, emptyWeight: "4550")
 
     // Navigate to Takeoff tab
-    let takeoffTab = app.tabBars.buttons["Takeoff"]
-    if !takeoffTab.isSelected {
+    if !app.tabButton("Takeoff").isSelected {
       app.tapTab("Takeoff")
     }
 
@@ -1529,7 +1529,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select OAK airport
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -1549,7 +1549,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select runway 28R
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -1606,7 +1606,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select OAK airport
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -1626,7 +1626,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select runway 28R
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["runwaySelector"]
+      element: app.descendants(matching: .any)["runwaySelector"].firstMatch
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
@@ -1728,8 +1728,7 @@ final class SF50_TOLDUITests: XCTestCase {
     completeInitialSetup(app: app, emptyWeight: "3000")
 
     // Navigate to Takeoff tab
-    let takeoffTab = app.tabBars.buttons["Takeoff"]
-    if !takeoffTab.isSelected {
+    if !app.tabButton("Takeoff").isSelected {
       app.tapTab("Takeoff")
     }
 
@@ -1742,7 +1741,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select high elevation airport
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 
@@ -1763,7 +1762,7 @@ final class SF50_TOLDUITests: XCTestCase {
       waitForNavigation()
 
       let runwaySelector = app.collectionViews.firstMatch.makeVisible(
-        element: app.buttons["runwaySelector"]
+        element: app.descendants(matching: .any)["runwaySelector"].firstMatch
       )
       XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
       runwaySelector!.tap()
@@ -1778,11 +1777,12 @@ final class SF50_TOLDUITests: XCTestCase {
 
       // Set extreme hot temperature
       let weatherSelector = app.collectionViews.firstMatch.makeVisible(
-        element: app.buttons["weatherSelector"]
+        element: app.descendants(matching: .any)["weatherSelector"].firstMatch
       )
       XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
       weatherSelector!.tap()
       waitForNavigation()
+      app.ensureWeatherPickerISA()
 
       let tempField = app.collectionViews.firstMatch.makeVisible(
         element: app.textFields["tempField"]
@@ -1837,7 +1837,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // Select an airport to see its local time
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
-      element: app.buttons["airportSelector"]
+      element: app.descendants(matching: .any)["airportSelector"].firstMatch
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
 

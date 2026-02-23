@@ -61,15 +61,17 @@ extension XCUIApplication {
     for bar in springboardApp.statusBars.allElementsBoundByIndex { bar.tap() }
   }
 
-  // Tap tab by label (works on both iPhone tab bar and iPad top tabs)
+  /// Finds a tab button by label, checking both the standard tab bar (iPhone) and
+  /// the floating tab bar (iPad) which doesn't expose a `TabBar` element.
+  func tabButton(_ label: String) -> XCUIElement {
+    let tabBarButton = tabBars.buttons[label]
+    if tabBarButton.exists { return tabBarButton }
+    return buttons[label].firstMatch
+  }
+
+  // Tap tab by label (works on both iPhone tab bar and iPad floating tabs)
   func tapTab(_ label: String) {
-    // Try tab bar first (iPhone)
-    if tabBars.buttons[label].exists {
-      tabBars.buttons[label].tap()
-    } else {
-      // Fall back to direct button (iPad) - use firstMatch to handle duplicates
-      buttons[label].firstMatch.tap()
-    }
+    tabButton(label).tap()
   }
 }
 
@@ -94,6 +96,39 @@ extension XCUIElement {
 // No-op placeholder for navigation timing - rely on waitForExistence instead
 func waitForNavigation() {
   // Intentionally empty - navigation timing is handled by waitForExistence calls
+}
+
+extension XCUIApplication {
+  /// Cancels any in-progress weather loading, then reopens the picker for a fresh start.
+  ///
+  /// Call this immediately after opening the weather picker (`weatherSelector.tap()`).
+  /// When weather is actively loading, this cancels it (resetting to ISA) so the form
+  /// fields start from known defaults. When weather has already loaded, the form keeps
+  /// its METAR values but gets a fresh `.onAppear` cycle.
+  @MainActor
+  func ensureWeatherPickerISA() {
+    let cancelButton = buttons["cancelWeatherUpdateButton"]
+
+    // If weather is currently loading, cancel it to get ISA
+    if cancelButton.waitForExistence(timeout: 5) {
+      cancelButton.tap()
+    }
+
+    // Wait for form to be ready
+    _ = textFields["windDirectionField"].waitForExistence(timeout: 5)
+
+    // Navigate back to destroy the form's cached @State
+    navigationBars.buttons.element(boundBy: 0).tap()
+    waitForNavigation()
+
+    // Reopen the weather picker — .onAppear gets a fresh read of conditions
+    scrollToTop()
+    let weatherSelector = collectionViews.firstMatch.makeVisible(
+      element: descendants(matching: .any)["weatherSelector"].firstMatch
+    )
+    weatherSelector?.tap()
+    waitForNavigation()
+  }
 }
 
 // Helper to tap element and ensure navigation occurred
