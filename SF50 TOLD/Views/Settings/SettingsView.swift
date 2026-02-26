@@ -81,7 +81,7 @@ struct SettingsView: View {
             NumberField(
               "Factor",
               value: $safetyFactorDry,
-              format: .number.rounded(increment: 0.1),
+              format: .number.precision(.fractionLength(0...2)),
               minimum: 1.0
             )
             .multilineTextAlignment(.trailing)
@@ -91,7 +91,7 @@ struct SettingsView: View {
             NumberField(
               "Factor",
               value: $safetyFactorWet,
-              format: .number.rounded(increment: 0.1),
+              format: .number.precision(.fractionLength(0...2)),
               minimum: 1.0
             )
             .multilineTextAlignment(.trailing)
