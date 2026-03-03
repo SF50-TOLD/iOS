@@ -136,8 +136,7 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
     }
 
     do {
-      let safetyFactor =
-        notam?.contamination != nil ? Defaults[.safetyFactorWet] : Defaults[.safetyFactorDry]
+      let safetyFactor = Defaults[.safetyFactorDry]
       let results = try calculationService.calculateTakeoff(
         for: model,
         safetyFactor: safetyFactor

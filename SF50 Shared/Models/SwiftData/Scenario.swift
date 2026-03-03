@@ -20,6 +20,9 @@ public final class Scenario {
   private var _deltaWeight: Double  // pounds
   private var _contaminationDepth: Double?  // meters
 
+  /// Runway Condition Code (1–6) for RwyCC contamination type
+  public var rwyCC: UInt8?
+
   /// Flap setting override (raw value of FlapSetting)
   public var flapSettingOverride: String?
 
@@ -176,7 +179,7 @@ public final class Scenario {
   /// Converts the contamination override to the Contamination enum type
   public func getContaminationOverride() -> Contamination? {
     guard let contaminationType = contaminationOverride else { return nil }
-    return Contamination(type: contaminationType, depth: _contaminationDepth)
+    return Contamination(type: contaminationType, depth: _contaminationDepth, rwyCC: rwyCC)
   }
 
   /// Converts the flap setting override to the FlapSetting enum type

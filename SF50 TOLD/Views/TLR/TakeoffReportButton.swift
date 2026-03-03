@@ -86,9 +86,7 @@ struct TakeoffReportButton: View {
           conditions = performance.conditions,
           weight = performance.weight,
           flapSetting = performance.flapSetting,
-          safetyFactor =
-            runwaySnapshot.notam?.contamination != nil
-            ? Defaults[.safetyFactorWet] : Defaults[.safetyFactorDry],
+          safetyFactor = Defaults[.safetyFactorDry],
           useRegressionModel = Defaults[.useRegressionModel],
           aircraftType = Defaults.Keys.aircraftType,
           emptyWeight = Defaults[.emptyWeight],

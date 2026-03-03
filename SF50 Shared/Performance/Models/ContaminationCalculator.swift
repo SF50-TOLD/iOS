@@ -64,6 +64,10 @@ final class ContaminationCalculator {
   private let slushData: DataTable?
   private let waterData: DataTable?
 
+  /// RwyCC landing distance factors (AC 91-79B) keyed by code (1-6)
+  private let rwyCCLDFGrooved: [UInt8: Double]
+  private let rwyCCLDFSmooth: [UInt8: Double]
+
   /// Whether this calculator uses tabular data (vs regression formulas)
   private var usesTabularData: Bool { waterData != nil }
 
@@ -83,6 +87,8 @@ final class ContaminationCalculator {
     self.drySnowData = loader.loadContaminationDrySnowData()
     self.slushData = loader.loadContaminationSlushData()
     self.waterData = loader.loadContaminationWaterData()
+    self.rwyCCLDFGrooved = Self.loadRwyCCFactors(filename: "rwycc_ldf_grooved")
+    self.rwyCCLDFSmooth = Self.loadRwyCCFactors(filename: "rwycc_ldf_smooth")
   }
 
   /// Creates a contamination calculator for regression model (no data tables).
@@ -97,6 +103,8 @@ final class ContaminationCalculator {
     self.drySnowData = nil
     self.slushData = nil
     self.waterData = nil
+    self.rwyCCLDFGrooved = Self.loadRwyCCFactors(filename: "rwycc_ldf_grooved")
+    self.rwyCCLDFSmooth = Self.loadRwyCCFactors(filename: "rwycc_ldf_smooth")
   }
 
   // MARK: - Public Methods
@@ -105,21 +113,84 @@ final class ContaminationCalculator {
   ///
   /// This method applies the appropriate contamination factor based on the type
   /// and the calculator's configuration (tabular vs regression).
+  /// RwyCC contamination does not affect the landing run (it applies to total distance).
   ///
   /// - Parameters:
   ///   - distance: The base landing run distance
   ///   - contamination: The contamination type, or nil for clean runway
+  ///   - isGroovedOrPFC: Whether the runway is grooved or has PFC treatment
   /// - Returns: The adjusted landing run distance with contamination effects
   func landingRunContaminationAddition(
     distance: Value<Double>,
-    contamination: Contamination?
+    contamination: Contamination?,
+    isGroovedOrPFC: Bool
   ) -> Value<Double> {
     guard let contamination else { return distance }
+
+    if case .rwyCC(let rwyCC) = contamination,
+      let ldf = rwyCCLandingDistanceFactor(code: rwyCC, isGroovedPFC: isGroovedOrPFC)
+    {
+      return distance.map { value, unc in (value * ldf, unc.map { $0 * ldf }) }
+    }
 
     if usesTabularData {
       return tabularContamination(distance: distance, contamination: contamination)
     }
     return regressionContamination(distance: distance, contamination: contamination)
+  }
+
+  /// Calculates the contaminated landing distance from base landing distance and run.
+  ///
+  /// This method encapsulates the full contamination adjustment for landing distance,
+  /// handling both RwyCC (landing distance factor) and non-RwyCC (run-increase) paths:
+  ///
+  /// - **RwyCC**: Multiplies the base landing distance by the appropriate LDF.
+  /// - **Non-RwyCC contamination**: Computes the contaminated ground run, then adds the
+  ///   difference (contaminated run - base run) to the base landing distance. This reflects
+  ///   the AFM approach where contamination only affects the ground run, not the air segment.
+  /// - **No contamination**: Returns the base landing distance unchanged.
+  ///
+  /// - Parameters:
+  ///   - landingDistance: The base (dry) landing distance
+  ///   - landingRun: The base (dry) landing ground run
+  ///   - contamination: The contamination type, or nil for clean runway
+  ///   - isGroovedOrPFC: Whether the runway is grooved or has PFC treatment
+  /// - Returns: The contamination-adjusted landing distance
+  func landingDistanceContaminationAddition(
+    landingDistance: Value<Double>,
+    landingRun: Value<Double>,
+    contamination: Contamination?,
+    isGroovedOrPFC: Bool
+  ) -> Value<Double> {
+    guard let contamination else { return landingDistance }
+
+    // RwyCC: multiply total distance by the landing distance factor
+    if case .rwyCC(let rwyCC) = contamination,
+      let ldf = rwyCCLandingDistanceFactor(code: rwyCC, isGroovedPFC: isGroovedOrPFC)
+    {
+      return landingDistance * ldf
+    }
+
+    // Non-RwyCC: contamination only affects the ground run
+    let contaminatedRun = landingRunContaminationAddition(
+      distance: landingRun,
+      contamination: contamination,
+      isGroovedOrPFC: isGroovedOrPFC
+    )
+    let runIncrease = contaminatedRun - landingRun
+    return landingDistance + runIncrease
+  }
+
+  /// Returns the RwyCC landing distance factor for the given code and surface type.
+  ///
+  /// - Parameters:
+  ///   - code: Runway Condition Code (1–6)
+  ///   - isGroovedPFC: Whether the runway is grooved or has PFC treatment
+  /// - Returns: The landing distance factor, or nil if the code is invalid
+  func rwyCCLandingDistanceFactor(code: UInt8, isGroovedPFC: Bool) -> Double? {
+    precondition((1...6).contains(code), "RwyCC must be 1–6")
+    let table = isGroovedPFC ? rwyCCLDFGrooved : rwyCCLDFSmooth
+    return table[code]
   }
 
   // MARK: - Tabular Contamination
@@ -148,6 +219,10 @@ final class ContaminationCalculator {
 
       case .compactSnow:
         return tabularCompactSnowContamination(distance: distance)
+
+      case .rwyCC:
+        // RwyCC is handled at the performance model level via LDF; should not reach here
+        return distance
     }
   }
 
@@ -175,6 +250,10 @@ final class ContaminationCalculator {
 
       case .compactSnow:
         return regressionCompactSnowContamination(distance: distance)
+
+      case .rwyCC:
+        // RwyCC is handled at the performance model level via LDF; should not reach here
+        return distance
     }
   }
 
@@ -353,6 +432,46 @@ final class ContaminationCalculator {
 
       return (newDistance, newUncertainty)
     }
+  }
+}
+
+// MARK: - CSV Loading
+
+extension ContaminationCalculator {
+  /// Loads RwyCC LDF values from a CSV file in the g1/landing data directory.
+  ///
+  /// CSV format: `rwycc,value` (header row, then code-value pairs).
+  /// AC 91-79B factors are aircraft-independent, so always loaded from g1.
+  fileprivate static func loadRwyCCFactors(filename: String) -> [UInt8: Double] {
+    guard
+      let url = Bundle(for: BasePerformanceModel.self).url(
+        forResource: filename,
+        withExtension: "csv",
+        subdirectory: "Data/g1/landing"
+      )
+    else {
+      assertionFailure("Missing RwyCC CSV file: \(filename)")
+      return [:]
+    }
+
+    guard let contents = try? String(contentsOf: url, encoding: .utf8) else {
+      assertionFailure("Could not read RwyCC CSV file: \(filename)")
+      return [:]
+    }
+
+    var factors = [UInt8: Double]()
+    let lines = contents.components(separatedBy: .newlines)
+
+    for line in lines.dropFirst() {  // skip header
+      let components = line.split(separator: ",")
+      guard components.count == 2,
+        let code = UInt8(components[0]),
+        let value = Double(components[1])
+      else { continue }
+      factors[code] = value
+    }
+
+    return factors
   }
 }
 

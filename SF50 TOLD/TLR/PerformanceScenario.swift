@@ -106,14 +106,14 @@ struct PerformanceScenario: Sendable {
     )
 
     // Apply contamination override if present
-    let adjustedRunway =
-      if let contamination = contaminationOverride {
-        runway.withContamination(contamination)
-      } else if isDryOverride {
-        runway.withContamination(nil)  // Force dry runway
-      } else {
-        runway
-      }
+    let adjustedRunway: RunwayInput
+    if let contaminationOverride {
+      adjustedRunway = runway.withContamination(contaminationOverride)
+    } else if isDryOverride {
+      adjustedRunway = runway.withContamination(nil)  // Force dry runway
+    } else {
+      adjustedRunway = runway
+    }
 
     return (conditions, configuration, adjustedRunway)
   }

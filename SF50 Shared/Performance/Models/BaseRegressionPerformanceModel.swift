@@ -179,7 +179,8 @@ class BaseRegressionPerformanceModel: BasePerformanceModel {
   func landingRun_contaminationAddition(distance: Value<Double>) -> Value<Double> {
     contaminationCalculator.landingRunContaminationAddition(
       distance: distance,
-      contamination: notam?.contamination
+      contamination: notam?.contamination,
+      isGroovedOrPFC: runway.isGroovedOrPFC
     )
   }
 }

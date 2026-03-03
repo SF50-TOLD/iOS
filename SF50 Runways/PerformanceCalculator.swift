@@ -185,9 +185,7 @@ class PerformanceCalculator {
 
     for runway in airport.runways {
       let runwaySnapshot = RunwayInput(from: runway, airport: airport)
-      let safetyFactor =
-        runwaySnapshot.notam?.contamination != nil
-        ? Defaults[.safetyFactorWet] : Defaults[.safetyFactorDry]
+      let safetyFactor = Defaults[.safetyFactorDry]
       let model = calculationService.createPerformanceModel(
         conditions: conditions,
         configuration: configuration,

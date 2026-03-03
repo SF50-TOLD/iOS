@@ -68,6 +68,7 @@ struct ScenarioDetailView: View {
         Picker("Contamination", selection: $scenario.contaminationOverride) {
           Text("None").tag(nil as String?)
           Text("Dry").tag("dry" as String?)
+          Text("RwyCC").tag("rwyCC" as String?)
           Text("Water/Slush").tag("waterOrSlush" as String?)
           Text("Slush/Wet Snow").tag("slushOrWetSnow" as String?)
           Text("Dry Snow").tag("drySnow" as String?)
@@ -86,7 +87,11 @@ struct ScenarioDetailView: View {
           }
 
           // Clear depth for non-depth contamination types
-          if newValue != "waterOrSlush" && newValue != "slushOrWetSnow" {
+          if newValue == "rwyCC" {
+            if scenario.rwyCC == nil {
+              scenario.rwyCC = 6
+            }
+          } else if newValue != "waterOrSlush" && newValue != "slushOrWetSnow" {
             scenario.contaminationDepth = nil
           } else if scenario.contaminationDepth == nil {
             // Set default depth for depth-based contamination
@@ -109,6 +114,30 @@ struct ScenarioDetailView: View {
               minimum: .init(value: 0, unit: .inches)
             )
             .accessibilityIdentifier("contaminationDepthField")
+          }
+        }
+
+        if scenario.contaminationOverride == "rwyCC" {
+          VStack {
+            LabeledContent("RwyCC") {
+              Text("\(scenario.rwyCC ?? 6, format: .number)")
+            }
+
+            HStack {
+              Text("1")
+                .foregroundStyle(.secondary)
+              Slider(
+                value: Binding(
+                  get: { Double(scenario.rwyCC ?? 6) },
+                  set: { scenario.rwyCC = max(1, min(6, UInt8($0))) }
+                ),
+                in: 1...6,
+                step: 1
+              )
+              .accessibilityIdentifier("rwyCCSlider")
+              Text("6")
+                .foregroundStyle(.secondary)
+            }
           }
         }
       }

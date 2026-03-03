@@ -27,6 +27,7 @@ public enum ShorteningLocation: String, Codable, CaseIterable, Sendable {
 public final class NOTAM {
   private var _contaminationType: String?
   private var _contaminationDepth: Double  // meters
+  private var _rwyCC: UInt8?
   private var _takeoffDistanceShortening: Double  // meters
   private var _landingDistanceShortening: Double  // meters
   private var _obstacleHeight: Double  // meters
@@ -39,10 +40,11 @@ public final class NOTAM {
 
   /// Runway surface contamination (ice, snow, slush, water)
   public var contamination: Contamination? {
-    get { .init(type: _contaminationType, depth: _contaminationDepth) }
+    get { .init(type: _contaminationType, depth: _contaminationDepth, rwyCC: _rwyCC) }
     set {
       _contaminationType = newValue?.type
       _contaminationDepth = newValue?.depth ?? 0
+      _rwyCC = newValue?.rwyCC
     }
   }
 
@@ -113,6 +115,7 @@ public final class NOTAM {
     self.runway = runway
     _contaminationType = contamination?.type
     _contaminationDepth = contamination?.depth ?? 0
+    _rwyCC = contamination?.rwyCC
     _takeoffDistanceShortening = takeoffDistanceShortening?.converted(to: .meters).value ?? 0
     _takeoffShorteningLocation = takeoffShorteningLocation.rawValue
     _landingDistanceShortening = landingDistanceShortening?.converted(to: .meters).value ?? 0
@@ -158,6 +161,9 @@ public enum Contamination: Sendable, Hashable {
   /// Wet runway surface
   case wetRunway
 
+  /// Runway Condition Code (AC 91-79B) with landing distance factor
+  case rwyCC(UInt8)
+
   /// Raw type string for persistence.
   var type: String {
     switch self {
@@ -166,6 +172,7 @@ public enum Contamination: Sendable, Hashable {
       case .drySnow: ContaminationType.drySnow.rawValue
       case .compactSnow: ContaminationType.compactSnow.rawValue
       case .wetRunway: ContaminationType.wetRunway.rawValue
+      case .rwyCC: ContaminationType.rwyCC.rawValue
     }
   }
 
@@ -174,14 +181,17 @@ public enum Contamination: Sendable, Hashable {
     switch self {
       case .waterOrSlush(let depth): depth.converted(to: .meters).value
       case .slushOrWetSnow(let depth): depth.converted(to: .meters).value
-      case .drySnow: nil
-      case .compactSnow: nil
-      case .wetRunway: nil
+      case .drySnow, .compactSnow, .wetRunway, .rwyCC: nil
     }
   }
 
+  /// Runway Condition Code (1–6) if this is an `.rwyCC` contamination, nil otherwise.
+  var rwyCC: UInt8? {
+    if case .rwyCC(let code) = self { code } else { nil }
+  }
+
   /// Creates contamination from persistence storage values.
-  init?(type: String?, depth: Double?) {
+  init?(type: String?, depth: Double?, rwyCC: UInt8? = nil) {
     guard let type, let typeEnum = ContaminationType(rawValue: type) else { return nil }
 
     switch typeEnum {
@@ -197,6 +207,9 @@ public enum Contamination: Sendable, Hashable {
         self = .compactSnow
       case .wetRunway:
         self = .wetRunway
+      case .rwyCC:
+        guard let rwyCC, (1...6).contains(rwyCC) else { return nil }
+        self = .rwyCC(rwyCC)
     }
   }
 
@@ -212,5 +225,7 @@ public enum Contamination: Sendable, Hashable {
     case compactSnow
     /// Wet runway surface
     case wetRunway
+    /// Runway Condition Code
+    case rwyCC
   }
 }

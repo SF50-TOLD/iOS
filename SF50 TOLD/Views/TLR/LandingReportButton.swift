@@ -86,13 +86,18 @@ struct LandingReportButton: View {
           conditions = performance.conditions,
           weight = performance.weight,
           flapSetting = performance.flapSetting,
-          safetyFactor =
-            runwaySnapshot.notam?.contamination != nil
-            ? Defaults[.safetyFactorWet] : Defaults[.safetyFactorDry],
           useRegressionModel = Defaults[.useRegressionModel],
           aircraftType = Defaults.Keys.aircraftType,
           emptyWeight = Defaults[.emptyWeight],
           date = weather.time
+
+        // LDF already includes safety margin per AC 91-79B; skip user safety factor
+        let safetyFactor: Double =
+          switch runwaySnapshot.notam?.contamination {
+            case .rwyCC: 1.0
+            case .some: Defaults[.safetyFactorWet]
+            case .none: Defaults[.safetyFactorDry]
+          }
 
         // Now run the report generation in the background
         let input = PerformanceInput(

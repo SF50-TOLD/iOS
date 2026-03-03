@@ -158,6 +158,101 @@ extension Value where T: FloatingPoint, T: Comparable {
     }
   }
 
+  /// Adds two values, propagating uncertainty through quadrature (RSS).
+  static func += (lhs: inout Value<T>, rhs: Value<T>) {
+    lhs =
+      switch (lhs, rhs) {
+        case (.value(let lv), .value(let rv)):
+          .value(lv + rv)
+        case (.value(let lv), .valueWithUncertainty(let rv, uncertainty: let ru)):
+          .valueWithUncertainty(lv + rv, uncertainty: ru)
+        case (.valueWithUncertainty(let lv, uncertainty: let lu), .value(let rv)):
+          .valueWithUncertainty(lv + rv, uncertainty: lu)
+        case (
+          .valueWithUncertainty(let lv, uncertainty: let lu),
+          .valueWithUncertainty(let rv, uncertainty: let ru)
+        ):
+          .valueWithUncertainty(lv + rv, uncertainty: addUncertaintiesRSS(lu, ru))
+        case (.invalid, _), (_, .invalid): .invalid
+        case (.notAuthorized, _), (_, .notAuthorized): .notAuthorized
+        case (.notAvailable, _), (_, .notAvailable): .notAvailable
+        case (.offscaleHigh, _), (_, .offscaleHigh): .offscaleHigh
+        case (.offscaleLow, _), (_, .offscaleLow): .offscaleLow
+      }
+  }
+
+  /// Adds a scalar to a value, preserving uncertainty.
+  static func += (lhs: inout Value<T>, rhs: T) {
+    lhs = lhs.map { value, uncertainty in
+      (value + rhs, uncertainty)
+    }
+  }
+
+  /// Adds a value and a scalar, preserving uncertainty.
+  static func + (lhs: Value<T>, rhs: T) -> Value<T> {
+    lhs.map { value, uncertainty in
+      (value + rhs, uncertainty)
+    }
+  }
+
+  /// Subtracts two values, propagating uncertainty through quadrature (RSS).
+  static func -= (lhs: inout Value<T>, rhs: Value<T>) {
+    lhs =
+      switch (lhs, rhs) {
+        case (.value(let lv), .value(let rv)):
+          .value(lv - rv)
+        case (.value(let lv), .valueWithUncertainty(let rv, uncertainty: let ru)):
+          .valueWithUncertainty(lv - rv, uncertainty: ru)
+        case (.valueWithUncertainty(let lv, uncertainty: let lu), .value(let rv)):
+          .valueWithUncertainty(lv - rv, uncertainty: lu)
+        case (
+          .valueWithUncertainty(let lv, uncertainty: let lu),
+          .valueWithUncertainty(let rv, uncertainty: let ru)
+        ):
+          .valueWithUncertainty(lv - rv, uncertainty: addUncertaintiesRSS(lu, ru))
+        case (.invalid, _), (_, .invalid): .invalid
+        case (.notAuthorized, _), (_, .notAuthorized): .notAuthorized
+        case (.notAvailable, _), (_, .notAvailable): .notAvailable
+        case (.offscaleHigh, _), (_, .offscaleHigh): .offscaleHigh
+        case (.offscaleLow, _), (_, .offscaleLow): .offscaleLow
+      }
+  }
+
+  /// Subtracts a scalar from a value, preserving uncertainty.
+  static func -= (lhs: inout Value<T>, rhs: T) {
+    lhs = lhs.map { value, uncertainty in
+      (value - rhs, uncertainty)
+    }
+  }
+
+  /// Subtracts a scalar from a value, preserving uncertainty.
+  static func - (lhs: Value<T>, rhs: T) -> Value<T> {
+    lhs.map { value, uncertainty in
+      (value - rhs, uncertainty)
+    }
+  }
+
+  /// Subtracts two values, propagating uncertainty through quadrature (RSS).
+  static func - (lhs: Value<T>, rhs: Value<T>) -> Value<T> {
+    var result = lhs
+    result -= rhs
+    return result
+  }
+
+  /// Adds two values, propagating uncertainty through quadrature (RSS).
+  static func + (lhs: Value<T>, rhs: Value<T>) -> Value<T> {
+    var result = lhs
+    result += rhs
+    return result
+  }
+
+  // MARK: - Uncertainty Helpers
+
+  /// RSS (root sum of squares) combination for additive uncertainty propagation.
+  private static func addUncertaintiesRSS(_ a: T, _ b: T) -> T {
+    (a * a + b * b).squareRoot()
+  }
+
   private static func addUncertainties(leftValue: T, rightUncertainty: T) -> T {
     abs(leftValue) * rightUncertainty
   }

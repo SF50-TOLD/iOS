@@ -307,6 +307,8 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
         String(localized: "Compact Snow")
       case .wetRunway:
         String(localized: "Wet Runway")
+      case .rwyCC(let rwyCC):
+        String(localized: "RwyCC \(rwyCC, format: .number)")
       case nil:
         String(localized: "Dry")
     }

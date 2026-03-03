@@ -11,6 +11,9 @@ public struct NOTAMInput: Sendable, Equatable {
   /// Depth of contamination on the runway surface
   public let contaminationDepth: Measurement<UnitLength>
 
+  /// Runway Condition Code (1–6) for RwyCC contamination type
+  public let rwyCC: UInt8?
+
   /// Reduction in takeoff distance available
   public let takeoffDistanceShortening: Measurement<UnitLength>
 
@@ -26,7 +29,11 @@ public struct NOTAMInput: Sendable, Equatable {
   /// Parsed contamination enum from type string and depth
   public var contamination: Contamination? {
     guard let type = contaminationType else { return nil }
-    return Contamination(type: type, depth: contaminationDepth.converted(to: .meters).value)
+    return Contamination(
+      type: type,
+      depth: contaminationDepth.converted(to: .meters).value,
+      rwyCC: rwyCC
+    )
   }
 
   /// Creates a snapshot from a SwiftData NOTAM model.
@@ -34,6 +41,7 @@ public struct NOTAMInput: Sendable, Equatable {
   public init(from notam: NOTAM) {
     self.contaminationType = notam.contamination?.type
     self.contaminationDepth = .init(value: notam.contamination?.depth ?? 0, unit: .meters)
+    self.rwyCC = notam.contamination?.rwyCC
     self.takeoffDistanceShortening = notam.takeoffDistanceShortening
     self.landingDistanceShortening = notam.landingDistanceShortening
     self.obstacleHeight = notam.obstacleHeight
@@ -43,6 +51,7 @@ public struct NOTAMInput: Sendable, Equatable {
   public init(
     contaminationType: String?,
     contaminationDepth: Measurement<UnitLength>,
+    rwyCC: UInt8? = nil,
     takeoffDistanceShortening: Measurement<UnitLength>,
     landingDistanceShortening: Measurement<UnitLength>,
     obstacleHeight: Measurement<UnitLength>,
@@ -50,6 +59,7 @@ public struct NOTAMInput: Sendable, Equatable {
   ) {
     self.contaminationType = contaminationType
     self.contaminationDepth = contaminationDepth
+    self.rwyCC = rwyCC
     self.takeoffDistanceShortening = takeoffDistanceShortening
     self.landingDistanceShortening = landingDistanceShortening
     self.obstacleHeight = obstacleHeight
@@ -89,8 +99,14 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
   /// Declared landing distance available (LDA)
   public let landingDistance: Measurement<UnitLength>?
 
+  /// Surface type of the runway
+  public let surfaceType: SurfaceType
+
   /// Whether the runway has a turf surface
-  public let isTurf: Bool
+  public var isTurf: Bool { surfaceType.isTurf }
+
+  /// Whether the runway has a grooved or PFC surface
+  public var isGroovedOrPFC: Bool { surfaceType.isGroovedOrPFC }
 
   /// Active NOTAM snapshot if present
   public let notam: NOTAMInput?
@@ -125,7 +141,7 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     self.takeoffRun = runway.takeoffRun
     self.takeoffDistance = runway.notamedTakeoffDistance
     self.landingDistance = runway.landingDistance
-    self.isTurf = runway.isTurf
+    self.surfaceType = runway.surfaceType
     self.notam = runway.notam.map { NOTAMInput(from: $0) }
     self.airportVariation = airport.variation
     self.thresholdCrossingHeight = runway.thresholdCrossingHeight
@@ -142,7 +158,7 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     takeoffRun: Measurement<UnitLength>?,
     takeoffDistance: Measurement<UnitLength>,
     landingDistance: Measurement<UnitLength>?,
-    isTurf: Bool,
+    surfaceType: SurfaceType = .paved,
     notam: NOTAMInput?,
     airportVariation: Measurement<UnitAngle>,
     thresholdCrossingHeight: Measurement<UnitLength>? = nil,
@@ -157,7 +173,7 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     self.takeoffRun = takeoffRun
     self.takeoffDistance = takeoffDistance
     self.landingDistance = landingDistance
-    self.isTurf = isTurf
+    self.surfaceType = surfaceType
     self.notam = notam
     self.airportVariation = airportVariation
     self.thresholdCrossingHeight = thresholdCrossingHeight
@@ -222,6 +238,7 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
         NOTAMInput(
           contaminationType: contamination?.type,
           contaminationDepth: .init(value: contamination?.depth ?? 0, unit: .meters),
+          rwyCC: contamination?.rwyCC,
           takeoffDistanceShortening: notam.takeoffDistanceShortening,
           landingDistanceShortening: notam.landingDistanceShortening,
           obstacleHeight: notam.obstacleHeight,
@@ -232,6 +249,7 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
         NOTAMInput(
           contaminationType: contamination.type,
           contaminationDepth: .init(value: contamination.depth ?? 0, unit: .meters),
+          rwyCC: contamination.rwyCC,
           takeoffDistanceShortening: .init(value: 0, unit: .meters),
           landingDistanceShortening: .init(value: 0, unit: .meters),
           obstacleHeight: .init(value: 0, unit: .meters),
@@ -250,7 +268,7 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
       takeoffRun: takeoffRun,
       takeoffDistance: takeoffDistance,
       landingDistance: landingDistance,
-      isTurf: isTurf,
+      surfaceType: surfaceType,
       notam: newNotam,
       airportVariation: airportVariation,
       thresholdCrossingHeight: thresholdCrossingHeight,

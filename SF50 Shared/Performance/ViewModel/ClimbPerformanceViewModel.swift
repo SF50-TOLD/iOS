@@ -185,7 +185,6 @@ public final class ClimbPerformanceViewModel {
       takeoffRun: nil,
       takeoffDistance: Measurement(value: 10_000, unit: UnitLength.feet),
       landingDistance: nil,
-      isTurf: false,
       notam: nil,
       airportVariation: Measurement(value: 0, unit: UnitAngle.degrees)
     )
