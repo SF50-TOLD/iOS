@@ -206,8 +206,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     // Observe safety factor changes
     addTask(
       Task {
-        for await _ in Defaults.updates(.safetyFactorDry, .safetyFactorWet) where !Task.isCancelled
-        {
+        for await _ in Defaults.updates(.safetyFactorDry, .safetyFactorWet, .VREFAdditive)
+        where !Task.isCancelled {
           recalculate()
         }
       }

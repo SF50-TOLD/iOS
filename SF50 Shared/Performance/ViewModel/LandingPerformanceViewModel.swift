@@ -134,9 +134,11 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
           case .some: Defaults[.safetyFactorWet]
           case .none: Defaults[.safetyFactorDry]
         }
+      let VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value
       let results = try calculationService.calculateLanding(
         for: model,
-        safetyFactor: safetyFactor
+        safetyFactor: safetyFactor,
+        VREFAdditiveKts: VREFAdditiveKts
       )
       Vref = results.Vref
       landingRun = results.landingRun

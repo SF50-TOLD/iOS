@@ -49,7 +49,8 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
     )
     let results = try performance.calculateLanding(
       for: perfModel,
-      safetyFactor: input.safetyFactor
+      safetyFactor: input.safetyFactor,
+      VREFAdditiveKts: input.VREFAdditiveKts
     )
 
     let landingRun = results.landingRun.map { value, uncertainty in
@@ -109,7 +110,8 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
       )
       let results = try performance.calculateLanding(
         for: model,
-        safetyFactor: input.safetyFactor
+        safetyFactor: input.safetyFactor,
+        VREFAdditiveKts: input.VREFAdditiveKts
       )
 
       // Check AFM limits

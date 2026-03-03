@@ -38,6 +38,9 @@ struct PerformanceInput {
   /// Aircraft empty weight for max weight calculations.
   let emptyWeight: Measurement<UnitMass>
 
+  /// VREF additive in knots for AC 91-79B section 5.2.2 distance adjustment.
+  let VREFAdditiveKts: Double
+
   /// Date/time for the planned operation.
   let date: Date
 
@@ -64,6 +67,7 @@ struct PerformanceInput {
     useRegressionModel: Bool,
     aircraftType: AircraftType,
     emptyWeight: Measurement<UnitMass>,
+    VREFAdditiveKts: Double = 0,
     date: Date
   ) {
     self.airport = airport
@@ -75,6 +79,7 @@ struct PerformanceInput {
     self.useRegressionModel = useRegressionModel
     self.aircraftType = aircraftType
     self.emptyWeight = emptyWeight
+    self.VREFAdditiveKts = VREFAdditiveKts
     self.date = date
   }
 }

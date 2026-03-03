@@ -23,9 +23,12 @@ public protocol PerformanceCalculationService: Sendable {
    * - Parameters:
    *   - model: The performance model configured with conditions, configuration, and runway.
    *   - safetyFactor: A multiplier applied to distance results (e.g., 1.15 for 15% safety margin).
+   *   - VREFAdditiveKts: Additional speed above base VREF in knots. Per AC 91-79B section 5.2.2,
+   *     each 10% increase in VREF adds 20% to landing distance.
    * - Returns: Landing performance results including Vref, run, distance, and go-around capability.
    */
-  func calculateLanding(for model: PerformanceModel, safetyFactor: Double) throws -> LandingResults
+  func calculateLanding(for model: PerformanceModel, safetyFactor: Double, VREFAdditiveKts: Double)
+    throws -> LandingResults
 }
 
 extension Value where T == Double {
@@ -200,14 +203,31 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
     )
   }
 
-  public func calculateLanding(for model: PerformanceModel, safetyFactor: Double) throws
-    -> LandingResults
-  {
-    let landingRun = (model.landingRunFt * safetyFactor).toMeasurement(UnitLength.feet),
-      landingDistance = (model.landingDistanceFt * safetyFactor).toMeasurement(
+  public func calculateLanding(
+    for model: PerformanceModel,
+    safetyFactor: Double,
+    VREFAdditiveKts: Double = 0
+  ) throws -> LandingResults {
+    // Per AC 91-79B section 5.2.2: each 10% increase in VREF adds 20% to landing distance.
+    // Factor = 1 + 2 * (additiveKts / baseVrefKts)
+    let VREFFactor: Double =
+      if VREFAdditiveKts > 0, case .value(let baseVrefKts) = model.VrefKts {
+        1 + 2 * (VREFAdditiveKts / baseVrefKts)
+      } else if VREFAdditiveKts > 0,
+        case .valueWithUncertainty(let baseVrefKts, _) = model.VrefKts
+      {
+        1 + 2 * (VREFAdditiveKts / baseVrefKts)
+      } else {
+        1.0
+      }
+
+    let combinedFactor = safetyFactor * VREFFactor
+
+    let landingRun = (model.landingRunFt * combinedFactor).toMeasurement(UnitLength.feet),
+      landingDistance = (model.landingDistanceFt * combinedFactor).toMeasurement(
         UnitLength.feet
       ),
-      Vref = model.VrefKts.toMeasurement(UnitSpeed.knots),
+      Vref = (model.VrefKts + VREFAdditiveKts).toMeasurement(UnitSpeed.knots),
       meetsGoAroundClimbGradient = model.meetsGoAroundClimbGradient
 
     return LandingResults(

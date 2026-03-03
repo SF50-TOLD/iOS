@@ -89,6 +89,7 @@ struct LandingReportButton: View {
           useRegressionModel = Defaults[.useRegressionModel],
           aircraftType = Defaults.Keys.aircraftType,
           emptyWeight = Defaults[.emptyWeight],
+          VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value,
           date = weather.time
 
         // LDF already includes safety margin per AC 91-79B; skip user safety factor
@@ -110,6 +111,7 @@ struct LandingReportButton: View {
           useRegressionModel: useRegressionModel,
           aircraftType: aircraftType,
           emptyWeight: emptyWeight,
+          VREFAdditiveKts: VREFAdditiveKts,
           date: date
         )
         let generatedHTML = try generateLandingReport(input: input, scenarios: scenarios)

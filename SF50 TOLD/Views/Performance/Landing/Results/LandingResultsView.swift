@@ -1,4 +1,3 @@
-import Defaults
 import SF50_Shared
 import SwiftUI
 
@@ -9,9 +8,13 @@ struct LandingResultsView: View {
   @Default(.useRegressionModel)
   private var useRegressionModel
 
+  @Default(.VREFAdditive)
+  private var VREFAdditive
+
   var body: some View {
     Section("Performance") {
       VREFView()
+      VREFAdditiveView()
       LandingGroundRunView()
       LandingDistanceView()
       GoAroundClimbGradientView()
@@ -25,6 +28,10 @@ struct LandingResultsView: View {
 
       if performance.notam?.contamination != nil {
         ContaminationWarningView()
+      }
+
+      if VREFAdditive.value > 0 {
+        VREFAdditiveWarningView()
       }
     }
   }

@@ -28,6 +28,11 @@ extension Defaults.Keys {
     default: 1.0,
     suite: groupDefaults
   )
+  public static let VREFAdditive = Key<Measurement<UnitSpeed>>(
+    "SF50/3/VREFAdditive",
+    default: .init(value: 0, unit: .knots),
+    suite: groupDefaults
+  )
   public static let updatedThrustSchedule = Key<Bool>(
     "SF50/3/updatedThrustSchedule",
     default: false,
