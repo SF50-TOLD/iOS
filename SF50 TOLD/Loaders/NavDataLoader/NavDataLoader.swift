@@ -270,7 +270,7 @@ actor NavDataLoader {
         takeoffRun: runwayData.takeoffRun.map { .init(value: $0, unit: .meters) },
         takeoffDistance: runwayData.takeoffDistance.map { .init(value: $0, unit: .meters) },
         landingDistance: runwayData.landingDistance.map { .init(value: $0, unit: .meters) },
-        isTurf: runwayData.isTurf,
+        surfaceType: runwayData.decodedSurfaceType,
         thresholdCoordinate: thresholdCoordinate,
         thresholdCrossingHeight: runwayData.thresholdCrossingHeight.map {
           .init(value: $0, unit: .meters)

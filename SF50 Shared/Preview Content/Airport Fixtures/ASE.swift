@@ -27,7 +27,7 @@ extension AirportBuilder {
         takeoffRun: .init(value: 7006, unit: .feet),
         takeoffDistance: .init(value: 7006, unit: .feet),
         landingDistance: .init(value: 7006, unit: .feet),
-        isTurf: false,
+        surfaceType: .grooved,
         thresholdCoordinate: CLLocationCoordinate2D(
           latitude: 39.232174479166666,
           longitude: -106.87315104166667
@@ -48,7 +48,7 @@ extension AirportBuilder {
         takeoffRun: .init(value: 8006, unit: .feet),
         takeoffDistance: .init(value: 8006, unit: .feet),
         landingDistance: .init(value: 7006, unit: .feet),
-        isTurf: false,
+        surfaceType: .grooved,
         thresholdCoordinate: CLLocationCoordinate2D(
           latitude: 39.214153645833335,
           longitude: -106.8645486111111

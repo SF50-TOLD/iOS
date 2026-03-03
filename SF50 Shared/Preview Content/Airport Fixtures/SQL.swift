@@ -28,7 +28,7 @@ extension AirportBuilder {
           takeoffRun: nil,
           takeoffDistance: nil,
           landingDistance: nil,
-          isTurf: false,
+          surfaceType: .paved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.509188368055554,
             longitude: -122.24651041666667
@@ -48,7 +48,7 @@ extension AirportBuilder {
           takeoffRun: nil,
           takeoffDistance: nil,
           landingDistance: nil,
-          isTurf: false,
+          surfaceType: .paved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.51453559027778,
             longitude: -122.25255208333333

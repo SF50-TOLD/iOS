@@ -61,6 +61,19 @@ struct NASRProcessor {
   /// Logger for status messages and errors.
   let logger: Logger
 
+  /// Derives `SurfaceType` from SwiftNASR runway treatment and material data.
+  private static func deriveSurfaceType(from runway: SwiftNASR.Runway) -> SurfaceType {
+    guard runway.isPaved else { return .turf }
+
+    if runway.treatment == .grooved {
+      return .grooved
+    }
+    if runway.treatment == .PFC || runway.materials.contains(.PFC) {
+      return .pfc
+    }
+    return .paved
+  }
+
   /// Downloads and parses FAA NASR airport data.
   /// - Parameters:
   ///   - cycle: The NASR cycle to download.
@@ -343,7 +356,7 @@ struct NASRProcessor {
       takeoffRun: end.TORA?.converted(to: .meters).value,
       takeoffDistance: end.TODA?.converted(to: .meters).value,
       landingDistance: end.LDA?.converted(to: .meters).value,
-      isTurf: !runway.isPaved,
+      surfaceType: Self.deriveSurfaceType(from: runway).rawValue,
       reciprocalName: reciprocalName,
       thresholdLatitude: thresholdLatitude,
       thresholdLongitude: thresholdLongitude,

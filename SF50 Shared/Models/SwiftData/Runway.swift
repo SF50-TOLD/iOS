@@ -2,6 +2,20 @@ import CoreLocation
 import Foundation
 import SwiftData
 
+/// Runway surface type, distinguishing grooved and PFC surfaces for RwyCC factor lookup.
+public enum SurfaceType: String, Codable, CaseIterable, Sendable {
+  case paved
+  case grooved
+  case pfc
+  case turf
+
+  /// Whether this surface type is unpaved (grass/turf)
+  public var isTurf: Bool { self == .turf }
+
+  /// Whether this surface type has grooved or PFC treatment
+  public var isGroovedOrPFC: Bool { self == .grooved || self == .pfc }
+}
+
 /// A runway at an airport with performance-critical dimensions and properties.
 ///
 /// ``Runway`` represents a single runway direction with associated metadata including
@@ -24,8 +38,11 @@ public final class Runway {
   private var _takeoffDistance: Double?  // meters
   private var _landingDistance: Double?  // meters
 
+  /// Runway surface type
+  public var surfaceType: SurfaceType
+
   /// Whether the runway surface is turf (grass) rather than paved
-  public var isTurf: Bool
+  public var isTurf: Bool { surfaceType.isTurf }
 
   private var _thresholdLatitude: Double?  // decimal degrees
   private var _thresholdLongitude: Double?  // decimal degrees
@@ -239,7 +256,7 @@ public final class Runway {
    *   - takeoffDistance: Declared TODA, or `nil` to use full length.
    *   - landingDistance: Declared LDA, or `nil` to use full length.
    *   - width: Runway width, or `nil` if not available.
-   *   - isTurf: Whether the runway is unpaved (grass/turf).
+   *   - surfaceType: Runway surface type (.paved, .grooved, .pfc, or .turf).
    *   - thresholdCoordinate: Threshold location, or `nil` if not available.
    *   - thresholdCrossingHeight: TCH for approach, or `nil` if not available.
    *   - glidepathAngle: Glidepath angle from ILS or PAPI/VASI, or `nil` if not available.
@@ -256,7 +273,7 @@ public final class Runway {
     takeoffRun: Measurement<UnitLength>?,
     takeoffDistance: Measurement<UnitLength>?,
     landingDistance: Measurement<UnitLength>?,
-    isTurf: Bool,
+    surfaceType: SurfaceType,
     thresholdCoordinate: CLLocationCoordinate2D? = nil,
     thresholdCrossingHeight: Measurement<UnitLength>? = nil,
     glidepathAngle: Measurement<UnitAngle>? = nil,
@@ -272,7 +289,7 @@ public final class Runway {
     _takeoffRun = takeoffRun?.converted(to: .meters).value
     _takeoffDistance = takeoffDistance?.converted(to: .meters).value
     _landingDistance = landingDistance?.converted(to: .meters).value
-    self.isTurf = isTurf
+    self.surfaceType = surfaceType
     _thresholdLatitude = thresholdCoordinate?.latitude
     _thresholdLongitude = thresholdCoordinate?.longitude
     _thresholdCrossingHeight = thresholdCrossingHeight?.converted(to: .meters).value

@@ -29,7 +29,7 @@ extension AirportBuilder {
           takeoffRun: .init(value: 10000, unit: .feet),
           takeoffDistance: .init(value: 10000, unit: .feet),
           landingDistance: .init(value: 10000, unit: .feet),
-          isTurf: false,
+          surfaceType: .grooved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.72006076388889,
             longitude: -122.24211805555555
@@ -49,7 +49,7 @@ extension AirportBuilder {
           takeoffRun: .init(value: 10000, unit: .feet),
           takeoffDistance: .init(value: 10000, unit: .feet),
           landingDistance: .init(value: 10000, unit: .feet),
-          isTurf: false,
+          surfaceType: .grooved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.70169270833333,
             longitude: -122.21455729166667
@@ -69,7 +69,7 @@ extension AirportBuilder {
           takeoffRun: .init(value: 6213, unit: .feet),
           takeoffDistance: .init(value: 6213, unit: .feet),
           landingDistance: .init(value: 6213, unit: .feet),
-          isTurf: false,
+          surfaceType: .grooved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.72870659722222,
             longitude: -122.22590277777778
@@ -88,7 +88,7 @@ extension AirportBuilder {
           takeoffRun: .init(value: 6213, unit: .feet),
           takeoffDistance: .init(value: 6213, unit: .feet),
           landingDistance: .init(value: 6213, unit: .feet),
-          isTurf: false,
+          surfaceType: .grooved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.72227430555556,
             longitude: -122.20600694444444
@@ -107,7 +107,7 @@ extension AirportBuilder {
           takeoffRun: .init(value: 5457, unit: .feet),
           takeoffDistance: .init(value: 5457, unit: .feet),
           landingDistance: .init(value: 5336, unit: .feet),
-          isTurf: false,
+          surfaceType: .grooved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.73046875,
             longitude: -122.22217881944445
@@ -127,7 +127,7 @@ extension AirportBuilder {
           takeoffRun: .init(value: 5457, unit: .feet),
           takeoffDistance: .init(value: 5457, unit: .feet),
           landingDistance: .init(value: 5457, unit: .feet),
-          isTurf: false,
+          surfaceType: .grooved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.72481336805556,
             longitude: -122.20470486111111
@@ -146,7 +146,7 @@ extension AirportBuilder {
           takeoffRun: nil,
           takeoffDistance: nil,
           landingDistance: nil,
-          isTurf: false,
+          surfaceType: .paved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.74029079861111,
             longitude: -122.2228125
@@ -163,7 +163,7 @@ extension AirportBuilder {
           takeoffRun: nil,
           takeoffDistance: nil,
           landingDistance: nil,
-          isTurf: false,
+          surfaceType: .paved,
           thresholdCoordinate: CLLocationCoordinate2D(
             latitude: 37.73136284722222,
             longitude: -122.21967013888889

@@ -51,7 +51,7 @@ enum Helper {
     elevation: Double = 0,
     heading: Double = 360,
     slope: Double = 0,
-    isTurf: Bool = false
+    surfaceType: SurfaceType = .paved
   ) -> Runway {
     let airport = Self.createTestAirport(elevation: elevation)
     return Runway(
@@ -63,7 +63,7 @@ enum Helper {
       takeoffRun: nil,
       takeoffDistance: nil,
       landingDistance: nil,
-      isTurf: isTurf,
+      surfaceType: surfaceType,
       airport: airport
     )
   }
@@ -72,13 +72,13 @@ enum Helper {
     elevation: Double = 0,
     heading: Double = 360,
     slope: Double = 0,
-    isTurf: Bool = false
+    surfaceType: SurfaceType = .paved
   ) -> RunwayInput {
     let runway = Self.createTestRunway(
       elevation: elevation,
       heading: heading,
       slope: slope,
-      isTurf: isTurf
+      surfaceType: surfaceType
     )
     return RunwayInput(from: runway, airport: runway.airport)
   }

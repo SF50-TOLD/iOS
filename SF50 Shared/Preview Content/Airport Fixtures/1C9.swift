@@ -23,7 +23,7 @@ extension AirportBuilder {
           takeoffRun: nil,
           takeoffDistance: nil,
           landingDistance: nil,
-          isTurf: true,
+          surfaceType: .turf,
           airport: airport
         ),
         .init(
@@ -35,7 +35,7 @@ extension AirportBuilder {
           takeoffRun: nil,
           takeoffDistance: nil,
           landingDistance: nil,
-          isTurf: true,
+          surfaceType: .turf,
           airport: airport
         )
       ]

@@ -594,8 +594,8 @@ struct RegressionPerformanceModelG1Tests {
     // Test unpaved runway adjustment for regression model
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration()
-    let runwayPaved = Helper.createTestRunway(isTurf: false)
-    let runwayUnpaved = Helper.createTestRunway(isTurf: true)
+    let runwayPaved = Helper.createTestRunway(surfaceType: .paved)
+    let runwayUnpaved = Helper.createTestRunway(surfaceType: .turf)
 
     let modelPaved = RegressionPerformanceModelG1(
       conditions: conditions,

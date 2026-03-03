@@ -164,8 +164,8 @@ public struct AirportDataCodable: Codable, Sendable {
     /// Landing distance available (LDA) in meters
     public let landingDistance: Double?
 
-    /// Whether the runway has a turf (grass) surface
-    public let isTurf: Bool
+    /// Surface type string (e.g., "paved", "grooved", "pfc", "turf")
+    public let surfaceType: String
 
     /// Name of the reciprocal runway (e.g., "10R" for runway "28L")
     public let reciprocalName: String?
@@ -188,6 +188,14 @@ public struct AirportDataCodable: Codable, Sendable {
     /// Displaced threshold distance from runway end in meters (nil if threshold is at runway end)
     public let displacedThresholdDistance: Double?
 
+    /// Decoded surface type from the raw string value
+    public var decodedSurfaceType: SurfaceType {
+      guard let type = SurfaceType(rawValue: surfaceType) else {
+        fatalError("Unknown surface type “\(surfaceType)”")
+      }
+      return type
+    }
+
     public init(
       name: String,
       elevation: Double?,
@@ -197,7 +205,7 @@ public struct AirportDataCodable: Codable, Sendable {
       takeoffRun: Double?,
       takeoffDistance: Double?,
       landingDistance: Double?,
-      isTurf: Bool,
+      surfaceType: String,
       reciprocalName: String?,
       thresholdLatitude: Double?,
       thresholdLongitude: Double?,
@@ -214,7 +222,7 @@ public struct AirportDataCodable: Codable, Sendable {
       self.takeoffRun = takeoffRun
       self.takeoffDistance = takeoffDistance
       self.landingDistance = landingDistance
-      self.isTurf = isTurf
+      self.surfaceType = surfaceType
       self.reciprocalName = reciprocalName
       self.thresholdLatitude = thresholdLatitude
       self.thresholdLongitude = thresholdLongitude
@@ -222,6 +230,71 @@ public struct AirportDataCodable: Codable, Sendable {
       self.thresholdCrossingHeight = thresholdCrossingHeight
       self.glidepathAngle = glidepathAngle
       self.displacedThresholdDistance = displacedThresholdDistance
+    }
+
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      name = try container.decode(String.self, forKey: .name)
+      elevation = try container.decodeIfPresent(Double.self, forKey: .elevation)
+      trueHeading = try container.decode(Double.self, forKey: .trueHeading)
+      gradient = try container.decodeIfPresent(Float.self, forKey: .gradient)
+      length = try container.decode(Double.self, forKey: .length)
+      takeoffRun = try container.decodeIfPresent(Double.self, forKey: .takeoffRun)
+      takeoffDistance = try container.decodeIfPresent(Double.self, forKey: .takeoffDistance)
+      landingDistance = try container.decodeIfPresent(Double.self, forKey: .landingDistance)
+      reciprocalName = try container.decodeIfPresent(String.self, forKey: .reciprocalName)
+      thresholdLatitude = try container.decodeIfPresent(Double.self, forKey: .thresholdLatitude)
+      thresholdLongitude = try container.decodeIfPresent(Double.self, forKey: .thresholdLongitude)
+      width = try container.decodeIfPresent(Double.self, forKey: .width)
+      thresholdCrossingHeight = try container.decodeIfPresent(
+        Double.self,
+        forKey: .thresholdCrossingHeight
+      )
+      glidepathAngle = try container.decodeIfPresent(Double.self, forKey: .glidepathAngle)
+      displacedThresholdDistance = try container.decodeIfPresent(
+        Double.self,
+        forKey: .displacedThresholdDistance
+      )
+
+      // Decode surfaceType if present, else fall back to legacy isTurf field
+      if let raw = try container.decodeIfPresent(String.self, forKey: .surfaceType) {
+        surfaceType = raw
+      } else {
+        let isTurf = try container.decodeIfPresent(Bool.self, forKey: .isTurf) ?? false
+        surfaceType = isTurf ? SurfaceType.turf.rawValue : SurfaceType.paved.rawValue
+      }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(name, forKey: .name)
+      try container.encodeIfPresent(elevation, forKey: .elevation)
+      try container.encode(trueHeading, forKey: .trueHeading)
+      try container.encodeIfPresent(gradient, forKey: .gradient)
+      try container.encode(length, forKey: .length)
+      try container.encodeIfPresent(takeoffRun, forKey: .takeoffRun)
+      try container.encodeIfPresent(takeoffDistance, forKey: .takeoffDistance)
+      try container.encodeIfPresent(landingDistance, forKey: .landingDistance)
+      try container.encode(surfaceType, forKey: .surfaceType)
+      try container.encode(decodedSurfaceType.isTurf, forKey: .isTurf)
+      try container.encodeIfPresent(reciprocalName, forKey: .reciprocalName)
+      try container.encodeIfPresent(thresholdLatitude, forKey: .thresholdLatitude)
+      try container.encodeIfPresent(thresholdLongitude, forKey: .thresholdLongitude)
+      try container.encodeIfPresent(width, forKey: .width)
+      try container.encodeIfPresent(thresholdCrossingHeight, forKey: .thresholdCrossingHeight)
+      try container.encodeIfPresent(glidepathAngle, forKey: .glidepathAngle)
+      try container.encodeIfPresent(
+        displacedThresholdDistance,
+        forKey: .displacedThresholdDistance
+      )
+    }
+
+    private enum CodingKeys: String, CodingKey {
+      case name, elevation, trueHeading, gradient, length
+      case takeoffRun, takeoffDistance, landingDistance
+      case isTurf, surfaceType
+      case reciprocalName, thresholdLatitude, thresholdLongitude
+      case width, thresholdCrossingHeight, glidepathAngle, displacedThresholdDistance
     }
   }
 

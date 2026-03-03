@@ -1,5 +1,6 @@
 import Foundation
 import Logging
+import SF50_Shared
 import TabularData
 
 /// Downloads and parses airport data from the OurAirports database.
@@ -114,7 +115,7 @@ struct OurAirportsLoader {
       }
 
       let surface = row["surface", String.self] ?? ""
-      let isTurf = !isHardSurface(surface)
+      let surfaceType = Self.deriveSurfaceType(surface)
 
       // Skip water runways
       if surface.lowercased().contains("water") {
@@ -138,7 +139,7 @@ struct OurAirportsLoader {
           trueHeading: lowHeading,
           lengthFt: Double(length),
           displacedThresholdFt: lowDisplaced,
-          isTurf: isTurf,
+          surfaceType: surfaceType,
           reciprocalName: row["he_ident", String.self],
           thresholdLatitude: lowLatitude,
           thresholdLongitude: lowLongitude,
@@ -166,7 +167,7 @@ struct OurAirportsLoader {
           trueHeading: highHeading,
           lengthFt: Double(length),
           displacedThresholdFt: highDisplaced,
-          isTurf: isTurf,
+          surfaceType: surfaceType,
           reciprocalName: row["le_ident", String.self],
           thresholdLatitude: highLatitude,
           thresholdLongitude: highLongitude,
@@ -197,6 +198,16 @@ struct OurAirportsLoader {
     if surface == "CON" { return true }
 
     return false
+  }
+
+  /// Derives ``SurfaceType`` from OurAirports surface description string.
+  private static func deriveSurfaceType(_ surface: String) -> SurfaceType {
+    guard isHardSurface(surface) else { return .turf }
+
+    let lowercased = surface.lowercased()
+    if lowercased.contains("groov") { return .grooved }
+    if lowercased.contains("pfc") { return .pfc }
+    return .paved
   }
 
   private static func calculateHeadingFromIdent(_ ident: String) -> Double {
@@ -289,8 +300,8 @@ struct OurRunwayData {
   /// Displaced threshold distance in feet.
   let displacedThresholdFt: Double
 
-  /// Whether the runway has a turf (non-paved) surface.
-  let isTurf: Bool
+  /// Runway surface type.
+  let surfaceType: SurfaceType
 
   /// Name of the reciprocal runway end.
   let reciprocalName: String?

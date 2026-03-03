@@ -775,8 +775,8 @@ struct TabularPerformanceModelG1Tests {
     // Test unpaved runway adjustment
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration()
-    let runwayPaved = Helper.createTestRunway(isTurf: false)
-    let runwayUnpaved = Helper.createTestRunway(isTurf: true)
+    let runwayPaved = Helper.createTestRunway(surfaceType: .paved)
+    let runwayUnpaved = Helper.createTestRunway(surfaceType: .turf)
 
     let modelPaved = TabularPerformanceModelG1(
       conditions: conditions,

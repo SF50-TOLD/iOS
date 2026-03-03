@@ -423,7 +423,7 @@ struct NavDataProcessor {
             takeoffRun: takeoffRun > 0 ? takeoffRun * 0.3048 : nil,
             takeoffDistance: nil,  // Not available in OurAirports
             landingDistance: nil,  // Not available in OurAirports
-            isTurf: runway.isTurf,
+            surfaceType: runway.surfaceType.rawValue,
             reciprocalName: runway.reciprocalName,
             thresholdLatitude: runway.thresholdLatitude,
             thresholdLongitude: runway.thresholdLongitude,
