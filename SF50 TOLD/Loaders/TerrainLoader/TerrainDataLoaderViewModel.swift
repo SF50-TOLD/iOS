@@ -261,7 +261,7 @@ struct TerrainCorruptionError: LocalizedError {
   let regions: Set<TerrainRegion>
 
   var errorDescription: String? {
-    String(localized: "Terrain data couldn\u{2019}t be loaded.")
+    String(localized: "Terrain data couldn’t be loaded.")
   }
 
   var failureReason: String? {
@@ -272,7 +272,7 @@ struct TerrainCorruptionError: LocalizedError {
   var recoverySuggestion: String? {
     String(
       localized:
-        "Go to Settings \u{2192} Terrain Data and tap \u{201C}Re-download\u{201D} to replace the corrupted files."
+        "Go to Settings → Terrain Data and tap “Re-download” to replace the corrupted files."
     )
   }
 }
