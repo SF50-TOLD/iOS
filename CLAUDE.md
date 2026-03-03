@@ -6,7 +6,7 @@
 
 ## Formatting & Linting
 
-- Format all changes with swift-format, and verify all changes with swiftlint.
+- Format all changes with swift format, and verify all changes with swiftlint.
 - Adhere to Swiftlint's `type_contents_order` setting:
 
 ``` yaml

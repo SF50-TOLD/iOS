@@ -146,7 +146,7 @@ Performance data is sourced from:
 #### CI/CD
 
 - **GitHub Actions**: Automated testing on push/PR
-- **Linters**: SwiftLint + swift-format
+- **Linters**: SwiftLint + swift format
 - **Test Plans**: Separate unit and UI test plans
 
 #### Fastlane
