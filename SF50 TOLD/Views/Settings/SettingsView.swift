@@ -3,6 +3,9 @@ import SF50_Shared
 import SwiftUI
 
 struct SettingsView: View {
+  private static let defaultSafetyFactorDry = 1.67
+  private static let defaultSafetyFactorWet = 1.92
+
   @Default(.aircraftTypeSetting)
   private var aircraftTypeSetting
 
@@ -29,6 +32,11 @@ struct SettingsView: View {
 
   @Default(.fuelDensityUnit)
   private var fuelDensityUnit
+
+  private var hasDefaultFactors: Bool {
+    safetyFactorDry == Self.defaultSafetyFactorDry
+      && safetyFactorWet == Self.defaultSafetyFactorWet
+  }
 
   var body: some View {
     NavigationView {
@@ -98,6 +106,15 @@ struct SettingsView: View {
             .accessibilityIdentifier("safetyFactorWetField")
           }
 
+          Button("Use AFM Safety Factors") {
+            safetyFactorDry = Self.defaultSafetyFactorDry
+            safetyFactorWet = Self.defaultSafetyFactorWet
+          }
+          .disabled(hasDefaultFactors)
+          .accessibilityIdentifier("useDefaultFactorsButton")
+        }
+
+        Section {
           NavigationLink("Takeoff/Landing Scenarios…", destination: ScenariosSettingsView())
             .accessibilityIdentifier("scenariosNavigationLink")
         }
