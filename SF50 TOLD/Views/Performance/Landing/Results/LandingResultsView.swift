@@ -5,11 +5,15 @@ struct LandingResultsView: View {
   @Environment(LandingPerformanceViewModel.self)
   private var performance
 
-  @Default(.useRegressionModel)
-  private var useRegressionModel
-
-  @Default(.VREFAdditive)
-  private var VREFAdditive
+  private var adjustmentsLabel: String {
+    if performance.notes.contains(where: { $0.severity == .warning }) {
+      return String(localized: "Adjustments and Operational Warnings…")
+    }
+    if !performance.notes.isEmpty {
+      return String(localized: "Adjustments and Operational Notes…")
+    }
+    return String(localized: "Adjustments…")
+  }
 
   var body: some View {
     Section("Performance") {
@@ -18,20 +22,19 @@ struct LandingResultsView: View {
       LandingGroundRunView()
       LandingDistanceView()
       GoAroundClimbGradientView()
+    }
 
-      if useRegressionModel && (performance.offscaleLow || performance.offscaleHigh) {
-        OffscaleWarningView(
-          offscaleLow: performance.offscaleLow,
-          offscaleHigh: performance.offscaleHigh
+    if performance.landingReport != nil {
+      Section {
+        NavigationLink {
+          LandingAdjustmentsView()
+        } label: {
+          Text(adjustmentsLabel)
+        }
+        .badge(performance.notes.count)
+        .badgeProminence(
+          performance.notes.contains { $0.severity == .warning } ? .increased : .standard
         )
-      }
-
-      if performance.notam?.contamination != nil {
-        ContaminationWarningView()
-      }
-
-      if VREFAdditive.value > 0 {
-        VREFAdditiveWarningView()
       }
     }
   }

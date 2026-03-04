@@ -106,9 +106,13 @@ public struct DistanceBreakdown: Sendable {
 }
 
 /// Severity level for a performance note.
-public enum PerformanceNoteSeverity: Sendable {
-  case warning
-  case info
+public enum PerformanceNoteSeverity: Int, Sendable, Comparable {
+  case warning = 0
+  case info = 1
+
+  public static func < (lhs: Self, rhs: Self) -> Bool {
+    lhs.rawValue < rhs.rawValue
+  }
 }
 
 /// A warning or note about the performance calculation.

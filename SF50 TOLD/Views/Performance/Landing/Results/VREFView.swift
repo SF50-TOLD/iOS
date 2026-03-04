@@ -9,29 +9,17 @@ struct VREFView: View {
   @Default(.speedUnit)
   private var speedUnit
 
-  private var vrefText: AttributedString {
-    let v = AttributedString("V")
-    var ref = AttributedString("REF")
-    ref.font = .system(size: 10.0)
-    ref.baselineOffset = -3.0
-
-    return v + ref
-  }
-
   var body: some View {
-    LabeledContent(
-      content: {
-        InterpolationView(
-          value: performance.Vref,
-          displayValue: { Text($0.converted(to: speedUnit), format: .speed) },
-          displayUncertainty: { Text("±\($0.converted(to: speedUnit), format: .speed)") }
-        )
-        .animation(.default, value: performance.Vref)
-      },
-      label: {
-        Text(vrefText)
-      }
-    )
+    LabeledContent {
+      InterpolationView(
+        value: performance.Vref,
+        displayValue: { Text($0.converted(to: speedUnit), format: .speed) },
+        displayUncertainty: { Text("±\($0.converted(to: speedUnit), format: .speed)") }
+      )
+      .animation(.default, value: performance.Vref)
+    } label: {
+      Text(.VREF)
+    }
   }
 }
 

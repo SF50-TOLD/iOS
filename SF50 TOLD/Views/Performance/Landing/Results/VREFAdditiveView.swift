@@ -9,30 +9,18 @@ struct VREFAdditiveView: View {
   @Default(.speedUnit)
   private var speedUnit
 
-  private var vrefAdditiveText: AttributedString {
-    let v = AttributedString("V")
-    var ref = AttributedString("REF")
-    ref.font = .system(size: 10.0)
-    ref.baselineOffset = -3.0
-
-    return v + ref + AttributedString(" Additive")
-  }
-
   var body: some View {
-    LabeledContent(
-      content: {
-        MeasurementField(
-          "Speed",
-          value: $VREFAdditive,
-          unit: speedUnit,
-          format: .speed(plusSign: true),
-          minimum: .init(value: 0, unit: .knots)
-        )
-      },
-      label: {
-        Text(vrefAdditiveText)
-      }
-    )
+    LabeledContent {
+      MeasurementField(
+        "Speed",
+        value: $VREFAdditive,
+        unit: speedUnit,
+        format: .speed(plusSign: true),
+        minimum: .init(value: 0, unit: .knots)
+      )
+    } label: {
+      Text(.VREF + AttributedString(" Additive"))
+    }
   }
 }
 

@@ -1,4 +1,3 @@
-import Defaults
 import SF50_Shared
 import SwiftUI
 
@@ -6,19 +5,33 @@ struct TakeoffResultsView: View {
   @Environment(TakeoffPerformanceViewModel.self)
   private var performance
 
-  @Default(.useRegressionModel)
-  private var useRegressionModel
+  private var adjustmentsLabel: String {
+    if performance.notes.contains(where: { $0.severity == .warning }) {
+      return String(localized: "Adjustments and Operational Warnings…")
+    }
+    if !performance.notes.isEmpty {
+      return String(localized: "Adjustments and Operational Notes…")
+    }
+    return String(localized: "Adjustments…")
+  }
 
   var body: some View {
     Section("Performance") {
       TakeoffGroundRunView()
       TakeoffDistanceView()
       VxClimbView()
+    }
 
-      if useRegressionModel && (performance.offscaleLow || performance.offscaleHigh) {
-        OffscaleWarningView(
-          offscaleLow: performance.offscaleLow,
-          offscaleHigh: performance.offscaleHigh
+    if performance.takeoffReport != nil {
+      Section {
+        NavigationLink {
+          TakeoffAdjustmentsView()
+        } label: {
+          Text(adjustmentsLabel)
+        }
+        .badge(performance.notes.count)
+        .badgeProminence(
+          performance.notes.contains { $0.severity == .warning } ? .increased : .standard
         )
       }
     }
