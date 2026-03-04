@@ -1819,12 +1819,13 @@ final class SF50_TOLDUITests: XCTestCase {
     app.tapTab("Settings")
     waitForNavigation()
 
-    // Find the time zone picker
-    let timeZonePicker = app.buttons["timeZoneDisplayPicker"]
-    XCTAssertTrue(timeZonePicker.waitForExistence(timeout: 2), "Time zone picker should exist")
+    // Find the time zone picker (may need scrolling as it's near bottom of Settings form)
+    let timeZonePickerElement = app.descendants(matching: .any)["timeZoneDisplayPicker"].firstMatch
+    let timeZonePicker = app.collectionViews.firstMatch.makeVisible(element: timeZonePickerElement)
+    XCTAssertNotNil(timeZonePicker, "Time zone picker should exist")
 
     // Tap to open picker
-    timeZonePicker.tap()
+    timeZonePicker!.tap()
 
     // Select Airport Local
     if app.buttons["Airport Local"].exists {
@@ -1872,7 +1873,7 @@ final class SF50_TOLDUITests: XCTestCase {
     app.tapTab("Settings")
     waitForNavigation()
 
-    timeZonePicker.tap()
+    timeZonePicker!.tap()
 
     if app.buttons["UTC"].exists {
       app.buttons["UTC"].tap()
