@@ -30,30 +30,10 @@ The app follows a layered architecture:
 
 - <doc:GettingStarted>
 
-### Takeoff and Landing Reports
+### Reports
 
-- <doc:TakeoffLandingReportGeneration>
-- <doc:PerformanceScenarios>
-- ``PerformanceInput``
-- ``BaseReportData``
-- ``TakeoffReportData``
-- ``LandingReportData``
-- ``BaseReportTemplate``
-- ``TakeoffReportTemplate``
-- ``LandingReportTemplate``
-- ``PerformanceScenario``
-- ``ScenarioFetcher``
-- ``LimitingFactor``
-- ``RunwayInfo``
-- ``PerformanceDistance``
-- ``TakeoffRunwayPerformance``
-- ``LandingRunwayPerformance``
-- ``ReportOutput``
+- <doc:TakeoffAndLandingReports>
 
-### Data Loading
+### Data Management
 
-- <doc:DataLoading>
-- ``NavDataLoader``
-- ``NavDataLoaderViewModel``
-- ``TerrainDataLoader``
-- ``TerrainDataLoaderViewModel``
+- <doc:DataLoaders>

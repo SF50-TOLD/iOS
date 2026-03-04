@@ -1,0 +1,34 @@
+# Utilities
+
+Location services, geographic calculations, custom measurement units, state management, and error handling.
+
+## Topics
+
+### Location Services
+
+- ``LocationStreamer``
+- ``CoreLocationStreamer``
+- ``LocationError``
+- ``NearestAirportViewModel``
+- ``NearbyFinder``
+- ``Locatable``
+
+### Geographic Calculations
+
+- ``GeoCalculations``
+- ``Geomagnetism``
+
+### Units and Measurements
+
+- ``UnitDensity``
+- ``UnitSlope``
+
+### State Management
+
+- ``Loadable``
+- ``ViewState``
+
+### Error Handling
+
+- ``IdentifiableError``
+- ``WithIdentifiableError``
