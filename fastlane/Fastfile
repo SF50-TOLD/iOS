@@ -76,8 +76,8 @@ platform :ios do
                         submit_for_review: false
 
     sentry_cli(
-      org_slug: 'timcodes',
-      project_slug: 'sf50-told',
+      org_slug:        "timcodes",
+      project_slug:    "sf50-told",
       include_sources: true
     )
   end
