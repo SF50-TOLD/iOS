@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "name": "landing-distance-headwind-factor-flaps100",
+  "description": "Headwind adjustment factor for landing distance - flaps 100",
+  "type": "constant",
+  "variables": [],
+  "equation": {
+    "value": 0.07
+  }
+}

@@ -15,7 +15,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 5992)
     let runway = Helper.createTestRunway(elevation: 2621)
 
-    let model = TabularPerformanceModelG2Plus(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -62,7 +62,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 5214, flapSetting: .flaps100)
     let runway = Helper.createTestRunway(elevation: 8900)
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -99,7 +99,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 5750)
     let runway = Helper.createTestRunway(elevation: 2500)
 
-    let model = TabularPerformanceModelG2Plus(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -124,7 +124,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 4000)  // Below minimum of 5000
     let runway = Helper.createTestRunway(elevation: 5000)
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -142,7 +142,7 @@ struct TabularModelEdgeCaseTests {
 
     // The value should be the same as at minimum weight (5000 lb)
     let minWeightConfig = Helper.createTestConfiguration(weight: 5000)
-    let minWeightModel = TabularPerformanceModelG1(
+    let minWeightModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: minWeightConfig,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -162,7 +162,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway(elevation: 12000)  // Above maximum
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -181,7 +181,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway(elevation: 5000)
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -210,7 +210,7 @@ struct TabularModelEdgeCaseTests {
       let config = Helper.createTestConfiguration(weight: testCase.weight)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -248,7 +248,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 6000)
     let runway = Helper.createTestRunway(elevation: 7000)
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -281,7 +281,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 5500)  // Exact match
     let runway = Helper.createTestRunway(elevation: 5000)  // Exact match
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -304,7 +304,7 @@ struct TabularModelEdgeCaseTests {
     let config = Helper.createTestConfiguration(weight: 5500)  // Exact match
     let runway = Helper.createTestRunway(elevation: 2500)  // Interpolate altitude
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -338,7 +338,7 @@ struct TabularModelEdgeCaseTests {
       let runway = Helper.createTestRunway(elevation: issue.altitude)
 
       // Test both G1 and G2+ models
-      let modelG1 = TabularPerformanceModelG1(
+      let modelG1 = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -346,7 +346,7 @@ struct TabularModelEdgeCaseTests {
         aircraftType: .g1
       )
 
-      let modelG2Plus = TabularPerformanceModelG2Plus(
+      let modelG2Plus = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -383,7 +383,7 @@ struct TabularModelEdgeCaseTests {
     for altitude in stride(from: 0, through: 8000, by: 1000) {
       let runway = Helper.createTestRunway(elevation: Double(altitude))
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: baseConditions,
         configuration: baseConfig,
         runway: RunwayInput(from: runway, airport: runway.airport),

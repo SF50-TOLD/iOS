@@ -11,11 +11,11 @@ struct GoAroundClimbGradientTests {
     weight: Double = 6000,
     elevation: Double = 0,
     temperature: Double = 15
-  ) -> RegressionPerformanceModelG2 {
+  ) -> RegressionPerformanceModel {
     let conditions = Helper.createTestConditions(temperature: temperature)
     let configuration = Helper.createTestConfiguration(weight: weight)
     let runway = Helper.createTestRunwayInput(elevation: elevation)
-    return RegressionPerformanceModelG2(
+    return RegressionPerformanceModel(
       conditions: conditions,
       configuration: configuration,
       runway: runway,

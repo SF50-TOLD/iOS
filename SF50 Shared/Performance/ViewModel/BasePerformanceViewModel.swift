@@ -343,42 +343,103 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       aircraftType = Defaults.Keys.aircraftType
 
     return if Defaults[.useRegressionModel] {
-      if aircraftType.usesUpdatedThrustSchedule {
-        RegressionPerformanceModelG2Plus(
-          conditions: conditions,
-          configuration: configuration,
-          runway: runwaySnapshot,
-          notam: notamInput,
-          aircraftType: aircraftType
-        )
-      } else {
-        RegressionPerformanceModelG1(
-          conditions: conditions,
-          configuration: configuration,
-          runway: runwaySnapshot,
-          notam: notamInput,
-          aircraftType: aircraftType
-        )
-      }
+      RegressionPerformanceModel(
+        conditions: conditions,
+        configuration: configuration,
+        runway: runwaySnapshot,
+        notam: notamInput,
+        aircraftType: aircraftType
+      )
     } else {
-      if aircraftType.usesUpdatedThrustSchedule {
-        TabularPerformanceModelG2Plus(
-          conditions: conditions,
-          configuration: configuration,
-          runway: runwaySnapshot,
-          notam: notamInput,
-          aircraftType: aircraftType
-        )
-      } else {
-        TabularPerformanceModelG1(
-          conditions: conditions,
-          configuration: configuration,
-          runway: runwaySnapshot,
-          notam: notamInput,
-          aircraftType: aircraftType
-        )
+      TabularPerformanceModel(
+        conditions: conditions,
+        configuration: configuration,
+        runway: runwaySnapshot,
+        notam: notamInput,
+        aircraftType: aircraftType
+      )
+    }
+  }
+
+  // MARK: - Input-Validation Notes
+
+  /// Generates notes for input-validation issues common to both takeoff and landing.
+  ///
+  /// Checks wind exceedances (crosswind, tailwind), weight/fuel limits, contamination,
+  /// and VREF additive applicability. Subclass view models call this, then append their
+  /// own result-dependent notes.
+  public func generateInputNotes(
+    for operation: Operation,
+    VREFAdditiveKts: Double = 0
+  ) -> [PerformanceNote] {
+    var notes: [PerformanceNote] = []
+    let limits = Defaults.Keys.aircraftType.limitations
+
+    // Wind exceedances
+    if let runway, let windDirection = conditions.windDirection,
+      let windSpeed = conditions.windSpeed
+    {
+      let headingRad =
+        runway.trueHeading.converted(to: .degrees).value * .pi / 180
+      let windRad = windDirection.converted(to: .degrees).value * .pi / 180
+      let angleDiff = windRad - headingRad
+
+      let crosswindKts = abs(sin(angleDiff) * windSpeed.converted(to: .knots).value)
+      let headwindKts = cos(angleDiff) * windSpeed.converted(to: .knots).value
+
+      let crosswindLimit: Measurement<UnitSpeed> =
+        flapSetting == .flaps100
+        ? limits.maxCrosswind_flaps100 : limits.maxCrosswind_flaps50
+
+      let crosswind = Measurement<UnitSpeed>(value: crosswindKts, unit: .knots)
+      if crosswind > crosswindLimit {
+        notes.append(.crosswindExceedance(crosswind: crosswind, limit: crosswindLimit))
+      }
+
+      if headwindKts < 0 {
+        let tailwind = Measurement<UnitSpeed>(value: -headwindKts, unit: .knots)
+        if tailwind > limits.maxTailwind {
+          notes.append(
+            .tailwindExceedance(tailwind: tailwind, limit: limits.maxTailwind)
+          )
+        }
       }
     }
+
+    // Weight exceedances
+    let maxWeight =
+      operation == .takeoff
+      ? limits.maxTakeoffWeight : limits.maxLandingWeight
+    if weight > maxWeight {
+      notes.append(.weightAboveMax(weight: weight, limit: maxWeight))
+    }
+    let zeroFuelWeight = Defaults[.emptyWeight] + Defaults[.payload]
+    if zeroFuelWeight > limits.maxZeroFuelWeight {
+      notes.append(
+        .zeroFuelWeightExceeded(weight: zeroFuelWeight, limit: limits.maxZeroFuelWeight)
+      )
+    }
+    let fuel = Defaults[fuelDefaultsKey]
+    if fuel > limits.maxFuel {
+      notes.append(.fuelExceedsCapacity(fuel: fuel, limit: limits.maxFuel))
+    }
+
+    // Contamination notes (landing only)
+    if operation == .landing, let contamination = notam?.contamination {
+      if case .rwyCC = contamination {
+        if Defaults[.safetyFactorDry] != 1.0 || Defaults[.safetyFactorWet] != 1.0 {
+          notes.append(.rwyCCSafetyFactorNotApplied)
+        }
+      }
+      notes.append(.contaminationSupplemental)
+    }
+
+    // VREF additive note
+    if VREFAdditiveKts > 0 {
+      notes.append(.VREFAdditiveApproximate)
+    }
+
+    return notes
   }
 
   // MARK: - Abstract Methods (must be overridden)

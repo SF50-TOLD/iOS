@@ -13,9 +13,9 @@ public protocol PerformanceCalculationService: Sendable {
    * - Parameters:
    *   - model: The performance model configured with conditions, configuration, and runway.
    *   - safetyFactor: A multiplier applied to distance results (e.g., 1.15 for 15% safety margin).
-   * - Returns: Takeoff performance results including run, distance, and climb gradient.
+   * - Returns: A takeoff report including results and distance breakdowns.
    */
-  func calculateTakeoff(for model: PerformanceModel, safetyFactor: Double) throws -> TakeoffResults
+  func calculateTakeoff(for model: PerformanceModel, safetyFactor: Double) throws -> TakeoffReport
 
   /**
    * Calculates landing performance for the given model.
@@ -25,58 +25,10 @@ public protocol PerformanceCalculationService: Sendable {
    *   - safetyFactor: A multiplier applied to distance results (e.g., 1.15 for 15% safety margin).
    *   - VREFAdditiveKts: Additional speed above base VREF in knots. Per AC 91-79B section 5.2.2,
    *     each 10% increase in VREF adds 20% to landing distance.
-   * - Returns: Landing performance results including Vref, run, distance, and go-around capability.
+   * - Returns: A landing report including results and distance breakdowns.
    */
   func calculateLanding(for model: PerformanceModel, safetyFactor: Double, VREFAdditiveKts: Double)
-    throws -> LandingResults
-}
-
-extension Value where T == Double {
-  fileprivate func toMeasurement<U: Dimension>(_ unit: U) -> Value<Measurement<U>> {
-    self.map { value, uncertainty in
-      (
-        Measurement(value: value, unit: unit),
-        uncertainty.map { Measurement(value: $0, unit: unit) }
-      )
-    }
-  }
-}
-
-/// Results of a takeoff performance calculation.
-///
-/// ``TakeoffResults`` contains the computed takeoff distances and climb performance
-/// for a given set of conditions. All values are wrapped in ``Value`` to handle
-/// uncertainty and error states.
-public struct TakeoffResults {
-  /// Ground run distance from brake release to liftoff.
-  public let takeoffRun: Value<Measurement<UnitLength>>
-
-  /// Total distance from brake release to 35 feet AGL.
-  public let takeoffDistance: Value<Measurement<UnitLength>>
-
-  /// Climb gradient in feet per nautical mile at Vx.
-  public let takeoffClimbGradient: Value<Measurement<UnitSlope>>
-
-  /// Climb rate in feet per minute at Vx.
-  public let takeoffClimbRate: Value<Measurement<UnitSpeed>>
-}
-
-/// Results of a landing performance calculation.
-///
-/// ``LandingResults`` contains the computed landing distances, reference speed,
-/// and go-around capability for a given set of conditions.
-public struct LandingResults {
-  /// Reference approach speed for the landing configuration.
-  public let Vref: Value<Measurement<UnitSpeed>>
-
-  /// Ground run distance from touchdown to stop.
-  public let landingRun: Value<Measurement<UnitLength>>
-
-  /// Total distance from 50 feet AGL to full stop.
-  public let landingDistance: Value<Measurement<UnitLength>>
-
-  /// Whether the aircraft can achieve the required go-around climb gradient.
-  public let meetsGoAroundClimbGradient: Value<Bool>
+    throws -> LandingReport
 }
 
 /// Default implementation of ``PerformanceCalculationService``.
@@ -112,94 +64,51 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
     aircraftType: AircraftType
   ) -> PerformanceModel {
     if useRegressionModel {
-      switch aircraftType {
-        case .g1:
-          return RegressionPerformanceModelG1(
-            conditions: conditions,
-            configuration: configuration,
-            runway: runway,
-            notam: notam,
-            aircraftType: aircraftType
-          )
-        case .g2(let updated):
-          if updated {
-            return RegressionPerformanceModelG2Plus(
-              conditions: conditions,
-              configuration: configuration,
-              runway: runway,
-              notam: notam,
-              aircraftType: aircraftType
-            )
-          }
-          return RegressionPerformanceModelG2(
-            conditions: conditions,
-            configuration: configuration,
-            runway: runway,
-            notam: notam,
-            aircraftType: aircraftType
-          )
-        case .g2Plus:
-          return RegressionPerformanceModelG2Plus(
-            conditions: conditions,
-            configuration: configuration,
-            runway: runway,
-            notam: notam,
-            aircraftType: aircraftType
-          )
-      }
+      return RegressionPerformanceModel(
+        conditions: conditions,
+        configuration: configuration,
+        runway: runway,
+        notam: notam,
+        aircraftType: aircraftType
+      )
     }
-    switch aircraftType {
-      case .g1:
-        return TabularPerformanceModelG1(
-          conditions: conditions,
-          configuration: configuration,
-          runway: runway,
-          notam: notam,
-          aircraftType: aircraftType
-        )
-      case .g2(let updated):
-        if updated {
-          return TabularPerformanceModelG2Plus(
-            conditions: conditions,
-            configuration: configuration,
-            runway: runway,
-            notam: notam,
-            aircraftType: aircraftType
-          )
-        }
-        return TabularPerformanceModelG2(
-          conditions: conditions,
-          configuration: configuration,
-          runway: runway,
-          notam: notam,
-          aircraftType: aircraftType
-        )
-      case .g2Plus:
-        return TabularPerformanceModelG2Plus(
-          conditions: conditions,
-          configuration: configuration,
-          runway: runway,
-          notam: notam,
-          aircraftType: aircraftType
-        )
-    }
+    return TabularPerformanceModel(
+      conditions: conditions,
+      configuration: configuration,
+      runway: runway,
+      notam: notam,
+      aircraftType: aircraftType
+    )
   }
 
   public func calculateTakeoff(for model: PerformanceModel, safetyFactor: Double) throws
-    -> TakeoffResults
+    -> TakeoffReport
   {
-    let takeoffRun = (model.takeoffRunFt * safetyFactor).toMeasurement(UnitLength.feet),
-      takeoffDistance = (model.takeoffDistanceFt * safetyFactor).toMeasurement(UnitLength.feet),
-      takeoffClimbGradient = model.takeoffClimbGradientFtNM.toMeasurement(
+    let (runValue, runBreakdown) = model.computeDistance(for: .takeoffRun)
+    let (distValue, distBreakdown) = model.computeDistance(for: .takeoffDistance)
+
+    let (finalRun, runAdjustments) = applyPostAdjustments(
+      to: runValue,
+      safetyFactor: safetyFactor
+    )
+    let (finalDist, distAdjustments) = applyPostAdjustments(
+      to: distValue,
+      safetyFactor: safetyFactor
+    )
+
+    let results = TakeoffResults(
+      takeoffRun: finalRun.toMeasurement(UnitLength.feet),
+      takeoffDistance: finalDist.toMeasurement(UnitLength.feet),
+      takeoffClimbGradient: model.takeoffClimbGradientFtNM.toMeasurement(
         UnitSlope.feetPerNauticalMile
       ),
-      takeoffClimbRate = model.takeoffClimbRateFtMin.toMeasurement(UnitSpeed.feetPerMinute)
+      takeoffClimbRate: model.takeoffClimbRateFtMin.toMeasurement(UnitSpeed.feetPerMinute)
+    )
 
-    return TakeoffResults(
-      takeoffRun: takeoffRun,
-      takeoffDistance: takeoffDistance,
-      takeoffClimbGradient: takeoffClimbGradient,
-      takeoffClimbRate: takeoffClimbRate
+    return TakeoffReport(
+      results: results,
+      groundRunBreakdown: runBreakdown.appending(runAdjustments),
+      distanceBreakdown: distBreakdown.appending(distAdjustments)
     )
   }
 
@@ -207,34 +116,97 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
     for model: PerformanceModel,
     safetyFactor: Double,
     VREFAdditiveKts: Double = 0
-  ) throws -> LandingResults {
+  ) throws -> LandingReport {
+    let (runValue, runBreakdown) = model.computeDistance(for: .landingRun)
+    let (distValue, distBreakdown) = model.computeDistance(for: .landingDistance)
+
     // Per AC 91-79B section 5.2.2: each 10% increase in VREF adds 20% to landing distance.
     // Factor = 1 + 2 * (additiveKts / baseVrefKts)
-    let VREFFactor: Double =
-      if VREFAdditiveKts > 0, case .value(let baseVrefKts) = model.VrefKts {
-        1 + 2 * (VREFAdditiveKts / baseVrefKts)
-      } else if VREFAdditiveKts > 0,
-        case .valueWithUncertainty(let baseVrefKts, _) = model.VrefKts
-      {
-        1 + 2 * (VREFAdditiveKts / baseVrefKts)
+    let VREFFactor: Value<Double> =
+      if VREFAdditiveKts > 0 {
+        model.VrefKts.map { 1 + 2 * (VREFAdditiveKts / $0) }
       } else {
-        1.0
+        .value(1.0)
       }
 
-    let combinedFactor = safetyFactor * VREFFactor
+    let VREFAdjustment: PostAdjustment? =
+      if VREFAdditiveKts > 0 {
+        PostAdjustment(
+          kind: .VREFAdditive(.init(value: VREFAdditiveKts, unit: .knots)),
+          factor: VREFFactor
+        )
+      } else {
+        nil
+      }
 
-    let landingRun = (model.landingRunFt * combinedFactor).toMeasurement(UnitLength.feet),
-      landingDistance = (model.landingDistanceFt * combinedFactor).toMeasurement(
-        UnitLength.feet
-      ),
-      Vref = (model.VrefKts + VREFAdditiveKts).toMeasurement(UnitSpeed.knots),
-      meetsGoAroundClimbGradient = model.meetsGoAroundClimbGradient
-
-    return LandingResults(
-      Vref: Vref,
-      landingRun: landingRun,
-      landingDistance: landingDistance,
-      meetsGoAroundClimbGradient: meetsGoAroundClimbGradient
+    let (finalRun, runAdjustments) = applyPostAdjustments(
+      to: runValue,
+      VREFAdjustment: VREFAdjustment,
+      safetyFactor: safetyFactor
     )
+    let (finalDist, distAdjustments) = applyPostAdjustments(
+      to: distValue,
+      VREFAdjustment: VREFAdjustment,
+      safetyFactor: safetyFactor
+    )
+
+    let results = LandingResults(
+      Vref: (model.VrefKts + VREFAdditiveKts).toMeasurement(UnitSpeed.knots),
+      landingRun: finalRun.toMeasurement(UnitLength.feet),
+      landingDistance: finalDist.toMeasurement(UnitLength.feet),
+      meetsGoAroundClimbGradient: model.meetsGoAroundClimbGradient
+    )
+
+    return LandingReport(
+      results: results,
+      groundRunBreakdown: runBreakdown.appending(runAdjustments),
+      distanceBreakdown: distBreakdown.appending(distAdjustments)
+    )
+  }
+}
+
+// MARK: - Post-Adjustment Helpers
+
+extension DefaultPerformanceCalculationService {
+
+  /// Applies optional VREF and safety adjustments to a base distance value,
+  /// returning the final value and the adjustments for the breakdown.
+  private func applyPostAdjustments(
+    to baseValue: Value<Double>,
+    VREFAdjustment: PostAdjustment? = nil,
+    safetyFactor: Double
+  ) -> (Value<Double>, [PerformanceAdjustment]) {
+    var running = baseValue
+    var adjustments: [PerformanceAdjustment] = []
+
+    if let VREFAdjustment {
+      running *= VREFAdjustment.factor
+      adjustments.append(
+        PerformanceAdjustment(
+          kind: VREFAdjustment.kind,
+          multiplier: VREFAdjustment.factor.nominal ?? 1.0,
+          resultFt: running
+        )
+      )
+    }
+
+    if safetyFactor != 1.0 {
+      running *= safetyFactor
+      adjustments.append(
+        PerformanceAdjustment(
+          kind: .safetyMargin(safetyFactor),
+          multiplier: safetyFactor,
+          resultFt: running
+        )
+      )
+    }
+
+    return (running, adjustments)
+  }
+
+  /// A VREF or similar adjustment to apply before the safety factor.
+  private struct PostAdjustment {
+    let kind: AdjustmentKind
+    let factor: Value<Double>
   }
 }

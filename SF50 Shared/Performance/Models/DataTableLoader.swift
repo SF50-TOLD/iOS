@@ -199,6 +199,28 @@ struct DataTableLoader {
     loadWaterLandingData()
   }
 
+  // MARK: - Prefix Helpers
+
+  /// Returns the AFM table prefix for Vref lookup based on flap setting.
+  func vrefPrefix(for flapSetting: FlapSetting) -> String {
+    switch flapSetting {
+      case .flapsUp: "up"
+      case .flapsUpIce: "up ice"
+      case .flaps50: "50"
+      case .flaps50Ice: "50 ice"
+      case .flaps100: "100"
+    }
+  }
+
+  /// Returns the AFM table prefix for landing distance lookup based on flap setting.
+  func landingPrefix(for flapSetting: FlapSetting) -> String {
+    switch flapSetting {
+      case .flaps50, .flapsUp: "50"
+      case .flaps50Ice, .flapsUpIce: "50 ice"
+      case .flaps100: "100"
+    }
+  }
+
   // MARK: - Helper Functions
 
   private func loadDataTable(path: String) -> DataTable {

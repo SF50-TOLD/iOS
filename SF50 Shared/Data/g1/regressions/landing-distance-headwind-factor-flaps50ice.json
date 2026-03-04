@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "name": "landing-distance-headwind-factor-flaps50ice",
+  "description": "Headwind adjustment factor for landing distance - flaps 50 ice",
+  "type": "constant",
+  "variables": [],
+  "equation": {
+    "value": 0.06
+  }
+}

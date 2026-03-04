@@ -50,7 +50,7 @@ struct TabularPerformanceModelG1Tests {
       let config = Helper.createTestConfiguration(weight: testCase.weight)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -77,7 +77,7 @@ struct TabularPerformanceModelG1Tests {
     let config = Helper.createTestConfiguration(weight: 5750)  // Between 5500 and 6000
     let runway = Helper.createTestRunway(elevation: 500)  // Between 0 and 1000
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -109,7 +109,7 @@ struct TabularPerformanceModelG1Tests {
     let config = Helper.createTestConfiguration(weight: 5684)
     let runway = Helper.createTestRunway(elevation: 0)
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -147,7 +147,7 @@ struct TabularPerformanceModelG1Tests {
     let config = Helper.createTestConfiguration(weight: 5684)
     let runway = Helper.createTestRunway(elevation: 0)
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -189,7 +189,7 @@ struct TabularPerformanceModelG1Tests {
     let config = Helper.createTestConfiguration(weight: 5684)
     let runway = Helper.createTestRunway(elevation: 5)
 
-    let model = TabularPerformanceModelG1(
+    let model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -238,7 +238,7 @@ struct TabularPerformanceModelG1Tests {
       let config = Helper.createTestConfiguration(weight: testCase.weight)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -295,7 +295,7 @@ struct TabularPerformanceModelG1Tests {
       let config = Helper.createTestConfiguration(weight: testCase.weight)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -350,7 +350,7 @@ struct TabularPerformanceModelG1Tests {
       let config = Helper.createTestConfiguration(weight: testCase.weight)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -411,7 +411,7 @@ struct TabularPerformanceModelG1Tests {
       )
       let runway = Helper.createTestRunway()
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -458,7 +458,7 @@ struct TabularPerformanceModelG1Tests {
       let config = Helper.createTestConfiguration(weight: testCase.weight, flapSetting: .flaps50)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -502,7 +502,7 @@ struct TabularPerformanceModelG1Tests {
       let config = Helper.createTestConfiguration(weight: testCase.weight, flapSetting: .flaps100)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -549,7 +549,7 @@ struct TabularPerformanceModelG1Tests {
       let config = Helper.createTestConfiguration(weight: testCase.weight, flapSetting: .flaps50)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -593,7 +593,7 @@ struct TabularPerformanceModelG1Tests {
       let config = Helper.createTestConfiguration(weight: testCase.weight, flapSetting: .flaps100)
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -627,7 +627,7 @@ struct TabularPerformanceModelG1Tests {
     let config = Helper.createTestConfiguration()
     let runway = Helper.createTestRunway(heading: 360)
 
-    let modelNoWind = TabularPerformanceModelG1(
+    let modelNoWind = TabularPerformanceModel(
       conditions: conditionsNoWind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -635,7 +635,7 @@ struct TabularPerformanceModelG1Tests {
       aircraftType: .g1
     )
 
-    let modelHeadwind = TabularPerformanceModelG1(
+    let modelHeadwind = TabularPerformanceModel(
       conditions: conditionsHeadwind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -666,7 +666,7 @@ struct TabularPerformanceModelG1Tests {
     let config = Helper.createTestConfiguration()
     let runway = Helper.createTestRunway(heading: 360)
 
-    let modelNoWind = TabularPerformanceModelG1(
+    let modelNoWind = TabularPerformanceModel(
       conditions: conditionsNoWind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -674,7 +674,7 @@ struct TabularPerformanceModelG1Tests {
       aircraftType: .g1
     )
 
-    let modelTailwind = TabularPerformanceModelG1(
+    let modelTailwind = TabularPerformanceModel(
       conditions: conditionsTailwind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -704,7 +704,7 @@ struct TabularPerformanceModelG1Tests {
     let runwayFlat = Helper.createTestRunway(slope: 0)
     let runwayUphill = Helper.createTestRunway(slope: 2)
 
-    let modelFlat = TabularPerformanceModelG1(
+    let modelFlat = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayFlat, airport: runwayFlat.airport),
@@ -712,7 +712,7 @@ struct TabularPerformanceModelG1Tests {
       aircraftType: .g1
     )
 
-    let modelUphill = TabularPerformanceModelG1(
+    let modelUphill = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayUphill, airport: runwayUphill.airport),
@@ -740,7 +740,7 @@ struct TabularPerformanceModelG1Tests {
     let runwayFlat = Helper.createTestRunway(slope: 0)
     let runwayDownhill = Helper.createTestRunway(slope: -2)
 
-    let modelFlat = TabularPerformanceModelG1(
+    let modelFlat = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayFlat, airport: runwayFlat.airport),
@@ -748,7 +748,7 @@ struct TabularPerformanceModelG1Tests {
       aircraftType: .g1
     )
 
-    let modelDownhill = TabularPerformanceModelG1(
+    let modelDownhill = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayDownhill, airport: runwayDownhill.airport),
@@ -778,7 +778,7 @@ struct TabularPerformanceModelG1Tests {
     let runwayPaved = Helper.createTestRunway(surfaceType: .paved)
     let runwayUnpaved = Helper.createTestRunway(surfaceType: .turf)
 
-    let modelPaved = TabularPerformanceModelG1(
+    let modelPaved = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayPaved, airport: runwayPaved.airport),
@@ -786,7 +786,7 @@ struct TabularPerformanceModelG1Tests {
       aircraftType: .g1
     )
 
-    let modelUnpaved = TabularPerformanceModelG1(
+    let modelUnpaved = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayUnpaved, airport: runwayUnpaved.airport),

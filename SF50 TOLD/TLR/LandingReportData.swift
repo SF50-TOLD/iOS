@@ -47,19 +47,19 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
       useRegressionModel: input.useRegressionModel,
       aircraftType: input.aircraftType
     )
-    let results = try performance.calculateLanding(
+    let report = try performance.calculateLanding(
       for: perfModel,
       safetyFactor: input.safetyFactor,
       VREFAdditiveKts: input.VREFAdditiveKts
     )
 
-    let landingRun = results.landingRun.map { value, uncertainty in
+    let landingRun = report.results.landingRun.map { value, uncertainty in
       (
         PerformanceDistance(distance: value, availableDistance: runway.length),
         uncertainty.map { PerformanceDistance(distance: $0, availableDistance: runway.length) }
       )
     }
-    let landingDistance = results.landingDistance.map { value, uncertainty in
+    let landingDistance = report.results.landingDistance.map { value, uncertainty in
       (
         PerformanceDistance(distance: value, availableDistance: runway.length),
         uncertainty.map { PerformanceDistance(distance: $0, availableDistance: runway.length) }
@@ -69,7 +69,7 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
     // Determine if valid based on landing distance and go-around requirement
     let isValid: Bool = {
       if case .value(let valid) = landingDistance.flatMap({ dist in
-        results.meetsGoAroundClimbGradient.map { meetsReq in
+        report.results.meetsGoAroundClimbGradient.map { meetsReq in
           dist.margin.converted(to: UnitLength.feet).value >= 0 && meetsReq
         }
       }) {
@@ -79,10 +79,10 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
     }()
 
     return LandingRunwayPerformance(
-      Vref: results.Vref,
+      Vref: report.results.Vref,
       landingRun: landingRun,
       landingDistance: landingDistance,
-      meetsGoAroundRequirement: results.meetsGoAroundClimbGradient,
+      meetsGoAroundRequirement: report.results.meetsGoAroundClimbGradient,
       isValid: isValid
     )
   }
@@ -108,20 +108,20 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
         useRegressionModel: input.useRegressionModel,
         aircraftType: input.aircraftType
       )
-      let results = try performance.calculateLanding(
+      let report = try performance.calculateLanding(
         for: model,
         safetyFactor: input.safetyFactor,
         VREFAdditiveKts: input.VREFAdditiveKts
       )
 
       // Check AFM limits
-      if case .offscaleHigh = results.landingDistance {
+      if case .offscaleHigh = report.results.landingDistance {
         return (false, .AFM)
       }
-      if case .offscaleLow = results.landingDistance {
+      if case .offscaleLow = report.results.landingDistance {
         return (false, .AFM)
       }
-      if case .value(let dist) = results.landingDistance {
+      if case .value(let dist) = report.results.landingDistance {
         // Check runway length
         if dist > runway.length {
           return (false, .field)
@@ -129,7 +129,7 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
       }
 
       // Check go-around climb gradient requirement
-      if case .value(let meetsReq) = results.meetsGoAroundClimbGradient {
+      if case .value(let meetsReq) = report.results.meetsGoAroundClimbGradient {
         if !meetsReq {
           return (false, .climb)
         }

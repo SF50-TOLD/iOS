@@ -213,4 +213,16 @@ extension FlapSetting {
       default: false
     }
   }
+
+  /// Normalizes flap setting for landing adjustment factor loading.
+  ///
+  /// Landing factor JSON files only exist for flaps100, flaps50, and flaps50Ice.
+  /// FlapsUp aliases to flaps50 and flapsUpIce aliases to flaps50Ice.
+  var landingFactorFlapSetting: FlapSetting {
+    switch self {
+      case .flapsUp: .flaps50
+      case .flapsUpIce: .flaps50Ice
+      default: self
+    }
+  }
 }

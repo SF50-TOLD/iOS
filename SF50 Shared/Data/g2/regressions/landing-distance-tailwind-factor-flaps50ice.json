@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "name": "landing-distance-tailwind-factor-flaps50ice",
+  "description": "Tailwind adjustment factor for landing distance - flaps 50 ice",
+  "type": "linear",
+  "variables": ["weight"],
+  "equation": {
+    "slope": -9.52381e-06,
+    "intercept": 0.382857
+  }
+}

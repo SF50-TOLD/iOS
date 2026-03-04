@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "name": "landing-run-tailwind-factor-flaps50",
+  "description": "Tailwind adjustment factor for landing ground run - flaps 50",
+  "type": "constant",
+  "variables": [],
+  "equation": {
+    "value": 0.42
+  }
+}

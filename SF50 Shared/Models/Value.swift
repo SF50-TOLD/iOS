@@ -233,7 +233,7 @@ extension Value where T: FloatingPoint, T: Comparable {
   }
 
   /// Subtracts two values, propagating uncertainty through quadrature (RSS).
-  static func - (lhs: Value<T>, rhs: Value<T>) -> Value<T> {
+  public static func - (lhs: Value<T>, rhs: Value<T>) -> Value<T> {
     var result = lhs
     result -= rhs
     return result
@@ -275,6 +275,36 @@ extension Value where T: FloatingPoint, T: Comparable {
         .squareRoot()
     return relativeUncertainty * leftValue * rightValue
   }
+}
+
+extension Value where T == Double {
+  /// Converts a dimensionless double value to a `Measurement` value.
+  public func toMeasurement<U: Dimension>(_ unit: U) -> Value<Measurement<U>> {
+    self.map { value, uncertainty in
+      (
+        Measurement(value: value, unit: unit),
+        uncertainty.map { Measurement(value: $0, unit: unit) }
+      )
+    }
+  }
+}
+
+extension Value {
+
+  /// The nominal value, ignoring uncertainty and error states.
+  public var nominal: T? {
+    switch self {
+      case .value(let v), .valueWithUncertainty(let v, _): v
+      default: nil
+    }
+  }
+}
+
+extension Value where T == Double {
+
+  /// The nominal value, ignoring uncertainty and error states.
+  @available(*, deprecated, renamed: "nominal")
+  public var nominalValue: Double? { nominal }
 }
 
 extension Value where T == Double {

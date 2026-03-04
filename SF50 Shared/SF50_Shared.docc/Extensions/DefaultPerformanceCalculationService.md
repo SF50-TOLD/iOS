@@ -13,4 +13,4 @@
 ### Calculating Performance
 
 - ``calculateTakeoff(for:safetyFactor:)``
-- ``calculateLanding(for:safetyFactor:)``
+- ``calculateLanding(for:safetyFactor:VREFAdditiveKts:)``

@@ -20,3 +20,8 @@
 - ``map(_:)-((T)->U)``
 - ``map(_:)-((T,T?)->(U,U?))``
 - ``flatMap(_:)``
+
+### Accessing Values
+
+- ``nominalValue``
+- ``toMeasurement(_:)``

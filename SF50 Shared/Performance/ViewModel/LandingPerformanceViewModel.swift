@@ -34,6 +34,8 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
   public private(set) var landingRun: Value<Measurement<UnitLength>>
   public private(set) var landingDistance: Value<Measurement<UnitLength>>
   public private(set) var meetsGoAroundClimbGradient: Value<Bool>
+  public private(set) var landingReport: LandingReport?
+  public private(set) var notes: [PerformanceNote] = []
 
   // MARK: Computed Properties
 
@@ -64,29 +66,15 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
   }
 
   public var offscaleLow: Bool {
-    // Check if any values are offscale low
     let valuesOffscaleLow =
       Vref == .offscaleLow || landingRun == .offscaleLow || landingDistance == .offscaleLow
-
-    // For regression models, also check if inputs are outside AFM bounds
-    if let regressionModel = model as? BaseRegressionPerformanceModel {
-      return valuesOffscaleLow || regressionModel.landingInputsOffscaleLow
-    }
-
-    return valuesOffscaleLow
+    return valuesOffscaleLow || (model?.landingInputsOffscaleLow ?? false)
   }
 
   public var offscaleHigh: Bool {
-    // Check if any values are offscale high
     let valuesOffscaleHigh =
       Vref == .offscaleHigh || landingRun == .offscaleHigh || landingDistance == .offscaleHigh
-
-    // For regression models, also check if inputs are outside AFM bounds
-    if let regressionModel = model as? BaseRegressionPerformanceModel {
-      return valuesOffscaleHigh || regressionModel.landingInputsOffscaleHigh
-    }
-
-    return valuesOffscaleHigh
+    return valuesOffscaleHigh || (model?.landingInputsOffscaleHigh ?? false)
   }
 
   public var availableLandingRun: Measurement<UnitLength>? { runway?.notamedLandingDistance }
@@ -124,6 +112,8 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
       landingRun = .notAvailable
       landingDistance = .notAvailable
       meetsGoAroundClimbGradient = .notAvailable
+      landingReport = nil
+      notes = []
       return
     }
 
@@ -135,21 +125,51 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
           case .none: Defaults[.safetyFactorDry]
         }
       let VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value
-      let results = try calculationService.calculateLanding(
+      let report = try calculationService.calculateLanding(
         for: model,
         safetyFactor: safetyFactor,
         VREFAdditiveKts: VREFAdditiveKts
       )
-      Vref = results.Vref
-      landingRun = results.landingRun
-      landingDistance = results.landingDistance
-      meetsGoAroundClimbGradient = results.meetsGoAroundClimbGradient
+      landingReport = report
+      Vref = report.results.Vref
+      landingRun = report.results.landingRun
+      landingDistance = report.results.landingDistance
+      meetsGoAroundClimbGradient = report.results.meetsGoAroundClimbGradient
+      notes = generateNotes(VREFAdditiveKts: VREFAdditiveKts)
     } catch {
-      // Handle calculation errors gracefully
       Vref = .invalid
       landingRun = .invalid
       landingDistance = .invalid
       meetsGoAroundClimbGradient = .invalid
+      landingReport = nil
+      notes = []
     }
+  }
+
+  // MARK: Notes
+
+  private func generateNotes(VREFAdditiveKts: Double) -> [PerformanceNote] {
+    var notes: [PerformanceNote] = []
+
+    // Offscale warnings
+    if offscaleHigh { notes.append(.offscaleHigh) }
+    if offscaleLow { notes.append(.offscaleLow) }
+
+    // Input-validation notes
+    notes += generateInputNotes(for: .landing, VREFAdditiveKts: VREFAdditiveKts)
+
+    // Distance exceedance
+    if let available = availableLandingRun,
+      let dist = landingDistance.nominal, dist > available
+    {
+      notes.append(.landingDistanceExceedsAvailable(required: dist, available: available))
+    }
+
+    // Go-around climb gradient
+    if case .value(let meets) = meetsGoAroundClimbGradient, !meets {
+      notes.append(.doesNotMeetGoAroundGradient)
+    }
+
+    return notes
   }
 }

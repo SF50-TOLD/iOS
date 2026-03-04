@@ -20,7 +20,7 @@ struct ContaminationTests {
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
     // Model without contamination
-    let cleanModel = TabularPerformanceModelG1(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -50,7 +50,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG1(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -75,7 +75,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG2Plus(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -105,7 +105,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG2Plus(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -130,7 +130,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = RegressionPerformanceModelG1(
+    let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -153,7 +153,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = RegressionPerformanceModelG1(
+    let contaminatedModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -179,7 +179,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = RegressionPerformanceModelG2Plus(
+    let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -202,7 +202,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = RegressionPerformanceModelG2Plus(
+    let contaminatedModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -231,7 +231,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG1(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -260,7 +260,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG1(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -285,7 +285,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG2Plus(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -314,7 +314,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG2Plus(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -339,7 +339,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = RegressionPerformanceModelG1(
+    let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -362,7 +362,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = RegressionPerformanceModelG1(
+    let contaminatedModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -391,7 +391,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = RegressionPerformanceModelG2Plus(
+    let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -414,7 +414,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = RegressionPerformanceModelG2Plus(
+    let contaminatedModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -457,7 +457,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let shallowModel = TabularPerformanceModelG1(
+    let shallowModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -478,7 +478,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let deepModel = TabularPerformanceModelG1(
+    let deepModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -523,7 +523,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway(heading: 360)
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG1(
+    let cleanModel = TabularPerformanceModel(
       conditions: headwindConditions,
       configuration: config,
       runway: runwayInput,
@@ -541,7 +541,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG1(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: headwindConditions,
       configuration: config,
       runway: runwayInput,
@@ -580,7 +580,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway(slope: 1.0)  // 1% uphill
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG1(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -598,7 +598,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG1(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -640,7 +640,7 @@ struct ContaminationTests {
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
     // Model without contamination
-    let cleanModel = TabularPerformanceModelG2Plus(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -670,7 +670,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG2Plus(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -702,7 +702,7 @@ struct ContaminationTests {
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
     // Model without contamination
-    let cleanModel = RegressionPerformanceModelG2Plus(
+    let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -726,7 +726,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = RegressionPerformanceModelG2Plus(
+    let contaminatedModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -752,7 +752,7 @@ struct ContaminationTests {
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
     // Model without contamination
-    let cleanModel = TabularPerformanceModelG1(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -782,7 +782,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG1(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -813,7 +813,7 @@ struct ContaminationTests {
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
     // Model without contamination
-    let cleanModel = RegressionPerformanceModelG1(
+    let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -837,7 +837,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = RegressionPerformanceModelG1(
+    let contaminatedModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -862,7 +862,7 @@ struct ContaminationTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG2Plus(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -891,7 +891,7 @@ struct ContaminationTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let contaminatedModel = TabularPerformanceModelG2Plus(
+    let contaminatedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -946,7 +946,7 @@ struct ContaminationTests {
           nil
         }
 
-      let model = TabularPerformanceModelG1(
+      let model = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: runwayInput,

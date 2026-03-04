@@ -16,9 +16,28 @@
 - ``takeoffClimbGradientFtNM``
 - ``takeoffClimbRateFtMin``
 
+### En Route Climb Performance
+
+- ``enrouteClimbGradientFtNM``
+- ``enrouteClimbRateFtMin``
+- ``enrouteClimbSpeedKIAS``
+- ``enrouteObstacleClimbGradientFtNM``
+- ``enrouteObstacleClimbRateFtMin``
+
 ### Landing Performance
 
 - ``VrefKts``
 - ``landingRunFt``
 - ``landingDistanceFt``
 - ``meetsGoAroundClimbGradient``
+
+### Bounds Checking
+
+- ``takeoffInputsOffscaleLow``
+- ``takeoffInputsOffscaleHigh``
+- ``landingInputsOffscaleLow``
+- ``landingInputsOffscaleHigh``
+
+### Distance Computation
+
+- ``computeDistance(for:)``

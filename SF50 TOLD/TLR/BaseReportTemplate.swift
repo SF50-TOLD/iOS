@@ -111,26 +111,32 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
 
   // MARK: - Template Methods (to be overridden)
 
+  // swiftlint:disable:next unavailable_function
   func reportTitle() -> String {
     fatalError("Subclasses must override reportTitle()")
   }
 
+  // swiftlint:disable:next unavailable_function
   func generateDataTable() -> Table {
     fatalError("Subclasses must override generateDataTable()")
   }
 
+  // swiftlint:disable:next unavailable_function
   func generateRunwaysTable(_: [RunwayInput: RunwayInfo]) -> Table {
     fatalError("Subclasses must override generateRunwaysTable(_:)")
   }
 
+  // swiftlint:disable:next unavailable_function
   func generatePerformanceTable(_: [RunwayInput: PerformanceType]) -> Table {
     fatalError("Subclasses must override generatePerformanceTable(_:)")
   }
 
+  // swiftlint:disable:next unavailable_function
   func extractPerformances(from _: ScenarioType) -> [RunwayInput: PerformanceType] {
     fatalError("Subclasses must override extractPerformances(from:)")
   }
 
+  // swiftlint:disable:next unavailable_function
   func extractScenarioName(from _: ScenarioType) -> String {
     fatalError("Subclasses must override extractScenarioName(from:)")
   }
@@ -168,6 +174,7 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     return DocumentRenderer(minify: false, indent: 2).render(doc)
   }
 
+  // swiftlint:disable:next unavailable_function
   func operationType() -> String {
     fatalError("Subclasses must override operationType()")
   }

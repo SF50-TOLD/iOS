@@ -1,0 +1,61 @@
+digraph PerformanceModelHierarchy {
+    // Graph settings
+    rankdir=TB
+    splines=ortho
+    nodesep=0.6
+    ranksep=0.5
+    bgcolor="transparent"
+
+    // Node styling
+    node [
+        shape=box
+        style="rounded,filled"
+        fontname="SF Pro Display, Helvetica Neue, Arial"
+        fontsize=12
+        fontcolor="#1a1a1a"
+        fillcolor="#f8f9fa"
+        color="#dee2e6"
+        penwidth=1.5
+        width=2.4
+        height=0.6
+    ]
+
+    // Edge styling
+    edge [
+        color="#6c757d"
+        penwidth=1.5
+        arrowsize=0.8
+        arrowhead=onormal
+    ]
+
+    // Protocol
+    protocol [
+        label="<<protocol>>\nPerformanceModel"
+        fillcolor="#e7f1ff"
+        color="#4a90d9"
+    ]
+
+    // Abstract base
+    base [
+        label="<<open class>>\nBasePerformanceModel\n\ncomputeDistance(for:)\nadjustmentGenerator\napplyAdjustment()\napplyContamination()"
+        fillcolor="#fff3cd"
+        color="#ffc107"
+    ]
+
+    // Concrete models
+    tabular [
+        label="<<final class>>\nTabularPerformanceModel\n\nbaseValue(for:)\nadjustmentMultiplier(for:target:)\n[parameterized by aircraftType]"
+        fillcolor="#d4edda"
+        color="#28a745"
+    ]
+    regression [
+        label="<<final class>>\nRegressionPerformanceModel\n\nbaseValue(for:)\nadjustmentMultiplier(for:target:)\n[parameterized by aircraftType]"
+        fillcolor="#e8daef"
+        color="#8e44ad"
+    ]
+
+    // Inheritance
+    protocol -> base [style=dashed label="conforms"]
+    base -> tabular
+    base -> regression
+}

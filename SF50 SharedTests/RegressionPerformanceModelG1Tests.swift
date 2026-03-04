@@ -16,7 +16,7 @@ struct RegressionPerformanceModelG1Tests {
     validateRegressionPredictions(
       dataTable,
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -40,7 +40,7 @@ struct RegressionPerformanceModelG1Tests {
     validateRegressionPredictions(
       dataTable,
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -64,7 +64,7 @@ struct RegressionPerformanceModelG1Tests {
     validateRegressionPredictions(
       dataTable,
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -86,7 +86,7 @@ struct RegressionPerformanceModelG1Tests {
     validateRegressionPredictions(
       dataTable,
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -132,7 +132,7 @@ struct RegressionPerformanceModelG1Tests {
         )
         let runway = Helper.createTestRunway()
 
-        let model = RegressionPerformanceModelG1(
+        let model = RegressionPerformanceModel(
           conditions: conditions,
           configuration: testConfig,
           runway: RunwayInput(from: runway, airport: runway.airport),
@@ -168,7 +168,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, flapSetting: .flaps50)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -193,7 +193,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, flapSetting: .flaps100)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -220,7 +220,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, flapSetting: .flaps50)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -245,7 +245,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, flapSetting: .flaps100)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -274,7 +274,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, iceProtection: false)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -301,7 +301,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, iceProtection: false)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -328,7 +328,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, iceProtection: false)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -356,7 +356,7 @@ struct RegressionPerformanceModelG1Tests {
       configBuilder: { weight in Helper.createTestConfiguration(weight: weight, iceProtection: true)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -382,7 +382,7 @@ struct RegressionPerformanceModelG1Tests {
       configBuilder: { weight in Helper.createTestConfiguration(weight: weight, iceProtection: true)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -408,7 +408,7 @@ struct RegressionPerformanceModelG1Tests {
       configBuilder: { weight in Helper.createTestConfiguration(weight: weight, iceProtection: true)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -437,7 +437,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, iceProtection: false)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -464,7 +464,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, iceProtection: false)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -493,7 +493,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, iceProtection: true)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -520,7 +520,7 @@ struct RegressionPerformanceModelG1Tests {
         Helper.createTestConfiguration(weight: weight, iceProtection: true)
       },
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG1(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -547,7 +547,7 @@ struct RegressionPerformanceModelG1Tests {
     let config = Helper.createTestConfiguration()
     let runway = Helper.createTestRunway(heading: 360)
 
-    let modelNoWind = RegressionPerformanceModelG1(
+    let modelNoWind = RegressionPerformanceModel(
       conditions: conditionsNoWind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -555,7 +555,7 @@ struct RegressionPerformanceModelG1Tests {
       aircraftType: .g1
     )
 
-    let modelHeadwind = RegressionPerformanceModelG1(
+    let modelHeadwind = RegressionPerformanceModel(
       conditions: conditionsHeadwind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -597,7 +597,7 @@ struct RegressionPerformanceModelG1Tests {
     let runwayPaved = Helper.createTestRunway(surfaceType: .paved)
     let runwayUnpaved = Helper.createTestRunway(surfaceType: .turf)
 
-    let modelPaved = RegressionPerformanceModelG1(
+    let modelPaved = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayPaved, airport: runwayPaved.airport),
@@ -605,7 +605,7 @@ struct RegressionPerformanceModelG1Tests {
       aircraftType: .g1
     )
 
-    let modelUnpaved = RegressionPerformanceModelG1(
+    let modelUnpaved = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayUnpaved, airport: runwayUnpaved.airport),
@@ -676,7 +676,7 @@ struct RegressionPerformanceModelG1Tests {
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
       // Test regression model
-      let regressionModel = RegressionPerformanceModelG1(
+      let regressionModel = RegressionPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -699,7 +699,7 @@ struct RegressionPerformanceModelG1Tests {
       )
 
       // Also verify against tabular model
-      let tabularModel = TabularPerformanceModelG1(
+      let tabularModel = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -739,7 +739,7 @@ struct RegressionPerformanceModelG1Tests {
     let minWeightConfig = Helper.createTestConfiguration(weight: 4500, flapSetting: .flaps100)
     let minWeightRunway = Helper.createTestRunway(elevation: 2000)
 
-    let minWeightModel = RegressionPerformanceModelG1(
+    let minWeightModel = RegressionPerformanceModel(
       conditions: minWeightConditions,
       configuration: minWeightConfig,
       runway: RunwayInput(from: minWeightRunway, airport: minWeightRunway.airport),
@@ -761,7 +761,7 @@ struct RegressionPerformanceModelG1Tests {
     let maxWeightConfig = Helper.createTestConfiguration(weight: 6000, flapSetting: .flaps100)
     let maxWeightRunway = Helper.createTestRunway(elevation: 9000)
 
-    let maxWeightModel = RegressionPerformanceModelG1(
+    let maxWeightModel = RegressionPerformanceModel(
       conditions: maxWeightConditions,
       configuration: maxWeightConfig,
       runway: RunwayInput(from: maxWeightRunway, airport: maxWeightRunway.airport),

@@ -1,0 +1,191 @@
+digraph PerformanceCalculationPipeline {
+    // Graph settings
+    rankdir=TB
+    splines=ortho
+    nodesep=0.8
+    ranksep=0.6
+    bgcolor="transparent"
+
+    // Modern, clean node styling
+    node [
+        shape=box
+        style="rounded,filled"
+        fontname="SF Pro Display, Helvetica Neue, Arial"
+        fontsize=13
+        fontcolor="#1a1a1a"
+        fillcolor="#f8f9fa"
+        color="#dee2e6"
+        penwidth=1.5
+        width=2.2
+        height=0.7
+    ]
+
+    // Edge styling
+    edge [
+        color="#6c757d"
+        penwidth=1.5
+        arrowsize=0.8
+        arrowhead=vee
+    ]
+
+    // --- Phase 1: Inputs ---
+    subgraph cluster_inputs {
+        label="Inputs"
+        labeljust=l
+        labelloc=t
+        fontname="SF Pro Display, Helvetica Neue, Arial"
+        fontsize=11
+        fontcolor="#6c757d"
+        style="rounded,dashed"
+        color="#dee2e6"
+        bgcolor="#ffffff08"
+        margin=20
+
+        conditions [
+            label="Conditions\n(temperature, pressure, wind)"
+            fillcolor="#e7f1ff"
+            color="#4a90d9"
+        ]
+        configuration [
+            label="Configuration\n(weight, flaps)"
+            fillcolor="#e7f1ff"
+            color="#4a90d9"
+        ]
+        runway [
+            label="RunwayInput\n(elevation, gradient, surface)"
+            fillcolor="#e7f1ff"
+            color="#4a90d9"
+        ]
+        notam [
+            label="NOTAMInput\n(contamination)"
+            fillcolor="#e7f1ff"
+            color="#4a90d9"
+        ]
+    }
+
+    // --- Phase 2: Model Selection ---
+    subgraph cluster_factory {
+        label="Model Selection"
+        labeljust=l
+        labelloc=t
+        fontname="SF Pro Display, Helvetica Neue, Arial"
+        fontsize=11
+        fontcolor="#6c757d"
+        style="rounded,dashed"
+        color="#dee2e6"
+        bgcolor="#ffffff08"
+        margin=20
+
+        service [
+            label="DefaultPerformance-\nCalculationService\n(factory + orchestrator)"
+            fillcolor="#fff3cd"
+            color="#ffc107"
+        ]
+        model [
+            label="PerformanceModel\n(selected by aircraft type\nand model preference)"
+            fillcolor="#fff3cd"
+            color="#ffc107"
+        ]
+    }
+
+    // --- Phase 3: Model Computation ---
+    subgraph cluster_model {
+        label="Model Computation (BasePerformanceModel)"
+        labeljust=l
+        labelloc=t
+        fontname="SF Pro Display, Helvetica Neue, Arial"
+        fontsize=11
+        fontcolor="#6c757d"
+        style="rounded,dashed"
+        color="#dee2e6"
+        bgcolor="#ffffff08"
+        margin=20
+
+        basevalue [
+            label="baseValue(for:)\n(regression equations\nor table interpolation)"
+            fillcolor="#d4edda"
+            color="#28a745"
+        ]
+        generator [
+            label="PerformanceAdjustment-\nGenerator\n(determines applicable\nadjustments)"
+            fillcolor="#d4edda"
+            color="#28a745"
+        ]
+        apply [
+            label="applyAdjustment()\ncontamination > wind >\ngradient > surface"
+            fillcolor="#d4edda"
+            color="#28a745"
+        ]
+        modelout [
+            label="(Value, DistanceBreakdown)\n(adjusted distance\nwith audit trail)"
+            fillcolor="#d4edda"
+            color="#28a745"
+            style="rounded,filled,bold"
+        ]
+    }
+
+    // --- Phase 4: Service-Level Adjustments ---
+    subgraph cluster_service {
+        label="Operational Adjustments (Service Layer)"
+        labeljust=l
+        labelloc=t
+        fontname="SF Pro Display, Helvetica Neue, Arial"
+        fontsize=11
+        fontcolor="#6c757d"
+        style="rounded,dashed"
+        color="#dee2e6"
+        bgcolor="#ffffff08"
+        margin=20
+
+        vref [
+            label="VREF Additive\n(AC 91-79B Sec. 5.2.2)"
+            fillcolor="#e8daef"
+            color="#8e44ad"
+        ]
+        safety [
+            label="Safety Factor\n(user-configured margin)"
+            fillcolor="#e8daef"
+            color="#8e44ad"
+        ]
+    }
+
+    // --- Phase 5: Output ---
+    subgraph cluster_output {
+        label="Output"
+        labeljust=l
+        labelloc=t
+        fontname="SF Pro Display, Helvetica Neue, Arial"
+        fontsize=11
+        fontcolor="#6c757d"
+        style="rounded,dashed"
+        color="#dee2e6"
+        bgcolor="#ffffff08"
+        margin=20
+
+        report [
+            label="TakeoffReport /\nLandingReport"
+            fillcolor="#f8d7da"
+            color="#dc3545"
+            style="rounded,filled,bold"
+        ]
+    }
+
+    // Connections
+    conditions -> service
+    configuration -> service
+    runway -> service
+    notam -> service
+
+    service -> model [xlabel="createPerformanceModel()"]
+
+    model -> basevalue
+    model -> generator
+    basevalue -> apply
+    generator -> apply
+    apply -> modelout
+
+    modelout -> vref
+    vref -> safety
+
+    safety -> report
+}

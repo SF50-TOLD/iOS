@@ -16,7 +16,7 @@ struct RegressionPerformanceModelG2PlusTests {
     validateRegressionPredictions(
       dataTable,
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG2Plus(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -40,7 +40,7 @@ struct RegressionPerformanceModelG2PlusTests {
     validateRegressionPredictions(
       dataTable,
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG2Plus(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -64,7 +64,7 @@ struct RegressionPerformanceModelG2PlusTests {
     validateRegressionPredictions(
       dataTable,
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG2Plus(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -86,7 +86,7 @@ struct RegressionPerformanceModelG2PlusTests {
     validateRegressionPredictions(
       dataTable,
       modelBuilder: { conditions, config, runway in
-        RegressionPerformanceModelG2Plus(
+        RegressionPerformanceModel(
           conditions: conditions,
           configuration: config,
           runway: runway,
@@ -113,7 +113,7 @@ struct RegressionPerformanceModelG2PlusTests {
     let config = Helper.createTestConfiguration()
     let runway = Helper.createTestRunway(heading: 360)
 
-    let modelNoWind = RegressionPerformanceModelG2Plus(
+    let modelNoWind = RegressionPerformanceModel(
       conditions: conditionsNoWind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -121,7 +121,7 @@ struct RegressionPerformanceModelG2PlusTests {
       aircraftType: .g2Plus
     )
 
-    let modelTailwind = RegressionPerformanceModelG2Plus(
+    let modelTailwind = RegressionPerformanceModel(
       conditions: conditionsTailwind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -169,7 +169,7 @@ struct RegressionPerformanceModelG2PlusTests {
     let config = Helper.createTestConfiguration()
     let runway = Helper.createTestRunway(heading: 360)
 
-    let modelNoWind = RegressionPerformanceModelG2Plus(
+    let modelNoWind = RegressionPerformanceModel(
       conditions: conditionsNoWind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -177,7 +177,7 @@ struct RegressionPerformanceModelG2PlusTests {
       aircraftType: .g2Plus
     )
 
-    let modelHeadwind = RegressionPerformanceModelG2Plus(
+    let modelHeadwind = RegressionPerformanceModel(
       conditions: conditionsHeadwind,
       configuration: config,
       runway: RunwayInput(from: runway, airport: runway.airport),
@@ -222,7 +222,7 @@ struct RegressionPerformanceModelG2PlusTests {
     let runwayUphill = Helper.createTestRunway(slope: 2)
     let runwayDownhill = Helper.createTestRunway(slope: -2)
 
-    let modelFlat = RegressionPerformanceModelG2Plus(
+    let modelFlat = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayFlat, airport: runwayFlat.airport),
@@ -230,7 +230,7 @@ struct RegressionPerformanceModelG2PlusTests {
       aircraftType: .g2Plus
     )
 
-    let modelUphill = RegressionPerformanceModelG2Plus(
+    let modelUphill = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayUphill, airport: runwayUphill.airport),
@@ -238,7 +238,7 @@ struct RegressionPerformanceModelG2PlusTests {
       aircraftType: .g2Plus
     )
 
-    let modelDownhill = RegressionPerformanceModelG2Plus(
+    let modelDownhill = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: RunwayInput(from: runwayDownhill, airport: runwayDownhill.airport),
@@ -312,7 +312,7 @@ struct RegressionPerformanceModelG2PlusTests {
       let runway = Helper.createTestRunway(elevation: testCase.altitude)
 
       // Test regression model
-      let regressionModel = RegressionPerformanceModelG2Plus(
+      let regressionModel = RegressionPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -335,7 +335,7 @@ struct RegressionPerformanceModelG2PlusTests {
       )
 
       // Also verify against tabular model
-      let tabularModel = TabularPerformanceModelG2Plus(
+      let tabularModel = TabularPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -375,7 +375,7 @@ struct RegressionPerformanceModelG2PlusTests {
     let minWeightConfig = Helper.createTestConfiguration(weight: 4500, flapSetting: .flaps100)
     let minWeightRunway = Helper.createTestRunway(elevation: 2000)
 
-    let minWeightModel = RegressionPerformanceModelG2Plus(
+    let minWeightModel = RegressionPerformanceModel(
       conditions: minWeightConditions,
       configuration: minWeightConfig,
       runway: RunwayInput(from: minWeightRunway, airport: minWeightRunway.airport),
@@ -397,7 +397,7 @@ struct RegressionPerformanceModelG2PlusTests {
     let maxWeightConfig = Helper.createTestConfiguration(weight: 6000, flapSetting: .flaps100)
     let maxWeightRunway = Helper.createTestRunway(elevation: 9000)
 
-    let maxWeightModel = RegressionPerformanceModelG2Plus(
+    let maxWeightModel = RegressionPerformanceModel(
       conditions: maxWeightConditions,
       configuration: maxWeightConfig,
       runway: RunwayInput(from: maxWeightRunway, airport: maxWeightRunway.airport),
@@ -434,7 +434,7 @@ struct RegressionPerformanceModelG2PlusTests {
       let config = Helper.createTestConfiguration(weight: condition.weight, flapSetting: .flaps100)
       let runway = Helper.createTestRunway(elevation: condition.altitude)
 
-      let g1Model = RegressionPerformanceModelG1(
+      let g1Model = RegressionPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
@@ -442,7 +442,7 @@ struct RegressionPerformanceModelG2PlusTests {
         aircraftType: .g2Plus
       )
 
-      let g2PlusModel = RegressionPerformanceModelG2Plus(
+      let g2PlusModel = RegressionPerformanceModel(
         conditions: conditions,
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),

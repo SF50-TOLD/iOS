@@ -191,114 +191,41 @@ public final class ClimbPerformanceViewModel {
 
     // Initialize the appropriate model
     let aircraftType = Defaults.Keys.aircraftType
+    let m: PerformanceModel
     if Defaults[.useRegressionModel] {
-      if aircraftType.usesUpdatedThrustSchedule {
-        let m = RegressionPerformanceModelG2Plus(
-          conditions: conditions,
-          configuration: configuration,
-          runway: dummyRunway,
-          notam: nil,
-          aircraftType: aircraftType
-        )
-        climbSpeed = m.enrouteClimbSpeedKIAS.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSpeed.knots),
-            uncertainty.map { Measurement(value: $0, unit: UnitSpeed.knots) }
-          )
-        }
-        climbRate = m.enrouteClimbRateFtMin.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSpeed.feetPerMinute),
-            uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
-          )
-        }
-        climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
-            uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
-          )
-        }
-      } else {
-        let m = RegressionPerformanceModelG1(
-          conditions: conditions,
-          configuration: configuration,
-          runway: dummyRunway,
-          notam: nil,
-          aircraftType: aircraftType
-        )
-        climbSpeed = m.enrouteClimbSpeedKIAS.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSpeed.knots),
-            uncertainty.map { Measurement(value: $0, unit: UnitSpeed.knots) }
-          )
-        }
-        climbRate = m.enrouteClimbRateFtMin.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSpeed.feetPerMinute),
-            uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
-          )
-        }
-        climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
-            uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
-          )
-        }
-      }
+      m = RegressionPerformanceModel(
+        conditions: conditions,
+        configuration: configuration,
+        runway: dummyRunway,
+        notam: nil,
+        aircraftType: aircraftType
+      )
     } else {
-      if aircraftType.usesUpdatedThrustSchedule {
-        let m = TabularPerformanceModelG2Plus(
-          conditions: conditions,
-          configuration: configuration,
-          runway: dummyRunway,
-          notam: nil,
-          aircraftType: aircraftType
-        )
-        climbSpeed = m.enrouteClimbSpeedKIAS.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSpeed.knots),
-            uncertainty.map { Measurement(value: $0, unit: UnitSpeed.knots) }
-          )
-        }
-        climbRate = m.enrouteClimbRateFtMin.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSpeed.feetPerMinute),
-            uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
-          )
-        }
-        climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
-            uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
-          )
-        }
-      } else {
-        let m = TabularPerformanceModelG1(
-          conditions: conditions,
-          configuration: configuration,
-          runway: dummyRunway,
-          notam: nil,
-          aircraftType: aircraftType
-        )
-        climbSpeed = m.enrouteClimbSpeedKIAS.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSpeed.knots),
-            uncertainty.map { Measurement(value: $0, unit: UnitSpeed.knots) }
-          )
-        }
-        climbRate = m.enrouteClimbRateFtMin.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSpeed.feetPerMinute),
-            uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
-          )
-        }
-        climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
-          (
-            Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
-            uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
-          )
-        }
-      }
+      m = TabularPerformanceModel(
+        conditions: conditions,
+        configuration: configuration,
+        runway: dummyRunway,
+        notam: nil,
+        aircraftType: aircraftType
+      )
+    }
+    climbSpeed = m.enrouteClimbSpeedKIAS.map { value, uncertainty in
+      (
+        Measurement(value: value, unit: UnitSpeed.knots),
+        uncertainty.map { Measurement(value: $0, unit: UnitSpeed.knots) }
+      )
+    }
+    climbRate = m.enrouteClimbRateFtMin.map { value, uncertainty in
+      (
+        Measurement(value: value, unit: UnitSpeed.feetPerMinute),
+        uncertainty.map { Measurement(value: $0, unit: UnitSpeed.feetPerMinute) }
+      )
+    }
+    climbGradient = m.enrouteClimbGradientFtNM.map { value, uncertainty in
+      (
+        Measurement(value: value, unit: UnitSlope.feetPerNauticalMile),
+        uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
+      )
     }
   }
 }

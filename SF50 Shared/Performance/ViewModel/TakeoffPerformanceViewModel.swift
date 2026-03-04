@@ -36,6 +36,8 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
   public private(set) var takeoffDistance: Value<Measurement<UnitLength>>
   public private(set) var takeoffClimbGradient: Value<Measurement<UnitSlope>>
   public private(set) var takeoffClimbRate: Value<Measurement<UnitSpeed>>
+  public private(set) var takeoffReport: TakeoffReport?
+  public private(set) var notes: [PerformanceNote] = []
 
   // MARK: Computed Properties
 
@@ -58,7 +60,8 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
     guard case .value(let takeoffRun) = takeoffRun,
       let availableTakeoffRun,
       let obstacleHeight = runway?.notam?.obstacleHeight,
-      let obstacleDistance = runway?.notam?.obstacleDistance
+      let obstacleDistance = runway?.notam?.obstacleDistance,
+      obstacleHeight.value > 0
     else { return nil }
 
     let distanceFromRunwayStart = obstacleDistance + availableTakeoffRun
@@ -69,31 +72,17 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
   }
 
   public var offscaleLow: Bool {
-    // Check if any values are offscale low
     let valuesOffscaleLow =
       takeoffRun == .offscaleLow || takeoffDistance == .offscaleLow
-      || takeoffClimbRate == .offscaleLow || takeoffClimbRate == .offscaleLow
-
-    // For regression models, also check if inputs are outside AFM bounds
-    if let regressionModel = model as? BaseRegressionPerformanceModel {
-      return valuesOffscaleLow || regressionModel.takeoffInputsOffscaleLow
-    }
-
-    return valuesOffscaleLow
+      || takeoffClimbRate == .offscaleLow || takeoffClimbGradient == .offscaleLow
+    return valuesOffscaleLow || (model?.takeoffInputsOffscaleLow ?? false)
   }
 
   public var offscaleHigh: Bool {
-    // Check if any values are offscale high
     let valuesOffscaleHigh =
       takeoffRun == .offscaleHigh || takeoffDistance == .offscaleHigh
-      || takeoffClimbRate == .offscaleHigh || takeoffClimbRate == .offscaleHigh
-
-    // For regression models, also check if inputs are outside AFM bounds
-    if let regressionModel = model as? BaseRegressionPerformanceModel {
-      return valuesOffscaleHigh || regressionModel.takeoffInputsOffscaleHigh
-    }
-
-    return valuesOffscaleHigh
+      || takeoffClimbRate == .offscaleHigh || takeoffClimbGradient == .offscaleHigh
+    return valuesOffscaleHigh || (model?.takeoffInputsOffscaleHigh ?? false)
   }
 
   public var availableTakeoffRun: Measurement<UnitLength>? { runway?.notamedTakeoffRun }
@@ -132,25 +121,67 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
       takeoffDistance = .notAvailable
       takeoffClimbGradient = .notAvailable
       takeoffClimbRate = .notAvailable
+      takeoffReport = nil
+      notes = []
       return
     }
 
     do {
       let safetyFactor = Defaults[.safetyFactorDry]
-      let results = try calculationService.calculateTakeoff(
+      let report = try calculationService.calculateTakeoff(
         for: model,
         safetyFactor: safetyFactor
       )
-      takeoffRun = results.takeoffRun
-      takeoffDistance = results.takeoffDistance
-      takeoffClimbGradient = results.takeoffClimbGradient
-      takeoffClimbRate = results.takeoffClimbRate
+      takeoffReport = report
+      takeoffRun = report.results.takeoffRun
+      takeoffDistance = report.results.takeoffDistance
+      takeoffClimbGradient = report.results.takeoffClimbGradient
+      takeoffClimbRate = report.results.takeoffClimbRate
+      notes = generateNotes()
     } catch {
-      // Handle calculation errors gracefully
       takeoffRun = .invalid
       takeoffDistance = .invalid
       takeoffClimbGradient = .invalid
       takeoffClimbRate = .invalid
+      takeoffReport = nil
+      notes = []
     }
+  }
+
+  // MARK: Notes
+
+  private func generateNotes() -> [PerformanceNote] {
+    var notes: [PerformanceNote] = []
+
+    // Offscale warnings
+    if offscaleHigh { notes.append(.offscaleHigh) }
+    if offscaleLow { notes.append(.offscaleLow) }
+
+    // Input-validation notes
+    notes += generateInputNotes(for: .takeoff)
+
+    // Distance exceedances
+    if let available = availableTakeoffRun,
+      let run = takeoffRun.nominal, run > available
+    {
+      notes.append(.takeoffRunExceedsAvailable(required: run, available: available))
+    }
+    if let available = availableTakeoffDistance,
+      let dist = takeoffDistance.nominal, dist > available
+    {
+      notes.append(.takeoffDistanceExceedsAvailable(required: dist, available: available))
+    }
+
+    // Climb gradient
+    if let required = requiredClimbGradient {
+      notes.append(
+        .insufficientClimbGradient(
+          required: required,
+          actual: takeoffClimbGradient
+        )
+      )
+    }
+
+    return notes
   }
 }

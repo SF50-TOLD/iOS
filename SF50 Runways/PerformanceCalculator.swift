@@ -196,11 +196,11 @@ class PerformanceCalculator {
       )
 
       do {
-        let takeoffResults = try calculationService.calculateTakeoff(
+        let report = try calculationService.calculateTakeoff(
           for: model,
           safetyFactor: safetyFactor
         )
-        results[runway.name] = takeoffResults.takeoffDistance
+        results[runway.name] = report.results.takeoffDistance
       } catch {
         results[runway.name] = .invalid
       }

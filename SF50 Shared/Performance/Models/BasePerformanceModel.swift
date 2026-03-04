@@ -4,20 +4,19 @@ import Foundation
 ///
 /// ``BasePerformanceModel`` provides shared infrastructure for performance calculations
 /// including input data storage and common derived values (headwind, gradient, etc.).
-/// Subclasses must override the abstract performance properties to provide actual
-/// calculation logic.
 ///
 /// ## Subclassing Notes
 ///
-/// All performance output properties are declared with `fatalError` implementations
-/// and must be overridden by concrete subclasses:
-/// - ``takeoffRunFt``
-/// - ``takeoffDistanceFt``
+/// Distance properties (``takeoffRunFt``, ``takeoffDistanceFt``, ``landingRunFt``,
+/// ``landingDistanceFt``) are computed via ``computeDistance(for:)`` and do not need
+/// to be overridden. Instead, subclasses must override:
+/// - ``baseValue(for:)`` - The unadjusted distance from equations or table lookup
+/// - ``applyAdjustment(_:to:target:)`` - How to apply one adjustment using model-specific method
+///
+/// Non-distance properties must still be overridden:
 /// - ``takeoffClimbGradientFtNM``
 /// - ``takeoffClimbRateFtMin``
 /// - ``VrefKts``
-/// - ``landingRunFt``
-/// - ``landingDistanceFt``
 open class BasePerformanceModel: PerformanceModel {
 
   // MARK: - Properties
@@ -27,15 +26,38 @@ open class BasePerformanceModel: PerformanceModel {
   public let runway: RunwayInput
   public let notam: NOTAMInput?
 
-  // MARK: - Required Protocol Properties (to be overridden)
+  // MARK: - Adjustment Generator
+
+  var adjustmentGenerator: PerformanceAdjustmentGenerator {
+    PerformanceAdjustmentGenerator(
+      headwind: headwind,
+      tailwind: tailwind,
+      uphill: uphill,
+      downhill: downhill,
+      isTurf: runway.isTurf,
+      contamination: notam?.contamination
+    )
+  }
+
+  // MARK: - Distance Properties (computed via computeDistance)
 
   open var takeoffRunFt: Value<Double> {
-    fatalError("Subclasses must implement takeoffRunFt")
+    computeDistance(for: .takeoffRun).value
   }
 
   open var takeoffDistanceFt: Value<Double> {
-    fatalError("Subclasses must implement takeoffDistanceFt")
+    computeDistance(for: .takeoffDistance).value
   }
+
+  open var landingRunFt: Value<Double> {
+    computeDistance(for: .landingRun).value
+  }
+
+  open var landingDistanceFt: Value<Double> {
+    computeDistance(for: .landingDistance).value
+  }
+
+  // MARK: - Non-Distance Properties (to be overridden)
 
   open var takeoffClimbGradientFtNM: Value<Double> {
     fatalError("Subclasses must implement takeoffClimbGradientFtNM")
@@ -49,17 +71,25 @@ open class BasePerformanceModel: PerformanceModel {
     fatalError("Subclasses must implement VrefKts")
   }
 
-  open var landingRunFt: Value<Double> {
-    fatalError("Subclasses must implement landingRunFt")
-  }
-
-  open var landingDistanceFt: Value<Double> {
-    fatalError("Subclasses must implement landingDistanceFt")
-  }
-
   open var meetsGoAroundClimbGradient: Value<Bool> {
     .notAvailable
   }
+
+  open var enrouteClimbGradientFtNM: Value<Double> { .notAvailable }
+  open var enrouteClimbRateFtMin: Value<Double> { .notAvailable }
+  open var enrouteClimbSpeedKIAS: Value<Double> { .notAvailable }
+  open var enrouteObstacleClimbGradientFtNM: Value<Double> { .notAvailable }
+  open var enrouteObstacleClimbRateFtMin: Value<Double> { .notAvailable }
+
+  open var takeoffInputsOffscaleLow: Bool { false }
+  open var takeoffInputsOffscaleHigh: Bool { false }
+  open var landingInputsOffscaleLow: Bool { false }
+  open var landingInputsOffscaleHigh: Bool { false }
+
+  // MARK: - Contamination Calculator
+
+  /// Calculator for runway contamination effects. Set by subclass initializers.
+  var contaminationCalculator: ContaminationCalculator?
 
   // MARK: - Common Input Properties
 
@@ -70,7 +100,7 @@ open class BasePerformanceModel: PerformanceModel {
 
   /// Temperature in Celsius, or ISA if not reported.
   var temperature: Double {
-    conditions.temperature?.converted(to: .celsius).value ?? ISAdegC(altitudeFt: altitude)
+    conditions.temperature?.converted(to: .celsius).value ?? isaTemperature(altitudeFt: altitude)
   }
 
   /// Runway elevation in feet.
@@ -131,25 +161,110 @@ open class BasePerformanceModel: PerformanceModel {
     self.notam = notam
   }
 
-  // MARK: - Helper Methods for Subclasses
+  // MARK: - Distance Computation
 
-  /// Returns the AFM table prefix for Vref lookup based on flap setting.
-  func vrefPrefix(for flapSetting: FlapSetting) -> String {
-    switch flapSetting {
-      case .flapsUp: "up"
-      case .flapsUpIce: "up ice"
-      case .flaps50: "50"
-      case .flaps50Ice: "50 ice"
-      case .flaps100: "100"
+  /// Computes the adjusted distance and breakdown for a given target.
+  ///
+  /// This method calls ``baseValue(for:)`` to get the unadjusted distance, then
+  /// iterates through all applicable adjustments (determined by the adjustment generator),
+  /// calling ``applyAdjustment(_:to:target:)`` for each one.
+  open func computeDistance(for target: DistanceTarget)
+    -> (value: Value<Double>, breakdown: DistanceBreakdown)
+  {
+    var value = baseValue(for: target)
+    let baseFt = value
+    var adjustments: [PerformanceAdjustment] = []
+
+    for kind in adjustmentGenerator.adjustmentKinds(for: target) {
+      let (newValue, multiplier) = applyAdjustment(kind, to: value, target: target)
+      value = newValue
+      adjustments.append(.init(kind: kind, multiplier: multiplier, resultFt: value))
+    }
+
+    return (value, .init(baseFt: baseFt, adjustments: adjustments))
+  }
+
+  /// Returns the base (unadjusted) distance for the given target.
+  ///
+  /// Subclasses must override this to provide the value from regression equations or table lookup.
+  open func baseValue(for target: DistanceTarget) -> Value<Double> {
+    assertionFailure("\(Self.self) must override baseValue(for: \(target))")
+    return .notAvailable
+  }
+
+  /// Applies a single adjustment to a distance value.
+  ///
+  /// The default implementation routes contamination to ``applyContamination(_:to:target:)``
+  /// and all other adjustments through ``adjustmentMultiplier(for:target:)``.
+  open func applyAdjustment(
+    _ kind: AdjustmentKind,
+    to value: Value<Double>,
+    target: DistanceTarget
+  ) -> (result: Value<Double>, effectiveMultiplier: Double) {
+    switch kind {
+      case .contamination(let contamination):
+        return applyContamination(contamination, to: value, target: target)
+      default:
+        let multiplier = adjustmentMultiplier(for: kind, target: target)
+        var result = value
+        result *= multiplier
+        return (result, multiplier.nominal ?? 1.0)
     }
   }
 
-  /// Returns the AFM table prefix for landing distance lookup based on flap setting.
-  func landingPrefix(for flapSetting: FlapSetting) -> String {
-    switch flapSetting {
-      case .flaps50, .flapsUp: "50"
-      case .flaps50Ice, .flapsUpIce: "50 ice"
-      case .flaps100: "100"
+  /// Returns the multiplicative adjustment factor for a given adjustment kind and target.
+  ///
+  /// Subclasses must override this to provide model-specific factors. Regression models
+  /// return scalar factors wrapped in `.value()`, while tabular models return factors
+  /// interpolated from data tables.
+  open func adjustmentMultiplier(
+    for kind: AdjustmentKind,
+    target: DistanceTarget
+  ) -> Value<Double> {
+    assertionFailure(
+      "\(Self.self) must override adjustmentMultiplier(for: \(kind), target: \(target))"
+    )
+    return .value(1.0)
+  }
+
+  /// Applies a contamination adjustment to a distance value.
+  ///
+  /// Uses the contamination calculator for additive contamination effects
+  /// on landing distances.
+  open func applyContamination(
+    _ contamination: Contamination,
+    to value: Value<Double>,
+    target: DistanceTarget
+  ) -> (result: Value<Double>, effectiveMultiplier: Double) {
+    guard let contaminationCalculator else {
+      return (value, 1.0)
     }
+    let newValue: Value<Double>
+    switch target {
+      case .landingRun:
+        newValue = contaminationCalculator.landingRunContaminationAddition(
+          distance: value,
+          contamination: contamination,
+          isGroovedOrPFC: runway.isGroovedOrPFC
+        )
+      case .landingDistance:
+        newValue = contaminationCalculator.landingDistanceContaminationAddition(
+          landingDistance: value,
+          landingRun: baseValue(for: .landingRun),
+          contamination: contamination,
+          isGroovedOrPFC: runway.isGroovedOrPFC
+        )
+      default:
+        return (value, 1.0)
+    }
+    return (newValue, effectiveMultiplier(from: value, to: newValue))
+  }
+
+  /// Computes the effective multiplier between two values.
+  func effectiveMultiplier(from oldValue: Value<Double>, to newValue: Value<Double>) -> Double {
+    guard let old = oldValue.nominal, old > 0, let new = newValue.nominal else {
+      return 1.0
+    }
+    return new / old
   }
 }

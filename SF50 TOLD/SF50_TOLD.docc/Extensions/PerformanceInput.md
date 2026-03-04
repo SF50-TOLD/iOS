@@ -22,7 +22,7 @@
 
 - ``safetyFactor``
 - ``useRegressionModel``
-- ``updatedThrustSchedule``
+- ``aircraftType``
 
 ### Derived Values
 

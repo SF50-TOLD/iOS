@@ -59,9 +59,19 @@ Sendable value types for background calculations:
 - <doc:PerformanceCalculationOverview>
 - ``PerformanceCalculationService``
 - ``DefaultPerformanceCalculationService``
+- ``PerformanceModel``
+- ``BasePerformanceModel``
+- ``PerformanceAdjustmentGenerator``
+- ``AdjustmentKind``
+- ``DistanceTarget``
+- ``PerformanceAdjustment``
+- ``DistanceBreakdown``
+- ``PerformanceNote``
+- ``PerformanceNoteSeverity``
+- ``TakeoffReport``
+- ``LandingReport``
 - ``TakeoffResults``
 - ``LandingResults``
-- ``PerformanceModel``
 - ``Value``
 
 ### Aircraft Configuration

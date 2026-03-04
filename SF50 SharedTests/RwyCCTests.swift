@@ -60,7 +60,7 @@ struct RwyCCTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG1(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -79,7 +79,7 @@ struct RwyCCTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let rwyCCModel = TabularPerformanceModelG1(
+    let rwyCCModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -111,7 +111,7 @@ struct RwyCCTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG1(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -136,7 +136,7 @@ struct RwyCCTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let rwyCCModel = TabularPerformanceModelG1(
+    let rwyCCModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -166,7 +166,7 @@ struct RwyCCTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = TabularPerformanceModelG1(
+    let cleanModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -186,7 +186,7 @@ struct RwyCCTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let rwyCC6Model = TabularPerformanceModelG1(
+    let rwyCC6Model = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -235,7 +235,7 @@ struct RwyCCTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let noWindModel = TabularPerformanceModelG1(
+    let noWindModel = TabularPerformanceModel(
       conditions: noWindConditions,
       configuration: config,
       runway: runwayInput,
@@ -243,7 +243,7 @@ struct RwyCCTests {
       aircraftType: .g1
     )
 
-    let headwindModel = TabularPerformanceModelG1(
+    let headwindModel = TabularPerformanceModel(
       conditions: headwindConditions,
       configuration: config,
       runway: runwayInput,
@@ -286,7 +286,7 @@ struct RwyCCTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let pavedModel = TabularPerformanceModelG1(
+    let pavedModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: pavedInput,
@@ -294,7 +294,7 @@ struct RwyCCTests {
       aircraftType: .g1
     )
 
-    let turfModel = TabularPerformanceModelG1(
+    let turfModel = TabularPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: turfInput,
@@ -324,7 +324,7 @@ struct RwyCCTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let cleanModel = RegressionPerformanceModelG1(
+    let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -343,7 +343,7 @@ struct RwyCCTests {
       obstacleDistance: .init(value: 0, unit: .nauticalMiles)
     )
 
-    let rwyCCModel = RegressionPerformanceModelG1(
+    let rwyCCModel = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,

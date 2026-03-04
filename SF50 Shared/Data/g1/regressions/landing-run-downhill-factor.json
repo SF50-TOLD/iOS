@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "name": "landing-run-downhill-factor",
+  "description": "Downhill adjustment factor for landing ground run",
+  "type": "constant",
+  "variables": [],
+  "equation": {
+    "value": 0.06
+  }
+}

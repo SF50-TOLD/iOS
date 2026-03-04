@@ -59,6 +59,8 @@ class BaseReportData<PerformanceType, ScenarioType> {
 
   // MARK: - Template Methods (to be overridden)
 
+  // swiftlint:disable unavailable_function
+
   /// Returns the operation type. Override in subclass.
   func operation() -> SF50_Shared.Operation {
     fatalError("Subclasses must override operation()")
@@ -89,6 +91,8 @@ class BaseReportData<PerformanceType, ScenarioType> {
   func maxWeight() -> Measurement<UnitMass> {
     fatalError("Subclasses must override maxWeight()")
   }
+
+  // swiftlint:enable unavailable_function
 
   // MARK: - Common Implementation
 
@@ -148,6 +152,7 @@ class BaseReportData<PerformanceType, ScenarioType> {
    * Performs binary search to find maximum valid weight.
    *
    * - Parameters:
+   *   - runway: The runway to use.
    *   - min: Minimum weight to consider.
    *   - max: Maximum weight to consider.
    *   - increment: Weight increment for search (default 50 lbs).

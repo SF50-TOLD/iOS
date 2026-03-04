@@ -15,7 +15,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -43,7 +43,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -71,7 +71,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG2Plus(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -98,7 +98,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG2Plus(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -127,7 +127,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -153,7 +153,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -179,7 +179,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG2Plus(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -205,7 +205,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG2Plus(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -233,7 +233,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -259,7 +259,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -285,7 +285,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -311,7 +311,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -339,7 +339,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway(elevation: 11000)  // Above 10000 ft maximum
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -365,7 +365,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway(elevation: 10500)  // Above 10000 ft maximum
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -393,7 +393,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway(elevation: 5000)  // Within 0-10000 ft
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -428,7 +428,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway(elevation: 3000)  // Within 0-10000 ft
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -466,7 +466,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,
@@ -492,7 +492,7 @@ struct RegressionModelOffscaleTests {
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
 
-    let model = RegressionPerformanceModelG1(
+    let model = RegressionPerformanceModel(
       conditions: conditions,
       configuration: config,
       runway: runwayInput,

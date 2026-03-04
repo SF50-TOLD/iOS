@@ -46,24 +46,24 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
       useRegressionModel: input.useRegressionModel,
       aircraftType: input.aircraftType
     )
-    let results = try performance.calculateTakeoff(
+    let report = try performance.calculateTakeoff(
       for: perfModel,
       safetyFactor: input.safetyFactor
     )
 
-    let groundRun = results.takeoffRun.map { value, uncertainty in
+    let groundRun = report.results.takeoffRun.map { value, uncertainty in
       (
         PerformanceDistance(distance: value, availableDistance: runway.length),
         uncertainty.map { PerformanceDistance(distance: $0, availableDistance: runway.length) }
       )
     }
-    let totalDistance = results.takeoffDistance.map { value, uncertainty in
+    let totalDistance = report.results.takeoffDistance.map { value, uncertainty in
       (
         PerformanceDistance(distance: value, availableDistance: runway.length),
         uncertainty.map { PerformanceDistance(distance: $0, availableDistance: runway.length) }
       )
     }
-    let climbRate = results.takeoffClimbGradient
+    let climbRate = report.results.takeoffClimbGradient
 
     // Determine if valid based on total distance
     let isValid: Bool = {
@@ -106,19 +106,19 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
         useRegressionModel: input.useRegressionModel,
         aircraftType: input.aircraftType
       )
-      let results = try performance.calculateTakeoff(
+      let report = try performance.calculateTakeoff(
         for: model,
         safetyFactor: input.safetyFactor
       )
 
       // Check AFM limits
-      if case .offscaleHigh = results.takeoffDistance {
+      if case .offscaleHigh = report.results.takeoffDistance {
         return (false, .AFM)
       }
-      if case .offscaleLow = results.takeoffDistance {
+      if case .offscaleLow = report.results.takeoffDistance {
         return (false, .AFM)
       }
-      if case .value(let dist) = results.takeoffDistance {
+      if case .value(let dist) = report.results.takeoffDistance {
         // Check runway length
         if dist.converted(to: .feet).value > runwayLength {
           return (false, .field)
@@ -128,7 +128,7 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
       // Check obstacle clearance if NOTAM present
       if let obstacleHeight = runway.notam?.obstacleHeight,
         let obstacleDistance = runway.notam?.obstacleDistance,
-        case .value(let takeoffRun) = results.takeoffRun
+        case .value(let takeoffRun) = report.results.takeoffRun
       {
         let distanceFromRunwayStart =
           obstacleDistance.converted(to: .feet).value
@@ -138,7 +138,7 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
         if distanceFromLiftoff > 0 {
           let requiredGradient = obstacleHeight.converted(to: .feet).value / distanceFromLiftoff
 
-          if case .value(let climbGradient) = results.takeoffClimbGradient {
+          if case .value(let climbGradient) = report.results.takeoffClimbGradient {
             let actualGradient =
               climbGradient.converted(to: .feetPerNauticalMile).value / 6076.12
             if actualGradient < requiredGradient {

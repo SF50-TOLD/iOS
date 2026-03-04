@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "name": "landing-run-uphill-factor-flaps100",
+  "description": "Uphill adjustment factor for landing ground run - flaps 100",
+  "type": "constant",
+  "variables": [],
+  "equation": {
+    "value": 0.05
+  }
+}
