@@ -23,8 +23,6 @@ It provides:
 
 ### Instrument Procedures
 
-- ``DepartureProcedure``
-- ``ApproachProcedure``
 - ``Leg``
 - ``LegType``
 - ``LegTypeCodable``

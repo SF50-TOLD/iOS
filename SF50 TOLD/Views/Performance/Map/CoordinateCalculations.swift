@@ -4,7 +4,7 @@ import SF50_Shared
 
 /// Calculates the initial bearing from one coordinate to another.
 ///
-/// Delegates to ``GeoCalculations/bearing(from:to:)``.
+/// Delegates to `GeoCalculations.bearing(from:to:)`.
 public func bearing(
   from start: CLLocationCoordinate2D,
   to end: CLLocationCoordinate2D
@@ -14,7 +14,7 @@ public func bearing(
 
 /// Calculates a destination coordinate given a starting point, distance, and bearing.
 ///
-/// Delegates to ``GeoCalculations/destination(from:distance:bearing:)``.
+/// Delegates to `GeoCalculations.destination(from:distance:bearing:)`.
 public func destination(
   from start: CLLocationCoordinate2D,
   distance: Measurement<UnitLength>,

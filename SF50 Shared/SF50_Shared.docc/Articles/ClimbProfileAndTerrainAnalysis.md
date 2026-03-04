@@ -106,12 +106,12 @@ for point in terrainPath.points {
 
 ## See Also
 
-- `ClimbProfileGenerator`
-- `ClimbProfile`
-- `ProcedurePathGenerator`
-- `ProcedurePath`
-- `ProcedureTerrainPathGenerator`
-- `ProcedureTerrainPath`
-- `ObstacleSurveyRegion`
-- `Obstacle`
+- ``ClimbProfileGenerator``
+- ``ClimbProfile``
+- ``ProcedurePathGenerator``
+- ``ProcedurePath``
+- ``ProcedureTerrainPathGenerator``
+- ``ProcedureTerrainPath``
+- ``ObstacleSurveyRegion``
+- ``Obstacle``
 - <doc:DigitalElevationModel>

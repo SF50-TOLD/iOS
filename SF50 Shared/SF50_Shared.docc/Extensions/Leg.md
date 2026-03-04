@@ -27,6 +27,3 @@
 - ``dmeDistance``
 
 ### Relationships
-
-- ``departureProcedure``
-- ``approachProcedure``

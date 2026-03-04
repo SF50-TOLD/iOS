@@ -102,8 +102,8 @@ public enum GeoCalculations {
   /// Uses the forward azimuth formula on a spherical Earth.
   ///
   /// - Parameters:
-  ///   - from: Starting coordinate.
-  ///   - to: Destination coordinate.
+  ///   - start: Starting coordinate.
+  ///   - end: Destination coordinate.
   /// - Returns: The initial bearing as a Measurement in degrees (0-360).
   public static func bearing(
     from start: CLLocationCoordinate2D,
@@ -166,7 +166,7 @@ public enum GeoCalculations {
   /// Uses the Haversine formula on a spherical Earth.
   ///
   /// - Parameters:
-  ///   - from: Starting coordinate.
+  ///   - start: Starting coordinate.
   ///   - distance: Distance to travel.
   ///   - bearing: True bearing in degrees (0-360).
   /// - Returns: The destination coordinate.

@@ -30,7 +30,7 @@ import SwiftUI
 /// ) { distance in
 ///     Text(distance, format: .measurement(width: .abbreviated))
 /// } displayUncertainty: { uncertainty in
-///     Text("± \(uncertainty.value, format: .number.precision(.fractionLength(0)))")
+///     Text("±\(uncertainty.value, format: .number.precision(.fractionLength(0)))")
 /// }
 /// ```
 public struct InterpolationView<ValueType, Content: View>: View {
@@ -298,7 +298,7 @@ private struct CustomType {
         ) { value in
           Text(value, format: .number)
         } displayUncertainty: { uncertainty in
-          Text("± \(uncertainty, format: .number)")
+          Text("±\(uncertainty, format: .number)")
         }
       }
       LabeledContent("Scalar (exceeds max)") {
@@ -309,7 +309,7 @@ private struct CustomType {
         ) { value in
           Text(value, format: .number)
         } displayUncertainty: { uncertainty in
-          Text("± \(uncertainty, format: .number)")
+          Text("±\(uncertainty, format: .number)")
         }
       }
       LabeledContent("Scalar (exceeds min)") {
@@ -320,7 +320,7 @@ private struct CustomType {
         ) { value in
           Text(value, format: .number)
         } displayUncertainty: { uncertainty in
-          Text("± \(uncertainty, format: .number)")
+          Text("±\(uncertainty, format: .number)")
         }
       }
       LabeledContent("Measurement (within)") {
@@ -334,7 +334,7 @@ private struct CustomType {
         ) { value in
           Text(value, format: .measurement(width: .abbreviated))
         } displayUncertainty: { uncertainty in
-          Text("± \(uncertainty, format: .measurement(width: .abbreviated))")
+          Text("±\(uncertainty, format: .measurement(width: .abbreviated))")
         }
       }
       LabeledContent("Measurement (exceeds)") {
@@ -348,7 +348,7 @@ private struct CustomType {
         ) { value in
           Text(value, format: .measurement(width: .abbreviated))
         } displayUncertainty: { uncertainty in
-          Text("± \(uncertainty, format: .measurement(width: .abbreviated))")
+          Text("±\(uncertainty, format: .measurement(width: .abbreviated))")
         }
       }
 
@@ -363,7 +363,7 @@ private struct CustomType {
         ) { value in
           Text(value, format: .measurement(width: .abbreviated))
         } displayUncertainty: { uncertainty in
-          Text("± \(uncertainty, format: .measurement(width: .abbreviated))")
+          Text("±\(uncertainty, format: .measurement(width: .abbreviated))")
         }
       }
     }

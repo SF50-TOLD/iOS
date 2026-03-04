@@ -4,9 +4,9 @@ import os
 /// Retries an async operation with exponential backoff.
 ///
 /// `CancellationError` and `URLError.cancelled` always rethrow immediately.
-/// Other errors are tested with ``shouldRetry``; transient errors are retried
-/// up to ``maximumRetryCount`` additional times with exponential backoff
-/// starting at ``initialDelaySeconds``.
+/// Other errors are tested with `shouldRetry`; transient errors are retried
+/// up to `maximumRetryCount` additional times with exponential backoff
+/// starting at `initialDelaySeconds`.
 func withRetry<T>(
   maximumRetryCount: Int = 3,
   initialDelaySeconds: Int = 2,

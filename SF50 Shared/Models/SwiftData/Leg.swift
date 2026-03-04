@@ -151,6 +151,7 @@ public final class Leg {
   ///   - segment: The procedure segment this leg belongs to.
   ///   - navaid: The recommended DME navaid, if applicable.
   ///   - dmeDistance: DME termination distance, if applicable.
+  ///   - theta: DME radial angle from the navaid, if applicable.
   public init(
     identifier: String?,
     latitude: Measurement<UnitAngle>?,
@@ -184,7 +185,7 @@ public final class Leg {
 
   /// Creates a new leg from a codable leg type representation.
   ///
-  /// Convenience initializer for the ``NavDataLoader`` import path.
+  /// Convenience initializer for the `NavDataLoader` import path.
   public convenience init(
     identifier: String?,
     latitude: Measurement<UnitAngle>?,
