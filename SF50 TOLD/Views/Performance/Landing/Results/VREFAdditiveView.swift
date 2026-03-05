@@ -18,6 +18,7 @@ struct VREFAdditiveView: View {
         format: .speed(plusSign: true),
         minimum: .init(value: 0, unit: .knots)
       )
+      .accessibilityIdentifier("VREFAdditiveField")
     } label: {
       Text(.VREF + AttributedString(" Additive"))
     }

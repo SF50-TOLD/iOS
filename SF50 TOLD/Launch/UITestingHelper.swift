@@ -4,6 +4,11 @@ import SF50_Shared
 import SwiftData
 
 enum UITestingHelper {
+  static var weatherLoader: (any WeatherLoaderProtocol)? {
+    guard ProcessInfo.processInfo.arguments.contains("UI-TESTING") else { return nil }
+    return UITestingWeatherLoader()
+  }
+
   static func setupUITestingEnvironment(container: ModelContainer) {
     // Reset all defaults
     Defaults.removeAll(suite: UserDefaults(suiteName: "group.codes.tim.TOLD")!)
@@ -14,6 +19,14 @@ enum UITestingHelper {
     // Set minimal configuration for testing - let tests go through setup flow
     Defaults[.schemaVersion] = latestSchemaVersion
     Defaults[.favoriteAirports] = []  // Ensure no favorites at start
+
+    if ProcessInfo.processInfo.arguments.contains("USE-REGRESSION-MODEL") {
+      Defaults[.useRegressionModel] = true
+    }
+
+    if ProcessInfo.processInfo.arguments.contains("SKIP-SCENARIO-SEEDING") {
+      Defaults[.defaultScenariosSeeded] = true
+    }
 
     // Only seed test data for regular UI tests, not screenshot generation
     if !isGeneratingScreenshots {

@@ -8,6 +8,7 @@ struct VREFAdditiveWarningView: View {
     )
     .font(.system(size: 14))
     .foregroundColor(.secondary)
+    .accessibilityIdentifier("VREFAdditiveWarning")
   }
 }
 

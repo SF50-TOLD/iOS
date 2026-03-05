@@ -34,7 +34,11 @@ struct LandingView: View {
         performance = .init(container: modelContext.container)
       }
       if weather == nil {
-        weather = .init(operation: .landing, container: modelContext.container)
+        weather = .init(
+          operation: .landing,
+          container: modelContext.container,
+          loader: UITestingHelper.weatherLoader
+        )
       }
     }
     .onChange(of: weather?.conditions) {

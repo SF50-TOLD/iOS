@@ -1,7 +1,11 @@
+import Defaults
 import SF50_Shared
 import SwiftUI
 
 struct LandingResultsView: View {
+  @Default(.VREFAdditive)
+  private var VREFAdditive
+
   @Environment(LandingPerformanceViewModel.self)
   private var performance
 
@@ -19,6 +23,9 @@ struct LandingResultsView: View {
     Section("Performance") {
       VREFView()
       VREFAdditiveView()
+      if VREFAdditive.converted(to: .knots).value > 0 {
+        VREFAdditiveWarningView()
+      }
       LandingGroundRunView()
       LandingDistanceView()
       GoAroundClimbGradientView()
@@ -31,6 +38,7 @@ struct LandingResultsView: View {
         } label: {
           Text(adjustmentsLabel)
         }
+        .accessibilityIdentifier("landingAdjustmentsLink")
         .badge(performance.notes.count)
         .badgeProminence(
           performance.notes.contains { $0.severity == .warning } ? .increased : .standard

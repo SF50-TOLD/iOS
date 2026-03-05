@@ -80,7 +80,6 @@ final class Generate_Screenshots: XCTestCase {
 
     // Download NA terrain data
     app.tapTab("Settings")
-    waitForNavigation()
 
     // Terrain link may be below the fold — scroll to find it
     let terrainLink = app.collectionViews.firstMatch.makeVisible(
@@ -88,7 +87,6 @@ final class Generate_Screenshots: XCTestCase {
     )
     XCTAssertNotNil(terrainLink, "Terrain navigation link should be accessible")
     terrainLink!.tap()
-    waitForNavigation()
 
     // Tap Download for North America (skip if already downloaded)
     let naDownloadButton = app.buttons["terrainDownload-na"]
@@ -105,7 +103,6 @@ final class Generate_Screenshots: XCTestCase {
 
     // Navigate back to Takeoff tab
     app.tapTab("Takeoff")
-    waitForNavigation()
 
     // Configure takeoff parameters
     let payloadField = app.textFields["payloadField"].firstMatch
@@ -127,7 +124,6 @@ final class Generate_Screenshots: XCTestCase {
       element: airportSelector!,
       expectedElement: app.segmentedControls["airportListPicker"]
     )
-    waitForNavigation()
 
     // Switch to Search tab
     let airportPicker = app.segmentedControls["airportListPicker"]
@@ -150,7 +146,6 @@ final class Generate_Screenshots: XCTestCase {
       "ASE airport should appear in results"
     )
     takeoffAirportRow.tap()
-    waitForNavigation()
 
     // Select runway
     let runwaySelector = app.collectionViews.firstMatch.makeVisible(
@@ -158,13 +153,11 @@ final class Generate_Screenshots: XCTestCase {
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
     runwaySelector!.tap()
-    waitForNavigation()
 
     // Select runway 33
     let takeoffRunwayRow = app.buttons["runwayRow-33"].firstMatch
     XCTAssertTrue(takeoffRunwayRow.waitForExistence(timeout: 2), "Runway 33 should appear")
     takeoffRunwayRow.tap()
-    waitForNavigation()
 
     // Scroll to top to show all configured parameters
     app.scrollToTop()
@@ -177,13 +170,11 @@ final class Generate_Screenshots: XCTestCase {
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
     weatherSelector!.tap()
-    waitForNavigation()
 
     snapshot("10-weather")
 
     // Go back from weather
     app.navigationBars.buttons.element(boundBy: 0).tap()
-    waitForNavigation()
 
     // Verify takeoff distances are displayed
     let takeoffGroundRun = app.staticTexts["takeoffGroundRunValue"]
@@ -236,7 +227,6 @@ final class Generate_Screenshots: XCTestCase {
     )
     if let showClimbButton, showClimbButton.isEnabled {
       showClimbButton.tap()
-      waitForNavigation()
 
       // Wait for terrain chart to render
       let climbNavBar = app.navigationBars["Climb Profile"]
@@ -253,12 +243,10 @@ final class Generate_Screenshots: XCTestCase {
 
       // Navigate back
       app.navigationBars.buttons.element(boundBy: 0).tap()
-      waitForNavigation()
     }
 
     // Navigate to Landing tab
     app.tapTab("Landing")
-    waitForNavigation()
 
     // Configure landing parameters
     let landingPayloadField = app.textFields["payloadField"].firstMatch
@@ -283,7 +271,6 @@ final class Generate_Screenshots: XCTestCase {
       element: landingAirportSelector!,
       expectedElement: app.segmentedControls["airportListPicker"]
     )
-    waitForNavigation()
 
     // Search for ASE
     let landingAirportPicker = app.segmentedControls["airportListPicker"]
@@ -302,7 +289,6 @@ final class Generate_Screenshots: XCTestCase {
     let landingAirportRow = app.buttons["airportRow-ASE"].firstMatch
     if landingAirportRow.waitForExistence(timeout: 3) {
       landingAirportRow.tap()
-      waitForNavigation()
     }
 
     // Select runway for landing
@@ -311,13 +297,11 @@ final class Generate_Screenshots: XCTestCase {
     )
     XCTAssertNotNil(landingRunwaySelector, "Landing runway selector should be accessible")
     landingRunwaySelector!.tap()
-    waitForNavigation()
 
     // Select runway 15
     let landingRunwayRow = app.buttons["runwayRow-15"].firstMatch
     if landingRunwayRow.waitForExistence(timeout: 2) {
       landingRunwayRow.tap()
-      waitForNavigation()
     }
 
     // Scroll to top to show configured parameters
@@ -355,7 +339,6 @@ final class Generate_Screenshots: XCTestCase {
       "Show landing map button should be enabled (runway must have threshold coordinates)"
     )
     showLandingMapButton!.tap()
-    waitForNavigation()
 
     // Wait for map to render
     Thread.sleep(forTimeInterval: 2.0)
@@ -366,11 +349,9 @@ final class Generate_Screenshots: XCTestCase {
     let mapBackButton = app.navigationBars.buttons.element(boundBy: 0)
     XCTAssertTrue(mapBackButton.waitForExistence(timeout: 5), "Map view back button should exist")
     mapBackButton.tap()
-    waitForNavigation()
 
     // Navigate to Climb tab
     app.tapTab("Climb")
-    waitForNavigation()
 
     snapshot("09-climb")
   }

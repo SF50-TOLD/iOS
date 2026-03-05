@@ -57,8 +57,14 @@ extension XCUIElement {
 
 extension XCUIApplication {
   func scrollToTop() {
+    // Tap status bar to scroll to top, falling back to coordinate tap
     let springboardApp = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-    for bar in springboardApp.statusBars.allElementsBoundByIndex { bar.tap() }
+    let statusBars = springboardApp.statusBars.allElementsBoundByIndex
+    if statusBars.isEmpty {
+      coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.02)).tap()
+    } else {
+      statusBars.first?.tap()
+    }
   }
 
   /// Finds a tab button by label, checking both the standard tab bar (iPhone) and
@@ -78,56 +84,23 @@ extension XCUIApplication {
 // Helper function for clearing and typing text in fields
 extension XCUIElement {
   func clearAndType(_ text: String, app: XCUIApplication) {
-    tap()
-
     // Dismiss keyboard popover on iPad if present
     if app.otherElements["PopoverDismissRegion"].exists {
       app.otherElements["PopoverDismissRegion"].tap()
     }
 
-    // Triple tap to select all
+    // Tap and wait for keyboard to appear, retrying if needed
+    for _ in 0..<3 {
+      tap()
+      if app.keyboards.firstMatch.waitForExistence(timeout: 2) { break }
+    }
+
+    // Triple tap to select all, then pause for selection to register
     tap(withNumberOfTaps: 3, numberOfTouches: 1)
+    Thread.sleep(forTimeInterval: 0.3)
 
     // Type new text (will replace selection)
     typeText(text)
-  }
-}
-
-// No-op placeholder for navigation timing - rely on waitForExistence instead
-func waitForNavigation() {
-  // Intentionally empty - navigation timing is handled by waitForExistence calls
-}
-
-extension XCUIApplication {
-  /// Cancels any in-progress weather loading, then reopens the picker for a fresh start.
-  ///
-  /// Call this immediately after opening the weather picker (`weatherSelector.tap()`).
-  /// When weather is actively loading, this cancels it (resetting to ISA) so the form
-  /// fields start from known defaults. When weather has already loaded, the form keeps
-  /// its METAR values but gets a fresh `.onAppear` cycle.
-  @MainActor
-  func ensureWeatherPickerISA() {
-    let cancelButton = buttons["cancelWeatherUpdateButton"]
-
-    // If weather is currently loading, cancel it to get ISA
-    if cancelButton.waitForExistence(timeout: 5) {
-      cancelButton.tap()
-    }
-
-    // Wait for form to be ready
-    _ = textFields["windDirectionField"].waitForExistence(timeout: 5)
-
-    // Navigate back to destroy the form's cached @State
-    navigationBars.buttons.element(boundBy: 0).tap()
-    waitForNavigation()
-
-    // Reopen the weather picker — .onAppear gets a fresh read of conditions
-    scrollToTop()
-    let weatherSelector = collectionViews.firstMatch.makeVisible(
-      element: descendants(matching: .any)["weatherSelector"].firstMatch
-    )
-    weatherSelector?.tap()
-    waitForNavigation()
   }
 }
 

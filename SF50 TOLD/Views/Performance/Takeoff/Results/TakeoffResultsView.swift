@@ -29,6 +29,7 @@ struct TakeoffResultsView: View {
         } label: {
           Text(adjustmentsLabel)
         }
+        .accessibilityIdentifier("takeoffAdjustmentsLink")
         .badge(performance.notes.count)
         .badgeProminence(
           performance.notes.contains { $0.severity == .warning } ? .increased : .standard

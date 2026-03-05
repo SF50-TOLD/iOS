@@ -18,6 +18,7 @@ struct GoAroundClimbGradientView: View {
           }
         }
       )
+      .accessibilityIdentifier("goAroundClimbGradientValue")
       .animation(.default, value: performance.meetsGoAroundClimbGradient)
     }
   }

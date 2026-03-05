@@ -46,16 +46,13 @@ struct WelcomeView: View {
         Spacer()
         Form {
           Section {
-            LabeledContent("Model") {
-              Picker("", selection: $selectedType) {
-                Text("G1").tag(AircraftTypeSetting.g1)
-                Text("G2").tag(AircraftTypeSetting.g2)
-                Text("G2+").tag(AircraftTypeSetting.g2Plus)
-              }
-              .pickerStyle(.segmented)
-              .frame(maxWidth: 200)
-              .accessibilityIdentifier("modelPicker")
+            Picker("Model", selection: $selectedType) {
+              Text("G1").tag(AircraftTypeSetting.g1)
+              Text("G2").tag(AircraftTypeSetting.g2)
+              Text("G2+").tag(AircraftTypeSetting.g2Plus)
             }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("modelPicker")
 
             if selectedType == .g2 {
               VStack(alignment: .leading) {
@@ -99,11 +96,16 @@ struct WelcomeView: View {
       }
     }
     .onAppear {
-      withAnimation(Animation.easeInOut(duration: 0.5).delay(2)) {
+      if ProcessInfo.processInfo.arguments.contains("UI-TESTING") {
         showForm = true
-      }
-      withAnimation(Animation.easeInOut(duration: 0.5).delay(2.5)) {
         formOpacity = 1.0
+      } else {
+        withAnimation(Animation.easeInOut(duration: 0.5).delay(2)) {
+          showForm = true
+        }
+        withAnimation(Animation.easeInOut(duration: 0.5).delay(2.5)) {
+          formOpacity = 1.0
+        }
       }
     }
   }

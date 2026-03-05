@@ -185,6 +185,24 @@ public struct Conditions: Sendable, Equatable {
     source = .ISA
   }
 
+  /// Creates fake NWS-sourced conditions for UI testing.
+  public static func fakeNWS(
+    windDirection: Measurement<UnitAngle> = .init(value: 350, unit: .degrees),
+    windSpeed: Measurement<UnitSpeed> = .init(value: 15, unit: .knots),
+    temperature: Measurement<UnitTemperature> = .init(value: 21, unit: .celsius),
+    seaLevelPressure: Measurement<UnitPressure> = .init(value: 30.05, unit: .inchesOfMercury)
+  ) -> Self {
+    .init(
+      validTime: .init(start: .now, duration: 3600),
+      source: .NWS,
+      windDirection: windDirection,
+      windSpeed: windSpeed,
+      temperature: temperature,
+      dewpoint: nil,
+      seaLevelPressure: seaLevelPressure
+    )
+  }
+
   /// Returns conditions with missing values filled from WeatherKit current weather.
   func adding(weather: CurrentWeather) -> Self {
     .init(

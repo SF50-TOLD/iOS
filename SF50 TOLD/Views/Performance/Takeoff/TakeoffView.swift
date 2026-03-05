@@ -33,7 +33,11 @@ struct TakeoffView: View {
         performance = .init(container: modelContext.container)
       }
       if weather == nil {
-        weather = .init(operation: .takeoff, container: modelContext.container)
+        weather = .init(
+          operation: .takeoff,
+          container: modelContext.container,
+          loader: UITestingHelper.weatherLoader
+        )
       }
     }
     .onChange(of: weather?.conditions) {

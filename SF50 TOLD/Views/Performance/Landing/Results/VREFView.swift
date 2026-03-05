@@ -16,6 +16,7 @@ struct VREFView: View {
         displayValue: { Text($0.converted(to: speedUnit), format: .speed) },
         displayUncertainty: { Text("±\($0.converted(to: speedUnit), format: .speed)") }
       )
+      .accessibilityIdentifier("VREFValue")
       .animation(.default, value: performance.Vref)
     } label: {
       Text(.VREF)
