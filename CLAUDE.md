@@ -81,3 +81,8 @@ type_contents_order:
 - Create a protocol that inherits Error for each general category of errors.
 - Errors should implement `LocalizedError`. `errorDescription` should be a general description of the error category, and typically is the same for all error cases (e.g., "Couldn’t download file."). `failureReason` should contain specific error details and interpolate occurrence-specific information (e.g., "Received HTTP error %lld when trying to download."). `recoverySuggestion` should only be provided if the error is user-actionable.
 - Use `fatalError` or `preconditionFailure` for errors that should never happen.
+
+# Output
+
+- Use xcbeautify to reduce the context load of build and test runs.
+- Use xclogparser and xcresultparser to efficiently parse Xcode output.
