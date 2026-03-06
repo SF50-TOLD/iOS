@@ -85,6 +85,10 @@ class PerformanceCalculator {
 
   /// Generates timeline entries with current performance data.
   func generateEntries() async -> [RunwayWidgetEntry] {
+    guard Defaults[.schemaVersion] == latestSchemaVersion else {
+      return [.empty()]
+    }
+
     guard let airport = selectedAirport else {
       return [.empty()]
     }

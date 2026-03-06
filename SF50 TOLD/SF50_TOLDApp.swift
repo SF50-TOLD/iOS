@@ -90,10 +90,18 @@ struct SF50_TOLDApp: App {
 
   init() {
     // Handle UI testing mode
+    let isGeneratingScreenshots = ProcessInfo.processInfo.arguments.contains("GENERATE-SCREENSHOTS")
     let isUITesting = ProcessInfo.processInfo.arguments.contains("UI-TESTING")
 
     if isUITesting {
       UITestingHelper.setupUITestingEnvironment(container: sharedModelContainer)
+    }
+
+    // Purge stale navigation data before anything can access it
+    if !isGeneratingScreenshots && !isUITesting
+      && Defaults[.schemaVersion] != latestSchemaVersion
+    {
+      Self.purgeStaleNavigationData(from: sharedModelContainer)
     }
 
     SentrySDK.start { options in
@@ -131,6 +139,24 @@ struct SF50_TOLDApp: App {
           return event
         #endif
       }
+    }
+  }
+
+  private static func purgeStaleNavigationData(from container: ModelContainer) {
+    let context = container.mainContext
+    do {
+      try context.delete(model: Airport.self)
+      try context.delete(model: Runway.self)
+      try context.delete(model: Procedure.self)
+      try context.delete(model: ProcedureSegment.self)
+      try context.delete(model: Leg.self)
+      try context.delete(model: Navaid.self)
+      try context.delete(model: Obstacle.self)
+      try context.delete(model: NOTAM.self)
+      try context.delete(model: Cycle.self)
+      try context.save()
+    } catch {
+      SentrySDK.capture(error: error)
     }
   }
 }

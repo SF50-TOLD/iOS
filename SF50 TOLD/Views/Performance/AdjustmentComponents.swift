@@ -8,7 +8,7 @@ struct BreakdownSection: View {
   let title: String
   let breakdown: DistanceBreakdown
   let total: Value<Measurement<UnitLength>>
-  var maximum: Measurement<UnitLength>? = nil
+  var maximum: Measurement<UnitLength>?
 
   @Default(.runwayLengthUnit)
   private var runwayLengthUnit

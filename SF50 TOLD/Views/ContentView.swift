@@ -29,9 +29,13 @@ struct ContentView: View {
   @ViewBuilder private var content: some View {
     if !initialSetupComplete || aircraftTypeSetting == nil {
       WelcomeView()
-    } else if let loader, loader.showLoader {
-      LoadingView()
-        .environment(loader)
+    } else if loader?.showLoader != false {
+      if let loader {
+        LoadingView()
+          .environment(loader)
+      } else {
+        ProgressView()
+      }
     } else {
       TabView(selection: $tab) {
         TakeoffView().tabItem {
