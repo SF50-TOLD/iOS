@@ -15,6 +15,41 @@
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
 
+# Workaround: Fastlane parses the OS version from `simctl list devices` section
+# headers (e.g., "iOS 26.3") and passes it as the xcodebuild destination OS.
+# But xcodebuild reports the full runtime version (e.g., 26.3.1), so the
+# name+OS destination match fails. Using the device UDID avoids this entirely.
+require "snapshot/test_command_generator"
+Snapshot::TestCommandGenerator.class_eval do
+  class << self
+    def destination(devices)
+      unless verify_devices_share_os(devices)
+        UI.user_error!("All devices provided to snapshot should run the same operating system")
+      end
+      return ["-destination 'platform=macOS'"] if devices.first.to_s =~ /^Mac/
+
+      case devices.first.to_s
+      when /^Apple TV/ then os = "tvOS"
+      when /^Apple Watch/ then os = "watchOS"
+      else os = "iOS"
+      end
+
+      os_version = Snapshot.config[:ios_version] || Snapshot::LatestOsVersion.version(os)
+
+      destinations = devices.map do |d|
+        device = find_device(d, os_version)
+        UI.user_error!("No device found named '#{d}' for version '#{os_version}'") if device.nil?
+        if device.os_version != os_version
+          UI.important("Using device named '#{device.name}' with version '#{device.os_version}' because no match was found for version '#{os_version}'")
+        end
+        "-destination 'platform=#{os} Simulator,id=#{device.udid}'"
+      end
+
+      return [destinations.join(" ")]
+    end
+  end
+end
+
 default_platform :ios
 
 platform :ios do

@@ -52,7 +52,7 @@ launch_arguments [
 ]
 
 # App identifier
-app_identifier "codes.tim.TOLD"
+app_identifier "codes.tim.SF50-TOLD"
 
 # Concurrent simulators
 concurrent_simulators false
