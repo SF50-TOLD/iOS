@@ -1,11 +1,7 @@
-import Defaults
 import SF50_Shared
 import SwiftUI
 
 struct LandingResultsView: View {
-  @Default(.VREFAdditive)
-  private var VREFAdditive
-
   @Environment(LandingPerformanceViewModel.self)
   private var performance
 
@@ -23,9 +19,6 @@ struct LandingResultsView: View {
     Section("Performance") {
       VREFView()
       VREFAdditiveView()
-      if VREFAdditive.converted(to: .knots).value > 0 {
-        VREFAdditiveWarningView()
-      }
       LandingGroundRunView()
       LandingDistanceView()
       GoAroundClimbGradientView()
