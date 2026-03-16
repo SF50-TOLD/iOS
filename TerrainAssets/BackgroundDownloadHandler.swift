@@ -79,7 +79,7 @@ struct DownloaderExtension: BADownloaderExtension {
     let download = BAURLDownload(
       identifier: "terrain-\(region.rawValue)",
       request: URLRequest(url: downloadURL),
-      essential: true,
+      essential: request == .install || request == .update,
       fileSize: manifestRegion.sizeBytes,
       applicationGroupIdentifier: appGroupID,
       priority: .default

@@ -56,6 +56,7 @@ public final class Navaid {
   }
 
   /// Legs that reference this navaid for DME distance termination
+  @Relationship(deleteRule: .nullify)
   public var legs: [Leg] = []
 
   /// Creates a new navaid.
