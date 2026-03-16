@@ -25,17 +25,6 @@
         }
       }
     },
-    "NSLocationUsageDescription" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SF50 TOLD uses your location to find nearby airports."
-          }
-        }
-      }
-    },
     "NSLocationWhenInUseUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {

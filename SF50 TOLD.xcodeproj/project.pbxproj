@@ -19,7 +19,6 @@
 		0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01441A6D2F35872E005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6C2F35872E005A8A76 /* StreamingLZMA */; };
 		01441A6F2F358738005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6E2F358738005A8A76 /* StreamingLZMA */; };
-		01442FC62E1D901900A0BD40 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 01442FC52E1D901900A0BD40 /* InfoPlist.xcstrings */; };
 		014457DA2F3125DB003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457D92F3125DB003ADBCD /* RealModule */; };
 		016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BB2EB30889001602E6 /* SwiftNASR */; };
 		016945BE2EB30889001602E6 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BD2EB30889001602E6 /* Logging */; };
@@ -38,7 +37,6 @@
 		01A1014F2E93C12E0032AB29 /* Gzip in Frameworks */ = {isa = PBXBuildFile; productRef = 01A1014E2E93C12E0032AB29 /* Gzip */; };
 		01AA52322F2DDF110085F4C6 /* SwiftR2 in Frameworks */ = {isa = PBXBuildFile; productRef = 01AA52312F2DDF110085F4C6 /* SwiftR2 */; };
 		01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01BABAE92F3B12E5000EA5E1 /* Charts.framework */; };
-		01BEA32B2E986B10005ABCD8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 01BEA32A2E986B10005ABCD8 /* PrivacyInfo.xcprivacy */; };
 		01BEBCB82E8A401100631DE6 /* SwiftHtml in Frameworks */ = {isa = PBXBuildFile; productRef = 01BEBCB72E8A401100631DE6 /* SwiftHtml */; };
 		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
 		01D0DEBA2F27377800856DB4 /* Gzip in Frameworks */ = {isa = PBXBuildFile; productRef = 01D0DEB92F27377800856DB4 /* Gzip */; };
@@ -159,7 +157,6 @@
 		0128374D2E5B8BB8002195A0 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SF50_Shared.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		012B1E452DE2F272000D9ADC /* SF50 SharedTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF50 SharedTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		01442FC52E1D901900A0BD40 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		0163BC6A2DDEE9D3008FEE8F /* SF50 TOLD.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SF50 TOLD.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0163BC792DDEE9D4008FEE8F /* SF50 TOLDTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF50 TOLDTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0163BC832DDEE9D4008FEE8F /* SF50 TOLDUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF50 TOLDUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -167,12 +164,7 @@
 		0169495B2EB314C9001602E6 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
 		01714CA52F2451D9003DADCF /* TerrainAssets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = TerrainAssets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Generate Screenshots.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		0191DC1B2E93232C0099FB0E /* Generate Screenshots.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "Generate Screenshots.xctestplan"; path = "Generate Screenshots/Generate Screenshots.xctestplan"; sourceTree = "<group>"; };
-		0191DC1E2E9323590099FB0E /* SF50 Shared Unit Tests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "SF50 Shared Unit Tests.xctestplan"; path = "SF50 SharedTests/SF50 Shared Unit Tests.xctestplan"; sourceTree = "<group>"; };
-		0191DC212E9323950099FB0E /* SF50 TOLD UI Tests.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "SF50 TOLD UI Tests.xctestplan"; path = "SF50 TOLDUITests/SF50 TOLD UI Tests.xctestplan"; sourceTree = "<group>"; };
-		01AB24552E948B89005D8996 /* SF50 RunwaysExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "SF50 RunwaysExtension.entitlements"; sourceTree = "<group>"; };
 		01BABAE92F3B12E5000EA5E1 /* Charts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Charts.framework; path = System/Library/Frameworks/Charts.framework; sourceTree = SDKROOT; };
-		01BEA32A2E986B10005ABCD8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		01EA44382EB327D7008FEB64 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		01NOTAM01NOTAM01NOTAM /* NOTAMAPIConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = NOTAMAPIConfig.xcconfig; path = "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig"; sourceTree = SOURCE_ROOT; };
 		01R2CFG01R2CFG01R2CFG /* Credentials.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Credentials.xcconfig; path = DownloadNASR/Credentials.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -385,12 +377,6 @@
 		0163BC612DDEE9D3008FEE8F = {
 			isa = PBXGroup;
 			children = (
-				01BEA32A2E986B10005ABCD8 /* PrivacyInfo.xcprivacy */,
-				01AB24552E948B89005D8996 /* SF50 RunwaysExtension.entitlements */,
-				0191DC212E9323950099FB0E /* SF50 TOLD UI Tests.xctestplan */,
-				0191DC1E2E9323590099FB0E /* SF50 Shared Unit Tests.xctestplan */,
-				0191DC1B2E93232C0099FB0E /* Generate Screenshots.xctestplan */,
-				01442FC52E1D901900A0BD40 /* InfoPlist.xcstrings */,
 				0163BC6C2DDEE9D3008FEE8F /* SF50 TOLD */,
 				0163BC7C2DDEE9D4008FEE8F /* SF50 TOLDTests */,
 				0163BC862DDEE9D4008FEE8F /* SF50 TOLDUITests */,
@@ -741,14 +727,14 @@
 			projectRoot = "";
 			targets = (
 				0163BC692DDEE9D3008FEE8F /* SF50 TOLD */,
-				0163BC782DDEE9D4008FEE8F /* SF50 TOLDTests */,
-				0163BC822DDEE9D4008FEE8F /* SF50 TOLDUITests */,
-				012B1E3A2DE2F272000D9ADC /* SF50 Shared */,
-				012B1E442DE2F272000D9ADC /* SF50 SharedTests */,
 				012837492E5B8BB8002195A0 /* SF50 RunwaysExtension */,
-				0191DC0B2E9322C20099FB0E /* Generate Screenshots */,
-				016945982EB30848001602E6 /* DownloadNASR */,
 				01714CA42F2451D9003DADCF /* TerrainAssets */,
+				012B1E3A2DE2F272000D9ADC /* SF50 Shared */,
+				016945982EB30848001602E6 /* DownloadNASR */,
+				0163BC782DDEE9D4008FEE8F /* SF50 TOLDTests */,
+				012B1E442DE2F272000D9ADC /* SF50 SharedTests */,
+				0163BC822DDEE9D4008FEE8F /* SF50 TOLDUITests */,
+				0191DC0B2E9322C20099FB0E /* Generate Screenshots */,
 			);
 		};
 /* End PBXProject section */
@@ -772,8 +758,6 @@
 		0163BC682DDEE9D3008FEE8F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				01BEA32B2E986B10005ABCD8 /* PrivacyInfo.xcprivacy in Resources */,
-				01442FC62E1D901900A0BD40 /* InfoPlist.xcstrings in Resources */,
 			);
 		};
 		0163BC772DDEE9D4008FEE8F /* Resources */ = {
@@ -954,7 +938,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_ENTITLEMENTS = "SF50 RunwaysExtension.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "SF50 Runways/SF50 RunwaysExtension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
@@ -982,7 +966,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_ENTITLEMENTS = "SF50 RunwaysExtension.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "SF50 Runways/SF50 RunwaysExtension.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 42;
 				DEVELOPMENT_TEAM = 2NFSK2WB24;
@@ -1269,6 +1253,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SF50-TOLD-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "SF50 TOLD";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -1305,6 +1290,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "SF50-TOLD-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "SF50 TOLD";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.reference";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

@@ -23,10 +23,5 @@
 			<string>pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev</string>
 		</array>
 	</dict>
-	<key>bugsnag</key>
-	<dict>
-		<key>apiKey</key>
-		<string>9081bd08ae6f938685e26e83495bf96c</string>
-	</dict>
 </dict>
 </plist>
