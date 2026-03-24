@@ -26,13 +26,13 @@ Snapshot::TestCommandGenerator.class_eval do
       unless verify_devices_share_os(devices)
         UI.user_error!("All devices provided to snapshot should run the same operating system")
       end
-      return ["-destination 'platform=macOS'"] if devices.first.to_s =~ /^Mac/
+      return ["-destination 'platform=macOS'"] if /^Mac/.match?(devices.first.to_s)
 
-      case devices.first.to_s
-      when /^Apple TV/ then os = "tvOS"
-      when /^Apple Watch/ then os = "watchOS"
-      else os = "iOS"
-      end
+      os = case devices.first.to_s
+             when /^Apple TV/ then "tvOS"
+             when /^Apple Watch/ then "watchOS"
+             else "iOS"
+           end
 
       os_version = Snapshot.config[:ios_version] || Snapshot::LatestOsVersion.version(os)
 
