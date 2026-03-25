@@ -616,9 +616,10 @@ final class SF50_TOLDUITests: XCTestCase {
     notams.setRunwayShortening("500")
     notams.goBack()
 
+    let badgeLabel = landing.waitForLabel(of: landing.NOTAMSelector, toContain: "1 configured")
     XCTAssertTrue(
-      landing.NOTAMBadgeLabel.contains("1 configured"),
-      "NOTAM button should show 1 configured after runway shortening"
+      badgeLabel.contains("1 configured"),
+      "NOTAM button should show 1 configured after runway shortening, got: \"\(badgeLabel)\""
     )
   }
 
@@ -636,9 +637,10 @@ final class SF50_TOLDUITests: XCTestCase {
     notams.setObstacleDistance("4000")
     notams.goBack()
 
+    let badgeLabel = takeoff.waitForLabel(of: takeoff.NOTAMSelector, toContain: "1 configured")
     XCTAssertTrue(
-      takeoff.NOTAMBadgeLabel.contains("1 configured"),
-      "NOTAM button should show 1 configured after adding obstacle"
+      badgeLabel.contains("1 configured"),
+      "NOTAM button should show 1 configured after adding obstacle, got: \"\(badgeLabel)\""
     )
   }
 
@@ -860,19 +862,17 @@ final class SF50_TOLDUITests: XCTestCase {
     notams.selectContamination("Water/Slush")
     notams.goBack()
 
+    let badgeLabel = landing.waitForLabel(of: landing.NOTAMSelector, toContain: "2 configured")
     XCTAssertTrue(
-      landing.NOTAMBadgeLabel.contains("2 configured"),
-      "NOTAM badge should show 2 configured"
+      badgeLabel.contains("2 configured"),
+      "NOTAM badge should show 2 configured, got: \"\(badgeLabel)\""
     )
 
     // Clear all
     let notams2 = landing.openNOTAMs()
     notams2.clearAllNOTAMs()
 
-    // Wait for dismiss animation and badge update
-    Thread.sleep(forTimeInterval: 1.0)
-
-    let clearedBadge = landing.NOTAMBadgeLabel
+    let clearedBadge = landing.waitForLabel(of: landing.NOTAMSelector, toContain: "NOTAMs")
     XCTAssertFalse(
       clearedBadge.contains("2 configured"),
       "NOTAM badge should not show 2 configured after clearing, got: \(clearedBadge)"
@@ -1094,7 +1094,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     // With a shorter runway available, the distance doesn't change but the
     // relationship to available runway does. Verify the NOTAM was applied.
-    let badgeLabel = landing.NOTAMBadgeLabel
+    let badgeLabel = landing.waitForLabel(of: landing.NOTAMSelector, toContain: "1 configured")
     XCTAssertTrue(
       badgeLabel.contains("1 configured"),
       "NOTAM should be configured, got: \"\(badgeLabel)\""

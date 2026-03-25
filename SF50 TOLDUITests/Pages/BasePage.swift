@@ -60,6 +60,21 @@ class BasePage {
     return element.label
   }
 
+  /// Polls an element's label until it contains the expected text, then returns the label.
+  func waitForLabel(
+    of element: XCUIElement,
+    toContain text: String,
+    timeout: TimeInterval = 10
+  ) -> String {
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      let label = scrollToElement(element)?.label ?? ""
+      if label.contains(text) { return label }
+      Thread.sleep(forTimeInterval: 0.2)
+    }
+    return scrollToElement(element)?.label ?? ""
+  }
+
   func clearAndType(_ element: XCUIElement, _ text: String) {
     element.clearAndType(text, app: app)
   }

@@ -68,6 +68,11 @@ struct NOTAMBadge: View {
 
   private var accessibilityLabel: String {
     if isLoading {
+      if localCount > 0 {
+        return String(
+          localized: "\(localCount, format: .count) configured, loading NOTAMs"
+        )
+      }
       return String(localized: "Loading NOTAMs")
     }
     if hasAttemptedFetch {
