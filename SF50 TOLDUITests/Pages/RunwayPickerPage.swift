@@ -9,7 +9,7 @@ final class RunwayPickerPage: BasePage {
       row.waitForExistence(timeout: 2),
       "Runway \(runway) should appear"
     )
-    row.tap()
+    forceTap(row)
   }
 
   func isRunwayVisible(_ runway: String) -> Bool {

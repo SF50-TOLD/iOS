@@ -15,8 +15,9 @@ final class ReportViewerPage: BasePage {
   }
 
   func dismiss() {
-    XCTAssertTrue(app.buttons["Done"].exists, "Done button should be present in report viewer")
-    app.buttons["Done"].tap()
+    let doneButton = app.buttons["Done"]
+    XCTAssertTrue(doneButton.exists, "Done button should be present in report viewer")
+    forceTap(doneButton)
   }
 }
 // swiftlint:enable prefer_nimble

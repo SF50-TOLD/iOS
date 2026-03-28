@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/getsentry/sentry-cocoa/",
       "state" : {
-        "revision" : "16cd512711375fa73f25ae5e373f596bdf4251ae",
-        "version" : "8.58.0"
+        "revision" : "05d3ce8332097ff0b2347231ac66476fd7d2f4d8",
+        "version" : "9.8.0"
       }
     },
     {
@@ -52,7 +52,7 @@
       "location" : "https://github.com/RISCfuture/StreamingLZMA",
       "state" : {
         "branch" : "main",
-        "revision" : "c3b7f620465fa98152944b2ac655c9a744c1b5ef"
+        "revision" : "073b0dc5691accf04897c146bd778c0a60e848d6"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser.git",
       "state" : {
-        "revision" : "c5d11a805e765f52ba34ec7284bd4fcd6ba68615",
-        "version" : "1.7.0"
+        "revision" : "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
+        "version" : "1.7.1"
       }
     },
     {
@@ -133,7 +133,7 @@
       "location" : "https://github.com/RISCfuture/SwiftCIFP.git",
       "state" : {
         "branch" : "main",
-        "revision" : "45a9e07ec6fe30f47d327b6fa8e2a3218e352940"
+        "revision" : "dde35e44562b1d106faf5f89cb63844a48eccc9e"
       }
     },
     {
@@ -142,7 +142,7 @@
       "location" : "https://github.com/RISCfuture/SwiftDOF.git",
       "state" : {
         "branch" : "main",
-        "revision" : "6badc67dbfd36d24c80262ebb1a9a2c4d202de1e"
+        "revision" : "9b4d30c14d6586a76ccf3c9153aa2000af5e7912"
       }
     },
     {
@@ -151,7 +151,7 @@
       "location" : "https://github.com/RISCfuture/SwiftMETAR",
       "state" : {
         "branch" : "main",
-        "revision" : "d460e86b8844b4c5611c80ed66b257d588daaf8e"
+        "revision" : "dae17ed1d65e2256919b5ba210425133d64c7388"
       }
     },
     {
@@ -160,7 +160,7 @@
       "location" : "https://github.com/RISCfuture/SwiftNASR",
       "state" : {
         "branch" : "master",
-        "revision" : "fdbaa63a5192b5ae088f2f793b500240286593a2"
+        "revision" : "080d1c817d17471bfcd5a8847c58adae8a284481"
       }
     },
     {
@@ -169,7 +169,7 @@
       "location" : "https://github.com/riscfuture/swiftr2",
       "state" : {
         "branch" : "main",
-        "revision" : "5e3c3380b8f5bb6038c7912922bf3a16cb384d35"
+        "revision" : "4d6927d3895cc498f7e0be4e1da838523812521b"
       }
     },
     {
@@ -177,8 +177,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/patrick-zippenfenig/SwiftTimeZoneLookup.git",
       "state" : {
-        "revision" : "1a653bcc6d3e0c5650886aba5c5a277cd49f0bbd",
-        "version" : "1.0.7"
+        "revision" : "e4db6c3ad57b58d472a05b73cf8ea78352957500",
+        "version" : "1.0.8"
       }
     },
     {

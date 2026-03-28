@@ -11,7 +11,7 @@ final class WelcomePage: BasePage {
   func handleDatabaseLoaderIfNeeded() {
     let deferButton = app.buttons["deferDataButton"]
     if deferButton.waitForExistence(timeout: 2) {
-      deferButton.tap()
+      forceTap(deferButton)
     }
   }
 
@@ -31,7 +31,8 @@ final class WelcomePage: BasePage {
     )
     let button = modelPicker.buttons[model]
     XCTAssertTrue(button.waitForExistence(timeout: 2), "\(model) button should exist in picker")
-    button.tap()
+    ensureHittable(button)
+    forceTap(button)
   }
 
   func setEmptyWeight(_ weight: String) {
@@ -47,7 +48,8 @@ final class WelcomePage: BasePage {
       thrustScheduleToggle.waitForExistence(timeout: 2),
       "Thrust schedule toggle should exist"
     )
-    thrustScheduleToggle.tap()
+    ensureHittable(thrustScheduleToggle)
+    forceTap(thrustScheduleToggle)
   }
 
   func tapContinue() -> TabBarPage {
@@ -59,12 +61,13 @@ final class WelcomePage: BasePage {
       continueButton.waitForExistence(timeout: 5),
       "Continue button should be tappable"
     )
-    continueButton.tap()
+    ensureHittable(continueButton)
+    forceTap(continueButton)
 
     // If the data loader appears after setup, defer it
     let deferButton = app.buttons["deferDataButton"]
     if deferButton.waitForExistence(timeout: 3) {
-      deferButton.tap()
+      forceTap(deferButton)
     }
 
     XCTAssertTrue(

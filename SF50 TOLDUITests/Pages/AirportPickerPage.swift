@@ -10,18 +10,24 @@ final class AirportPickerPage: BasePage {
   // MARK: - Tab Switching
 
   func switchToFavorites() {
-    XCTAssertTrue(segmentedControl.waitForExistence(timeout: 2), "Airport picker should appear")
-    segmentedControl.buttons["Favorites"].tap()
+    XCTAssertTrue(segmentedControl.waitForExistence(timeout: 5), "Airport picker should appear")
+    let button = segmentedControl.buttons["Favorites"]
+    ensureHittable(button)
+    forceTap(button)
   }
 
   func switchToRecents() {
-    XCTAssertTrue(segmentedControl.waitForExistence(timeout: 2), "Airport picker should appear")
-    segmentedControl.buttons["Recents"].tap()
+    XCTAssertTrue(segmentedControl.waitForExistence(timeout: 5), "Airport picker should appear")
+    let button = segmentedControl.buttons["Recents"]
+    ensureHittable(button)
+    forceTap(button)
   }
 
   func switchToSearch() {
-    XCTAssertTrue(segmentedControl.waitForExistence(timeout: 2), "Airport picker should appear")
-    segmentedControl.buttons["Search"].tap()
+    XCTAssertTrue(segmentedControl.waitForExistence(timeout: 5), "Airport picker should appear")
+    let button = segmentedControl.buttons["Search"]
+    ensureHittable(button)
+    forceTap(button)
   }
 
   // MARK: - Actions
@@ -41,7 +47,7 @@ final class AirportPickerPage: BasePage {
 
     // Tap the search field and wait for keyboard to gain focus
     for _ in 0..<3 {
-      searchField.tap()
+      forceTap(searchField)
       if app.keyboards.firstMatch.waitForExistence(timeout: 2) { break }
     }
 
@@ -54,7 +60,7 @@ final class AirportPickerPage: BasePage {
       row.waitForExistence(timeout: 3),
       "\(identifier) should appear in results"
     )
-    row.tap()
+    forceTap(row)
   }
 
   func searchAndSelect(_ identifier: String) {
@@ -66,7 +72,7 @@ final class AirportPickerPage: BasePage {
   override func dismissKeyboard() {
     let keyboardSearchButton = app.keyboards.buttons["Search"].firstMatch
     if keyboardSearchButton.exists {
-      keyboardSearchButton.tap()
+      forceTap(keyboardSearchButton)
     } else {
       app.searchFields.firstMatch.typeText("\n")
     }

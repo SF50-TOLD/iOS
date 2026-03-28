@@ -10,12 +10,22 @@ extension XCUIElement {
 
   func toggleOn() {
     guard switches["0"].exists else { return }
-    switches["0"].firstMatch.tap()
+    let toggle = switches["0"].firstMatch
+    if toggle.isHittable {
+      toggle.tap()
+    } else {
+      toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
   }
 
   func toggleOff() {
     guard switches["1"].exists else { return }
-    switches["1"].firstMatch.tap()
+    let toggle = switches["1"].firstMatch
+    if toggle.isHittable {
+      toggle.tap()
+    } else {
+      toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
   }
 
   func makeVisible(element: XCUIElement) -> XCUIElement? {
@@ -75,9 +85,15 @@ extension XCUIApplication {
     return buttons[label].firstMatch
   }
 
-  // Tap tab by label (works on both iPhone tab bar and iPad floating tabs)
+  // Tap tab by label (works on both iPhone tab bar and iPad floating tabs).
+  // Falls back to coordinate-based tap for iOS 26 Liquid Glass overlay.
   func tapTab(_ label: String) {
-    tabButton(label).tap()
+    let button = tabButton(label)
+    if button.isHittable {
+      button.tap()
+    } else {
+      button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
   }
 }
 
@@ -89,32 +105,81 @@ extension XCUIElement {
       app.otherElements["PopoverDismissRegion"].tap()
     }
 
-    // Tap and wait for keyboard to appear, retrying if needed
+    // Tap and wait for keyboard to appear, retrying if needed.
+    // Falls back to coordinate-based tap for iOS 26 Liquid Glass overlay.
     for _ in 0..<3 {
-      tap()
+      if isHittable {
+        tap()
+      } else {
+        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+      }
       if app.keyboards.firstMatch.waitForExistence(timeout: 2) { break }
     }
 
-    // Triple tap to select all, then pause for selection to register
-    tap(withNumberOfTaps: 3, numberOfTouches: 1)
-    Thread.sleep(forTimeInterval: 0.3)
+    // Select all existing text so the new text replaces it.
+    // On iPad with iOS 26 Liquid Glass, elements can become not-hittable
+    // between keyboard focus and triple-tap. Nudge the content to restore
+    // hittability so the direct triple-tap (which is the only reliable
+    // select-all gesture) can succeed. If still not hittable, fall back to
+    // dismissing the keyboard and retapping to reset layout state.
+    if !isHittable {
+      let collectionView = app.collectionViews.firstMatch
+      if collectionView.exists {
+        let windowHeight = app.windows.firstMatch.frame.height
+        if frame.minY < windowHeight * 0.35 {
+          let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
+          let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+          start.press(forDuration: 0.01, thenDragTo: end)
+        } else if frame.maxY > windowHeight * 0.70 {
+          let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+          let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+          start.press(forDuration: 0.01, thenDragTo: end)
+        }
+      }
+    }
 
-    // Type new text (will replace selection)
-    typeText(text)
+    if isHittable {
+      tap(withNumberOfTaps: 3, numberOfTouches: 1)
+      Thread.sleep(forTimeInterval: 0.3)
+      typeText(text)
+    } else {
+      // Field has keyboard focus but Liquid Glass prevents direct triple-tap.
+      // Wait for keyboard/Liquid Glass animations to settle, then retry.
+      // If still not hittable, dismiss keyboard and tap again to reset state.
+      Thread.sleep(forTimeInterval: 0.5)
+      if !isHittable {
+        // Dismiss keyboard to reset layout, then retap
+        app.swipeDown()
+        Thread.sleep(forTimeInterval: 0.3)
+        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        if app.keyboards.firstMatch.waitForExistence(timeout: 2) {
+          Thread.sleep(forTimeInterval: 0.3)
+        }
+      }
+      // Last resort: attempt triple-tap even if not hittable (may work after reset)
+      tap(withNumberOfTaps: 3, numberOfTouches: 1)
+      Thread.sleep(forTimeInterval: 0.3)
+      typeText(text)
+    }
   }
 }
 
-// Helper to tap element and ensure navigation occurred
+// Helper to tap element and ensure navigation occurred.
+// Falls back to coordinate-based tap for iOS 26 Liquid Glass overlay.
 @MainActor
 func tapAndEnsureNavigation(
   element: XCUIElement,
   expectedElement: XCUIElement,
-  timeout: TimeInterval = 2
+  timeout: TimeInterval = 5
 ) {
-  element.tap()
-
-  // If expected element doesn't appear, tap again (needed on some devices)
-  if !expectedElement.waitForExistence(timeout: timeout) {
-    element.tap()
+  for _ in 0..<3 {
+    if element.exists {
+      if element.isHittable {
+        element.tap()
+      } else {
+        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+      }
+    }
+    if expectedElement.waitForExistence(timeout: timeout) { return }
   }
 }

@@ -32,33 +32,38 @@ final class UnitsSettingsPage: BasePage {
 
   func selectWeight(_ unit: String) {
     guard let picker = scrollToElement(weightPicker) else { return }
-    picker.tap()
-    app.buttons[unit].tap()
+    forceTap(picker)
+    let option = app.buttons[unit]
+    forceTap(option)
   }
 
   func selectFuelVolume(_ unit: String) {
     guard let picker = scrollToElement(fuelVolumePicker) else { return }
-    picker.tap()
-    app.buttons[unit].tap()
+    forceTap(picker)
+    let option = app.buttons[unit]
+    forceTap(option)
   }
 
   func selectTemperature(_ unit: String) {
     guard let picker = scrollToElement(temperaturePicker) else { return }
-    picker.tap()
-    app.buttons[unit].tap()
+    forceTap(picker)
+    let option = app.buttons[unit]
+    forceTap(option)
   }
 
   func selectPressure(_ unit: String) {
     guard let picker = scrollToElement(pressurePicker) else { return }
-    picker.tap()
-    app.buttons[unit].tap()
+    forceTap(picker)
+    let option = app.buttons[unit]
+    forceTap(option)
   }
 
   func selectFuelDensity(_ unit: String) {
     let picker = app.buttons["fuelDensityUnitPicker"]
     guard let picker = scrollToElement(picker) else { return }
-    picker.tap()
-    app.buttons[unit].tap()
+    forceTap(picker)
+    let option = app.buttons[unit]
+    forceTap(option)
   }
 
   func goBack() {

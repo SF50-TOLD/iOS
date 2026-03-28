@@ -26,7 +26,7 @@ final class ScenariosSettingsPage: BasePage {
       addButton.waitForExistence(timeout: 2),
       "Add Scenario button should exist"
     )
-    addButton.tap()
+    forceTap(addButton)
     return ScenarioDetailPage(app: app)
   }
 
@@ -64,10 +64,10 @@ final class ScenariosSettingsPage: BasePage {
     }
 
     if deleteButton.waitForExistence(timeout: 2) {
-      deleteButton.tap()
+      forceTap(deleteButton)
       // Tap again if a confirmation button appears
       if deleteButton.exists {
-        deleteButton.tap()
+        forceTap(deleteButton)
       }
     }
     _ = deleteButton.waitForNonExistence(timeout: 2)
@@ -76,7 +76,7 @@ final class ScenariosSettingsPage: BasePage {
   func openScenario(_ name: String) -> ScenarioDetailPage {
     let text = app.staticTexts[name]
     XCTAssertTrue(text.exists, "Scenario \(name) should exist")
-    text.tap()
+    forceTap(text)
     return ScenarioDetailPage(app: app)
   }
 
@@ -103,7 +103,7 @@ final class ScenariosSettingsPage: BasePage {
       button = app.buttons["Restore Default Scenarios"].firstMatch
     }
     XCTAssertTrue(button.exists, "Restore Default Scenarios button should exist")
-    button.tap()
+    forceTap(button)
   }
 
   func goBack() {

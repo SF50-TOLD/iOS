@@ -41,8 +41,10 @@ final class NOTAMPage: BasePage {
 
   func selectContamination(_ type: String) {
     if contaminationTypePicker.waitForExistence(timeout: 2) {
-      contaminationTypePicker.tap()
-      app.buttons[type].tap()
+      ensureHittable(contaminationTypePicker)
+      forceTap(contaminationTypePicker)
+      let option = app.buttons[type]
+      forceTap(option)
     }
   }
 
@@ -57,7 +59,8 @@ final class NOTAMPage: BasePage {
   func clearAllNOTAMs() {
     let clearButton = app.buttons["clearNOTAMsButton"]
     XCTAssertTrue(clearButton.exists, "Clear NOTAMs button should exist")
-    clearButton.tap()
+    ensureHittable(clearButton)
+    forceTap(clearButton)
   }
 
   func goBack() {

@@ -40,14 +40,29 @@ final class ClimbPage: BasePage {
   func toggleIceProtection() {
     let toggle = scrollToElement(iceProtectionToggle)
     XCTAssertNotNil(toggle, "Ice Protection toggle should exist")
-    let valueBefore = toggle!.value as? String
-    toggle!.tap()
+    ensureHittable(toggle!)
 
-    // Verify the toggle actually changed; retry with coordinate tap if needed
-    let valueAfter = toggle!.value as? String
-    if valueAfter == valueBefore {
-      toggle!.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
+    let valueBefore = toggle!.value as? String ?? "unknown"
+
+    // Try multiple tap strategies to handle platform differences:
+    // - iOS 18 Form cells have delaysContentTouches, requiring longer presses
+    // - iOS 26 iPad Liquid Glass can intercept taps at certain positions
+    let strategies: [(XCUIElement) -> Void] = [
+      { $0.switches.firstMatch.tap() },
+      { $0.press(forDuration: 0.2) },
+      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).press(forDuration: 0.2) },
+      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5)).tap() }
+    ]
+
+    for strategy in strategies {
+      strategy(toggle!)
+      Thread.sleep(forTimeInterval: 0.5)
+      if (toggle!.value as? String ?? "unknown") != valueBefore { return }
     }
+
+    XCTFail(
+      "Failed to toggle ice protection (value stayed \(valueBefore))"
+    )
   }
 }
 // swiftlint:enable prefer_nimble

@@ -25,8 +25,10 @@ final class SettingsPage: BasePage {
 
   func selectAircraftModel(_ model: String) {
     XCTAssertTrue(aircraftTypePicker.waitForExistence(timeout: 2), "Aircraft picker should exist")
-    aircraftTypePicker.tap()
-    app.buttons[model].tap()
+    ensureHittable(aircraftTypePicker)
+    forceTap(aircraftTypePicker)
+    let option = app.buttons[model]
+    forceTap(option)
   }
 
   func setEmptyWeight(_ weight: String) {
@@ -45,18 +47,18 @@ final class SettingsPage: BasePage {
   func selectPerformanceModel(_ model: String) {
     let toggle = scrollToElement(selectModelToggle)
     XCTAssertNotNil(toggle, "Model toggle should exist")
-    toggle!.tap()
+    forceTap(toggle!)
 
     // On iOS 26, MenuPickerStyle options may render as menuItems or buttons
     let menuItem = app.menuItems[model].firstMatch
     let button = app.buttons[model].firstMatch
     let popUp = app.popUpButtons[model].firstMatch
     if menuItem.waitForExistence(timeout: 2) {
-      menuItem.tap()
+      forceTap(menuItem)
     } else if button.waitForExistence(timeout: 2) {
-      button.tap()
+      forceTap(button)
     } else if popUp.waitForExistence(timeout: 2) {
-      popUp.tap()
+      forceTap(popUp)
     } else {
       // Tap any descendant matching the model name
       let any = app.descendants(matching: .any)[model].firstMatch
@@ -64,16 +66,17 @@ final class SettingsPage: BasePage {
         any.waitForExistence(timeout: 2),
         "Could not find '\(model)' option in any form"
       )
-      any.tap()
+      forceTap(any)
     }
   }
 
   func selectTimeZone(_ zone: String) {
     let picker = scrollToElement(timeZoneDisplayPicker)
     XCTAssertNotNil(picker, "Time zone picker should exist")
-    picker!.tap()
-    if app.buttons[zone].exists {
-      app.buttons[zone].tap()
+    forceTap(picker!)
+    let option = app.buttons[zone]
+    if option.exists {
+      forceTap(option)
     }
   }
 
@@ -82,21 +85,21 @@ final class SettingsPage: BasePage {
   func openScenarios() -> ScenariosSettingsPage {
     let link = scrollToElement(app.buttons["scenariosNavigationLink"])
     XCTAssertNotNil(link, "Scenarios link should exist")
-    link!.tap()
+    forceTap(link!)
     return ScenariosSettingsPage(app: app)
   }
 
   func openUnits() -> UnitsSettingsPage {
     let link = scrollToElement(app.buttons["unitsNavigationLink"])
     XCTAssertNotNil(link, "Units link should exist")
-    link!.tap()
+    forceTap(link!)
     return UnitsSettingsPage(app: app)
   }
 
   func openTerrain() -> TerrainSettingsPage {
     let link = scrollToElement(app.buttons["terrainNavigationLink"])
     XCTAssertNotNil(link, "Terrain link should exist")
-    link!.tap()
+    forceTap(link!)
     return TerrainSettingsPage(app: app)
   }
 }

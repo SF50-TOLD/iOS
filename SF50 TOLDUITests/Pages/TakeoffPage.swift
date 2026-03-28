@@ -68,6 +68,7 @@ final class TakeoffPage: BasePage {
   func openAirportPicker() -> AirportPickerPage {
     let selector = scrollToElement(airportSelector)
     XCTAssertNotNil(selector, "Airport selector should be accessible")
+    ensureHittable(selector!)
     let airportPicker = app.segmentedControls["airportListPicker"]
     tapAndEnsureNavigation(element: selector!, expectedElement: airportPicker)
     return AirportPickerPage(app: app)
@@ -76,7 +77,7 @@ final class TakeoffPage: BasePage {
   func openRunwayPicker() -> RunwayPickerPage {
     let selector = scrollToElement(runwaySelector)
     XCTAssertNotNil(selector, "Runway selector should be accessible")
-    selector!.tap()
+    forceTap(selector!)
     return RunwayPickerPage(app: app)
   }
 
@@ -84,7 +85,7 @@ final class TakeoffPage: BasePage {
     app.scrollToTop()
     let selector = scrollToElement(weatherSelector)
     XCTAssertNotNil(selector, "Weather selector should be accessible")
-    selector!.tap()
+    forceTap(selector!)
     return WeatherPickerPage(app: app)
   }
 
@@ -94,14 +95,14 @@ final class TakeoffPage: BasePage {
       NOTAMSelector.waitForExistence(timeout: 2),
       "NOTAM selector should exist"
     )
-    selector?.tap()
+    if let selector { forceTap(selector) }
     return NOTAMPage(app: app)
   }
 
   func openReport() -> ReportViewerPage {
     let reportButton = scrollToElement(app.buttons["generateTakeoffReportButton"])
     XCTAssertNotNil(reportButton, "Report button should be accessible")
-    reportButton!.tap()
+    forceTap(reportButton!)
     return ReportViewerPage(app: app, title: "Takeoff Report")
   }
 
@@ -109,7 +110,7 @@ final class TakeoffPage: BasePage {
     let button = scrollToElement(app.buttons["showClimbProfileButton"])
     XCTAssertNotNil(button, "Show Climb button should be accessible")
     XCTAssertTrue(button!.isEnabled, "Show Climb button should be enabled")
-    button!.tap()
+    forceTap(button!)
     return ClimbProfilePage(app: app)
   }
 
@@ -118,14 +119,14 @@ final class TakeoffPage: BasePage {
       app.descendants(matching: .any)["takeoffAdjustmentsLink"].firstMatch
     )
     XCTAssertNotNil(link, "Takeoff adjustments link should be accessible")
-    link!.tap()
+    forceTap(link!)
     return TakeoffAdjustmentsPage(app: app)
   }
 
   func openTakeoffMap() -> RunwayMapPage {
     let button = scrollToElement(app.buttons["showTakeoffMapButton"])
     XCTAssertNotNil(button, "Show Takeoff Map button should be accessible")
-    button!.tap()
+    forceTap(button!)
     return RunwayMapPage(app: app)
   }
 
