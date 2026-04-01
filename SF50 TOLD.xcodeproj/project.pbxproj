@@ -952,7 +952,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.5.0;
+				MARKETING_VERSION = 3.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.SF50-Runways";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -980,7 +980,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.5.0;
+				MARKETING_VERSION = 3.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.SF50-Runways";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1265,7 +1265,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.5.0;
+				MARKETING_VERSION = 3.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1302,7 +1302,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.5.0;
+				MARKETING_VERSION = 3.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -1417,7 +1417,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 3.5.0;
+				MARKETING_VERSION = 3.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.DownloadNASR";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -1467,7 +1467,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 3.5.0;
+				MARKETING_VERSION = 3.5.1;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.DownloadNASR";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1498,7 +1498,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.5.0;
+				MARKETING_VERSION = 3.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.TerrainAssets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -1528,7 +1528,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 3.5.0;
+				MARKETING_VERSION = 3.5.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLD.TerrainAssets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
