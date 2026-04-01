@@ -33,6 +33,8 @@ struct ScenarioSeeder {
 
       // Report error to Sentry so we can track this issue
       SentrySDK.capture(error: error) { scope in
+        scope.setTag(value: "scenario", key: "swiftData.entity")
+        scope.setFingerprint(["swiftData", "save"])
         scope.setContext(
           value: [
             "scenarioCount": Scenario.defaultScenarios().count

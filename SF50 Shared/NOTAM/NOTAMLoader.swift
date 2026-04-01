@@ -1,5 +1,6 @@
 import Foundation
 import Logging
+import Sentry
 
 /**
  * Actor responsible for fetching NOTAM data from the NOTAM API.
@@ -218,6 +219,11 @@ public actor NOTAMLoader {
       )
       return notamResponse
     } catch {
+      SentrySDK.capture(error: error) { scope in
+        scope.setLevel(.warning)
+        scope.setTag(value: icao, key: "airport")
+        scope.setFingerprint(["notam-decoding"])
+      }
       Self.logger.error("Failed to decode NOTAM response", metadata: ["error": "\(error)"])
       throw Errors.decodingFailed(error)
     }
@@ -277,6 +283,11 @@ public actor NOTAMLoader {
       Self.logger.info("Successfully fetched NOTAM", metadata: ["notamId": "\(notamId)"])
       return singleResponse.data
     } catch {
+      SentrySDK.capture(error: error) { scope in
+        scope.setLevel(.warning)
+        scope.setTag(value: notamId, key: "notam.id")
+        scope.setFingerprint(["notam-decoding"])
+      }
       Self.logger.error("Failed to decode NOTAM response", metadata: ["error": "\(error)"])
       throw Errors.decodingFailed(error)
     }

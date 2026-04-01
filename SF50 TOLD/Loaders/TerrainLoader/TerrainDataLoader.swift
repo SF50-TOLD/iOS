@@ -1,6 +1,7 @@
 import BackgroundAssets
 import Foundation
 import os
+import Sentry
 import SF50_Shared
 import StreamingLZMA
 
@@ -254,6 +255,12 @@ final class TerrainDataLoader: ObservableObject {
     downloadingRegions.insert(region)
     state = .downloading(region: region, progress: nil)
 
+    let transaction = SentrySDK.startTransaction(
+      name: "Terrain Download",
+      operation: "terrain.download"
+    )
+    transaction.setTag(value: region.rawValue, key: "terrain.region")
+
     do {
       // Request download via Background Assets
       try scheduleBackgroundDownload(for: region)
@@ -266,9 +273,15 @@ final class TerrainDataLoader: ObservableObject {
       // downloaded OK but can't be loaded, mark it as corrupted so the UI
       // shows "Corrupted" rather than a misleading "Download" button.
       if let fileURL = decompressedFileURL(for: region) {
+        let loadSpan = transaction.startChild(
+          operation: "terrain.load",
+          description: "Load \(region.rawValue) into TerrainService"
+        )
         do {
           try await TerrainService.shared.loadRegion(region, from: fileURL)
+          loadSpan.finish()
         } catch {
+          loadSpan.finish(status: .internalError)
           logger.error(
             "Downloaded \(region.rawValue) but failed to load into TerrainService: \(error.localizedDescription)"
           )
@@ -281,9 +294,11 @@ final class TerrainDataLoader: ObservableObject {
       downloadingRegions.remove(region)
       state = .completed(region: region)
 
+      transaction.finish()
       NotificationCenter.default.post(name: .terrainRegionsDidChange, object: nil)
       logger.info("Region \(region.rawValue) downloaded and loaded")
     } catch {
+      transaction.finish(status: .internalError)
       downloadingRegions.remove(region)
       state = .failed(region: region, message: error.localizedDescription)
       throw error
@@ -421,6 +436,11 @@ final class TerrainDataLoader: ObservableObject {
       loadAvailableRegionsIntoService()
       logger.info("BA terrain for \(region.rawValue) is now available")
     } catch {
+      SentrySDK.capture(error: error) { scope in
+        scope.setTag(value: region.rawValue, key: "terrain.region")
+        scope.setTag(value: "decompress", key: "terrain.operation")
+        scope.setFingerprint(["terrain", "decompress"])
+      }
       decompressingRegions.remove(region)
       logger.error(
         "Failed to decompress BA terrain for \(region.rawValue): \(error.localizedDescription)"
@@ -460,9 +480,19 @@ final class TerrainDataLoader: ObservableObject {
     logger.info("Downloaded \(region.rawValue), decompressing…")
     state = .decompressing(region: region)
 
-    try await Task.detached(priority: .userInitiated) {
-      try Self.streamingDecompress(from: compressedURL, to: decompressedURL)
-    }.value
+    let decompressSpan = SentrySDK.span?.startChild(
+      operation: "terrain.decompress",
+      description: "Decompress \(region.rawValue)"
+    )
+    do {
+      try await Task.detached(priority: .userInitiated) {
+        try Self.streamingDecompress(from: compressedURL, to: decompressedURL)
+      }.value
+      decompressSpan?.finish()
+    } catch {
+      decompressSpan?.finish(status: .internalError)
+      throw error
+    }
   }
 
   /// Loads any available-but-not-yet-loaded regions into ``TerrainService/shared``
@@ -479,6 +509,11 @@ final class TerrainDataLoader: ObservableObject {
             didChange = true
             logger.info("Loaded \(region.rawValue) into TerrainService")
           } catch {
+            SentrySDK.capture(error: error) { scope in
+              scope.setTag(value: region.rawValue, key: "terrain.region")
+              scope.setTag(value: "load", key: "terrain.operation")
+              scope.setFingerprint(["terrain", "load"])
+            }
             logger.error(
               "Failed to load \(region.rawValue) into TerrainService: \(error.localizedDescription)"
             )

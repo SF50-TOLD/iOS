@@ -1,6 +1,7 @@
 import Defaults
 import Foundation
 import Observation
+import Sentry
 import SwiftData
 
 /// View model for takeoff performance calculations.
@@ -139,6 +140,10 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
       takeoffClimbRate = report.results.takeoffClimbRate
       notes = generateNotes()
     } catch {
+      SentrySDK.logger.error(
+        "Unexpected takeoff calculation error: \(error.localizedDescription)",
+        attributes: ["airport": airport?.locationID ?? "unknown"]
+      )
       takeoffRun = .invalid
       takeoffDistance = .invalid
       takeoffClimbGradient = .invalid

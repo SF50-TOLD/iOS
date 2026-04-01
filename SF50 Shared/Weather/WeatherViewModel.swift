@@ -139,7 +139,9 @@ public final class WeatherViewModel: WithIdentifiableError {
         do {
           airport = try findAirport(for: airportID, in: context)
         } catch {
-          SentrySDK.capture(error: error)
+          SentrySDK.capture(error: error) { scope in
+            scope.setFingerprint(["swiftData", "fetch"])
+          }
           self.error = error
         }
       }
@@ -191,7 +193,10 @@ public final class WeatherViewModel: WithIdentifiableError {
                   }
                 case .error(let error):
                   if !self.isManualMode {
-                    SentrySDK.capture(error: error)
+                    SentrySDK.capture(error: error) { scope in
+                      scope.setLevel(.warning)
+                      scope.setTag(value: "conditions", key: "weather.dataType")
+                    }
                     self.isLoading = false
                     self.conditions = .init()
                     self.error = error

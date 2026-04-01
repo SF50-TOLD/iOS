@@ -169,7 +169,9 @@ open class BasePerformanceViewModel: WithIdentifiableError {
             self.airport = airport
             self.runway = runway
           } catch {
-            SentrySDK.capture(error: error)
+            SentrySDK.capture(error: error) { scope in
+              scope.setFingerprint(["swiftData", "fetch"])
+            }
             self.error = error
           }
         }

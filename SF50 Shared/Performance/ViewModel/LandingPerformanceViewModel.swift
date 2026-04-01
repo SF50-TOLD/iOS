@@ -1,6 +1,7 @@
 import Defaults
 import Foundation
 import Observation
+import Sentry
 import SwiftData
 
 /// View model for landing performance calculations.
@@ -137,6 +138,10 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
       meetsGoAroundClimbGradient = report.results.meetsGoAroundClimbGradient
       notes = generateNotes(VREFAdditiveKts: VREFAdditiveKts)
     } catch {
+      SentrySDK.logger.error(
+        "Unexpected landing calculation error: \(error.localizedDescription)",
+        attributes: ["airport": airport?.locationID ?? "unknown"]
+      )
       Vref = .invalid
       landingRun = .invalid
       landingDistance = .invalid

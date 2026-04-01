@@ -140,7 +140,10 @@ struct NOTAMView: View {
       do {
         try modelContext.save()
       } catch {
-        SentrySDK.capture(error: error)
+        SentrySDK.capture(error: error) { scope in
+          scope.setTag(value: "notam", key: "swiftData.entity")
+          scope.setFingerprint(["swiftData", "save"])
+        }
         self.error = error
         errorSheetPresented = true
       }

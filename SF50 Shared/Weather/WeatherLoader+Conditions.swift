@@ -1,4 +1,5 @@
 import Foundation
+import Sentry
 @preconcurrency import WeatherKit
 
 extension WeatherLoader {
@@ -7,6 +8,12 @@ extension WeatherLoader {
     do {
       weather = try await Self.weatherService.weather(for: key.location)
     } catch {
+      SentrySDK.capture(error: error) { scope in
+        scope.setLevel(.warning)
+        scope.setTag(value: "weatherKit", key: "weather.dataType")
+        scope.setTag(value: key.id, key: "airport")
+        scope.setFingerprint(["weather-loading", "weatherKit"])
+      }
       Self.logger.error(
         "WeatherKit error",
         metadata: [

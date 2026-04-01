@@ -1,5 +1,6 @@
 import Foundation
 import Gzip
+import Sentry
 import SwiftMETAR
 
 extension WeatherLoader {
@@ -76,6 +77,11 @@ extension WeatherLoader {
     } catch is CancellationError {
       // Don't update observations if cancelled
     } catch {
+      SentrySDK.capture(error: error) { scope in
+        scope.setLevel(.warning)
+        scope.setTag(value: "metar", key: "weather.dataType")
+        scope.setFingerprint(["weather-loading", "metar"])
+      }
       observations = .error(error)
     }
   }
@@ -152,6 +158,11 @@ extension WeatherLoader {
     } catch is CancellationError {
       // Don't update forecasts if cancelled
     } catch {
+      SentrySDK.capture(error: error) { scope in
+        scope.setLevel(.warning)
+        scope.setTag(value: "taf", key: "weather.dataType")
+        scope.setFingerprint(["weather-loading", "taf"])
+      }
       forecasts = .error(error)
     }
   }
@@ -187,6 +198,11 @@ extension WeatherLoader {
     } catch is CancellationError {
       // Don't update windsAloft if cancelled
     } catch {
+      SentrySDK.capture(error: error) { scope in
+        scope.setLevel(.warning)
+        scope.setTag(value: "windsAloft", key: "weather.dataType")
+        scope.setFingerprint(["weather-loading", "windsAloft"])
+      }
       Self.logger.error(
         "Failed to load winds aloft",
         metadata: ["error": "\(error)"]

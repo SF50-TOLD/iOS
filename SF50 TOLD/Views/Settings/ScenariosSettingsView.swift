@@ -1,3 +1,4 @@
+import Sentry
 import SF50_Shared
 import SwiftData
 import SwiftUI
@@ -71,6 +72,10 @@ struct ScenariosSettingsView: View {
       do {
         try modelContext.save()
       } catch {
+        SentrySDK.capture(error: error) { scope in
+          scope.setTag(value: "scenario", key: "swiftData.entity")
+          scope.setFingerprint(["swiftData", "save"])
+        }
         errorState.error = error
       }
     }

@@ -1,3 +1,4 @@
+import Sentry
 import SwiftUI
 import WebKit
 
@@ -104,6 +105,10 @@ struct HTMLReportViewer: View {
             try data.write(to: tempURL)
             pdfURL = tempURL
           } catch {
+            SentrySDK.capture(error: error) { scope in
+              scope.setLevel(.warning)
+              scope.setFingerprint(["pdf-save"])
+            }
             errorMessage = String(localized: "Failed to save PDF: \(error.localizedDescription)")
             showError = true
           }

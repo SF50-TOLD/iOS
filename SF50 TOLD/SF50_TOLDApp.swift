@@ -156,7 +156,10 @@ struct SF50_TOLDApp: App {
       try context.delete(model: Cycle.self)
       try context.save()
     } catch {
-      SentrySDK.capture(error: error)
+      SentrySDK.capture(error: error) { scope in
+        scope.setTag(value: "purge", key: "swiftData.operation")
+        scope.setFingerprint(["swiftData", "purge"])
+      }
     }
   }
 }

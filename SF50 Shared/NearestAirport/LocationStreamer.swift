@@ -116,7 +116,9 @@ public final class CoreLocationStreamer: NSObject, LocationStreamer {
           }
         }
       } catch {
-        SentrySDK.capture(error: error)
+        SentrySDK.capture(error: error) { scope in
+          scope.setFingerprint(["location", "streaming"])
+        }
         await MainActor.run {
           self.error = error
         }

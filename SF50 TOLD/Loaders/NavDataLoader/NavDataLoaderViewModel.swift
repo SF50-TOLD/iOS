@@ -48,7 +48,9 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     do {
       try recalculate()
     } catch {
-      SentrySDK.capture(error: error)
+      SentrySDK.capture(error: error) { scope in
+        scope.setFingerprint(["navData", "recalculate"])
+      }
       self.error = error
     }
 
@@ -63,7 +65,9 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
           do {
             try recalculate()
           } catch {
-            SentrySDK.capture(error: error)
+            SentrySDK.capture(error: error) { scope in
+              scope.setFingerprint(["navData", "recalculate"])
+            }
             self.error = error
           }
         }
@@ -80,7 +84,9 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
             try? await Task.sleep(for: .seconds(0.5))
           }
         } catch {
-          SentrySDK.capture(error: error)
+          SentrySDK.capture(error: error) { scope in
+            scope.setFingerprint(["navData", "airportCheck"])
+          }
           self.error = error
         }
       }
@@ -96,6 +102,10 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
 
     addTask(
       Task {
+        let transaction = SentrySDK.startTransaction(
+          name: "Nav Data Load",
+          operation: "navData.load"
+        )
         do {
           error = nil
           try clearCycles()
@@ -138,8 +148,13 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
             Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
             Defaults[.schemaVersion] = latestSchemaVersion
           }
+          transaction.finish()
         } catch {
-          SentrySDK.capture(error: error)
+          transaction.finish(status: .internalError)
+          SentrySDK.capture(error: error) { scope in
+            scope.setTag(value: "load", key: "navData.operation")
+            scope.setFingerprint(["navData", "load"])
+          }
           self.error = error
         }
       }

@@ -165,7 +165,9 @@ public class NearestAirportViewModel {
       } catch {
         guard !Task.isCancelled else { return }
         await MainActor.run {
-          SentrySDK.capture(error: error)
+          SentrySDK.capture(error: error) { scope in
+            scope.setFingerprint(["swiftData", "fetch"])
+          }
           self.error = error
         }
       }
