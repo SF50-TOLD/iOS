@@ -92,8 +92,7 @@ final class LandingPage: BasePage {
     let selector = scrollToElement(airportSelector)
     XCTAssertNotNil(selector, "Airport selector should be accessible")
     ensureHittable(selector!)
-    let airportPicker = app.segmentedControls["airportListPicker"]
-    tapAndEnsureNavigation(element: selector!, expectedElement: airportPicker)
+    tapAndEnsureNavigation(element: selector!, expectedElement: app.airportListPicker())
     return AirportPickerPage(app: app)
   }
 
@@ -108,7 +107,8 @@ final class LandingPage: BasePage {
     app.scrollToTop()
     let selector = scrollToElement(weatherSelector)
     XCTAssertNotNil(selector, "Weather selector should be accessible")
-    forceTap(selector!)
+    let windField = app.textFields["windDirectionField"].firstMatch
+    tapAndEnsureNavigation(element: selector!, expectedElement: windField)
     return WeatherPickerPage(app: app)
   }
 

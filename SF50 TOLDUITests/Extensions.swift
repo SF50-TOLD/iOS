@@ -116,70 +116,45 @@ extension XCUIElement {
       if app.keyboards.firstMatch.waitForExistence(timeout: 2) { break }
     }
 
-    // Select all existing text so the new text replaces it.
-    // On iPad with iOS 26 Liquid Glass, elements can become not-hittable
-    // between keyboard focus and triple-tap. Nudge the content to restore
-    // hittability so the direct triple-tap (which is the only reliable
-    // select-all gesture) can succeed. If still not hittable, fall back to
-    // dismissing the keyboard and retapping to reset layout state.
-    if !isHittable {
-      let collectionView = app.collectionViews.firstMatch
-      if collectionView.exists {
-        let windowHeight = app.windows.firstMatch.frame.height
-        if frame.minY < windowHeight * 0.35 {
-          let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
-          let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-          start.press(forDuration: 0.01, thenDragTo: end)
-        } else if frame.maxY > windowHeight * 0.70 {
-          let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-          let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
-          start.press(forDuration: 0.01, thenDragTo: end)
-        }
-      }
-    }
-
-    if isHittable {
-      tap(withNumberOfTaps: 3, numberOfTouches: 1)
-      Thread.sleep(forTimeInterval: 0.3)
-      typeText(text)
-    } else {
-      // Field has keyboard focus but Liquid Glass prevents direct triple-tap.
-      // Wait for keyboard/Liquid Glass animations to settle, then retry.
-      // If still not hittable, dismiss keyboard and tap again to reset state.
-      Thread.sleep(forTimeInterval: 0.5)
-      if !isHittable {
-        // Dismiss keyboard to reset layout, then retap
-        app.swipeDown()
-        Thread.sleep(forTimeInterval: 0.3)
-        coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        if app.keyboards.firstMatch.waitForExistence(timeout: 2) {
-          Thread.sleep(forTimeInterval: 0.3)
-        }
-      }
-      // Last resort: attempt triple-tap even if not hittable (may work after reset)
-      tap(withNumberOfTaps: 3, numberOfTouches: 1)
-      Thread.sleep(forTimeInterval: 0.3)
-      typeText(text)
-    }
+    // Select all existing text and type the replacement.
+    tap(withNumberOfTaps: 3, numberOfTouches: 1)
+    Thread.sleep(forTimeInterval: 0.3)
+    typeText(text)
   }
 }
 
 // Helper to tap element and ensure navigation occurred.
-// Falls back to coordinate-based tap for iOS 26 Liquid Glass overlay.
+// Tries multiple strategies to handle Liquid Glass overlays and iPad layouts.
 @MainActor
 func tapAndEnsureNavigation(
   element: XCUIElement,
   expectedElement: XCUIElement,
   timeout: TimeInterval = 5
 ) {
-  for _ in 0..<3 {
-    if element.exists {
-      if element.isHittable {
-        element.tap()
+  let strategies: [(XCUIElement) -> Void] = [
+    {
+      if $0.isHittable {
+        $0.tap()
       } else {
-        element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        $0.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
       }
-    }
+    },
+    { $0.press(forDuration: 0.3) },
+    { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5)).press(forDuration: 0.3) }
+  ]
+
+  for strategy in strategies {
+    guard element.exists else { return }
+    strategy(element)
     if expectedElement.waitForExistence(timeout: timeout) { return }
+  }
+}
+
+extension XCUIApplication {
+  /// Finds the airport list picker regardless of whether the platform renders
+  /// it as a SegmentedControl (iPhone) or TabGroup (iPad on iOS 26).
+  func airportListPicker() -> XCUIElement {
+    let predicate = NSPredicate(format: "identifier == 'airportListPicker'")
+    return descendants(matching: .any).matching(predicate).firstMatch
   }
 }

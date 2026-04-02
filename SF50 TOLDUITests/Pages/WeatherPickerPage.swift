@@ -49,6 +49,7 @@ final class WeatherPickerPage: BasePage {
   }
 
   func goBack() {
+    dismissKeyboard()
     tapBackButton()
   }
 }

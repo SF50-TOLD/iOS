@@ -3,9 +3,7 @@ import XCTest
 
 final class AirportPickerPage: BasePage {
 
-  private var segmentedControl: XCUIElement {
-    app.segmentedControls["airportListPicker"]
-  }
+  private var segmentedControl: XCUIElement { app.airportListPicker() }
 
   // MARK: - Tab Switching
 
