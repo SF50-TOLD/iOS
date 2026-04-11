@@ -8,20 +8,32 @@ extension WeatherLoader {
     do {
       weather = try await Self.weatherService.weather(for: key.location)
     } catch {
-      SentrySDK.capture(error: error) { scope in
-        scope.setLevel(.warning)
-        scope.setTag(value: "weatherKit", key: "weather.dataType")
-        scope.setTag(value: key.id, key: "airport")
-        scope.setFingerprint(["weather-loading", "weatherKit"])
+      if Self.isNetworkCancellation(error) {
+        // No action needed
+      } else if Self.isTransientNetworkError(error) {
+        Self.logger.info(
+          "Transient network error fetching WeatherKit data",
+          metadata: [
+            "error": "\(error)",
+            "id": "\(key.id)"
+          ]
+        )
+      } else {
+        SentrySDK.capture(error: error) { scope in
+          scope.setLevel(.warning)
+          scope.setTag(value: "weatherKit", key: "weather.dataType")
+          scope.setTag(value: key.id, key: "airport")
+          scope.setFingerprint(["weather-loading", "weatherKit"])
+        }
+        Self.logger.error(
+          "WeatherKit error",
+          metadata: [
+            "error": "\(error)",
+            "location": "\(key.location)",
+            "id": "\(key.id)"
+          ]
+        )
       }
-      Self.logger.error(
-        "WeatherKit error",
-        metadata: [
-          "error": "\(error)",
-          "location": "\(key.location)",
-          "id": "\(key.id)"
-        ]
-      )
       weather = nil
     }
 
