@@ -43,7 +43,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   private static let logger = Logger(label: "codes.tim.SF50-TOLD.BasePerformanceViewModel")
 
-  internal let context: ModelContext
+  private let container: ModelContainer
   internal var model: PerformanceModel?
   private var cancellables: Set<Task<Void, Never>> = []
   private var runwayNOTAMObservationTask: Task<Void, Never>?
@@ -134,7 +134,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared,
     defaultFlapSetting: FlapSetting
   ) {
-    context = container.mainContext
+    self.container = container
     self.calculationService = calculationService
 
     // temporary values, overwritten by recalculate()
@@ -153,26 +153,37 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   // MARK: - Observation Setup
 
   private func setupObservation() {
-    // Observe airport and runway changes
+    let airportKey = airportDefaultsKey
+    let runwayKey = runwayDefaultsKey
     addTask(
-      Task {
-        for await (airportID, runwayID) in Defaults.updates(airportDefaultsKey, runwayDefaultsKey)
+      Task.detached { [container] in
+        for await (airportID, runwayID) in Defaults.updates(airportKey, runwayKey)
         where !Task.isCancelled {
           do {
-            let (airport, runway) = try findAirportAndRunway(
+            let context = ModelContext(container)
+            let (fetchedAirport, fetchedRunway) = try findAirportAndRunway(
               airportID: airportID,
               runwayID: runwayID,
               in: context
             )
-            if airport == nil { Defaults[airportDefaultsKey] = nil }
-            if runway == nil { Defaults[runwayDefaultsKey] = nil }
-            self.airport = airport
-            self.runway = runway
-          } catch {
-            SentrySDK.capture(error: error) { scope in
-              scope.setFingerprint(["swiftData", "fetch"])
+            let airportPersistentID = fetchedAirport?.persistentModelID
+            let runwayPersistentID = fetchedRunway?.persistentModelID
+            await MainActor.run {
+              let mainContext = container.mainContext
+              let airport = airportPersistentID.flatMap { mainContext.model(for: $0) as? Airport }
+              let runway = runwayPersistentID.flatMap { mainContext.model(for: $0) as? Runway }
+              if airport == nil { Defaults[airportKey] = nil }
+              if runway == nil { Defaults[runwayKey] = nil }
+              self.airport = airport
+              self.runway = runway
             }
-            self.error = error
+          } catch {
+            await MainActor.run {
+              SentrySDK.capture(error: error) { scope in
+                scope.setFingerprint(["swiftData", "fetch"])
+              }
+              self.error = error
+            }
           }
         }
       }
