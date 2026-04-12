@@ -33,14 +33,11 @@
             reference = "container:Generate Screenshots/Generate Screenshots.xctestplan">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:SF50 SharedTests/SF50 Shared Unit Tests.xctestplan">
+            reference = "container:SF50 SharedTests/SF50 Shared Unit Tests.xctestplan"
+            default = "YES">
          </TestPlanReference>
          <TestPlanReference
             reference = "container:SF50 TOLDUITests/SF50 TOLD UI Tests.xctestplan">
-         </TestPlanReference>
-         <TestPlanReference
-            reference = "container:SF50 TOLDTests/Unit Tests.xctestplan"
-            default = "YES">
          </TestPlanReference>
       </TestPlans>
       <Testables>
