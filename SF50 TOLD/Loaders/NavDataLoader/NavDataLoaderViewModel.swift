@@ -75,19 +75,23 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     )
 
     addTask(
-      Task {
+      Task.detached { [container] in
         do {
-          let context = container.mainContext
-          try setAnyAirports(context: context)
+          let context = ModelContext(container)
           while !Task.isCancelled {
-            try setAnyAirports(context: context)
+            let state = try NavDataStateHelper.fetchState(context: context)
+            await MainActor.run {
+              self.applyState(state)
+            }
             try? await Task.sleep(for: .seconds(0.5))
           }
         } catch {
-          SentrySDK.capture(error: error) { scope in
-            scope.setFingerprint(["navData", "airportCheck"])
+          await MainActor.run {
+            SentrySDK.capture(error: error) { scope in
+              scope.setFingerprint(["navData", "airportCheck"])
+            }
+            self.error = error
           }
-          self.error = error
         }
       }
     )
@@ -182,25 +186,40 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     Defaults[.ourAirportsLastUpdated] = nil
   }
 
-  private func outOfDate(expirationDate: Date?) -> Bool {
-    guard let expirationDate else { return true }
-    return Date() > expirationDate
-  }
-
-  private func outOfDate(schemaVersion: Int) -> Bool {
-    schemaVersion != latestSchemaVersion
-  }
-
   private func recalculate() throws {
-    let schemaOutOfDate = outOfDate(schemaVersion: Defaults[.schemaVersion])
-    let nasrExpiration = try fetchNASRExpiration()
-    let dataOutOfDate = outOfDate(expirationDate: nasrExpiration)
-    needsLoad = schemaOutOfDate || dataOutOfDate
-    canSkip = !noData && !schemaOutOfDate
+    let state = try NavDataStateHelper.fetchState(context: container.mainContext)
+    applyState(state)
   }
 
-  private func fetchNASRExpiration() throws -> Date? {
-    let context = container.mainContext
+  private func applyState(_ state: NavDataStateHelper.State) {
+    if noData != state.noData { self.noData = state.noData }
+    if needsLoad != state.needsLoad { self.needsLoad = state.needsLoad }
+    if canSkip != state.canSkip { self.canSkip = state.canSkip }
+  }
+}
+
+/// File-scope helper for computing nav-data loader state from any `ModelContext`.
+///
+/// Declared outside `NavDataLoaderViewModel` so it is nonisolated by default
+/// and callable from both MainActor and background tasks without annotations.
+private enum NavDataStateHelper {
+  static func fetchState(context: ModelContext) throws -> State {
+    var airportDescriptor = FetchDescriptor<SF50_Shared.Airport>()
+    airportDescriptor.fetchLimit = 1
+    let noData = try context.fetch(airportDescriptor).isEmpty
+
+    let schemaOutOfDate = Defaults[.schemaVersion] != latestSchemaVersion
+    let nasrExpiration = try fetchNASRExpiration(context: context)
+    let dataOutOfDate = nasrExpiration.map { Date() > $0 } ?? true
+
+    return State(
+      noData: noData,
+      needsLoad: schemaOutOfDate || dataOutOfDate,
+      canSkip: !noData && !schemaOutOfDate
+    )
+  }
+
+  private static func fetchNASRExpiration(context: ModelContext) throws -> Date? {
     let nasrRawValue = CycleDataSource.nasr.rawValue
     var descriptor = FetchDescriptor<Cycle>(
       predicate: #Predicate { $0._dataSource == nasrRawValue }
@@ -209,10 +228,9 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     return try context.fetch(descriptor).first?.expires
   }
 
-  private func setAnyAirports(context: ModelContext) throws {
-    var descriptor = FetchDescriptor<SF50_Shared.Airport>()
-    descriptor.fetchLimit = 1
-    noData = try context.fetch(descriptor).isEmpty
-    try recalculate()
+  struct State {
+    let noData: Bool
+    let needsLoad: Bool
+    let canSkip: Bool
   }
 }
