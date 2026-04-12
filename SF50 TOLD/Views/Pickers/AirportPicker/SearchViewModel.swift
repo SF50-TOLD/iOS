@@ -68,8 +68,8 @@ final class SearchViewModel: WithIdentifiableError {
     isLoading = true
     let searchTextCopy = searchText
 
-    Task { [container] in
-      let context = container.mainContext
+    Task.detached { [container] in
+      let context = ModelContext(container)
       let uppercaseText = searchTextCopy.uppercased()
 
       let predicate = #Predicate<Airport> { airport in
