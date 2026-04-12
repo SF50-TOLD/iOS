@@ -79,7 +79,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
         do {
           let context = ModelContext(container)
           while !Task.isCancelled {
-            let state = try self.fetchLoaderState(context: context)
+            let state = try NavDataStateHelper.fetchState(context: context)
             await MainActor.run {
               self.applyState(state)
             }
@@ -186,48 +186,51 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     Defaults[.ourAirportsLastUpdated] = nil
   }
 
-  nonisolated private func outOfDate(expirationDate: Date?) -> Bool {
-    guard let expirationDate else { return true }
-    return Date() > expirationDate
-  }
-
-  nonisolated private func outOfDate(schemaVersion: Int) -> Bool {
-    schemaVersion != latestSchemaVersion
-  }
-
   private func recalculate() throws {
-    let state = try fetchLoaderState(context: container.mainContext)
+    let state = try NavDataStateHelper.fetchState(context: container.mainContext)
     applyState(state)
   }
 
-  private func applyState(_ state: (noData: Bool, needsLoad: Bool, canSkip: Bool)) {
+  private func applyState(_ state: NavDataStateHelper.State) {
     if noData != state.noData { self.noData = state.noData }
     if needsLoad != state.needsLoad { self.needsLoad = state.needsLoad }
     if canSkip != state.canSkip { self.canSkip = state.canSkip }
   }
+}
 
-  nonisolated private func fetchLoaderState(context: ModelContext) throws -> (
-    noData: Bool, needsLoad: Bool, canSkip: Bool
-  ) {
+/// File-scope helper for computing nav-data loader state from any `ModelContext`.
+///
+/// Declared outside `NavDataLoaderViewModel` so it is nonisolated by default
+/// and callable from both MainActor and background tasks without annotations.
+private enum NavDataStateHelper {
+  static func fetchState(context: ModelContext) throws -> State {
     var airportDescriptor = FetchDescriptor<SF50_Shared.Airport>()
     airportDescriptor.fetchLimit = 1
     let noData = try context.fetch(airportDescriptor).isEmpty
 
-    let schemaOutOfDate = outOfDate(schemaVersion: Defaults[.schemaVersion])
+    let schemaOutOfDate = Defaults[.schemaVersion] != latestSchemaVersion
     let nasrExpiration = try fetchNASRExpiration(context: context)
-    let dataOutOfDate = outOfDate(expirationDate: nasrExpiration)
+    let dataOutOfDate = nasrExpiration.map { Date() > $0 } ?? true
 
-    let needsLoad = schemaOutOfDate || dataOutOfDate
-    let canSkip = !noData && !schemaOutOfDate
-    return (noData: noData, needsLoad: needsLoad, canSkip: canSkip)
+    return State(
+      noData: noData,
+      needsLoad: schemaOutOfDate || dataOutOfDate,
+      canSkip: !noData && !schemaOutOfDate
+    )
   }
 
-  nonisolated private func fetchNASRExpiration(context: ModelContext) throws -> Date? {
+  private static func fetchNASRExpiration(context: ModelContext) throws -> Date? {
     let nasrRawValue = CycleDataSource.nasr.rawValue
     var descriptor = FetchDescriptor<Cycle>(
       predicate: #Predicate { $0._dataSource == nasrRawValue }
     )
     descriptor.fetchLimit = 1
     return try context.fetch(descriptor).first?.expires
+  }
+
+  struct State {
+    let noData: Bool
+    let needsLoad: Bool
+    let canSkip: Bool
   }
 }
