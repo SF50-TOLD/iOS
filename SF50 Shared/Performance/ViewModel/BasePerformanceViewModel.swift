@@ -150,29 +150,9 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     setupObservation()
   }
 
-  // MARK: - Background Fetching
-
-  /// Searches for airport and runway on a background context, returning their
-  /// persistent identifiers so results can be applied on the main actor without
-  /// sending non-Sendable model objects across isolation boundaries.
-  nonisolated private static func fetchAirportAndRunwayIDs(
-    airportID: String?,
-    runwayID: String?,
-    container: ModelContainer
-  ) throws -> (airport: PersistentIdentifier?, runway: PersistentIdentifier?, airportFound: Bool) {
-    let context = ModelContext(container)
-    let (airport, runway) = try findAirportAndRunway(
-      airportID: airportID,
-      runwayID: runwayID,
-      in: context
-    )
-    return (airport?.persistentModelID, runway?.persistentModelID, airport != nil)
-  }
-
   // MARK: - Observation Setup
 
   private func setupObservation() {
-    // Observe airport and runway changes (fetched off the main thread)
     let airportKey = airportDefaultsKey
     let runwayKey = runwayDefaultsKey
     addTask(
@@ -180,16 +160,19 @@ open class BasePerformanceViewModel: WithIdentifiableError {
         for await (airportID, runwayID) in Defaults.updates(airportKey, runwayKey)
         where !Task.isCancelled {
           do {
-            let ids = try Self.fetchAirportAndRunwayIDs(
+            let context = ModelContext(container)
+            let (fetchedAirport, fetchedRunway) = try findAirportAndRunway(
               airportID: airportID,
               runwayID: runwayID,
-              container: container
+              in: context
             )
+            let airportPersistentID = fetchedAirport?.persistentModelID
+            let runwayPersistentID = fetchedRunway?.persistentModelID
             await MainActor.run {
               let mainContext = container.mainContext
-              let airport = ids.airport.flatMap { mainContext.model(for: $0) as? Airport }
-              let runway = ids.runway.flatMap { mainContext.model(for: $0) as? Runway }
-              if !ids.airportFound { Defaults[airportKey] = nil }
+              let airport = airportPersistentID.flatMap { mainContext.model(for: $0) as? Airport }
+              let runway = runwayPersistentID.flatMap { mainContext.model(for: $0) as? Runway }
+              if airport == nil { Defaults[airportKey] = nil }
               if runway == nil { Defaults[runwayKey] = nil }
               self.airport = airport
               self.runway = runway
