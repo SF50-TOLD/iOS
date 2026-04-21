@@ -116,8 +116,15 @@ extension XCUIElement {
       if app.keyboards.firstMatch.waitForExistence(timeout: 2) { break }
     }
 
-    // Select all existing text and type the replacement.
-    tap(withNumberOfTaps: 3, numberOfTouches: 1)
+    // Select all existing text. On iPhone, triple-tap works natively. On
+    // iPad with iOS 26 Liquid Glass overlays, the element can report "not
+    // hittable" and the XCUIElement triple-tap fails, so fall back to
+    // hardware-keyboard-emulated Cmd+A which bypasses hit-testing.
+    if isHittable {
+      tap(withNumberOfTaps: 3, numberOfTouches: 1)
+    } else {
+      typeKey("a", modifierFlags: .command)
+    }
     Thread.sleep(forTimeInterval: 0.3)
     typeText(text)
   }

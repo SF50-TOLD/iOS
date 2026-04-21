@@ -62,13 +62,13 @@ final class TerrainDataLoader: ObservableObject {
   @Published private(set) var corruptedRegions: Set<TerrainRegion> = []
 
   /// Logger for debug output.
-  private let logger = Logger(
+  nonisolated private let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",
     category: "TerrainDataLoader"
   )
 
   /// App group identifier for shared storage.
-  private let appGroupID = "group.codes.tim.TOLD"
+  nonisolated private let appGroupID = "group.codes.tim.TOLD"
 
   /// Base URL for terrain data downloads.
   private var baseURL = TerrainManifest.defaultBaseURL.absoluteString
@@ -82,7 +82,7 @@ final class TerrainDataLoader: ObservableObject {
   }()
 
   /// Returns the URL to the terrain directory in the app group container.
-  private var terrainDirectory: URL? {
+  nonisolated private var terrainDirectory: URL? {
     guard
       let containerURL = FileManager.default.containerURL(
         forSecurityApplicationGroupIdentifier: appGroupID
@@ -177,37 +177,41 @@ final class TerrainDataLoader: ObservableObject {
   /// Refreshes the list of available regions by scanning the terrain directory.
   ///
   /// Also detects compressed `.srtm.lzma` files left by the Background Assets
-  /// extension and triggers async decompression for them.
+  /// extension and triggers async decompression for them. The filesystem scan
+  /// runs on a background task so the main actor is never blocked.
   func refreshAvailableRegions() {
-    var available = Set<TerrainRegion>()
-    var pendingDecompression = [TerrainRegion]()
+    let corrupted = corruptedRegions
+    Task.detached(priority: .userInitiated) { [self] in
+      var available = Set<TerrainRegion>()
+      var pendingDecompression = [TerrainRegion]()
 
-    for region in TerrainRegion.allCases {
-      if corruptedRegions.contains(region) { continue }
-
-      if let url = decompressedFileURL(for: region),
-        FileManager.default.fileExists(atPath: url.path)
-      {
-        available.insert(region)
-      } else if let compressed = compressedFileURL(for: region),
-        FileManager.default.fileExists(atPath: compressed.path)
-      {
-        logger.info(
-          "Found BA-downloaded compressed file for \(region.rawValue), queuing decompression"
-        )
-        pendingDecompression.append(region)
+      for region in TerrainRegion.allCases where !corrupted.contains(region) {
+        if let url = decompressedFileURL(for: region),
+          FileManager.default.fileExists(atPath: url.path)
+        {
+          available.insert(region)
+        } else if let compressed = compressedFileURL(for: region),
+          FileManager.default.fileExists(atPath: compressed.path)
+        {
+          logger.info(
+            "Found BA-downloaded compressed file for \(region.rawValue), queuing decompression"
+          )
+          pendingDecompression.append(region)
+        }
       }
-    }
 
-    availableRegions = available
-    logger.info("Available terrain regions: \(available.map(\.rawValue))")
+      await MainActor.run {
+        self.availableRegions = available
+        self.logger.info("Available terrain regions: \(available.map(\.rawValue))")
 
-    loadAvailableRegionsIntoService()
+        self.loadAvailableRegionsIntoService()
 
-    // Decompress any files left by the Background Assets extension
-    for region in pendingDecompression {
-      Task {
-        await decompressPendingDownload(for: region)
+        // Decompress any files left by the Background Assets extension
+        for region in pendingDecompression {
+          Task {
+            await self.decompressPendingDownload(for: region)
+          }
+        }
       }
     }
   }
@@ -339,12 +343,12 @@ final class TerrainDataLoader: ObservableObject {
   // MARK: - Private Methods
 
   /// Returns the URL to the decompressed terrain file for a region.
-  private func decompressedFileURL(for region: TerrainRegion) -> URL? {
+  nonisolated private func decompressedFileURL(for region: TerrainRegion) -> URL? {
     terrainDirectory?.appendingPathComponent("\(region.rawValue).srtm")
   }
 
   /// Returns the URL to the compressed terrain file for a region.
-  private func compressedFileURL(for region: TerrainRegion) -> URL? {
+  nonisolated private func compressedFileURL(for region: TerrainRegion) -> URL? {
     terrainDirectory?.appendingPathComponent(region.filename)
   }
 
