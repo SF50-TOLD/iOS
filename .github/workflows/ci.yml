@@ -239,7 +239,9 @@ jobs:
           xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardAutocorrection -bool false
           xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardAutocapitalization -bool false
           xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardPrediction -bool false
-          defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool NO
+          # Enabled so Cmd+A works in clearAndType on iPad fields where iOS 26
+          # Liquid Glass reports the text field as not-hittable for triple-tap.
+          defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool YES
           xcrun simctl status_bar "$UDID" override \
             --time "9:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \
             --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100 || true
