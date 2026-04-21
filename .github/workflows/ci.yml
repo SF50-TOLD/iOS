@@ -22,7 +22,7 @@ jobs:
             device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro
             os-version: ""
           - ios-label: "18.4"
-            runner: macos-latest
+            runner: macos-26
             device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro
             os-version: "18.4"
     runs-on: ${{ matrix.runner }}
@@ -114,7 +114,7 @@ jobs:
             device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro
             os-version: ""
           - ios-label: "18.4"
-            runner: macos-latest
+            runner: macos-26
             device: "iPhone 16 Pro"
             device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro
             os-version: "18.4"
@@ -184,12 +184,12 @@ jobs:
             device-type: com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB
             os-version: ""
           - ios-label: "18.4"
-            runner: macos-latest
+            runner: macos-26
             device: "iPhone 16 Pro"
             device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro
             os-version: "18.4"
           - ios-label: "18.4"
-            runner: macos-latest
+            runner: macos-26
             device: "iPad Pro 13-inch (M4)"
             device-type: com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M4-8GB
             os-version: "18.4"

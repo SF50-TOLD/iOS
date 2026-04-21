@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 90;
+	objectVersion = 100;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -660,6 +660,7 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2640;
+				ORGANIZATIONNAME = "";
 				TargetAttributes = {
 					012837492E5B8BB8002195A0 = {
 						CreatedOnToolsVersion = 16.4;
@@ -721,7 +722,7 @@
 				01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */,
 				018ED7932F340BFD00D084B4 /* XCRemoteSwiftPackageReference "SwiftMETAR" */,
 			);
-			preferredProjectObjectVersion = 90;
+			preferredProjectObjectVersion = 100;
 			productRefGroup = 0163BC6B2DDEE9D3008FEE8F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
