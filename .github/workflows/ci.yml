@@ -64,7 +64,7 @@ jobs:
             UDID=$(xcrun simctl create "build-sim" "${{ matrix.device-type }}")
           fi
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Generate NOTAM API config
         env:
           NOTAM_API_TOKEN: ${{ secrets.NOTAM_API_TOKEN }}
@@ -95,7 +95,7 @@ jobs:
       - name: Clean build intermediates
         run: rm -rf DerivedData/Build/Intermediates.noindex
       - name: Upload build products
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: derived-data-${{ matrix.ios-label }}
           path: DerivedData
@@ -150,9 +150,9 @@ jobs:
             UDID=$(xcrun simctl create "${{ matrix.device }}" "${{ matrix.device-type }}")
           fi
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download build products
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: derived-data-${{ matrix.ios-label }}
           path: DerivedData
@@ -245,9 +245,9 @@ jobs:
           xcrun simctl status_bar "$UDID" override \
             --time "9:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \
             --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100 || true
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Download build products
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: derived-data-${{ matrix.ios-label }}
           path: DerivedData
