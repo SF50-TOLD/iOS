@@ -160,10 +160,12 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
         try await loader.downloadRegion(region)
         downloadState = .idle
       } catch {
-        SentrySDK.capture(error: error) { scope in
-          scope.setTag(value: region.rawValue, key: "terrain.region")
-          scope.setTag(value: "download", key: "terrain.operation")
-          scope.setFingerprint(["terrain", "download"])
+        if (error as? TerrainDataLoaderError)?.isReportable ?? true {
+          SentrySDK.capture(error: error) { scope in
+            scope.setTag(value: region.rawValue, key: "terrain.region")
+            scope.setTag(value: "download", key: "terrain.operation")
+            scope.setFingerprint(["terrain", "download"])
+          }
         }
         self.error = error
         downloadState = .idle
@@ -180,10 +182,12 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
         try await loader.downloadRegion(region)
         downloadState = .idle
       } catch {
-        SentrySDK.capture(error: error) { scope in
-          scope.setTag(value: region.rawValue, key: "terrain.region")
-          scope.setTag(value: "redownload", key: "terrain.operation")
-          scope.setFingerprint(["terrain", "download"])
+        if (error as? TerrainDataLoaderError)?.isReportable ?? true {
+          SentrySDK.capture(error: error) { scope in
+            scope.setTag(value: region.rawValue, key: "terrain.region")
+            scope.setTag(value: "redownload", key: "terrain.operation")
+            scope.setFingerprint(["terrain", "download"])
+          }
         }
         self.error = error
         downloadState = .idle

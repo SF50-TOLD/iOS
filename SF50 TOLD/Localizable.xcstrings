@@ -633,6 +633,34 @@
     "Flaps Up ICE" : {
 
     },
+    "Free up space on your device and try again. The download will resume from where it left off." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "device" : {
+              "ipad" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Free up space on iPad and try again. The download will resume from where it left off."
+                }
+              },
+              "iphone" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Free up space on iPhone and try again. The download will resume from where it left off."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Free up space on your device and try again. The download will resume from where it left off."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Fuel Density" : {
 
     },
@@ -1540,6 +1568,34 @@
     },
     "Your airport database is out of date. Would you like to update it?" : {
 
+    },
+    "Your device is out of storage space." : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "device" : {
+              "ipad" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "iPad is out of storage space."
+                }
+              },
+              "iphone" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "iPhone is out of storage space."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your device is out of storage space."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

@@ -132,6 +132,9 @@ final class TerrainDataLoader: ObservableObject {
     } catch {
       try? outputHandle.close()
       try? FileManager.default.removeItem(at: destinationURL)
+      if error.isOutOfDiskSpace {
+        throw TerrainDataLoaderError.outOfDiskSpace
+      }
       throw TerrainDataLoaderError.decompressionFailed(error)
     }
 
@@ -440,10 +443,12 @@ final class TerrainDataLoader: ObservableObject {
       loadAvailableRegionsIntoService()
       logger.info("BA terrain for \(region.rawValue) is now available")
     } catch {
-      SentrySDK.capture(error: error) { scope in
-        scope.setTag(value: region.rawValue, key: "terrain.region")
-        scope.setTag(value: "decompress", key: "terrain.operation")
-        scope.setFingerprint(["terrain", "decompress"])
+      if (error as? TerrainDataLoaderError)?.isReportable ?? true {
+        SentrySDK.capture(error: error) { scope in
+          scope.setTag(value: region.rawValue, key: "terrain.region")
+          scope.setTag(value: "decompress", key: "terrain.operation")
+          scope.setFingerprint(["terrain", "decompress"])
+        }
       }
       decompressingRegions.remove(region)
       logger.error(
@@ -597,7 +602,19 @@ enum TerrainDataLoaderError: LocalizedError {
   case noStorageAccess
   case downloadFailed(Error)
   case decompressionFailed(Error)
+  case outOfDiskSpace
   case regionNotAvailable(TerrainRegion)
+
+  /// Whether this error should be reported to Sentry.
+  ///
+  /// User-side conditions like running out of disk space are not actionable
+  /// for the developer and are filtered out at the capture sites.
+  var isReportable: Bool {
+    switch self {
+      case .outOfDiskSpace: false
+      default: true
+    }
+  }
 
   var errorDescription: String? {
     String(localized: "Terrain data couldn’t be loaded.")
@@ -611,6 +628,8 @@ enum TerrainDataLoaderError: LocalizedError {
         String(localized: "Download failed: \(error.localizedDescription)")
       case .decompressionFailed(let error):
         String(localized: "Decompression failed: \(error.localizedDescription)")
+      case .outOfDiskSpace:
+        String(localized: "Your device is out of storage space.")
       case .regionNotAvailable(let region):
         String(localized: "Terrain data for \(region.displayName) is not available for download.")
     }
@@ -622,8 +641,35 @@ enum TerrainDataLoaderError: LocalizedError {
         String(localized: "Check that the app has permission to access storage.")
       case .downloadFailed, .decompressionFailed:
         String(localized: "Check your internet connection and try again.")
+      case .outOfDiskSpace:
+        String(
+          localized:
+            "Free up space on your device and try again. The download will resume from where it left off."
+        )
       case .regionNotAvailable:
         nil
     }
+  }
+}
+
+private extension Error {
+  /// Whether this error (or any error in its `NSUnderlyingErrorKey` chain)
+  /// represents a POSIX `ENOSPC` "No space left on device" condition.
+  ///
+  /// `StreamingLZMA` wraps the underlying `errno` string in a String-typed
+  /// `LZMAError.internalError` case, so the string fallback is needed when
+  /// the typed POSIX error has been lost.
+  var isOutOfDiskSpace: Bool {
+    let nsError = self as NSError
+    if nsError.domain == NSPOSIXErrorDomain, nsError.code == Int(ENOSPC) {
+      return true
+    }
+    if let posix = self as? POSIXError, posix.code == .ENOSPC {
+      return true
+    }
+    if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error {
+      return underlying.isOutOfDiskSpace
+    }
+    return localizedDescription.contains("No space left on device")
   }
 }
