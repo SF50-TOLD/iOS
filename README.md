@@ -1,5 +1,11 @@
 # SF50 TOLD
 
+[![CI](https://github.com/SF50-TOLD/iOS/actions/workflows/ci.yml/badge.svg)](https://github.com/SF50-TOLD/iOS/actions/workflows/ci.yml)
+[![Lint](https://github.com/SF50-TOLD/iOS/actions/workflows/lint.yml/badge.svg)](https://github.com/SF50-TOLD/iOS/actions/workflows/lint.yml)
+[![App Store](https://img.shields.io/itunes/v/1552835232.svg)](https://apps.apple.com/app/id1552835232)
+[![Platform](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](https://developer.apple.com/ios/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A comprehensive Takeoff and Landing Data (TOLD) calculator for the Cirrus SF50 Vision Jet, supporting G1 through G2+ models.
 
 ## ⚠️ Disclaimer
