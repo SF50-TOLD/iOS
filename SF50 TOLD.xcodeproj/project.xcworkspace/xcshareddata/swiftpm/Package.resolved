@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/riscfuture/BuildableMacro.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "1f8f8a17c75eeb3fd1287eb3abb6429a290412e8"
+        "revision" : "1f8f8a17c75eeb3fd1287eb3abb6429a290412e8",
+        "version" : "1.0.0"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/getsentry/sentry-cocoa/",
       "state" : {
-        "revision" : "05d3ce8332097ff0b2347231ac66476fd7d2f4d8",
-        "version" : "9.8.0"
+        "revision" : "64c9c5cc401aefde0eda46a9192b36082533a79d",
+        "version" : "9.13.0"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/StreamingLZMA",
       "state" : {
-        "branch" : "main",
-        "revision" : "073b0dc5691accf04897c146bd778c0a60e848d6"
+        "revision" : "3773bb684557d2cca47ef29bd04298291a4f7204",
+        "version" : "1.1.0"
       }
     },
     {
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",
       "state" : {
-        "revision" : "bbd81b6725ae874c69e9b8c8804d462356b55523",
-        "version" : "1.10.1"
+        "revision" : "5073617dac96330a486245e4c0179cb0a6fd2256",
+        "version" : "1.12.0"
       }
     },
     {
@@ -96,8 +96,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stackotter/swift-macro-toolkit",
       "state" : {
-        "revision" : "569627091e1fbb8745d691aeeb008e7247dedb7c",
-        "version" : "0.6.1"
+        "revision" : "d6ed555bb83c9f21a292e9769952e8f52610a6e2",
+        "version" : "0.9.0"
       }
     },
     {
@@ -132,8 +132,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftCIFP.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "dde35e44562b1d106faf5f89cb63844a48eccc9e"
+        "revision" : "0fdfe20ed157bfd41fe67a5a4666a6278a061c13",
+        "version" : "1.0.0"
       }
     },
     {
@@ -141,8 +141,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftDOF.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "9b4d30c14d6586a76ccf3c9153aa2000af5e7912"
+        "revision" : "2a8824bfa9a407b212163e126d68e8e2fa4243fa",
+        "version" : "1.0.0"
       }
     },
     {
@@ -150,8 +150,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftMETAR",
       "state" : {
-        "branch" : "main",
-        "revision" : "dae17ed1d65e2256919b5ba210425133d64c7388"
+        "revision" : "5257b321220c75b7f62f8c1ecd0ab7775f4e0bac",
+        "version" : "3.0.1"
       }
     },
     {
@@ -159,8 +159,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftNASR",
       "state" : {
-        "branch" : "master",
-        "revision" : "080d1c817d17471bfcd5a8847c58adae8a284481"
+        "revision" : "1830f51bfbbd789bcdbf57f4f9decb9726123e87",
+        "version" : "2.0.0"
       }
     },
     {
@@ -168,8 +168,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/riscfuture/swiftr2",
       "state" : {
-        "branch" : "main",
-        "revision" : "4d6927d3895cc498f7e0be4e1da838523812521b"
+        "revision" : "dbf12e7e6e4cce1182e925612c4026c4936e5fda",
+        "version" : "1.0.0"
       }
     },
     {
@@ -193,7 +193,7 @@
     {
       "identity" : "zipfoundation",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/weichsel/ZIPFoundation.git",
+      "location" : "https://github.com/weichsel/ZIPFoundation",
       "state" : {
         "revision" : "22787ffb59de99e5dc1fbfe80b19c97a904ad48d",
         "version" : "0.9.20"

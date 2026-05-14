@@ -1669,16 +1669,16 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/SwiftDOF.git";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
 			};
 		};
 		0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/SwiftCIFP.git";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
 			};
 		};
 		0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
@@ -1693,8 +1693,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/SwiftNASR";
 			requirement = {
-				branch = master;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
 			};
 		};
 		01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
@@ -1717,8 +1717,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/StreamingLZMA";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
 			};
 		};
 		01758ED52F2A9D13001D218C /* XCRemoteSwiftPackageReference "tiff-ios" */ = {
@@ -1741,8 +1741,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/SwiftMETAR";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.0;
 			};
 		};
 		01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */ = {
@@ -1765,8 +1765,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/riscfuture/swiftr2";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
 			};
 		};
 		01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */ = {
