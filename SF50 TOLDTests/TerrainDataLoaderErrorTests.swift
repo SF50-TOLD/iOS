@@ -66,7 +66,9 @@ struct TerrainDataLoaderErrorTests {
         .decompressionFailed(lzmaError)
       }
 
-    #expect(terrainError == .outOfDiskSpace)
+    let mappedToOutOfDiskSpace: Bool =
+      if case .outOfDiskSpace = terrainError { true } else { false }
+    #expect(mappedToOutOfDiskSpace)
     #expect(!terrainError.isReportable)
     #expect(terrainError.recoverySuggestion != nil)
 
@@ -74,24 +76,6 @@ struct TerrainDataLoaderErrorTests {
     let badAdvice = "Check your internet connection"
     if let suggestion = terrainError.recoverySuggestion {
       #expect(!suggestion.contains(badAdvice))
-    }
-  }
-}
-
-// TerrainDataLoaderError must be Equatable for the test assertions above.
-extension TerrainDataLoaderError: Equatable {
-  public static func == (lhs: TerrainDataLoaderError, rhs: TerrainDataLoaderError) -> Bool {
-    switch (lhs, rhs) {
-      case (.noStorageAccess, .noStorageAccess),
-        (.outOfDiskSpace, .outOfDiskSpace):
-        return true
-      case (.regionNotAvailable(let l), .regionNotAvailable(let r)):
-        return l == r
-      case (.downloadFailed, .downloadFailed),
-        (.decompressionFailed, .decompressionFailed):
-        return true
-      default:
-        return false
     }
   }
 }
