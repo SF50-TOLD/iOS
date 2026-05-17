@@ -151,9 +151,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
 ///
 /// Declared outside `NavDataLoaderViewModel` so it is nonisolated by default
 /// and callable from both MainActor and background tasks without annotations.
-/// It is intentionally non-`private` so the off-main state computation can be
-/// exercised directly by unit tests via `@testable import`.
-enum NavDataStateHelper {
+private enum NavDataStateHelper {
   static func fetchState(context: ModelContext) throws -> State {
     var airportDescriptor = FetchDescriptor<SF50_Shared.Airport>()
     airportDescriptor.fetchLimit = 1

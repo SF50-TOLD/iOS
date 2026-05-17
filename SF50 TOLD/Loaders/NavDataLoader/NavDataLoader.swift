@@ -116,7 +116,7 @@ actor NavDataLoader {
       self.state = .loading(progress: Float(airportCount + obstaclesProcessed) / Float(totalItems))
     }
 
-    writeCycles(nasr.cycles)
+    try writeCycles(nasr.cycles)
 
     state = .finished
     return LoadResult(
@@ -134,11 +134,11 @@ actor NavDataLoader {
     try modelContext.save()
   }
 
-  private func writeCycles(_ cycles: AirportDataCodable.DataCycles) {
+  private func writeCycles(_ cycles: AirportDataCodable.DataCycles) throws {
     insertCycle(cycles.nasr, source: .nasr)
     insertCycle(cycles.cifp, source: .cifp)
     insertCycle(cycles.dof, source: .dof)
-    try? modelContext.save()
+    try modelContext.save()
   }
 
   private func insertCycle(
