@@ -45,56 +45,51 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
 
   init(container: ModelContainer) {
     self.container = container
-    do {
-      try recalculate()
-    } catch {
-      SentrySDK.capture(error: error) { scope in
-        scope.setFingerprint(["navData", "recalculate"])
-      }
-      self.error = error
-    }
-
     setupObservation()
   }
 
   private func setupObservation() {
-    addTask(
-      Task {
-        for await _ in Defaults.updates(.schemaVersion)
-        where !Task.isCancelled {
-          do {
-            try recalculate()
-          } catch {
-            SentrySDK.capture(error: error) { scope in
-              scope.setFingerprint(["navData", "recalculate"])
-            }
-            self.error = error
-          }
-        }
-      }
-    )
+    addTask(schemaVersionObservationTask())
+    addTask(statePollingTask())
+  }
 
-    addTask(
-      Task.detached { [container] in
-        do {
-          let context = ModelContext(container)
-          while !Task.isCancelled {
-            let state = try NavDataStateHelper.fetchState(context: context)
-            await MainActor.run {
-              self.applyState(state)
-            }
-            try? await Task.sleep(for: .seconds(0.5))
-          }
-        } catch {
-          await MainActor.run {
-            SentrySDK.capture(error: error) { scope in
-              scope.setFingerprint(["navData", "airportCheck"])
-            }
-            self.error = error
-          }
-        }
+  private func schemaVersionObservationTask() -> Task<Void, Never> {
+    Task.detached { [container] in
+      let context = ModelContext(container)
+      for await _ in Defaults.updates(.schemaVersion)
+      where !Task.isCancelled {
+        await self.refreshState(from: context, fingerprint: "recalculate")
       }
-    )
+    }
+  }
+
+  private func statePollingTask() -> Task<Void, Never> {
+    Task.detached { [container] in
+      let context = ModelContext(container)
+      while !Task.isCancelled {
+        await self.refreshState(from: context, fingerprint: "airportCheck")
+        try? await Task.sleep(for: .seconds(0.5))
+      }
+    }
+  }
+
+  nonisolated private func refreshState(
+    from context: ModelContext,
+    fingerprint: String
+  ) async {
+    do {
+      let state = try NavDataStateHelper.fetchState(context: context)
+      await MainActor.run {
+        self.applyState(state)
+      }
+    } catch {
+      await MainActor.run {
+        SentrySDK.capture(error: error) { scope in
+          scope.setFingerprint(["navData", fingerprint])
+        }
+        self.error = error
+      }
+    }
   }
 
   private func addTask(_ task: Task<Void, Never>) {
@@ -112,46 +107,12 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
         )
         do {
           error = nil
-          try clearCycles()
+          try await loader.clearCycles()
+          Defaults[.ourAirportsLastUpdated] = nil
           let result = try await loader.load()
 
-          await MainActor.run {
-            let context = container.mainContext
-            if let nasr = result.cycles.nasr {
-              context.insert(
-                Cycle(
-                  dataSource: .nasr,
-                  name: nasr.name,
-                  effective: nasr.effective,
-                  expires: nasr.expires
-                )
-              )
-            }
-            if let cifp = result.cycles.cifp {
-              context.insert(
-                Cycle(
-                  dataSource: .cifp,
-                  name: cifp.name,
-                  effective: cifp.effective,
-                  expires: cifp.expires
-                )
-              )
-            }
-            if let dof = result.cycles.dof {
-              context.insert(
-                Cycle(
-                  dataSource: .dof,
-                  name: dof.name,
-                  effective: dof.effective,
-                  expires: dof.expires
-                )
-              )
-            }
-            try? context.save()
-            try? self.recalculate()
-            Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
-            Defaults[.schemaVersion] = latestSchemaVersion
-          }
+          Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
+          Defaults[.schemaVersion] = latestSchemaVersion
           transaction.finish()
         } catch {
           transaction.finish(status: .internalError)
@@ -179,18 +140,6 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     if canSkip { deferred = true }
   }
 
-  private func clearCycles() throws {
-    let context = container.mainContext
-    try context.delete(model: Cycle.self)
-    try context.save()
-    Defaults[.ourAirportsLastUpdated] = nil
-  }
-
-  private func recalculate() throws {
-    let state = try NavDataStateHelper.fetchState(context: container.mainContext)
-    applyState(state)
-  }
-
   private func applyState(_ state: NavDataStateHelper.State) {
     if noData != state.noData { self.noData = state.noData }
     if needsLoad != state.needsLoad { self.needsLoad = state.needsLoad }
@@ -202,7 +151,9 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
 ///
 /// Declared outside `NavDataLoaderViewModel` so it is nonisolated by default
 /// and callable from both MainActor and background tasks without annotations.
-private enum NavDataStateHelper {
+/// It is intentionally non-`private` so the off-main state computation can be
+/// exercised directly by unit tests via `@testable import`.
+enum NavDataStateHelper {
   static func fetchState(context: ModelContext) throws -> State {
     var airportDescriptor = FetchDescriptor<SF50_Shared.Airport>()
     airportDescriptor.fetchLimit = 1

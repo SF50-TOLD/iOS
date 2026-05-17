@@ -116,10 +116,43 @@ actor NavDataLoader {
       self.state = .loading(progress: Float(airportCount + obstaclesProcessed) / Float(totalItems))
     }
 
+    writeCycles(nasr.cycles)
+
     state = .finished
     return LoadResult(
       cycles: nasr.cycles,
       ourAirportsLastUpdated: nasr.ourAirportsLastUpdated
+    )
+  }
+
+  /// Deletes all persisted ``Cycle`` records on the loader's background context.
+  ///
+  /// Performed off the main thread so it never contends with the main
+  /// `NSManagedObjectContext` for the persistent store coordinator.
+  func clearCycles() throws {
+    try modelContext.delete(model: Cycle.self)
+    try modelContext.save()
+  }
+
+  private func writeCycles(_ cycles: AirportDataCodable.DataCycles) {
+    insertCycle(cycles.nasr, source: .nasr)
+    insertCycle(cycles.cifp, source: .cifp)
+    insertCycle(cycles.dof, source: .dof)
+    try? modelContext.save()
+  }
+
+  private func insertCycle(
+    _ info: AirportDataCodable.CycleInfo?,
+    source: CycleDataSource
+  ) {
+    guard let info else { return }
+    modelContext.insert(
+      Cycle(
+        dataSource: source,
+        name: info.name,
+        effective: info.effective,
+        expires: info.expires
+      )
     )
   }
 
