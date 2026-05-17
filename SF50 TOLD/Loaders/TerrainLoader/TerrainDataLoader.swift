@@ -652,16 +652,14 @@ enum TerrainDataLoaderError: LocalizedError {
   }
 }
 
-extension Error {
+private extension Error {
   /// Whether this error (or any error in its `NSUnderlyingErrorKey` chain)
   /// represents a POSIX `ENOSPC` "No space left on device" condition.
   ///
-  /// `StreamingLZMA` wraps the underlying `errno` string in a String-typed
-  /// `LZMAError.internalError` case, so a string fallback is needed when
-  /// the typed POSIX error has been lost. The fallback checks
-  /// `String(describing:)` (CustomStringConvertible) and `failureReason`
-  /// because `localizedDescription` returns the localized `errorDescription`
-  /// ("Internal Error"), which does not contain the errno text.
+  /// `StreamingLZMA` surfaces a failed-write `errno` as `LZMAError.ioFailure`,
+  /// which bridges (via `CustomNSError`) to an `NSError` carrying an
+  /// `NSPOSIXErrorDomain` underlying error, so the typed checks below are
+  /// sufficient.
   var isOutOfDiskSpace: Bool {
     let nsError = self as NSError
     if nsError.domain == NSPOSIXErrorDomain, nsError.code == Int(ENOSPC) {
@@ -673,8 +671,6 @@ extension Error {
     if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error {
       return underlying.isOutOfDiskSpace
     }
-    let enospcText = "No space left on device"
-    return String(describing: self).contains(enospcText)
-      || (self as? LocalizedError)?.failureReason?.contains(enospcText) == true
+    return false
   }
 }

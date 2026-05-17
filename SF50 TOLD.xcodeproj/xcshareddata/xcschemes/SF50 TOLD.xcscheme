@@ -37,9 +37,6 @@
             default = "YES">
          </TestPlanReference>
          <TestPlanReference
-            reference = "container:SF50 TOLDTests/Unit Tests.xctestplan">
-         </TestPlanReference>
-         <TestPlanReference
             reference = "container:SF50 TOLDUITests/SF50 TOLD UI Tests.xctestplan">
          </TestPlanReference>
       </TestPlans>
