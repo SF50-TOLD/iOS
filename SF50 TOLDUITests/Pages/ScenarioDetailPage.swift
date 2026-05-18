@@ -18,12 +18,31 @@ final class ScenarioDetailPage: BasePage {
 
   func setOATDelta(_ value: String) {
     XCTAssertTrue(OATDeltaField.exists, "OAT delta field should exist")
-    OATDeltaField.clearAndType(value, app: app)
+    clearTypeAndVerify(OATDeltaField, value)
   }
 
   func setWeightDelta(_ value: String) {
     XCTAssertTrue(weightDeltaField.exists, "Weight delta field should exist")
-    weightDeltaField.clearAndType(value, app: app)
+    clearTypeAndVerify(weightDeltaField, value)
+  }
+
+  /// Types `value` into a numeric ``MeasurementField`` and verifies the
+  /// committed value reflects the typed digits, retrying if a keystroke was
+  /// dropped (intermittent on slower simulator configs). Ends editing first
+  /// so the `FormatStyle`-backed field commits before it is read back.
+  private func clearTypeAndVerify(_ field: XCUIElement, _ value: String, retries: Int = 3) {
+    let digits = value.filter(\.isNumber)
+    for attempt in 1...retries {
+      field.clearAndType(value, app: app)
+      dismissKeyboard()
+      let shown = (field.value as? String ?? "").filter(\.isNumber)
+      if shown.contains(digits) { return }
+      XCTAssertNotEqual(
+        attempt,
+        retries,
+        "Field did not accept \"\(value)\"; shows \"\(field.value as? String ?? "")\""
+      )
+    }
   }
 
   func goBack() {

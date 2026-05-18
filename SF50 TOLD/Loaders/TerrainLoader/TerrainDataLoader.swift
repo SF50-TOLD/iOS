@@ -656,9 +656,10 @@ private extension Error {
   /// Whether this error (or any error in its `NSUnderlyingErrorKey` chain)
   /// represents a POSIX `ENOSPC` "No space left on device" condition.
   ///
-  /// `StreamingLZMA` wraps the underlying `errno` string in a String-typed
-  /// `LZMAError.internalError` case, so the string fallback is needed when
-  /// the typed POSIX error has been lost.
+  /// `StreamingLZMA` surfaces a failed-write `errno` as `LZMAError.ioFailure`,
+  /// which bridges (via `CustomNSError`) to an `NSError` carrying an
+  /// `NSPOSIXErrorDomain` underlying error, so the typed checks below are
+  /// sufficient.
   var isOutOfDiskSpace: Bool {
     let nsError = self as NSError
     if nsError.domain == NSPOSIXErrorDomain, nsError.code == Int(ENOSPC) {
@@ -670,6 +671,6 @@ private extension Error {
     if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error {
       return underlying.isOutOfDiskSpace
     }
-    return localizedDescription.contains("No space left on device")
+    return false
   }
 }

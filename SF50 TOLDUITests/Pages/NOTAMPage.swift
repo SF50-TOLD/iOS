@@ -44,6 +44,10 @@ final class NOTAMPage: BasePage {
       ensureHittable(contaminationTypePicker)
       forceTap(contaminationTypePicker)
       let option = app.buttons[type]
+      XCTAssertTrue(
+        waitForHittable(option, timeout: 5),
+        "Contamination option \"\(type)\" should be hittable after opening the picker"
+      )
       forceTap(option)
     }
   }
