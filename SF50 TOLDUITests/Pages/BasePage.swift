@@ -120,6 +120,21 @@ class BasePage {
     return scrollToElement(element)?.label ?? ""
   }
 
+  /// Polls until the element exists and is hittable, then returns whether it is.
+  ///
+  /// Use for elements presented behind an animation (menu/picker options),
+  /// whose frame is briefly invalid before presentation settles — tapping
+  /// during that window fails with "Activation point invalid".
+  @discardableResult
+  func waitForHittable(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if element.exists, element.isHittable { return true }
+      Thread.sleep(forTimeInterval: 0.2)
+    }
+    return element.exists && element.isHittable
+  }
+
   func clearAndType(_ element: XCUIElement, _ text: String) {
     element.clearAndType(text, app: app)
   }
