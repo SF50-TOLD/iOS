@@ -25,6 +25,21 @@ jobs:
       - uses: SwiftyLab/setup-swift@latest
         with:
           swift-version: "6.3"
+      - name: Ensure iOS simulator runtime
+        run: |
+          VERSION=$(xcrun --sdk iphonesimulator --show-sdk-version)
+          if xcrun simctl list runtimes | grep -q "iOS ${VERSION}"; then
+            echo "iOS ${VERSION} runtime already installed"
+          else
+            echo "iOS ${VERSION} runtime not found, downloading..."
+            xcodebuild -downloadPlatform iOS
+          fi
+      - name: Create simulator
+        id: sim
+        run: |
+          while xcrun simctl delete "periphery-sim" 2>/dev/null; do :; done
+          UDID=$(xcrun simctl create "periphery-sim" com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro)
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v6
       - name: Generate NOTAM API config
         env:
@@ -41,4 +56,7 @@ jobs:
       - name: Install Periphery
         run: brew install periphery
       - name: Run Periphery
-        run: periphery scan
+        run: |
+          periphery scan -- \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            -destination-timeout 300
