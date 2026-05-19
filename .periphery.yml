@@ -1,0 +1,9 @@
+project: SF50 TOLD.xcodeproj
+schemes:
+  - SF50 TOLD
+exclude_tests: true
+exclude_targets:
+  - SF50 TOLDTests
+  - SF50 SharedTests
+  - SF50 TOLDUITests
+retain_public: false

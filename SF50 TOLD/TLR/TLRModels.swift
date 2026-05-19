@@ -116,15 +116,6 @@ struct AircraftInfo {
   let emptyWeight: Measurement<UnitMass>
 }
 
-/// Wind information for TLR display. Direction is nil for variable or calm winds.
-struct WindInfo {
-  /// Wind direction in degrees true (nil for variable/calm).
-  let direction: Measurement<UnitAngle>?
-
-  /// Wind speed.
-  let speed: Measurement<UnitSpeed>
-}
-
 /// Runway analysis results showing weight limits.
 ///
 /// ``RunwayInfo`` captures the maximum weight that can be used for a runway
@@ -162,27 +153,6 @@ struct PerformanceDistance {
 
 // MARK: - Takeoff Data Structures
 
-/// Planned takeoff conditions for display in the TLR header.
-struct TakeoffData {
-  /// Airport identifier.
-  let airport: String
-
-  /// Selected runway designator.
-  let plannedRunway: String
-
-  /// Outside air temperature.
-  let plannedOAT: Measurement<UnitTemperature>
-
-  /// Wind conditions.
-  let plannedWind: WindInfo
-
-  /// Altimeter setting.
-  let plannedQNH: Measurement<UnitPressure>
-
-  /// Planned takeoff weight.
-  let plannedTOW: Measurement<UnitMass>
-}
-
 /// Calculated takeoff performance for a single runway.
 ///
 /// Contains ground run, total distance (to 50'), climb gradient, and
@@ -211,30 +181,6 @@ struct TakeoffPerformanceScenario {
 }
 
 // MARK: - Landing Data Structures
-
-/// Planned landing conditions for display in the TLR header.
-struct LandingData {
-  /// Airport identifier.
-  let airport: String
-
-  /// Selected runway designator.
-  let plannedRunway: String
-
-  /// Outside air temperature.
-  let plannedOAT: Measurement<UnitTemperature>
-
-  /// Wind conditions.
-  let plannedWind: WindInfo
-
-  /// Altimeter setting.
-  let plannedQNH: Measurement<UnitPressure>
-
-  /// Planned landing weight.
-  let plannedLW: Measurement<UnitMass>
-
-  /// Flap configuration description.
-  let configuration: String
-}
 
 /// Calculated landing performance for a single runway.
 ///
@@ -279,9 +225,3 @@ struct ReportOutput<ScenarioType> {
   /// Performance calculations for each scenario.
   let scenarios: [ScenarioType]
 }
-
-/// Report output specialized for takeoff scenarios.
-typealias TakeoffReportOutput = ReportOutput<TakeoffPerformanceScenario>
-
-/// Report output specialized for landing scenarios.
-typealias LandingReportOutput = ReportOutput<LandingPerformanceScenario>
