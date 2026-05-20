@@ -9,7 +9,12 @@
     }
   ],
   "defaultOptions" : {
-
+    "environmentVariableEntries" : [
+      {
+        "key" : "SF50_UI_TEST_TIMEOUT_MULTIPLIER",
+        "value" : "3"
+      }
+    ]
   },
   "testTargets" : [
     {

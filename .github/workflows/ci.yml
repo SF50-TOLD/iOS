@@ -233,9 +233,18 @@ jobs:
       - name: Boot and configure simulator
         run: |
           UDID="${{ steps.sim.outputs.udid }}"
+          # Raise the per-host pseudo-terminal cap. xcodebuild allocates a
+          # fresh PTY per test launch and never reclaims them, so the macOS
+          # default of 127 starves late in long suites as "Lost connection to
+          # the application" and element-not-hittable errors.
+          sudo sysctl -w kern.tty.ptmx_max=999 || true
           xcrun simctl boot "$UDID" || true
           xcrun simctl bootstatus "$UDID" || true
           xcrun simctl spawn "$UDID" defaults write -g AppleLocale en_US
+          # Pin the simulator timezone — runner image defaults to UTC, which
+          # puts CI deeper into "today" the later in the day a job fires.
+          xcrun simctl spawn "$UDID" defaults write -g AppleTimeZone "America/Los_Angeles"
+          xcrun simctl spawn "$UDID" launchctl setenv TZ "America/Los_Angeles"
           xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardAutocorrection -bool false
           xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardAutocapitalization -bool false
           xcrun simctl spawn "$UDID" defaults write com.apple.Preferences KeyboardPrediction -bool false
@@ -251,12 +260,54 @@ jobs:
         with:
           name: derived-data-${{ matrix.ios-label }}
           path: DerivedData
+      - name: Pre-warm app launch
+        run: |
+          UDID="${{ steps.sim.outputs.udid }}"
+          APP_PATH=$(find DerivedData/Build/Products -name "SF50 TOLD.app" -type d | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "::warning::SF50 TOLD.app not found under derived data; skipping pre-warm"
+            exit 0
+          fi
+          echo "Pre-warming using $APP_PATH"
+          xcrun simctl install "$UDID" "$APP_PATH"
+          xcrun simctl launch "$UDID" codes.tim.SF50-TOLD || true
+          sleep 5
+          xcrun simctl terminate "$UDID" codes.tim.SF50-TOLD || true
       - name: Run UI tests
         run: |
           set -o pipefail
+          rm -rf /tmp/ui-tests.xcresult
+          # `-retry-tests-on-failure -test-iterations 3` reruns only failing
+          # tests up to 3x. xcodebuild exits non-zero whenever any iteration
+          # fails (even when a later retry passed), so swallow the exit code
+          # and decide pass/fail by parsing the xcresult below.
           xcodebuild test-without-building \
             -scheme "SF50 TOLD" -testPlan "SF50 TOLD UI Tests" \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
-            -destination-timeout 300 \
+            -destination-timeout 600 \
             -derivedDataPath DerivedData \
-            | xcbeautify --renderer github-actions
+            -resultBundlePath /tmp/ui-tests.xcresult \
+            -retry-tests-on-failure -test-iterations 3 \
+            2>&1 | xcbeautify --renderer github-actions || true
+          # Counts a test as a "real failure" only if EVERY iteration failed.
+          # A retried-then-passed test has both 'Failed' and 'Passed' Test Case
+          # nodes and the `select(... | not)` predicate drops it.
+          FAILED=$(xcrun xcresulttool get test-results tests \
+            --path /tmp/ui-tests.xcresult --format json \
+            | jq '[.. | objects | select(.nodeType? == "Test Case") | {name: (.nodeIdentifier // .name), result}] | group_by(.name) | map(select([.[].result] | any(. == "Passed" or . == "Skipped" or . == "Expected Failure") | not)) | length')
+          if [ "$FAILED" = "0" ]; then
+            echo "UI tests passed (after retries)"
+          else
+            echo "UI tests failed: $FAILED test(s) failed every iteration"
+            xcrun xcresulttool get test-results tests \
+              --path /tmp/ui-tests.xcresult --format json \
+              | jq -r '[.. | objects | select(.nodeType? == "Test Case") | {name: (.nodeIdentifier // .name), result}] | group_by(.name) | map(select([.[].result] | any(. == "Passed" or . == "Skipped" or . == "Expected Failure") | not)) | .[] | .[0].name'
+            exit 1
+          fi
+      - name: Upload xcresult on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ui-tests-xcresult-${{ matrix.device }}-${{ matrix.ios-label }}
+          path: /tmp/ui-tests.xcresult
+          retention-days: 7

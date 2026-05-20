@@ -44,20 +44,30 @@ final class ClimbPage: BasePage {
 
     let valueBefore = toggle!.value as? String ?? "unknown"
 
-    // Try multiple tap strategies to handle platform differences:
-    // - iOS 18 Form cells have delaysContentTouches, requiring longer presses
-    // - iOS 26 iPad Liquid Glass can intercept taps at certain positions
+    // SwiftUI Toggle inside a Form: the row is the switch. Tap positions vary
+    // by iOS version because of Liquid Glass insets. Sweep a set of tap
+    // targets and confirm the switch value flips after each.
+    // - center/right of switch knob (iPhone iOS 26)
+    // - 0.85 dx coordinate (iPad iOS 18.4 knob position)
+    // - left-of-knob (iPad iOS 26 Liquid Glass slide gesture)
+    // - long-press (iOS 18 Form delaysContentTouches)
     let strategies: [(XCUIElement) -> Void] = [
-      { $0.switches.firstMatch.tap() },
-      { $0.press(forDuration: 0.2) },
-      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).press(forDuration: 0.2) },
-      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5)).tap() }
+      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() },
+      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap() },
+      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap() },
+      { $0.tapStable() },
+      { $0.press(forDuration: 0.25) },
+      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).press(forDuration: 0.25) }
     ]
 
     for strategy in strategies {
       strategy(toggle!)
-      Thread.sleep(forTimeInterval: 0.5)
-      if (toggle!.value as? String ?? "unknown") != valueBefore { return }
+      // Poll up to 1s for the value to flip; tap dispatch can be async on iPad
+      let deadline = Date().addingTimeInterval(1.0)
+      while Date() < deadline {
+        if (toggle!.value as? String ?? "unknown") != valueBefore { return }
+        Thread.sleep(forTimeInterval: 0.1)
+      }
     }
 
     XCTFail(

@@ -12,8 +12,13 @@ final class ScenarioDetailPage: BasePage {
   // MARK: - Actions
 
   func setName(_ name: String) {
-    XCTAssertTrue(nameField.waitForExistence(timeout: 2), "Name field should exist")
+    XCTAssertTrue(nameField.wait(), "Name field should exist")
     nameField.clearAndType(name, app: app)
+    // Ends editing so the name binding commits before any subsequent action
+    // (other field tap, back-nav, etc.). On iPad iOS 18.4 the first-responder
+    // transfer from a plain TextField can drop the latest keystroke if we
+    // don't explicitly resign first responder here.
+    dismissKeyboard()
   }
 
   func setOATDelta(_ value: String) {
