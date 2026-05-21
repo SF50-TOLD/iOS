@@ -44,24 +44,34 @@ final class ClimbPage: BasePage {
 
     let valueBefore = toggle!.value as? String ?? "unknown"
 
-    // SwiftUI Toggle inside a Form: the row is the switch. Tap positions vary
-    // by iOS version because of Liquid Glass insets. Sweep a set of tap
-    // targets and confirm the switch value flips after each.
-    // - center/right of switch knob (iPhone iOS 26)
-    // - 0.85 dx coordinate (iPad iOS 18.4 knob position)
-    // - left-of-knob (iPad iOS 26 Liquid Glass slide gesture)
-    // - long-press (iOS 18 Form delaysContentTouches)
-    let strategies: [(XCUIElement) -> Void] = [
-      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() },
-      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap() },
-      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap() },
-      { $0.tapStable() },
-      { $0.press(forDuration: 0.25) },
-      { $0.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).press(forDuration: 0.25) }
+    // SwiftUI `Toggle("Engine IPS", isOn:)` in a Form renders differently per
+    // platform/iOS version. Cast a wide net so at least one strategy lands a
+    // touch event that actually flips the switch.
+    let label = app.staticTexts["Engine IPS"]
+    let labelCell = app.cells.containing(.staticText, identifier: "Engine IPS").firstMatch
+    let strategies: [() -> Void] = [
+      // Tap a child .switch element — works on iOS 26 where the accessibility
+      // ID is on a cell wrapping a switch widget
+      { toggle!.switches.firstMatch.tap() },
+      // Tap the row label — SwiftUI Form Toggle forwards row taps to the switch
+      { if label.exists { label.tap() } },
+      { if labelCell.exists { labelCell.tap() } },
+      // Sweep tap coordinates across the toggle's frame (handles wide iPad rows)
+      { toggle!.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap() },
+      { toggle!.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).tap() },
+      { toggle!.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() },
+      { toggle!.coordinate(withNormalizedOffset: CGVector(dx: 0.15, dy: 0.5)).tap() },
+      // iOS 18 Form cells have delaysContentTouches — a long press defeats it
+      { toggle!.press(forDuration: 0.25) },
+      {
+        toggle!.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)).press(
+          forDuration: 0.25
+        )
+      }
     ]
 
     for strategy in strategies {
-      strategy(toggle!)
+      strategy()
       // Poll up to 1s for the value to flip; tap dispatch can be async on iPad
       let deadline = Date().addingTimeInterval(1.0)
       while Date() < deadline {
@@ -71,7 +81,7 @@ final class ClimbPage: BasePage {
     }
 
     XCTFail(
-      "Failed to toggle ice protection (value stayed \(valueBefore))"
+      "Failed to toggle ice protection (value stayed \(valueBefore), frame=\(toggle!.frame))"
     )
   }
 }
