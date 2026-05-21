@@ -74,8 +74,11 @@ final class ScenariosSettingsPage: BasePage {
   }
 
   func openScenario(_ name: String) -> ScenarioDetailPage {
+    // Mirror the search strategy from `scenarioExists`: wait briefly for the
+    // row to appear in case the SwiftData write + List refresh after goBack
+    // is still settling, then scroll to find it if it landed below the fold.
+    XCTAssertTrue(scenarioExists(name), "Scenario \(name) should exist")
     let text = app.staticTexts[name]
-    XCTAssertTrue(text.exists, "Scenario \(name) should exist")
     forceTap(text)
     return ScenarioDetailPage(app: app)
   }

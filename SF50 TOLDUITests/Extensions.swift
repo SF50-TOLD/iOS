@@ -1,4 +1,19 @@
+// swiftlint:disable prefer_nimble
 import XCTest
+
+/// Centralized timeouts for UI tests. CI sets a multiplier via the
+/// `SF50_UI_TEST_TIMEOUT_MULTIPLIER` env var in the test plan; local runs
+/// default to 1.0.
+enum UITestTimeouts {
+  static let multiplier: TimeInterval = {
+    ProcessInfo.processInfo.environment["SF50_UI_TEST_TIMEOUT_MULTIPLIER"]
+      .flatMap(TimeInterval.init) ?? 1
+  }()
+
+  static var element: TimeInterval { 5 * multiplier }
+  static var launch: TimeInterval { 30 * multiplier }
+  static var slowElement: TimeInterval { 15 * multiplier }
+}
 
 extension XCUIElement {
   var isVisible: Bool {
@@ -38,30 +53,104 @@ extension XCUIElement {
     return self.swipe(to: element) ? element : nil
   }
 
-  // Use the collection view's scrollToItem method via coordinate-based scrolling
   private func scroll(to element: XCUIElement) -> Bool {
     var attempts = 0
-
     while !element.isVisible && attempts < 10 {
       let startCoordinate = self.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
       let endCoordinate = self.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
       startCoordinate.press(forDuration: 0.01, thenDragTo: endCoordinate)
       attempts += 1
     }
-
     return element.isVisible
   }
 
-  // Fallback to swipe-based scrolling with limits
   private func swipe(to element: XCUIElement) -> Bool {
     var attempts = 0
-
     while !element.isVisible && attempts < 10 {
       swipeUp()
       attempts += 1
     }
-
     return element.isVisible
+  }
+}
+
+// MARK: - Wait helpers
+
+extension XCUIElement {
+  /// Waits for the element to exist within the project-wide default timeout.
+  @discardableResult
+  func wait() -> Bool {
+    waitForExistence(timeout: UITestTimeouts.element)
+  }
+
+  /// Short-window probe scaled by the timeout multiplier. Pass the *base*
+  /// seconds; the multiplier is applied automatically.
+  @discardableResult
+  func wait(scaled seconds: TimeInterval) -> Bool {
+    waitForExistence(timeout: seconds * UITestTimeouts.multiplier)
+  }
+
+  /// Waits for the element to satisfy a predicate within the default timeout.
+  @discardableResult
+  func waitFor(_ predicate: NSPredicate) -> Bool {
+    let expectation = XCTNSPredicateExpectation(predicate: predicate, object: self)
+    return
+      XCTWaiter().wait(for: [expectation], timeout: UITestTimeouts.element) == .completed
+  }
+}
+
+// MARK: - Stable tap
+
+extension XCUIElement {
+  /// Tap that waits for frame stability, then taps via center-coordinate. Use
+  /// after `scrollToElement` for buttons/switches whose frame can briefly
+  /// invalidate during SwiftUI relayout. Sidesteps "Activation point invalid"
+  /// errors that plague iPad SwiftUI Form/List cells.
+  func tapStable(file: StaticString = #filePath, line: UInt = #line) {
+    waitForStableFrame(requireHittable: true, file: file, line: line)
+    coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+  }
+
+  /// Coordinate-tap variant that waits only for frame stability — does NOT
+  /// require `isHittable`. For SwiftUI .pickerStyle(.navigationLink) cells
+  /// whose underlying Button reports not-hittable even after the frame
+  /// stabilizes.
+  func coordinateTapWhenFrameStable(file: StaticString = #filePath, line: UInt = #line) {
+    waitForStableFrame(requireHittable: false, file: file, line: line)
+    coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+  }
+
+  private func waitForStableFrame(
+    requireHittable: Bool,
+    file: StaticString,
+    line: UInt
+  ) {
+    let deadline = Date().addingTimeInterval(UITestTimeouts.element)
+    var lastFrame: CGRect = .null
+    var stableHits = 0
+    while Date() < deadline {
+      let frameOK = frame.width > 0 && frame.height > 0
+      let hittableOK = !requireHittable || isHittable
+      if !frameOK || !hittableOK {
+        Thread.sleep(forTimeInterval: 0.1)
+        continue
+      }
+      if frame == lastFrame {
+        stableHits += 1
+        if stableHits >= 2 { break }
+      } else {
+        stableHits = 0
+        lastFrame = frame
+      }
+      Thread.sleep(forTimeInterval: 0.1)
+    }
+    let hittableOK = !requireHittable || isHittable
+    XCTAssertTrue(
+      hittableOK && frame.width > 0 && frame.height > 0,
+      "Element not stable for tap (frame=\(frame), hittable=\(isHittable))",
+      file: file,
+      line: line
+    )
   }
 }
 
@@ -93,6 +182,28 @@ extension XCUIApplication {
       button.tap()
     } else {
       button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
+  }
+
+  /// Resigns first responder, then waits for the keyboard window to leave the
+  /// hierarchy. Prefers tapping a navbar element to dismiss; falls back to a
+  /// gentle upward swipe (SwiftUI Form auto-dismisses keyboard on scroll).
+  func dismissKeyboardStable() {
+    let keyboard = keyboards.firstMatch
+    guard keyboard.exists else { return }
+
+    let navBar = navigationBars.firstMatch
+    if navBar.exists, navBar.isHittable {
+      navBar.tap()
+      if keyboard.waitForNonExistence(timeout: UITestTimeouts.element) { return }
+    }
+
+    let deadline = Date().addingTimeInterval(UITestTimeouts.element)
+    while keyboard.exists && Date() < deadline {
+      let start = coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+      let end = coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15))
+      start.press(forDuration: 0.05, thenDragTo: end)
+      _ = keyboard.waitForNonExistence(timeout: 1)
     }
   }
 }
@@ -153,7 +264,7 @@ func tapAndEnsureNavigation(
   for strategy in strategies {
     guard element.exists else { return }
     strategy(element)
-    if expectedElement.waitForExistence(timeout: timeout) { return }
+    if expectedElement.waitForExistence(timeout: timeout * UITestTimeouts.multiplier) { return }
   }
 }
 
@@ -165,3 +276,4 @@ extension XCUIApplication {
     return descendants(matching: .any).matching(predicate).firstMatch
   }
 }
+// swiftlint:enable prefer_nimble
