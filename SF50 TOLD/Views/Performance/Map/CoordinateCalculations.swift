@@ -5,7 +5,7 @@ import SF50_Shared
 /// Calculates the initial bearing from one coordinate to another.
 ///
 /// Delegates to `GeoCalculations.bearing(from:to:)`.
-public func bearing(
+func bearing(
   from start: CLLocationCoordinate2D,
   to end: CLLocationCoordinate2D
 ) -> Measurement<UnitAngle> {
@@ -15,7 +15,7 @@ public func bearing(
 /// Calculates a destination coordinate given a starting point, distance, and bearing.
 ///
 /// Delegates to `GeoCalculations.destination(from:distance:bearing:)`.
-public func destination(
+func destination(
   from start: CLLocationCoordinate2D,
   distance: Measurement<UnitLength>,
   bearing: Measurement<UnitAngle>
@@ -34,7 +34,7 @@ public func destination(
 ///   - thresholdCrossingHeight: TCH for approach (nil to use fallback).
 ///   - glidepathAngle: Glidepath angle from ILS or PAPI/VASI (nil to use fallback).
 /// - Returns: Distance from threshold to touchdown zone.
-public func touchdownZoneOffset(
+func touchdownZoneOffset(
   runwayLength: Measurement<UnitLength>,
   thresholdCrossingHeight: Measurement<UnitLength>? = nil,
   glidepathAngle: Measurement<UnitAngle>? = nil
@@ -69,7 +69,7 @@ public func touchdownZoneOffset(
 ///   - width: Runway width (defaults to 100 feet).
 /// - Returns: Array of four coordinates representing the runway corners in clockwise order
 ///            starting from the left side of the threshold.
-public func runwayCorners(
+func runwayCorners(
   threshold: CLLocationCoordinate2D,
   heading: Measurement<UnitAngle>,
   length: Measurement<UnitLength>,
@@ -101,30 +101,13 @@ public func runwayCorners(
   return [thresholdLeft, thresholdRight, farEndRight, farEndLeft]
 }
 
-/// Calculates the four corner coordinates for a ground run overlay on the runway.
-///
-/// - Parameters:
-///   - startPoint: Starting coordinate of the ground run.
-///   - heading: True heading of the runway in degrees.
-///   - distance: Ground run distance.
-///   - width: Runway width (defaults to 100 feet).
-/// - Returns: Array of four coordinates representing the ground run rectangle in clockwise order.
-public func groundRunCorners(
-  startPoint: CLLocationCoordinate2D,
-  heading: Measurement<UnitAngle>,
-  distance: Measurement<UnitLength>,
-  width: Measurement<UnitLength> = .init(value: 100, unit: .feet)
-) -> [CLLocationCoordinate2D] {
-  return runwayCorners(threshold: startPoint, heading: heading, length: distance, width: width)
-}
-
 /// A single chevron polygon with its coordinates and whether it uses primary or secondary opacity.
-public struct ChevronData {
+struct ChevronData {
   /// The polygon coordinates for this chevron.
-  public let coordinates: [CLLocationCoordinate2D]
+  let coordinates: [CLLocationCoordinate2D]
 
   /// Whether this chevron uses primary (true) or secondary (false) opacity.
-  public let isPrimary: Bool
+  let isPrimary: Bool
 }
 
 /// Generates tessellated chevron polygons along a path to indicate direction of travel.
@@ -140,7 +123,7 @@ public struct ChevronData {
 ///   - width: Width of the chevron band.
 ///   - depth: How far back each chevron extends (defaults to 60 feet). Also determines spacing.
 /// - Returns: Array of ChevronData with coordinates and alternating primary/secondary flag.
-public func generateChevrons(
+func generateChevrons(
   startPoint: CLLocationCoordinate2D,
   heading: Measurement<UnitAngle>,
   distance: Measurement<UnitLength>,

@@ -1,5 +1,4 @@
 import Foundation
-import SF50_Shared
 import SwiftUI
 
 struct ErrorSheet: View {
