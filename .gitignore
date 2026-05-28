@@ -1,9 +1,19 @@
-# SwiftLint Remote Config Cache
-.swiftlint/RemoteConfigCache
-.sentryclirc
+# Xcode
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
 
-# swift-format config (downloaded in CI)
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# SwiftLint / swift-format
+.swiftlint/RemoteConfigCache
 .swift-format
+
+# Sentry CLI config
+.sentryclirc
 
 # NOTAM API Configuration (contains API token)
 SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig
