@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import XCUITestKit
 
 final class Generate_Screenshots: XCTestCase {
 

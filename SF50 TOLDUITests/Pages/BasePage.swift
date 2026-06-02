@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 @MainActor
 class BasePage {
@@ -11,11 +12,7 @@ class BasePage {
   /// Tap an element, falling back to coordinate-based tap when not hittable.
   /// Works around iOS 26 Liquid Glass overlay making elements "not hittable".
   func forceTap(_ element: XCUIElement) {
-    if element.isHittable {
-      element.tap()
-    } else {
-      element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-    }
+    element.forceTap()
   }
 
   /// Nudge content to make an element hittable.
@@ -65,16 +62,38 @@ class BasePage {
       return element
     }
 
-    // Scroll the collection view to find the element. On smaller screens (e.g.
-    // iPhone SE), lazy list cells may not exist in the hierarchy until scrolled.
-    let collectionView = app.collectionViews.firstMatch
-    guard collectionView.exists else { return nil }
+    // Scroll to find the element. On smaller screens (e.g. iPhone SE) lazy list
+    // cells may not exist in the hierarchy until scrolled. On iPad,
+    // `collectionViews.firstMatch` can resolve to the wrong scroll container
+    // (e.g. the floating tab bar), and the target may sit *above* the current
+    // viewport, so scroll every collection view in both directions.
+    let containers = app.collectionViews
+    let containerCount = max(containers.count, 1)
 
-    for _ in 0..<12 {
-      let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8))
-      let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
-      start.press(forDuration: 0.01, thenDragTo: end)
-      if element.waitForExistence(timeout: 0.3) && element.isVisible {
+    for index in 0..<containerCount {
+      let container =
+        containerCount == 1 ? containers.firstMatch : containers.element(boundBy: index)
+      guard container.exists else { continue }
+
+      // Scroll down (swipe up), then up (swipe down), so an element on either
+      // side of the current position is reached.
+      for direction in [(from: 0.8, to: 0.2), (from: 0.2, to: 0.8)] {
+        for _ in 0..<12 {
+          if element.waitForExistence(timeout: 0.3) && element.isVisible {
+            ensureHittable(element)
+            return element
+          }
+          let start = container.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: direction.from)
+          )
+          let end = container.coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: direction.to)
+          )
+          start.press(forDuration: 0.01, thenDragTo: end)
+        }
+      }
+
+      if element.exists, element.isVisible {
         ensureHittable(element)
         return element
       }

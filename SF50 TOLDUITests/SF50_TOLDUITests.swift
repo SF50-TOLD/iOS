@@ -1,5 +1,6 @@
 // swiftlint:disable prefer_nimble
 import XCTest
+import XCUITestKit
 
 final class SF50_TOLDUITests: XCTestCase {
 

@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 enum WeatherMode: String {
   case ISA = "WEATHER-ISA"
@@ -27,6 +28,7 @@ struct AppLauncher {
       args.append("SKIP-SCENARIO-SEEDING")
     }
     app.launchArguments = args
+    app.disableLogStderrMirroring()
     app.launch()
 
     // Wait for the app to be ready before interacting

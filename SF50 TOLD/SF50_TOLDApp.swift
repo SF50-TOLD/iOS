@@ -89,6 +89,10 @@ struct SF50_TOLDApp: App {
   init() {
     if ProcessInfo.processInfo.arguments.contains("UI-TESTING") {
       UITestingHelper.setupUITestingEnvironment(container: sharedModelContainer)
+      // Skip Sentry under UI tests: its profiling registers a CADisplayLink and
+      // its logging runs on the main thread, which XCTest treats as never-ending
+      // work — stalling wait-for-idle until tests time out (matches FART).
+      return
     }
 
     SentrySDK.start { options in

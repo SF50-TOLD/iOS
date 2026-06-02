@@ -20,6 +20,7 @@
 		01441A6D2F35872E005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6C2F35872E005A8A76 /* StreamingLZMA */; };
 		01441A6F2F358738005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6E2F358738005A8A76 /* StreamingLZMA */; };
 		014457DA2F3125DB003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457D92F3125DB003ADBCD /* RealModule */; };
+		01591FF02FCA2ACC007FB6BB /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01591FEF2FCA2ACC007FB6BB /* XCUITestKit */; };
 		016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BB2EB30889001602E6 /* SwiftNASR */; };
 		016945BE2EB30889001602E6 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BD2EB30889001602E6 /* Logging */; };
 		016945C22EB30889001602E6 /* SwiftTimeZoneLookup in Frameworks */ = {isa = PBXBuildFile; productRef = 016945C12EB30889001602E6 /* SwiftTimeZoneLookup */; };
@@ -43,6 +44,7 @@
 		01D0DEBE2F27504500856DB4 /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01D0DEBF2F27504600856DB4 /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01EA44382EB327D7008FEB64 /* Security.framework */; };
+		01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01EB070A2FCA2D22007C3D1E /* XCUITestKit */; };
 		AB352BDD14B44A2CA78F9D44 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 /* End PBXBuildFile section */
 
@@ -331,6 +333,7 @@
 		0163BC802DDEE9D4008FEE8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01591FF02FCA2ACC007FB6BB /* XCUITestKit in Frameworks */,
 			);
 		};
 		016945962EB30848001602E6 /* Frameworks */ = {
@@ -360,6 +363,7 @@
 		0191DC092E9322C20099FB0E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -577,6 +581,9 @@
 				0163BC862DDEE9D4008FEE8F /* SF50 TOLDUITests */,
 			);
 			name = "SF50 TOLDUITests";
+			packageProductDependencies = (
+				01591FEF2FCA2ACC007FB6BB /* XCUITestKit */,
+			);
 			productName = "SF50 TOLDUITests";
 			productReference = 0163BC832DDEE9D4008FEE8F /* SF50 TOLDUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -647,6 +654,9 @@
 				0191DC0D2E9322C20099FB0E /* Generate Screenshots */,
 			);
 			name = "Generate Screenshots";
+			packageProductDependencies = (
+				01EB070A2FCA2D22007C3D1E /* XCUITestKit */,
+			);
 			productName = "Generate Screenshots";
 			productReference = 0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -721,6 +731,7 @@
 				0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */,
 				01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */,
 				018ED7932F340BFD00D084B4 /* XCRemoteSwiftPackageReference "SwiftMETAR" */,
+				01591FEE2FCA2ACB007FB6BB /* XCRemoteSwiftPackageReference "XCUITestKit" */,
 			);
 			preferredProjectObjectVersion = 100;
 			productRefGroup = 0163BC6B2DDEE9D3008FEE8F /* Products */;
@@ -1689,6 +1700,14 @@
 				minimumVersion = 1.0.3;
 			};
 		};
+		01591FEE2FCA2ACB007FB6BB /* XCRemoteSwiftPackageReference "XCUITestKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RISCfuture/XCUITestKit";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		0163BCA72DDEF40D008FEE8F /* XCRemoteSwiftPackageReference "SwiftNASR" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/SwiftNASR";
@@ -1792,6 +1811,8 @@
 				kind = upToNextMajorVersion;
 				minimumVersion = 9.0.0;
 			};
+			traits = (
+			);
 		};
 /* End XCRemoteSwiftPackageReference section */
 
@@ -1830,6 +1851,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */;
 			productName = RealModule;
+		};
+		01591FEF2FCA2ACC007FB6BB /* XCUITestKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01591FEE2FCA2ACB007FB6BB /* XCRemoteSwiftPackageReference "XCUITestKit" */;
+			productName = XCUITestKit;
 		};
 		0163BCA82DDEF40D008FEE8F /* SwiftNASR */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1905,6 +1931,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 01D1E3112DDF890100C1CAC8 /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
+		};
+		01EB070A2FCA2D22007C3D1E /* XCUITestKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01591FEE2FCA2ACB007FB6BB /* XCRemoteSwiftPackageReference "XCUITestKit" */;
+			productName = XCUITestKit;
 		};
 		602F51ECCC3348DE83D26B3E /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;

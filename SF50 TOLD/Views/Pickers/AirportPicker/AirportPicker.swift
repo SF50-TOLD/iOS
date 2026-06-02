@@ -47,9 +47,13 @@ struct AirportPicker: View {
       }
     }
     .task {
-      showNearestTab =
+      // `CLLocationManager.locationServicesEnabled()` blocks the calling thread,
+      // so run the availability checks off the main actor to keep the UI
+      // responsive (a synchronous call here hangs the picker on slow devices).
+      showNearestTab = await Task.detached {
         CLLocationManager.locationServicesEnabled()
-        && CLLocationManager.significantLocationChangeMonitoringAvailable()
+          && CLLocationManager.significantLocationChangeMonitoringAvailable()
+      }.value
     }
   }
 
