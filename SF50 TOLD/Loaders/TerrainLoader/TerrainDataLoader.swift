@@ -668,7 +668,7 @@ private extension Error {
     if let posix = self as? POSIXError, posix.code == .ENOSPC {
       return true
     }
-    if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Error {
+    if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Self {
       return underlying.isOutOfDiskSpace
     }
     return false

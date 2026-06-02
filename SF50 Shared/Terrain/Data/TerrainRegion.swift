@@ -144,9 +144,12 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
     switch self {
       case .northAmerica:
         [
-          .init(minLat: 7, maxLat: 50, minLon: -130, maxLon: -50),  // Continental US, Mexico, Central America
-          .init(minLat: 50, maxLat: 72, minLon: -180, maxLon: -130),  // Alaska
-          .init(minLat: 50, maxLat: 56, minLon: 170, maxLon: 180),  // Aleutian Islands (past date line)
+          // Continental US, Mexico, Central America
+          .init(minLat: 7, maxLat: 50, minLon: -130, maxLon: -50),
+          // Alaska
+          .init(minLat: 50, maxLat: 72, minLon: -180, maxLon: -130),
+          // Aleutian Islands (past date line)
+          .init(minLat: 50, maxLat: 56, minLon: 170, maxLon: 180),
           .init(minLat: 50, maxLat: 84, minLon: -130, maxLon: -50),  // Arctic Canada
           .init(minLat: 10, maxLat: 28, minLon: -90, maxLon: -60)  // Caribbean
         ]
@@ -201,7 +204,8 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
           .init(minLat: -28, maxLat: -26, minLon: -110, maxLon: -108),  // Easter Island
           .init(minLat: 13, maxLat: 21, minLon: 144, maxLon: 146),  // Guam, Marianas
           .init(minLat: 0, maxLat: 10, minLon: 131, maxLon: 172),  // Micronesia/Marshall Islands
-          .init(minLat: -45, maxLat: -29, minLon: -180, maxLon: -175),  // Chatham, Raoul (NZ remote)
+          // Chatham, Raoul (NZ remote)
+          .init(minLat: -45, maxLat: -29, minLon: -180, maxLon: -175),
           .init(minLat: -5, maxLat: 6, minLon: -173, maxLon: -157),  // Kiribati
           .init(minLat: 27, maxLat: 30, minLon: -178, maxLon: -176),  // Midway
           .init(minLat: 5, maxLat: 7, minLon: -163, maxLon: -161)  // Palmyra

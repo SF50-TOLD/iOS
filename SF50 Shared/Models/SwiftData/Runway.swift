@@ -38,8 +38,10 @@ public final class Runway {
   private var _takeoffDistance: Double?  // meters
   private var _landingDistance: Double?  // meters
 
+  // swiftlint:disable redundant_type_annotation
   /// Runway surface type
-  public var surfaceType: SurfaceType = SurfaceType.paved  // swiftlint:disable:this redundant_type_annotation
+  public var surfaceType: SurfaceType = SurfaceType.paved
+  // swiftlint:enable redundant_type_annotation
 
   /// Whether the runway surface is turf (grass) rather than paved
   public var isTurf: Bool { surfaceType.isTurf }

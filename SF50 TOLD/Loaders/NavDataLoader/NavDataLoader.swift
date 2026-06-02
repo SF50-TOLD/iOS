@@ -179,7 +179,8 @@ actor NavDataLoader {
   }
 
   private func decompress(data: Data) throws -> AirportDataCodable {
-    let data = try (data as NSData).decompressed(using: .lzma)  // swiftlint:disable:this legacy_objc_type
+    // swiftlint:disable:next legacy_objc_type
+    let data = try (data as NSData).decompressed(using: .lzma)
     return try decoder.decode(AirportDataCodable.self, from: data as Data)
   }
 

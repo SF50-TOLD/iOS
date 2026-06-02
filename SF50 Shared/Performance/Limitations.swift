@@ -50,7 +50,8 @@ public struct LimitationsG1: Limitations {
   public static let maxZeroFuelWeight = Measurement(value: 4900, unit: UnitMass.pounds)
   public static let maxTakeoffAltitude = Measurement(value: 10_000, unit: UnitLength.feet)
   public static let maxEnrouteAltitude = Measurement(value: 28_000, unit: UnitLength.feet)
-  public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)  // takeoff and landing
+  // takeoff and landing
+  public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps50 = Measurement(value: 18, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps100 = Measurement(value: 16, unit: UnitSpeed.knots)
   public static let maxFuel = Measurement(value: 296, unit: UnitVolume.gallons)
@@ -68,7 +69,8 @@ public struct LimitationsG2: Limitations {
   public static let maxZeroFuelWeight = Measurement(value: 4900, unit: UnitMass.pounds)
   public static let maxTakeoffAltitude = Measurement(value: 10_000, unit: UnitLength.feet)
   public static let maxEnrouteAltitude = Measurement(value: 31_000, unit: UnitLength.feet)
-  public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)  // takeoff and landing
+  // takeoff and landing
+  public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps50 = Measurement(value: 18, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps100 = Measurement(value: 16, unit: UnitSpeed.knots)
   public static let maxFuel = Measurement(value: 296, unit: UnitVolume.gallons)
@@ -86,7 +88,8 @@ public struct LimitationsG2Plus: Limitations {
   public static let maxZeroFuelWeight = Measurement(value: 4900, unit: UnitMass.pounds)
   public static let maxTakeoffAltitude = Measurement(value: 10_000, unit: UnitLength.feet)
   public static let maxEnrouteAltitude = Measurement(value: 31_000, unit: UnitLength.feet)
-  public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)  // takeoff and landing
+  // takeoff and landing
+  public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps50 = Measurement(value: 18, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps100 = Measurement(value: 16, unit: UnitSpeed.knots)
   public static let maxFuel = Measurement(value: 296, unit: UnitVolume.gallons)

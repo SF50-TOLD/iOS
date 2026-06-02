@@ -35,10 +35,14 @@ struct NearbyFinderTests {
     }
 
     let items = [
-      TestItem(id: "A", coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)),  // At center
-      TestItem(id: "B", coordinate: CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)),  // ~30nm north
-      TestItem(id: "C", coordinate: CLLocationCoordinate2D(latitude: 38.0, longitude: -122.0)),  // ~60nm north
-      TestItem(id: "D", coordinate: CLLocationCoordinate2D(latitude: 40.0, longitude: -122.0))  // ~180nm north
+      // At center
+      TestItem(id: "A", coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)),
+      // ~30nm north
+      TestItem(id: "B", coordinate: CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)),
+      // ~60nm north
+      TestItem(id: "C", coordinate: CLLocationCoordinate2D(latitude: 38.0, longitude: -122.0)),
+      // ~180nm north
+      TestItem(id: "D", coordinate: CLLocationCoordinate2D(latitude: 40.0, longitude: -122.0))
     ]
 
     let center = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)

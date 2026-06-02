@@ -228,7 +228,8 @@ struct RegressionModelOffscaleTests {
 
   @Test("G1 landing temperature below minimum sets landingInputsOffscaleLow flag")
   func g1LandingTemperatureTooLow() throws {
-    let conditions = Helper.createTestConditions(temperature: -5)  // Below 0°C minimum for flaps 100
+    // Below 0°C minimum for flaps 100
+    let conditions = Helper.createTestConditions(temperature: -5)
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps100)
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
@@ -254,7 +255,8 @@ struct RegressionModelOffscaleTests {
 
   @Test("G1 landing temperature above maximum sets landingInputsOffscaleHigh flag")
   func g1LandingTemperatureTooHigh() throws {
-    let conditions = Helper.createTestConditions(temperature: 55)  // Above 50°C maximum for flaps 100
+    // Above 50°C maximum for flaps 100
+    let conditions = Helper.createTestConditions(temperature: 55)
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps100)
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
@@ -461,7 +463,8 @@ struct RegressionModelOffscaleTests {
   @Test("G1 landing flaps 50 ice temperature bounds are different")
   func g1LandingFlaps50IceTemperatureBounds() throws {
     // Flaps 50 ice has temperature range -20°C to 10°C (different from flaps 100)
-    let conditions = Helper.createTestConditions(temperature: 15)  // Above 10°C max for flaps 50 ice
+    // Above 10°C max for flaps 50 ice
+    let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps50Ice)
     let runway = Helper.createTestRunway()
     let runwayInput = RunwayInput(from: runway, airport: runway.airport)
