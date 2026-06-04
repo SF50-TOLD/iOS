@@ -73,13 +73,6 @@ struct ClimbConfigView: View {
     )
   }
 
-  // ISA temperature at current altitude
-  private var ISATemperature: Measurement<UnitTemperature> {
-    let altitudeFeet = performance.altitude.converted(to: .feet).value
-    let isaTemp = 15.0 - (1.98 * altitudeFeet / 1000.0)
-    return Measurement(value: isaTemp, unit: .celsius)
-  }
-
   // Min/max values rounded to nearest step
   private var minFuel: Measurement<UnitVolume> {
     Measurement(value: 0, unit: fuelVolumeUnit)

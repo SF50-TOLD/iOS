@@ -5,8 +5,6 @@ import Foundation
 public struct ProcedurePath: Sendable {
   public let points: [Point]
 
-  public var coordinates: [CLLocationCoordinate2D] { points.map(\.coordinate) }
-
   public var totalDistanceNM: Double { points.last?.distanceNM ?? 0 }
 
   init(points: [Point]) {

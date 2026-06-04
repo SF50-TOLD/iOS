@@ -44,12 +44,14 @@ public final class Leg {
   @Relationship(deleteRule: .noAction, inverse: \Navaid.legs)
   public var navaid: Navaid?
 
+  // periphery:ignore - Measurement facade over private SwiftData storage; part of the model schema API
   /// Fix latitude in degrees. Nil for legs with no fix (e.g., CA/VA).
   public var latitude: Measurement<UnitAngle>? {
     get { _latitude.map { .init(value: $0, unit: .degrees) } }
     set { _latitude = newValue?.converted(to: .degrees).value }
   }
 
+  // periphery:ignore - Measurement facade over private SwiftData storage; part of the model schema API
   /// Fix longitude in degrees. Nil for legs with no fix (e.g., CA/VA).
   public var longitude: Measurement<UnitAngle>? {
     get { _longitude.map { .init(value: $0, unit: .degrees) } }

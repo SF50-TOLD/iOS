@@ -54,18 +54,6 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
   /// Number of downloaded NOTAMs from the API
   public var downloadedNOTAMCount: Int { downloadedNOTAMs.count }
 
-  public var requiredClimbGradient: Measurement<UnitSlope>? {
-    guard let availableLandingRun,
-      let obstacleHeight = runway?.notam?.obstacleHeight,
-      let obstacleDistance = runway?.notam?.obstacleDistance
-    else { return nil }
-
-    let distanceFromRunwayStart = obstacleDistance + availableLandingRun
-
-    let slope = (obstacleHeight / distanceFromRunwayStart)
-    return .init(value: slope, unit: .gradient)
-  }
-
   public var offscaleLow: Bool {
     let valuesOffscaleLow =
       Vref == .offscaleLow || landingRun == .offscaleLow || landingDistance == .offscaleLow
@@ -85,7 +73,6 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
   override public var airportDefaultsKey: Defaults.Key<String?> { .landingAirport }
   override public var runwayDefaultsKey: Defaults.Key<String?> { .landingRunway }
   override public var fuelDefaultsKey: Defaults.Key<Measurement<UnitVolume>> { .landingFuel }
-  override public var defaultFlapSetting: FlapSetting { .flaps100 }
 
   // MARK: Initializers
 

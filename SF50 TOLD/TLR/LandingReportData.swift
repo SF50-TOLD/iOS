@@ -20,10 +20,6 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
 
   // MARK: - Template Method Overrides
 
-  override func operation() -> SF50_Shared.Operation {
-    .landing
-  }
-
   override func maxWeight() -> Measurement<UnitMass> {
     LimitationsG2Plus.maxLandingWeight
   }

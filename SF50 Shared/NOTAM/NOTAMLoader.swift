@@ -274,7 +274,7 @@ public actor NOTAMLoader {
     }
 
     // Decode response (single NOTAM endpoint returns { "data": {...} })
-    struct SingleNOTAMResponse: Codable {
+    struct SingleNOTAMResponse: Decodable {
       let data: NOTAMResponse
     }
 

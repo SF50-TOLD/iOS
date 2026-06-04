@@ -56,30 +56,6 @@ class GitHubUploader {
     self.init(token: CredentialsConfig[.githubToken] ?? "", logger: logger)
   }
 
-  /// Validate that the token is valid and has necessary permissions
-  /// - Returns: true if token is valid
-  /// - Throws: GitHubAPIError if validation fails
-  func validateToken() async throws -> Bool {
-    let url = URL(string: "\(Self.baseURL)/user")!
-    var request = URLRequest(url: url)
-    configureRequest(&request)
-
-    let (_, response) = try await URLSession.shared.data(for: request)
-
-    guard let httpResponse = response as? HTTPURLResponse else {
-      throw GitHubAPIError.invalidResponse
-    }
-
-    guard httpResponse.statusCode == 200 else {
-      if httpResponse.statusCode == 401 {
-        throw GitHubAPIError.invalidToken
-      }
-      throw GitHubAPIError.validationFailed(httpResponse.statusCode)
-    }
-
-    return true
-  }
-
   /// Upload a file to the GitHub repository
   /// - Parameters:
   ///   - filePath: Local file path to upload

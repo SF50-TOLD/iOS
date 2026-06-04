@@ -1,6 +1,7 @@
 import Foundation
 import os
 
+// periphery:ignore:parameters isolation
 /// Retries an async operation with exponential backoff.
 ///
 /// `CancellationError` and `URLError.cancelled` always rethrow immediately.
@@ -42,6 +43,7 @@ func withRetry<T>(
 
 extension URLSession {
 
+  // periphery:ignore:parameters isolation
   /// Downloads a file with automatic retry and resume-data support.
   ///
   /// On transient `URLError` failures the method retries with exponential

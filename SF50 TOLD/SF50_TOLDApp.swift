@@ -10,6 +10,7 @@ import WidgetKit
   @MainActor let navigationStyle = DefaultNavigationViewStyle()
 #endif
 
+// periphery:ignore - side-effect-only observer retained by @StateObject below
 private class WidgetReloadObserver: ObservableObject {
   private var notificationObserver: Any?
 
@@ -73,6 +74,7 @@ struct SF50_TOLDApp: App {
     }
   }()
 
+  // periphery:ignore - side-effect-only observer; retained for its lifetime, never read
   @StateObject private var widgetReloadObserver = WidgetReloadObserver()
 
   var body: some Scene {

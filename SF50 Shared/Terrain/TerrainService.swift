@@ -20,9 +20,6 @@ import os
 /// if let elevation = service.elevation(at: coordinate) {
 ///     print("Elevation: \(elevation.converted(to: .feet))")
 /// }
-///
-/// // Generate elevation profile along a route
-/// let profile = service.profile(along: routeCoordinates, sampleIntervalNM: 0.5)
 /// ```
 public actor TerrainService {
 
@@ -124,76 +121,6 @@ public actor TerrainService {
       }
     }
     return nil
-  }
-
-  // MARK: - Route Profile
-
-  /// Generates an elevation profile along a route.
-  /// - Parameters:
-  ///   - coordinates: Array of coordinates defining the route
-  ///   - sampleIntervalNM: Distance between elevation samples in nautical miles
-  /// - Returns: Terrain profile with elevation points along the route
-  public func profile(
-    along coordinates: [CLLocationCoordinate2D],
-    sampleIntervalNM: Double = 0.5
-  ) -> TerrainProfile {
-    guard coordinates.count >= 2 else {
-      return TerrainProfile(points: [])
-    }
-
-    var points: [TerrainProfilePoint] = [],
-      totalDistanceNM = 0.0
-
-    // Add first point
-    if let elevM = elevationM(at: coordinates[0]) {
-      points.append(
-        .init(
-          distanceNM: 0,
-          coordinate: coordinates[0],
-          elevationM: elevM
-        )
-      )
-    }
-
-    // Process each segment
-    for i in 1..<coordinates.count {
-      let from = coordinates[i - 1],
-        to = coordinates[i]
-      let segmentDistanceNM = GeoCalculations.distanceNM(from: from, to: to)
-
-      // Sample points along the segment
-      var segmentOffset = sampleIntervalNM
-      while segmentOffset < segmentDistanceNM {
-        let fraction = segmentOffset / segmentDistanceNM
-        let intermediate = GeoCalculations.interpolate(from: from, to: to, fraction: fraction)
-
-        if let elevM = elevationM(at: intermediate) {
-          points.append(
-            .init(
-              distanceNM: totalDistanceNM + segmentOffset,
-              coordinate: intermediate,
-              elevationM: elevM
-            )
-          )
-        }
-
-        segmentOffset += sampleIntervalNM
-      }
-
-      // Add endpoint
-      totalDistanceNM += segmentDistanceNM
-      if let elevM = elevationM(at: to) {
-        points.append(
-          .init(
-            distanceNM: totalDistanceNM,
-            coordinate: to,
-            elevationM: elevM
-          )
-        )
-      }
-    }
-
-    return TerrainProfile(points: points)
   }
 }
 

@@ -56,39 +56,9 @@ public enum Loadable<Loaded>: Sendable where Loaded: Sendable {
 }
 
 extension Loadable {
-  /// Whether a load operation is currently in progress.
-  public var isLoading: Bool {
-    if case .loading = self { return true }
-    return false
-  }
-
   /// Whether data has been successfully loaded.
   public var hasValue: Bool {
     if case .value = self { return true }
     return false
-  }
-
-  /// Whether the load operation failed with an error.
-  public var hasError: Bool {
-    if case .error = self { return true }
-    return false
-  }
-
-  /// Whether no load operation has been attempted.
-  public var isNotLoaded: Bool {
-    if case .notLoaded = self { return true }
-    return false
-  }
-
-  /// The loaded value, or nil if not in the `.value` state.
-  public var value: Loaded? {
-    if case .value(let value) = self { return value }
-    return nil
-  }
-
-  /// The error if in the `.error` state, or nil otherwise.
-  public var error: Error? {
-    if case .error(let error) = self { return error }
-    return nil
   }
 }

@@ -32,6 +32,7 @@ public final class Scenario {
   /// Force dry runway conditions
   public var isDryOverride: Bool
 
+  // periphery:ignore - facade over private SwiftData storage; part of the model schema API
   /// Operation type (takeoff or landing)
   public var operation: Operation {
     get { Operation(rawValue: _operation) ?? .takeoff }

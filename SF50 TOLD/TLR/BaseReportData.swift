@@ -12,7 +12,6 @@ import SF50_Shared
 /// ## Template Methods
 ///
 /// Subclasses must override:
-/// - ``operation()``: Returns the operation type (takeoff/landing)
 /// - ``maxWeight()``: Returns the maximum allowable weight
 /// - ``calculatePerformance(for:conditions:config:)``: Calculates performance for one runway
 /// - ``determineMaxWeight(runway:)``: Finds maximum weight for a runway
@@ -61,11 +60,6 @@ class BaseReportData<PerformanceType, ScenarioType> {
 
   // swiftlint:disable unavailable_function
 
-  /// Returns the operation type. Override in subclass.
-  func operation() -> SF50_Shared.Operation {
-    fatalError("Subclasses must override operation()")
-  }
-
   /// Calculates performance for a single runway. Override in subclass.
   func calculatePerformance(
     for _: RunwayInput,
@@ -87,6 +81,7 @@ class BaseReportData<PerformanceType, ScenarioType> {
     fatalError("Subclasses must override createScenario(name:runways:)")
   }
 
+  // periphery:ignore - abstract template method; required for the live `override`s in the subclasses
   /// Returns the maximum allowable weight. Override in subclass.
   func maxWeight() -> Measurement<UnitMass> {
     fatalError("Subclasses must override maxWeight()")

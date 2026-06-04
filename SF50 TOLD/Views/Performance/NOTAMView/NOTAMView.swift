@@ -2,6 +2,7 @@ import SF50_Shared
 import Sentry
 import SwiftUI
 
+// periphery:ignore - consumed only by the #Preview macros below
 private enum PreviewError: Error {
   case runwayNotFound(String)
 }

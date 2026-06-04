@@ -296,7 +296,7 @@ final class RegressionEquation {
   // MARK: - Types
 
   /// The type of equation stored in the JSON file.
-  enum EquationType: String, Codable, Sendable {
+  enum EquationType: String, Decodable, Sendable {
     /// Multi-variable polynomial equation (degree 1-3)
     case polynomial
     /// Delta polynomial: result = base - max(0, delta). Stored as polynomial coefficients.
@@ -354,7 +354,7 @@ final class RegressionEquation {
 // MARK: - Codable Structures
 
 /// Root structure for equation JSON files.
-private struct EquationFile: Codable {
+private struct EquationFile: Decodable {
   let version: String
   let name: String
   let description: String?
@@ -373,7 +373,7 @@ private struct EquationFile: Codable {
 }
 
 /// Container for type-specific equation definitions.
-private struct EquationContainer: Codable {
+private struct EquationContainer: Decodable {
   // Polynomial fields
   let intercept: Double?
   let terms: [PolynomialTerm]?
@@ -448,7 +448,7 @@ private struct PolynomialEquation {
   let terms: [PolynomialTerm]
 }
 
-private struct PolynomialTerm: Codable {
+private struct PolynomialTerm: Decodable {
   let coefficient: Double
   let powers: [Int]
 }
@@ -466,25 +466,25 @@ private struct PiecewiseEquation {
   let breakpoints: [Breakpoint]
 }
 
-private struct Breakpoint: Codable {
+private struct Breakpoint: Decodable {
   let condition: Condition
   let result: BreakpointResult
 }
 
-private struct Condition: Codable {
+private struct Condition: Decodable {
   let variable: String
   let `operator`: ComparisonOperator
   let value: Double
 }
 
-private enum ComparisonOperator: String, Codable {
+private enum ComparisonOperator: String, Decodable {
   case lessThan = "<"
   case lessThanOrEqual = "<="
   case greaterThan = ">"
   case greaterThanOrEqual = ">="
 }
 
-private enum BreakpointResult: Codable {
+private enum BreakpointResult: Decodable {
   case constant(Double)
   case linear(slope: Double, intercept: Double, minValue: Double?, maxValue: Double?)
   case polynomial(PolynomialEquation)
@@ -519,28 +519,6 @@ private enum BreakpointResult: Codable {
     }
   }
 
-  func encode(to encoder: Encoder) throws {
-    var container = encoder.container(keyedBy: CodingKeys.self)
-
-    switch self {
-      case .constant(let value):
-        try container.encode("constant", forKey: .type)
-        try container.encode(value, forKey: .value)
-
-      case .linear(let slope, let intercept, let minValue, let maxValue):
-        try container.encode("linear", forKey: .type)
-        try container.encode(slope, forKey: .slope)
-        try container.encode(intercept, forKey: .intercept)
-        try container.encodeIfPresent(minValue, forKey: .minValue)
-        try container.encodeIfPresent(maxValue, forKey: .maxValue)
-
-      case .polynomial(let poly):
-        try container.encode("polynomial", forKey: .type)
-        try container.encode(poly.intercept, forKey: .intercept)
-        try container.encode(poly.terms, forKey: .terms)
-    }
-  }
-
   enum CodingKeys: String, CodingKey {
     case type, value, slope, intercept, terms
     case minValue = "min_value"
@@ -556,12 +534,12 @@ private struct LogisticEquation {
   let threshold: Double
 }
 
-private struct Normalization: Codable {
+private struct Normalization: Decodable {
   let offset: Double
   let scale: Double
 }
 
-private struct LogisticTerm: Codable {
+private struct LogisticTerm: Decodable {
   let features: [String]
   let coefficient: Double
 }

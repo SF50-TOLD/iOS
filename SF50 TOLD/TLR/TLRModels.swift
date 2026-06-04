@@ -31,8 +31,7 @@ struct PerformanceInput {
   /// Whether to use regression model vs tabular model.
   let useRegressionModel: Bool
 
-  /// Aircraft type (G1, G2, or G2+). Use `aircraftType.usesUpdatedThrustSchedule`
-  /// for performance model selection.
+  /// Aircraft type (G1, G2, or G2+).
   let aircraftType: AircraftType
 
   /// Aircraft empty weight for max weight calculations.

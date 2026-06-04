@@ -301,14 +301,6 @@ extension Value {
 }
 
 extension Value where T == Double {
-
-  /// The nominal value, ignoring uncertainty and error states.
-  @available(*, deprecated, renamed: "nominal")
-  public var nominalValue: Double? { nominal }
-}
-
-extension Value where T == Double {
-
   /// Confidence level threshold for 1σ (68% of normal distribution).
   private static var oneSigmaConfidence: Double { 0.68 }
 
@@ -321,7 +313,8 @@ extension Value where T == Double {
   /// z-score multiplier for 99% confidence interval.
   private static var zScore99: Double { 2.58 }
 
-  /// Check if a value falls within the uncertainty bounds at the specified confidence level
+  // periphery:ignore - exercised by the SF50 SharedTests regression-tolerance helpers (test bundle excluded from scan)
+  /// Check if a value falls within the uncertainty bounds at the specified confidence level.
   /// - Parameters:
   ///   - value: The value to test
   ///   - confidenceLevel: The confidence level (0.68 for 1σ, 0.95 for 2σ, etc.)
@@ -349,10 +342,5 @@ extension Value where T == Double {
       case .offscaleHigh: return false
       case .offscaleLow: return false
     }
-  }
-
-  /// Legacy method for backward compatibility - uses 68% confidence level
-  func contains(_ value: Double) -> Bool {
-    return contains(value, confidenceLevel: Self.oneSigmaConfidence)
   }
 }

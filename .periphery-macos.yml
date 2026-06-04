@@ -1,0 +1,24 @@
+project: SF50 TOLD.xcodeproj
+# macOS scan pass. DownloadNASR is the macOS build-tool that produces the
+# bundled nav-data and terrain assets; it links SF50_Shared and is the only
+# consumer of large parts of that framework's public API (the Codable data
+# models, NASR/CIFP/DOF processors, terrain types). Scanning it on macOS lets
+# Periphery see those callers, which the iOS-Simulator pass cannot build.
+# A SF50 Shared symbol is only genuine dead code when both this pass and the
+# iOS pass (.periphery.yml) report it unused.
+schemes:
+  - DownloadNASR
+exclude_tests: true
+exclude_targets:
+  - SF50 TOLDTests
+  - SF50 SharedTests
+  - SF50 TOLDUITests
+retain_public: false
+retain_assign_only_properties: true
+report_exclude:
+  - "**/Preview Content/**"
+  # SF50 Shared is consumed by both iOS and macOS targets. This single-platform
+  # pass cannot see the iOS app/extension callers, so it over-reports the
+  # framework. Shared dead code is gated by the cross-platform intersection job
+  # in .github/workflows/periphery.yml, not by this pass.
+  - "**/SF50 Shared/**"

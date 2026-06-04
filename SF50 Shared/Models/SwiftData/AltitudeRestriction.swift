@@ -59,6 +59,7 @@ public enum AltitudeRestriction: Sendable, Hashable {
     }
   }
 
+  // periphery:ignore - intentional-completeness helper over the persisted restriction schema
   /// Human-readable description of the altitude restriction.
   public var description: String {
     let formatter = Self.measurementFormatter
@@ -113,6 +114,7 @@ public enum AltitudeRestriction: Sendable, Hashable {
 }
 
 extension AltitudeRestriction {
+  // periphery:ignore - intentional-completeness helper over the persisted restriction schema
   /// Whether this restriction can serve as a climb target altitude.
   ///
   /// `atOrBelow` restrictions define a ceiling, not a climb target.
@@ -140,6 +142,7 @@ extension AltitudeRestriction {
     }
   }
 
+  // periphery:ignore - intentional-completeness helper over the persisted restriction schema
   func isViolated(byAltitudeFt altitudeFt: Double) -> Bool {
     switch self {
       case .atOrAbove(let altitude):

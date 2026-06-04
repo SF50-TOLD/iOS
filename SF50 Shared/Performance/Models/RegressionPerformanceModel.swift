@@ -33,12 +33,6 @@ final class RegressionPerformanceModel: BasePerformanceModel {
   private let enrouteClimbRateIceEquation: RegressionEquation
   private let enrouteClimbSpeedIceEquation: RegressionEquation
 
-  // En Route Obstacle Climb
-  private let enrouteObstacleClimbGradientNormalEquation: RegressionEquation
-  private let enrouteObstacleClimbRateNormalEquation: RegressionEquation
-  private let enrouteObstacleClimbGradientIceEquation: RegressionEquation
-  private let enrouteObstacleClimbRateIceEquation: RegressionEquation
-
   // Landing
   private let landingRunFlaps100Equation: RegressionEquation
   private let landingRunFlaps50Equation: RegressionEquation
@@ -143,26 +137,6 @@ final class RegressionPerformanceModel: BasePerformanceModel {
       : evaluate(enrouteClimbSpeedNormalEquation)
   }
 
-  // MARK: - En Route Obstacle Climb
-
-  override var enrouteObstacleClimbGradientFtNM: Value<Double> {
-    configuration.iceProtection
-      ? evaluateDelta(
-        base: enrouteObstacleClimbGradientNormalEquation,
-        delta: enrouteObstacleClimbGradientIceEquation
-      )
-      : evaluate(enrouteObstacleClimbGradientNormalEquation)
-  }
-
-  override var enrouteObstacleClimbRateFtMin: Value<Double> {
-    configuration.iceProtection
-      ? evaluateDelta(
-        base: enrouteObstacleClimbRateNormalEquation,
-        delta: enrouteObstacleClimbRateIceEquation
-      )
-      : evaluate(enrouteObstacleClimbRateNormalEquation)
-  }
-
   // MARK: - Go-Around Climb Gradient
 
   override var meetsGoAroundClimbGradient: Value<Bool> {
@@ -217,18 +191,6 @@ final class RegressionPerformanceModel: BasePerformanceModel {
     )
     enrouteClimbRateIceEquation = loader.loadEnrouteClimbRateEquation(iceContaminated: true)
     enrouteClimbSpeedIceEquation = loader.loadEnrouteClimbSpeedEquation(iceContaminated: true)
-
-    enrouteObstacleClimbGradientNormalEquation =
-      loader.loadEnrouteObstacleClimbGradientEquation(iceContaminated: false)
-    enrouteObstacleClimbRateNormalEquation = loader.loadEnrouteObstacleClimbRateEquation(
-      iceContaminated: false
-    )
-    enrouteObstacleClimbGradientIceEquation = loader.loadEnrouteObstacleClimbGradientEquation(
-      iceContaminated: true
-    )
-    enrouteObstacleClimbRateIceEquation = loader.loadEnrouteObstacleClimbRateEquation(
-      iceContaminated: true
-    )
 
     landingRunFlaps100Equation = loader.loadLandingRunEquation(flapSetting: .flaps100)
     landingRunFlaps50Equation = loader.loadLandingRunEquation(flapSetting: .flaps50)
@@ -429,57 +391,5 @@ extension RegressionPerformanceModel {
       "altitude": altitude,
       "temperature": temperature
     ])
-  }
-
-  /// Evaluates a delta equation: result = base_value - max(0, delta_value).
-  ///
-  /// Falls back to regular evaluation if the equation is not a delta type.
-  func evaluateDelta(base: RegressionEquation, delta: RegressionEquation) -> Value<Double> {
-    guard delta.type == .deltaPolynomial else {
-      return evaluate(delta)
-    }
-
-    let inputs: [String: Double] = [
-      "weight": weight,
-      "altitude": altitude,
-      "temperature": temperature
-    ]
-
-    let baseResult = base.evaluate(inputs: inputs)
-    let deltaResult = delta.evaluate(inputs: inputs)
-
-    let baseVal: Double
-    switch baseResult {
-      case .value(let v): baseVal = v
-      case .valueWithUncertainty(let v, _): baseVal = v
-      default: return evaluate(delta)
-    }
-
-    let deltaVal: Double
-    switch deltaResult {
-      case .value(let v): deltaVal = v
-      case .valueWithUncertainty(let v, _): deltaVal = v
-      default: return evaluate(delta)
-    }
-
-    let result = baseVal - max(0, deltaVal)
-
-    if let key = delta.uncertaintyKey {
-      let rmse = ResidualErrorCalculator.RMSE(for: key, binParameters: inputs)
-      return .valueWithUncertainty(result, uncertainty: rmse)
-    }
-    return .value(result)
-  }
-
-  /// Returns the RMSE uncertainty for a specific calculation table.
-  func uncertainty(for table: String) -> Double {
-    ResidualErrorCalculator.RMSE(
-      for: table,
-      binParameters: [
-        "weight": weight,
-        "altitude": altitude,
-        "temperature": temperature
-      ]
-    )
   }
 }

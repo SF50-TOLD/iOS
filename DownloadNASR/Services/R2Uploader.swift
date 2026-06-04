@@ -128,18 +128,11 @@ actor R2Uploader {
 
   /// Configuration for R2 uploads.
   struct Config: Sendable {
-    private static let endpointTemplate = "https://%@.r2.cloudflarestorage.com"
-
     let accountId: String
     let accessKeyId: String
     let secretAccessKey: String
     let bucketName: String
     let publicURL: String
-
-    /// S3-compatible endpoint URL for R2.
-    var endpoint: String {
-      String(format: Self.endpointTemplate, accountId)
-    }
 
     /// Load from Bundle (Info.plist values from xcconfig).
     static func fromBundle() -> Self? {

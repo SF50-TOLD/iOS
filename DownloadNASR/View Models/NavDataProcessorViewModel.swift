@@ -26,16 +26,6 @@ actor LogCollector {
     entries.append(entry)
     continuation?.yield(entry)
   }
-
-  /// Get all collected entries.
-  func allEntries() -> [LogEntry] {
-    entries
-  }
-
-  /// Clear all entries.
-  func clear() {
-    entries.removeAll()
-  }
 }
 
 /// LogHandler that sends entries to a LogCollector actor.
@@ -256,10 +246,5 @@ class NavDataProcessorViewModel {
   func cancel() {
     isCancelling = true
     processingTask?.cancel()
-  }
-
-  /// Adds a log entry to the display list.
-  func addLogEntry(_ entry: LogEntry) {
-    logEntries.append(entry)
   }
 }

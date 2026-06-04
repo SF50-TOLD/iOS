@@ -11,13 +11,6 @@ struct RunwayListItem: View {
   @Default(.runwayLengthUnit)
   private var runwayLengthUnit
 
-  private let integerFormatter: NumberFormatter = {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .decimal
-    formatter.maximumFractionDigits = 0
-    return formatter
-  }()
-
   var body: some View {
     HStack {
       Text(runway.name).bold()

@@ -1,12 +1,9 @@
 import SF50_Shared
-import SwiftData
 import SwiftUI
 
 struct LoadingView: View {
   @Environment(NavDataLoaderViewModel.self)
   private var loader
-
-  @State private var errorSheetIsPresented = false
 
   var body: some View {
     content

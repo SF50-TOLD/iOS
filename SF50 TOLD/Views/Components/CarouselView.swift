@@ -72,6 +72,7 @@ where Data: RandomAccessCollection, ID: Hashable, Content: View {
   }
 }
 
+// periphery:ignore - consumed only by the #Preview macro below
 private struct CarouselPreviewItem: Identifiable {
   let id: Int
   let title: String

@@ -90,15 +90,6 @@ final class TerrainProcessorViewModel {
     selectedRegions = []
   }
 
-  /// Toggles selection state for a region.
-  func toggleRegion(_ region: TerrainRegion) {
-    if selectedRegions.contains(region) {
-      selectedRegions.remove(region)
-    } else {
-      selectedRegions.insert(region)
-    }
-  }
-
   /// Returns a binding for whether a region is selected.
   func bindingForRegion(_ region: TerrainRegion) -> Binding<Bool> {
     Binding(

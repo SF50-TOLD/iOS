@@ -85,10 +85,6 @@ struct DataTableLoader {
     loadDataTable(path: "takeoff climb/rate.csv")
   }
 
-  func loadGoAroundClimbGradientData() -> DataTable {
-    loadDataTable(path: "landing/go around gradient.csv")
-  }
-
   // MARK: - Enroute Climb Data Tables
 
   func loadEnrouteClimbGradientData(iceContaminated: Bool) -> DataTable {

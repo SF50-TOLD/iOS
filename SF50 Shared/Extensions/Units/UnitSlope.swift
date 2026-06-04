@@ -11,7 +11,6 @@ import Foundation
 /// ## Units
 ///
 /// - ``gradient``: Decimal ratio (rise/run), base unit
-/// - ``percentGrade``: Gradient × 100 (e.g., 2% grade)
 /// - ``feetPerNauticalMile``: Aviation climb gradient standard
 ///
 /// ## Usage
@@ -31,12 +30,6 @@ public final class UnitSlope: Dimension, @unchecked Sendable {
     converter: UnitConverterLinear(coefficient: 1.0)
   )
 
-  /// Percent grade, or gradient × 100
-  public static let percentGrade = UnitSlope(
-    symbol: "%",
-    converter: UnitConverterLinear(coefficient: 100.0)
-  )
-
   /// Feet per nautical mile (ft/NM)
   public static let feetPerNauticalMile = UnitSlope(
     symbol: "ft/NM",
@@ -45,32 +38,5 @@ public final class UnitSlope: Dimension, @unchecked Sendable {
     )
   )
 
-  /// A zero slope constant for comparisons.
-  public static let zero = Measurement<UnitSlope>(value: 0, unit: .gradient)
-
   override public static func baseUnit() -> UnitSlope { .gradient }
-}
-
-// MARK: - Measurement Operations
-
-extension Measurement<UnitLength> {
-  /// Divides a length by a slope to produce a length.
-  ///
-  /// Since slope is dimensionless (rise/run = length/length), dividing a length
-  /// by a slope yields another length: `distance = height / gradient`.
-  ///
-  /// This is useful for calculating horizontal distance from vertical height
-  /// and a known gradient, such as touchdown distance from threshold crossing
-  /// height and glidepath angle.
-  ///
-  /// - Parameters:
-  ///   - lhs: A length measurement (e.g., threshold crossing height).
-  ///   - rhs: A slope measurement (e.g., glidepath gradient).
-  /// - Returns: The resulting length (e.g., touchdown distance from threshold).
-  public static func / (lhs: Self, rhs: Measurement<UnitSlope>) -> Self {
-    let lengthMeters = lhs.converted(to: .meters).value,
-      gradientValue = rhs.converted(to: .gradient).value
-    guard gradientValue != 0 else { return .init(value: 0, unit: .meters) }
-    return .init(value: lengthMeters / gradientValue, unit: .meters)
-  }
 }

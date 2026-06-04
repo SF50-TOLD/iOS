@@ -4,14 +4,14 @@ import Foundation
 ///
 /// This is the top-level response structure returned by the NOTAM API for
 /// list queries. It includes both the NOTAM data and pagination metadata.
-public struct NOTAMListResponse: Codable, Sendable {
+public struct NOTAMListResponse: Decodable, Sendable {
   /// Array of NOTAM entries
   public let data: [NOTAMResponse]
 
   /// Pagination metadata
   public let pagination: Pagination
 
-  public struct Pagination: Codable, Sendable {
+  public struct Pagination: Decodable, Sendable {
     /// Total number of NOTAMs matching the query
     public let total: Int
 
@@ -46,7 +46,7 @@ public struct NOTAMListResponse: Codable, Sendable {
 /// - ``isEffectiveNow``: Whether NOTAM is currently in effect
 /// - ``isEffective(within:windowInterval:)``: Time-window effectiveness
 /// - ``isAerodromeRelated``: Whether NOTAM affects the aerodrome
-public struct NOTAMResponse: Codable, Sendable, Identifiable {
+public struct NOTAMResponse: Decodable, Sendable, Identifiable {
   /// Database primary key
   public let id: Int
 
@@ -89,6 +89,7 @@ public struct NOTAMResponse: Codable, Sendable, Identifiable {
   /// Raw AIXM XML or text NOTAM (only included in single NOTAM endpoint)
   public let rawMessage: String?
 
+  // periphery:ignore - memberwise init mirrors the API contract; used by previews/tests
   /// Public initializer for creating NOTAM responses (e.g., in previews and tests)
   public init(
     id: Int,
@@ -141,7 +142,7 @@ public struct NOTAMResponse: Codable, Sendable, Identifiable {
 }
 
 /// Structured Q-line data from a NOTAM.
-public struct QLine: Codable, Sendable {
+public struct QLine: Decodable, Sendable {
   /// NOTAM purpose code (N, B, O, M, K)
   public let purpose: String?
 
@@ -171,11 +172,11 @@ public struct QLine: Codable, Sendable {
 }
 
 /// Error response from the NOTAM API.
-public struct NOTAMErrorResponse: Codable, Sendable {
+public struct NOTAMErrorResponse: Decodable, Sendable {
   /// Error details
   public let error: ErrorDetail
 
-  public struct ErrorDetail: Codable, Sendable {
+  public struct ErrorDetail: Decodable, Sendable {
     /// Human-readable error message
     public let message: String
 
@@ -185,6 +186,7 @@ public struct NOTAMErrorResponse: Codable, Sendable {
 }
 
 extension NOTAMResponse {
+  // periphery:ignore - intentional-completeness API mirroring the external NOTAM contract
   /// Returns true if the NOTAM is currently effective.
   public var isEffectiveNow: Bool {
     let now = Date()
@@ -202,6 +204,7 @@ extension NOTAMResponse {
     scope == "A" || qLine?.scope == "A"
   }
 
+  // periphery:ignore - intentional-completeness API mirroring the external NOTAM contract
   /// Returns a short summary of the NOTAM for display purposes.
   public var summary: String {
     if notamText.count <= 60 {
@@ -254,6 +257,7 @@ extension NOTAMResponse {
     return effectiveStart.timeIntervalSince(referenceTime)
   }
 
+  // periphery:ignore - intentional-completeness API mirroring the external NOTAM contract
   /// Returns true if the NOTAM will become effective in the future relative to the reference time.
   ///
   /// - Parameter referenceTime: The reference time (e.g., planned departure/arrival)

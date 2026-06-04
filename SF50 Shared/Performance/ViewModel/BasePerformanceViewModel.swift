@@ -21,7 +21,6 @@ import SwiftData
 /// - ``airportDefaultsKey`` - Which airport setting to observe
 /// - ``runwayDefaultsKey`` - Which runway setting to observe
 /// - ``fuelDefaultsKey`` - Which fuel setting to observe
-/// - ``defaultFlapSetting`` - Default flap setting for the operation
 /// - ``recalculate()`` - Perform the actual performance calculation
 ///
 /// ## Observation
@@ -120,11 +119,6 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   /// The Defaults key for the fuel amount
   open var fuelDefaultsKey: Defaults.Key<Measurement<UnitVolume>> {
     fatalError("Subclasses must override fuelDefaultsKey")
-  }
-
-  /// The default flap setting for this operation
-  open var defaultFlapSetting: FlapSetting {
-    fatalError("Subclasses must override defaultFlapSetting")
   }
 
   // MARK: - Initialization

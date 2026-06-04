@@ -5,7 +5,7 @@ import SF50_Shared
 ///
 /// Used by ``SRTMProcessor`` to report current processing stage. View models can poll
 /// this state to update UI without callback complexity.
-public enum TerrainProgress: Sendable {
+enum TerrainProgress: Sendable {
   case pending
 
   /// Downloading tiles for a region.
@@ -29,12 +29,4 @@ public enum TerrainProgress: Sendable {
   case completed
   case cancelled
   case failed(Error)
-
-  /// Whether processing has finished (success, cancel, or failure).
-  public var isFinished: Bool {
-    switch self {
-      case .completed, .cancelled, .failed: true
-      default: false
-    }
-  }
 }

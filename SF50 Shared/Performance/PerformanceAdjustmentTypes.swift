@@ -9,7 +9,6 @@ public enum DistanceTarget: Sendable {
   case landingRun
   case landingDistance
 
-  public var isTakeoff: Bool { self == .takeoffRun || self == .takeoffDistance }
   public var isLanding: Bool { self == .landingRun || self == .landingDistance }
   public var isGroundRun: Bool { self == .takeoffRun || self == .landingRun }
   public var isTotalDistance: Bool { self == .takeoffDistance || self == .landingDistance }

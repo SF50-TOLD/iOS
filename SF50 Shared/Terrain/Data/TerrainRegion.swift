@@ -1,17 +1,6 @@
 import CoreLocation
 import Foundation
 
-/// Processing phases for terrain data.
-///
-/// Used by ``TerrainRegion/phaseWeight(for:totalTiles:)`` to calculate weighted
-/// progress contributions based on measured per-tile processing times.
-public enum TerrainPhase: Sendable {
-  case downloading
-  case parsing
-  case compressing
-  case uploading
-}
-
 /// Represents a terrain region/continent for SRTM data.
 ///
 /// Each region contains one or more bounding boxes that define the geographic extent
@@ -35,20 +24,12 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
 
   // MARK: - Progress Weight Constants
 
-  /// Phase time multipliers based on measured per-tile processing times.
-  /// Derived from actual timing data across 40,622 tiles (11 regions, ~8 hours total).
-  private static let downloadMultiplier = 0.2250
-  private static let combineMultiplier = 0.3556
-  private static let compressMultiplier = 0.1879
-  private static let uploadMultiplier = 0.2315
-
   /// Each processing phase's share of region processing time, scaled to 10 000.
-  /// Values derived from the multipliers above: download 29.3%, parse 46.3%, compress 24.5%.
-  /// Upload (23.2% of overall) is tracked separately in the progress tree.
+  /// Values derived from measured per-tile processing times: download 29.3%, parse 46.3%,
+  /// compress 24.5%.
   public static let downloadPhaseRatio: Int64 = 2928
   public static let parsePhaseRatio: Int64 = 4627
   public static let compressPhaseRatio: Int64 = 2445
-  public static let uploadPhaseRatio: Int64 = 2315
 
   /// Returns the terrain region to prefetch based on the device's locale.
   ///
@@ -135,9 +116,6 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   public var estimatedFileSize: Int {
     hgtTileNames.count * Self.estimatedTileSize
   }
-
-  /// Whether this region should be prefetched on app install.
-  public var shouldPrefetch: Bool { self == .northAmerica }
 
   /// Bounding boxes for the region. Multiple boxes allow precise coverage of non-contiguous areas.
   public var boundingBoxes: [TerrainBoundingBox] {
@@ -316,25 +294,6 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
     // numTiles / totalTiles gives the region's share; multiply by 10 000 to stay in integer space.
     // The result is the number of units this region should occupy out of the parent's totalUnitCount.
     Int64(round(Double(numTiles) / Double(totalTiles) * 10000))
-  }
-
-  /// Returns the weighted progress contribution for each phase of processing this region.
-  ///
-  /// The weights are based on measured per-tile processing times across 40,622 tiles.
-  /// Download (~23%), parsing/combining (~36%), compression (~19%), upload (~23%).
-  ///
-  /// - Parameters:
-  ///   - phase: The processing phase
-  ///   - totalTiles: Sum of numTiles for all regions being processed
-  /// - Returns: The fraction of total progress this phase contributes (0.0-1.0)
-  public func phaseWeight(for phase: TerrainPhase, totalTiles: Int) -> Double {
-    let tileWeight = Double(numTiles) / Double(totalTiles)
-    switch phase {
-      case .downloading: return tileWeight * Self.downloadMultiplier
-      case .parsing: return tileWeight * Self.combineMultiplier
-      case .compressing: return tileWeight * Self.compressMultiplier
-      case .uploading: return tileWeight * Self.uploadMultiplier
-    }
   }
 }
 

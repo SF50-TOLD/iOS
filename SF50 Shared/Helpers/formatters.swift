@@ -15,7 +15,6 @@ extension FormatStyle where Self == FloatingPointFormatStyle<Double> {
   public static var temperature: Self { .number.rounded(increment: 1) }
   public static var airPressure: Self { .number.rounded(increment: 0.01) }
   public static var heading: Self { .number.rounded(increment: 1) }
-  public static var safetyFactor: Self { .number.rounded(increment: 0.01) }
 }
 
 extension FormatStyle where Self == IntegerFormatStyle<Int> {

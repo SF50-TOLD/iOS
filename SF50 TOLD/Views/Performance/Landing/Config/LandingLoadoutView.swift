@@ -9,9 +9,6 @@ struct LandingLoadoutView: View {
   @Environment(\.aircraftType)
   private var aircraftType
 
-  @Default(.emptyWeight)
-  private var emptyWeight
-
   @Default(.payload)
   private var payload
 

@@ -237,66 +237,6 @@ enum HGTParser {
     /// Elevation data as Int16 values (row-major, north to south).
     /// Values are in meters. ``Elevations/voidValue`` indicates void/no data.
     let elevations: Elevations
-
-    /// Returns the elevation at the given offset within the tile.
-    /// - Parameters:
-    ///   - latOffset: Fractional latitude offset from SW corner (0.0 to 1.0)
-    ///   - lonOffset: Fractional longitude offset from SW corner (0.0 to 1.0)
-    /// - Returns: Elevation in meters, or nil if void/no data
-    func elevation(atLatOffset latOffset: Double, lonOffset: Double) -> Int16? {
-      let samples = resolution.samplesPerSide
-
-      // Calculate row (from north) and column indices
-      let row = Int((1.0 - latOffset) * Double(samples - 1))
-      let col = Int(lonOffset * Double(samples - 1))
-
-      // Clamp to valid range
-      let clampedRow = max(0, min(samples - 1, row))
-      let clampedCol = max(0, min(samples - 1, col))
-
-      let value = elevations[clampedRow, clampedCol]
-      return Elevations.isVoid(value) ? nil : value
-    }
-
-    /// Returns bilinear interpolated elevation at the given offset.
-    /// - Parameters:
-    ///   - latOffset: Fractional latitude offset from SW corner (0.0 to 1.0)
-    ///   - lonOffset: Fractional longitude offset from SW corner (0.0 to 1.0)
-    /// - Returns: Interpolated elevation in meters, or nil if any sample is void
-    func interpolatedElevation(atLatOffset latOffset: Double, lonOffset: Double) -> Double? {
-      let samples = resolution.samplesPerSide
-
-      // Calculate exact position
-      let exactRow = (1.0 - latOffset) * Double(samples - 1)
-      let exactCol = lonOffset * Double(samples - 1)
-
-      let (rowInt, rowFrac) = modf(exactRow),
-        (colInt, colFrac) = modf(exactCol)
-
-      let row0 = Int(rowInt),
-        col0 = Int(colInt),
-        row1 = min(row0 + 1, samples - 1),
-        col1 = min(col0 + 1, samples - 1)
-
-      // Sample four corners
-      func sample(_ r: Int, _ c: Int) -> Double? {
-        let v = elevations[r, c]
-        return Elevations.isVoid(v) ? nil : Double(v)
-      }
-
-      guard let e00 = sample(row0, col0),
-        let e01 = sample(row0, col1),
-        let e10 = sample(row1, col0),
-        let e11 = sample(row1, col1)
-      else {
-        return nil
-      }
-
-      // Bilinear interpolation
-      let e0 = e00 * (1 - colFrac) + e01 * colFrac,
-        e1 = e10 * (1 - colFrac) + e11 * colFrac
-      return e0 * (1 - rowFrac) + e1 * rowFrac
-    }
   }
 
   /// Parsed tile coordinates.

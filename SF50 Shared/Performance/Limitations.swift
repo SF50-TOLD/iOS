@@ -15,9 +15,6 @@ public protocol Limitations {
   /// Maximum zero fuel weight.
   static var maxZeroFuelWeight: Measurement<UnitMass> { get }
 
-  /// Maximum pressure altitude for takeoff.
-  static var maxTakeoffAltitude: Measurement<UnitLength> { get }
-
   /// Maximum pressure altitude for enroute flight.
   static var maxEnrouteAltitude: Measurement<UnitLength> { get }
 
@@ -33,9 +30,6 @@ public protocol Limitations {
   /// Maximum usable fuel capacity.
   static var maxFuel: Measurement<UnitVolume> { get }
 
-  /// Minimum runway length for operations.
-  static var minRunwayLength: Measurement<UnitLength> { get }
-
   /// Minimum operating temperature.
   static var minTemperature: Measurement<UnitTemperature> { get }
 
@@ -48,14 +42,12 @@ public struct LimitationsG1: Limitations {
   public static let maxTakeoffWeight = Measurement(value: 6000, unit: UnitMass.pounds)
   public static let maxLandingWeight = Measurement(value: 5550, unit: UnitMass.pounds)
   public static let maxZeroFuelWeight = Measurement(value: 4900, unit: UnitMass.pounds)
-  public static let maxTakeoffAltitude = Measurement(value: 10_000, unit: UnitLength.feet)
   public static let maxEnrouteAltitude = Measurement(value: 28_000, unit: UnitLength.feet)
   // takeoff and landing
   public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps50 = Measurement(value: 18, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps100 = Measurement(value: 16, unit: UnitSpeed.knots)
   public static let maxFuel = Measurement(value: 296, unit: UnitVolume.gallons)
-  public static let minRunwayLength = Measurement(value: 1400, unit: UnitLength.feet)
   public static let minTemperature = Measurement(value: -40, unit: UnitTemperature.celsius)
   public static let maxTemperature = Measurement(value: 50, unit: UnitTemperature.celsius)
 
@@ -67,14 +59,12 @@ public struct LimitationsG2: Limitations {
   public static let maxTakeoffWeight = Measurement(value: 6000, unit: UnitMass.pounds)
   public static let maxLandingWeight = Measurement(value: 5550, unit: UnitMass.pounds)
   public static let maxZeroFuelWeight = Measurement(value: 4900, unit: UnitMass.pounds)
-  public static let maxTakeoffAltitude = Measurement(value: 10_000, unit: UnitLength.feet)
   public static let maxEnrouteAltitude = Measurement(value: 31_000, unit: UnitLength.feet)
   // takeoff and landing
   public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps50 = Measurement(value: 18, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps100 = Measurement(value: 16, unit: UnitSpeed.knots)
   public static let maxFuel = Measurement(value: 296, unit: UnitVolume.gallons)
-  public static let minRunwayLength = Measurement(value: 1400, unit: UnitLength.feet)
   public static let minTemperature = Measurement(value: -40, unit: UnitTemperature.celsius)
   public static let maxTemperature = Measurement(value: 50, unit: UnitTemperature.celsius)
 

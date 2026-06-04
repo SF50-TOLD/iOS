@@ -51,26 +51,6 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
   let temperatureUnit: UnitTemperature
   let pressureUnit: UnitPressure
 
-  var reportDateFormat: Date.FormatStyle {
-    let displayTimeZone = TimeZone.displayTimeZone(
-      for: nil,  // We'll use the actual Airport object when available
-      useAirportLocalTime: useAirportLocalTime
-    )
-    return Date.FormatStyle(
-      date: .omitted,
-      time: .shortened,
-      locale: Locale.current,
-      calendar: Calendar.current,
-      timeZone: displayTimeZone,
-      capitalizationContext: .unknown
-    )
-    .month(.abbreviated)
-    .day()
-    .hour()
-    .minute()
-    .timeZone()
-  }
-
   // MARK: - Initialization
 
   init(input: PerformanceInput, useAirportLocalTime: Bool = false) {

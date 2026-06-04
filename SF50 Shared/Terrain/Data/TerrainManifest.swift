@@ -5,7 +5,7 @@ import Foundation
 /// The manifest contains metadata about available terrain regions including
 /// their actual file sizes. This is used to display accurate download sizes
 /// in the UI rather than hardcoded estimates.
-public struct TerrainManifest: Codable, Sendable {
+public struct TerrainManifest: Decodable, Sendable {
 
   // MARK: - Type Properties
 
@@ -54,7 +54,7 @@ public struct TerrainManifest: Codable, Sendable {
   // MARK: - Nested Types
 
   /// A single region entry in the manifest.
-  public struct Region: Codable, Sendable {
+  public struct Region: Decodable, Sendable {
     public let filename: String
     public let id: String
     public let sizeBytes: Int

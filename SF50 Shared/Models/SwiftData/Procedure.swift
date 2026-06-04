@@ -35,6 +35,7 @@ public final class Procedure {
   /// The procedure type (departure or approach).
   public var type: ProcedureType { .init(rawValue: _type)! }
 
+  // periphery:ignore - facade over private SwiftData storage; part of the model schema API
   /// Required climb gradient in feet per nautical mile (departures only).
   ///
   /// Standard climb gradient is 200 ft/NM. Values above this indicate

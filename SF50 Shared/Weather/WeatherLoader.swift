@@ -36,20 +36,6 @@ public protocol WeatherLoaderProtocol: Actor {
   /// - Returns: Async stream yielding winds aloft data as it becomes available.
   ///   Returns `nil` for airports without a winds aloft reporting station.
   func streamWindsAloft(for key: WeatherLoader.Key) async -> AsyncStream<Loadable<WindsAloftData?>>
-
-  /// Returns interpolated winds aloft for a specific location and altitude.
-  ///
-  /// This method performs spatial interpolation from nearby winds aloft stations
-  /// when no direct station match exists for the location.
-  ///
-  /// - Parameters:
-  ///   - coordinate: The target location
-  ///   - altitude: The target altitude
-  /// - Returns: Interpolated winds aloft entry, or `nil` if insufficient data
-  func interpolatedWindsAloft(
-    at coordinate: CLLocationCoordinate2D,
-    altitude: Measurement<UnitLength>
-  ) async -> WindsAloftData.Entry?
 }
 
 /**
@@ -210,40 +196,5 @@ public actor WeatherLoader: WeatherLoaderProtocol {
         }
       }
     }
-  }
-
-  public func interpolatedWindsAloft(
-    at coordinate: CLLocationCoordinate2D,
-    altitude: Measurement<UnitLength>
-  ) -> WindsAloftData.Entry? {
-    guard case .value(let stationData) = windsAloft else { return nil }
-
-    // Build located stations from available data
-    let locatedStations: [WindsAloftInterpolator.LocatedStation] = stationData.compactMap {
-      stationID,
-      data in
-      guard let location = stationLocations[stationID] else { return nil }
-      return WindsAloftInterpolator.LocatedStation(
-        stationID: stationID,
-        coordinate: location,
-        data: data
-      )
-    }
-
-    return WindsAloftInterpolator.interpolate(
-      at: coordinate,
-      altitude: altitude,
-      from: locatedStations
-    )
-  }
-
-  /// Resolves station locations from the airport database.
-  ///
-  /// Call this after loading winds aloft data to enable spatial interpolation.
-  /// Station IDs are matched against airport location IDs.
-  ///
-  /// - Parameter locations: Dictionary mapping location IDs to coordinates.
-  public func setStationLocations(_ locations: [String: CLLocationCoordinate2D]) {
-    stationLocations = locations
   }
 }

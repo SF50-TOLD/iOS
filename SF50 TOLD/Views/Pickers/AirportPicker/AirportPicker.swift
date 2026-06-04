@@ -19,9 +19,6 @@ struct AirportPicker: View {
   @Environment(\.presentationMode)
   private var mode
 
-  @Environment(\.locationStreamer)
-  private var locationStreamer
-
   @Default(.recentAirports)
   private var recentAirports
 

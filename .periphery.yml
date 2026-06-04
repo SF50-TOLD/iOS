@@ -1,9 +1,30 @@
 project: SF50 TOLD.xcodeproj
+# iOS scan pass. Builds the app plus every iOS consumer of the SF50 Shared
+# framework so its public API is judged against real callers. The app target
+# already embeds the SF50 RunwaysExtension (widget) and TerrainAssets
+# (ExtensionKit) dependencies, but the extension scheme is listed explicitly so
+# Periphery roots analysis in the extension target too. The macOS DownloadNASR
+# consumer cannot share an iOS-Simulator destination, so it is scanned in a
+# separate macOS pass (see .github/workflows/periphery.yml). A SF50 Shared
+# symbol is only genuine dead code when both passes agree it is unused.
 schemes:
   - SF50 TOLD
+  - SF50 RunwaysExtension
 exclude_tests: true
 exclude_targets:
   - SF50 TOLDTests
   - SF50 SharedTests
   - SF50 TOLDUITests
 retain_public: false
+retain_assign_only_properties: true
+report_exclude:
+  - "**/Preview Content/**"
+  # XCUITest Page Object infrastructure. exclude_tests only drops unit-test
+  # bundles, not ui-testing bundles, so these helpers are filtered cosmetically.
+  - "**/SF50 TOLDUITests/**"
+  - "**/Generate Screenshots/**"
+  # SF50 Shared is consumed by both iOS and macOS targets. This single-platform
+  # pass cannot see the macOS DownloadNASR caller, so it over-reports the
+  # framework. Shared dead code is gated by the cross-platform intersection job
+  # in .github/workflows/periphery.yml, not by this pass.
+  - "**/SF50 Shared/**"

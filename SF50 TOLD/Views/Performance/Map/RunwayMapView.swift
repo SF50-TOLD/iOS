@@ -95,16 +95,6 @@ struct RunwayMapView: View {
     }
   }
 
-  /// The end point of the ground run.
-  private var groundRunEndPoint: CLLocationCoordinate2D? {
-    guard let startPoint = groundRunStartPoint else { return nil }
-    return destination(
-      from: startPoint,
-      distance: groundRun,
-      bearing: runwayHeading
-    )
-  }
-
   /// The four corners of the usable runway polygon, accounting for NOTAM shortening.
   private var runwayPolygon: [CLLocationCoordinate2D]? {
     guard let physicalStart = runway.takeoffStartCoordinate else { return nil }

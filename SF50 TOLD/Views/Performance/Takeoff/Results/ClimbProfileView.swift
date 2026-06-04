@@ -486,14 +486,6 @@ struct ClimbProfileView: View {
     var showsSecondSegment: Bool {
       self == .takeoff2min || self == .takeoff5min
     }
-
-    func profileType(antiIce: Bool) -> ClimbProfile.ProfileType {
-      switch self {
-        case .takeoff2min, .takeoff5min: .takeoff
-        case .enrouteObstacle: .enrouteObstacle(antiIce: antiIce)
-        case .enroute: .enroute(antiIce: antiIce)
-      }
-    }
   }
 
   enum SecondSegment: String, CaseIterable, Identifiable {

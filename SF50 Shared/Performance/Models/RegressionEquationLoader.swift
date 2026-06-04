@@ -175,11 +175,6 @@ struct RegressionEquationLoader {
     return loadEquation(filename: "enroute-obstacle-climb-gradient-\(suffix).json")
   }
 
-  func loadEnrouteObstacleClimbRateEquation(iceContaminated: Bool) -> RegressionEquation {
-    let suffix = iceContaminated ? "ice" : "normal"
-    return loadEquation(filename: "enroute-obstacle-climb-rate-\(suffix).json")
-  }
-
   // MARK: - Private Helpers
 
   private func loadEquation(filename: String) -> RegressionEquation {
@@ -203,14 +198,6 @@ extension FlapSetting {
       case .flaps50: "flaps50"
       case .flaps50Ice: "flaps50ice"
       case .flaps100: "flaps100"
-    }
-  }
-
-  /// Whether this flap setting is ice-contaminated.
-  var isIceContaminated: Bool {
-    switch self {
-      case .flapsUpIce, .flaps50Ice: true
-      default: false
     }
   }
 

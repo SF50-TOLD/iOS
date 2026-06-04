@@ -195,31 +195,6 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     }
   }
 
-  /// Checks if terrain is available for an airport coordinate.
-  func terrainStatus(for latitude: Double, longitude: Double) -> TerrainAvailability {
-    switch loader.regionStatus(for: (latitude, longitude)) {
-      case .available(let region):
-        return .available(region: region)
-      case .needsDownload(let region):
-        return .needsDownload(region: region)
-      case .downloading(let region):
-        return .downloading(region: region)
-      case .notCovered:
-        return .notCovered
-    }
-  }
-
-  /// Refreshes the list of available regions and active BA downloads.
-  func refresh() {
-    loader.refreshAvailableRegions()
-    loader.refreshBackgroundDownloads()
-  }
-
-  /// Returns the terrain file URL for a region, if available.
-  func terrainFileURL(for region: TerrainRegion) -> URL? {
-    loader.terrainFileURL(for: region)
-  }
-
   // MARK: - Private Methods
 
   private func handleStateChange(_ state: TerrainDataLoader.State) {
@@ -254,14 +229,6 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     case notDownloaded
     case downloading(progress: Float?)
   }
-
-  /// Terrain availability for a location.
-  enum TerrainAvailability: Equatable {
-    case available(region: TerrainRegion)
-    case needsDownload(region: TerrainRegion)
-    case downloading(region: TerrainRegion)
-    case notCovered
-  }
 }
 
 /// Error wrapper for terrain download failures.
@@ -289,19 +256,5 @@ struct TerrainCorruptionError: LocalizedError {
       localized:
         "Go to Settings → Terrain Data and tap “Re-download” to replace the corrupted files."
     )
-  }
-}
-
-// MARK: - Preview Support
-
-extension TerrainDataLoaderViewModel {
-  /// Creates a preview instance with mocked state.
-  static func preview(
-    availableRegions _: Set<TerrainRegion> = [.northAmerica],
-    downloadingRegion _: TerrainRegion? = nil
-  ) -> TerrainDataLoaderViewModel {
-    // In preview, we ca/n't easily mock the loader state
-    // The view should handle this gracefully
-    return TerrainDataLoaderViewModel()
   }
 }

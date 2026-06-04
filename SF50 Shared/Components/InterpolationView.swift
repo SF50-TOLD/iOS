@@ -241,6 +241,7 @@ extension InterpolationView {
 }
 
 // Non-comparable type example for preview
+// periphery:ignore - consumed only by the #Preview macro below
 private struct CustomType {
   let name: String
   let id: Int

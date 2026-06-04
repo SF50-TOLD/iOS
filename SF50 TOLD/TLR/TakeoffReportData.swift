@@ -19,10 +19,6 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
 
   // MARK: - Template Method Overrides
 
-  override func operation() -> SF50_Shared.Operation {
-    .takeoff
-  }
-
   override func maxWeight() -> Measurement<UnitMass> {
     LimitationsG2Plus.maxTakeoffWeight
   }

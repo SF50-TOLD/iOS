@@ -35,20 +35,6 @@ final class BinaryFileWriter {
 
   // MARK: - Factory Methods
 
-  /// Writes binary data to a file using the provided closure.
-  ///
-  /// - Parameters:
-  ///   - url: The file URL to write to. The file will be created or overwritten.
-  ///   - block: A closure that receives the writer and performs write operations.
-  /// - Throws: `BinaryFileWriterError` if the file cannot be created or written.
-  static func write(to url: URL, _ block: (BinaryFileWriter) throws -> Void) throws {
-    guard let stream = OutputStream(url: url, append: false) else {
-      throw BinaryFileWriterError.cannotOpenFile(url)
-    }
-    let writer = BinaryFileWriter(stream: stream)
-    try block(writer)
-  }
-
   /// Builds binary data in memory using the provided closure.
   ///
   /// - Parameter block: A closure that receives the writer and performs write operations.
@@ -68,37 +54,11 @@ final class BinaryFileWriter {
 
   // MARK: - Write Methods
 
-  /// Writes a single byte.
-  func writeByte(_ value: UInt8) {
-    var byte = value
-    stream.write(&byte, maxLength: 1)
-  }
-
   /// Writes an array of bytes.
   func writeBytes(_ bytes: [UInt8]) {
     bytes.withUnsafeBufferPointer { buffer in
       guard let baseAddress = buffer.baseAddress else { return }
       stream.write(baseAddress, maxLength: bytes.count)
-    }
-  }
-
-  /// Writes raw `Data`.
-  func writeData(_ data: Data) {
-    data.withUnsafeBytes { buffer in
-      guard let baseAddress = buffer.baseAddress?.assumingMemoryBound(to: UInt8.self) else {
-        return
-      }
-      stream.write(baseAddress, maxLength: data.count)
-    }
-  }
-
-  /// Writes an array of `Int16` values.
-  func writeInt16Array(_ values: [Int16]) {
-    values.withUnsafeBufferPointer { buffer in
-      buffer.withMemoryRebound(to: UInt8.self) { byteBuffer in
-        guard let baseAddress = byteBuffer.baseAddress else { return }
-        stream.write(baseAddress, maxLength: byteBuffer.count)
-      }
     }
   }
 
@@ -125,22 +85,8 @@ final class BinaryFileWriter {
     }
   }
 
-  /// Writes a 32-bit signed integer in little-endian byte order.
-  func writeInt32(_ value: Int32) {
-    _ = withUnsafeBytes(of: value.littleEndian) { buffer in
-      stream.write(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self), maxLength: 4)
-    }
-  }
-
   /// Writes a 64-bit unsigned integer in little-endian byte order.
   func writeUInt64(_ value: UInt64) {
-    _ = withUnsafeBytes(of: value.littleEndian) { buffer in
-      stream.write(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self), maxLength: 8)
-    }
-  }
-
-  /// Writes a 64-bit signed integer in little-endian byte order.
-  func writeInt64(_ value: Int64) {
     _ = withUnsafeBytes(of: value.littleEndian) { buffer in
       stream.write(buffer.baseAddress!.assumingMemoryBound(to: UInt8.self), maxLength: 8)
     }

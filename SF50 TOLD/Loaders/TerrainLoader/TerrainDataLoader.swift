@@ -312,37 +312,6 @@ final class TerrainDataLoader: ObservableObject {
     }
   }
 
-  /// Determines which region contains an airport and whether it's available.
-  ///
-  /// When multiple regions cover the coordinate, prioritizes:
-  /// 1. Already available regions
-  /// 2. Currently downloading regions
-  /// 3. Regions that need download
-  func regionStatus(for coordinate: (latitude: Double, longitude: Double)) -> RegionStatus {
-    let regions = TerrainRegion.containing(
-      latitude: coordinate.latitude,
-      longitude: coordinate.longitude
-    )
-
-    guard let firstRegion = regions.first else {
-      return .notCovered
-    }
-
-    // Prefer already available regions
-    if let available = regions.first(where: { isRegionAvailable($0) }) {
-      return .available(available)
-    }
-
-    // Then prefer downloading regions (direct or Background Assets)
-    if let downloading = regions.first(where: {
-      downloadingRegions.contains($0) || backgroundDownloadingRegions.contains($0)
-    }) {
-      return .downloading(downloading)
-    }
-
-    return .needsDownload(firstRegion)
-  }
-
   // MARK: - Private Methods
 
   /// Returns the URL to the decompressed terrain file for a region.
@@ -586,14 +555,6 @@ final class TerrainDataLoader: ObservableObject {
           return false
       }
     }
-  }
-
-  /// Status of terrain coverage for a location.
-  enum RegionStatus: Equatable {
-    case available(TerrainRegion)
-    case needsDownload(TerrainRegion)
-    case downloading(TerrainRegion)
-    case notCovered
   }
 }
 

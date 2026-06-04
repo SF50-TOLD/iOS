@@ -94,7 +94,6 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
   override public var airportDefaultsKey: Defaults.Key<String?> { .takeoffAirport }
   override public var runwayDefaultsKey: Defaults.Key<String?> { .takeoffRunway }
   override public var fuelDefaultsKey: Defaults.Key<Measurement<UnitVolume>> { .takeoffFuel }
-  override public var defaultFlapSetting: FlapSetting { .flaps50 }
 
   // MARK: Initializers
 

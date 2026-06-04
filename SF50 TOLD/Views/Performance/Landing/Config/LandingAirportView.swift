@@ -5,7 +5,6 @@ import SwiftUI
 
 struct LandingAirportView: View {
   @State private var showNowButton = false
-  @State private var showNOTAMView = false
 
   @Environment(LandingPerformanceViewModel.self)
   private var performance

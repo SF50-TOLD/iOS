@@ -185,19 +185,6 @@ enum GeoTIFFParser {
     /// Southwest corner longitude in degrees
     let longitude: Int
 
-    /// Number of samples per side for square tiles.
-    /// For non-square tiles (polar regions), returns the larger dimension.
-    var samplesPerSide: Int { max(elevations.width, elevations.height) }
-
-    /// Image width in samples.
-    var width: Int { elevations.width }
-
-    /// Image height in samples.
-    var height: Int { elevations.height }
-
-    /// Whether this tile is square (typical for most regions)
-    var isSquare: Bool { elevations.width == elevations.height }
-
     /// Elevation data as a grid of Int16 values (row-major, north to south).
     /// Values are in meters. ``Elevations/voidValue`` indicates no data.
     let elevations: Elevations

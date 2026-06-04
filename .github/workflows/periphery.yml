@@ -51,12 +51,57 @@ jobs:
           NOTAM_API_TOKEN = ${NOTAM_API_TOKEN}
           NOTAM_API_BASE_URL = https:/\$()/notams.fly.dev
           EOF
+      - name: Generate DownloadNASR credentials
+        run: |
+          cat > "DownloadNASR/Credentials.xcconfig" << EOF
+          R2_ACCOUNT_ID = test
+          R2_ACCESS_KEY_ID = test
+          R2_SECRET_ACCESS_KEY = test
+          R2_BUCKET_NAME = sf50-terrain
+          R2_PUBLIC_URL = https:/\$()/test.invalid
+          GITHUB_TOKEN = test
+          EOF
       - name: Enable macros
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
-      - name: Install Periphery
-        run: brew install periphery
-      - name: Run Periphery
+      - name: Install Periphery and jq
+        run: brew install periphery jq
+      # iOS pass: gates the app and its iOS extensions. Uses .periphery.yml,
+      # which report-excludes SF50 Shared (judged by the intersection job below).
+      - name: Run Periphery (iOS)
         run: |
-          periphery scan -- \
+          periphery scan --strict -- \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -destination-timeout 300
+      # macOS pass: gates the DownloadNASR build tool. Uses .periphery-macos.yml,
+      # which also report-excludes SF50 Shared.
+      - name: Run Periphery (macOS)
+        run: |
+          periphery scan --strict --config .periphery-macos.yml -- \
+            -destination "platform=macOS"
+      # Cross-platform SF50 Shared gate. The framework is consumed by both
+      # platforms, so neither single pass can judge it. Report only the Shared
+      # framework from each pass as JSON, then fail on symbols both passes agree
+      # are dead.
+      - name: Periphery SF50 Shared intersection
+        run: |
+          periphery scan --config .periphery.yml \
+            --report-include "**/SF50 Shared/**" --format json -- \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            -destination-timeout 300 > periphery-shared-ios.json
+          periphery scan --config .periphery-macos.yml \
+            --report-include "**/SF50 Shared/**" --format json -- \
+            -destination "platform=macOS" > periphery-shared-macos.json
+          # A SF50 Shared symbol is genuine dead code only when BOTH platform
+          # passes report it `unused` at the same source location. Preview
+          # Content reappears because --report-include supersedes report_exclude,
+          # so it is filtered here.
+          filter='.[] | select((.hints | index("unused")) and (.location | contains("/Preview Content/") | not)) | .location'
+          jq -r "$filter" periphery-shared-ios.json | sort -u > shared-ios-unused.txt
+          jq -r "$filter" periphery-shared-macos.json | sort -u > shared-macos-unused.txt
+          dead=$(comm -12 shared-ios-unused.txt shared-macos-unused.txt)
+          if [ -n "$dead" ]; then
+            echo "SF50 Shared symbols unused on BOTH iOS and macOS:"
+            echo "$dead"
+            exit 1
+          fi
+          echo "No SF50 Shared symbols are dead on both platforms."

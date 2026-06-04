@@ -8,7 +8,6 @@ struct LandingView: View {
 
   @State private var performance: LandingPerformanceViewModel?
   @State private var weather: WeatherViewModel?
-  @State private var landingTime = Date()
 
   var body: some View {
     NavigationView {

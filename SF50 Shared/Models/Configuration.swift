@@ -43,15 +43,6 @@ public struct Configuration {
     self.flapSetting = flapSetting
     self.iceProtection = iceProtection
   }
-
-  /// Returns a configuration with weight clamped to the specified range.
-  func clampWeight(min: Measurement<UnitMass>? = nil, max: Measurement<UnitMass>? = nil) -> Self {
-    var weight = weight
-    if let min, min > weight { weight = min }
-    if let max, max < weight { weight = max }
-
-    return .init(weight: weight, flapSetting: flapSetting, iceProtection: iceProtection)
-  }
 }
 
 /// The generation of SF50 Vision Jet aircraft.
@@ -80,20 +71,6 @@ public enum AircraftType: Sendable, Equatable {
     switch self {
       case .g1: LimitationsG1.self
       case .g2, .g2Plus: LimitationsG2.self
-    }
-  }
-
-  /// Whether this aircraft uses the updated (G2+) thrust schedule for performance calculations.
-  ///
-  /// - G1: Always false (uses G1 performance data)
-  /// - G2 without SB: false (uses G1 performance data)
-  /// - G2 with SB: true (uses G2+ performance data)
-  /// - G2+: Always true (uses G2+ performance data)
-  public var usesUpdatedThrustSchedule: Bool {
-    switch self {
-      case .g1: false
-      case .g2(let updated): updated
-      case .g2Plus: true
     }
   }
 }

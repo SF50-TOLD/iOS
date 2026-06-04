@@ -78,8 +78,6 @@ open class BasePerformanceModel: PerformanceModel {
   open var enrouteClimbGradientFtNM: Value<Double> { .notAvailable }
   open var enrouteClimbRateFtMin: Value<Double> { .notAvailable }
   open var enrouteClimbSpeedKIAS: Value<Double> { .notAvailable }
-  open var enrouteObstacleClimbGradientFtNM: Value<Double> { .notAvailable }
-  open var enrouteObstacleClimbRateFtMin: Value<Double> { .notAvailable }
 
   open var takeoffInputsOffscaleLow: Bool { false }
   open var takeoffInputsOffscaleHigh: Bool { false }

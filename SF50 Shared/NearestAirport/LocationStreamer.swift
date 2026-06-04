@@ -6,8 +6,6 @@ import SwiftUI
 public enum LocationError: Error {
   /// User denied location permission.
   case permissionDenied
-  /// Location services unavailable.
-  case locationUnavailable
 }
 
 /// Protocol for streaming device location updates.

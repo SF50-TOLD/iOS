@@ -1,5 +1,4 @@
 import SF50_Shared
-import SwiftData
 import SwiftUI
 
 struct RunwayPicker: View {
@@ -11,9 +10,6 @@ struct RunwayPicker: View {
 
   @Environment(\.presentationMode)
   private var mode
-
-  @Environment(\.operation)
-  private var operation
 
   private var runways: [Runway] {
     airport.runways.sorted(using: Runway.NameComparator())

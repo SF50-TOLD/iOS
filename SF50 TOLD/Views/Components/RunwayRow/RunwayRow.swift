@@ -7,9 +7,6 @@ struct RunwayRow: View {
   var conditions: Conditions
   var flapSetting: FlapSetting?
 
-  @Environment(\.operation)
-  private var operation
-
   @Environment(\.aircraftType)
   private var aircraftType
 

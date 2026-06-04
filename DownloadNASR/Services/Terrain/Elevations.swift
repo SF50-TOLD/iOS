@@ -3,8 +3,8 @@ import Foundation
 /// A row-major grid of `Int16` elevation samples.
 ///
 /// `Elevations` provides structured access to a flat array of elevation data
-/// organized as a 2D grid. All access goes through subscript, ``each(_:)``,
-/// or ``withUnsafeBufferPointer(_:)`` — the underlying storage is private.
+/// organized as a 2D grid. All access goes through subscript or
+/// ``withUnsafeBufferPointer(_:)`` — the underlying storage is private.
 ///
 /// Width and height are stored separately to support non-square GeoTIFF tiles,
 /// with convenience initializers for the common square SRTM case.
@@ -20,9 +20,6 @@ struct Elevations: Sendable {
 
   /// Number of rows in the grid.
   let height: Int
-
-  /// Total number of samples in the grid.
-  var count: Int { storage.count }
 
   // MARK: - Initializers
 
@@ -69,24 +66,6 @@ struct Elevations: Sendable {
 
   private func index(row: Int, col: Int) -> Int {
     row * width + col
-  }
-
-  // MARK: - Iteration
-
-  /// Calls `body` for every sample in the grid.
-  ///
-  /// - Parameter body: A closure receiving `(row, col, value)`.
-  func each(_ body: (Int, Int, Int16) -> Void) {
-    for row in 0..<height {
-      for col in 0..<width {
-        body(row, col, storage[index(row: row, col: col)])
-      }
-    }
-  }
-
-  /// Whether the sample at `(row, col)` is void.
-  func isVoid(row: Int, col: Int) -> Bool {
-    self[row, col] == Self.voidValue
   }
 
   // MARK: - Resampling

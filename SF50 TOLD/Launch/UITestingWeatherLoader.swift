@@ -1,4 +1,3 @@
-import CoreLocation
 import Foundation
 import SF50_Shared
 
@@ -74,13 +73,6 @@ actor UITestingWeatherLoader: WeatherLoaderProtocol {
     AsyncStream { continuation in
       continuation.yield(.notLoaded)
     }
-  }
-
-  func interpolatedWindsAloft(
-    at _: CLLocationCoordinate2D,
-    altitude _: Measurement<UnitLength>
-  ) -> WindsAloftData.Entry? {
-    nil
   }
 
   enum Mode: String {

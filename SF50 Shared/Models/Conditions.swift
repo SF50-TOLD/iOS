@@ -229,19 +229,6 @@ public struct Conditions: Sendable, Equatable {
     )
   }
 
-  /// Returns conditions with missing values filled from another conditions instance.
-  public func adding(conditions: Self) -> Self {
-    .init(
-      validTime: validTime,
-      source: conditions.source,
-      windDirection: conditions.windDirection ?? windDirection,
-      windSpeed: conditions.windSpeed ?? windSpeed,
-      temperature: conditions.temperature ?? temperature,
-      dewpoint: conditions.dewpoint ?? dewpoint,
-      seaLevelPressure: conditions.seaLevelPressure ?? seaLevelPressure
-    )
-  }
-
   /// Returns conditions modified by user-entered values, changing the source to `.entered`.
   public func userModified(with conditions: Self) -> Self {
     .init(

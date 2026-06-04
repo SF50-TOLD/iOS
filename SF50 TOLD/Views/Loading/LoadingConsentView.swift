@@ -1,13 +1,9 @@
 import SF50_Shared
-import SwiftData
 import SwiftUI
 
 struct LoadingConsentView: View {
   @Environment(NavDataLoaderViewModel.self)
   private var loader
-
-  @Environment(\.modelContext)
-  private var context
 
   var titleString: String {
     if loader.canSkip {

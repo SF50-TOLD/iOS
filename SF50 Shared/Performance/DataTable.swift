@@ -34,9 +34,6 @@ class DataTable {
   private var data: [Row] = []
   private var nInputs: Int = 0
 
-  /// Number of input columns
-  var inputCount: Int { nInputs }
-
   /// Returns all data rows for iteration
   var rows: [[Double]] {
     return data
@@ -94,7 +91,7 @@ class DataTable {
   /// surrounding data points.
   ///
   /// - Parameters:
-  ///   - inputs: An array of input values with length matching ``inputCount``.
+  ///   - inputs: An array of input values with length matching the table's input-column count.
   ///   - clamping: Optional array of clamping modes for each input dimension. If nil, no clamping is applied.
   ///
   /// - Returns: A `Value<Double>` which may be:
@@ -483,29 +480,9 @@ class DataTable {
     return .offscaleHigh
   }
 
-  private func nearestNeighbor(inputs: [Double]) -> Value<Double> {
-    var minDistance = Double.infinity
-    var nearestValue = 0.0
-
-    for row in data {
-      var distance = 0.0
-      for dim in 0..<nInputs {
-        let diff = row[dim] - inputs[dim]
-        distance += diff * diff
-      }
-
-      if distance < minDistance {
-        minDistance = distance
-        nearestValue = row.last!
-      }
-    }
-
-    return .value(nearestValue)
-  }
-
   /// Returns the minimum value in the specified input dimension.
   ///
-  /// - Parameter dimension: The zero-based index of the input dimension (must be less than ``inputCount``).
+  /// - Parameter dimension: The zero-based index of the input dimension (must be less than the input-column count).
   /// - Returns: The minimum value found in that dimension across all data rows.
   func min(dimension: Int) -> Double {
     precondition((0..<nInputs).contains(dimension), "Invalid dimension")
@@ -514,7 +491,7 @@ class DataTable {
 
   /// Returns the maximum value in the specified input dimension.
   ///
-  /// - Parameter dimension: The zero-based index of the input dimension (must be less than ``inputCount``).
+  /// - Parameter dimension: The zero-based index of the input dimension (must be less than the input-column count).
   /// - Returns: The maximum value found in that dimension across all data rows.
   func max(dimension: Int) -> Double {
     precondition((0..<nInputs).contains(dimension), "Invalid dimension")

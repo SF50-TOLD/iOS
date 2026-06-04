@@ -85,31 +85,6 @@ enum ResidualErrorCalculator {
     return sqrt(sumSquares)
   }
 
-  static func maxError(for table: String, binParameters: [String: Double] = [:]) -> Double {
-    guard let residualData = residualDataCache[table] else {
-      fatalError("No residual data found for table: \(table)")
-    }
-
-    // If no bin parameters provided, return overall max error
-    if binParameters.isEmpty {
-      return residualData.overallMaxError
-    }
-
-    // Find the appropriate bin
-    for (binName, value) in binParameters {
-      guard let bins = residualData.bins[binName] else { continue }
-
-      for bin in bins {
-        if bin.range.count >= 2 && value >= bin.range[0] && value < bin.range[1] {
-          return bin.maxError
-        }
-      }
-    }
-
-    // If no matching bin found, return overall max error
-    return residualData.overallMaxError
-  }
-
   // Convenience method to get RMSE for contamination adjustments
   static func contaminationRMSE(
     for contaminationType: String,
