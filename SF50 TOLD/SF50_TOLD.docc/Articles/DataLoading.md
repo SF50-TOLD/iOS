@@ -120,6 +120,7 @@ The compressed data combines two sources:
 ### FAA NASR
 
 National Airspace System Resources provides authoritative data for US airports:
+
 - Precise runway lengths and distances
 - Displaced thresholds
 - Gradient information
@@ -128,6 +129,7 @@ National Airspace System Resources provides authoritative data for US airports:
 ### OurAirports
 
 Community-maintained database supplements NASR with:
+
 - International airports
 - Time zone information
 - Additional airports not in NASR

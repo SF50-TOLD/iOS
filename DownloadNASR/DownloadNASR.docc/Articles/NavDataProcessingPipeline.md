@@ -24,6 +24,7 @@ The FAA publishes National Airspace System Resources (NASR) data every 28 days
 4. Extract precise runway distances (TORA, TODA, LDA)
 
 NASR data is authoritative for US airports and includes:
+
 - Precise runway geometry (length, distances, gradient)
 - Official identifiers (FAA LID, ICAO)
 - Touchdown zone elevations
@@ -40,6 +41,7 @@ let runwaysURL = "https://davidmegginson.github.io/ourairports-data/runways.csv"
 ```
 
 The loader filters to:
+
 - Airport types: `small_airport`, `medium_airport`, `large_airport`
 - Runways ≥500 feet
 - Excludes water runways
@@ -115,7 +117,7 @@ Upload path: `3.0/{cycle}.plist.lzma`
 
 The compressed file contains an ``AirportDataCodable`` structure:
 
-```
+```text
 AirportDataCodable
 ├── cycles: DataCycles
 │   ├── nasr: CycleInfo? (effective/expires dates)

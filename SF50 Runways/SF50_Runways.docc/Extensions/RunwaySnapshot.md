@@ -8,6 +8,7 @@ be safely passed across actor boundaries and stored in timeline entries.
 
 Each snapshot captures the essential information needed to display runway
 performance:
+
 - The runway name (e.g., "09", "27L")
 - Available takeoff distance
 - True heading for wind calculations

@@ -50,7 +50,7 @@ This app has not been approved by the FAA or by Cirrus Aircraft as an official s
 
 #### Project Structure
 
-```
+```text
 SF50 TOLD/
 ├── SF50 TOLD/                  # Main iOS app target
 │   ├── SF50_TOLDApp.swift      # App entry point & initialization

@@ -7,6 +7,7 @@ Terrain elevation data for departure obstacle clearance analysis.
 SF50 TOLD uses SRTM (Shuttle Radar Topography Mission) elevation data to analyze terrain along departure paths. This enables pilots to verify obstacle clearance when climbing out from airports in mountainous terrain.
 
 The terrain system consists of:
+
 - **Downloadable region files** - LZMA-compressed binary files containing elevation data
 - **On-demand file access** - Efficient O(1) coordinate lookups via `pread` without loading entire files into memory
 - **Route profiling** - Generate elevation profiles along flight paths
@@ -33,6 +34,7 @@ Terrain data is stored in a custom binary format optimized for mobile devices. F
 Following the header is an index entry for each tile. Entry size depends on file version:
 
 **Version 1 (12 bytes per entry):**
+
 | Offset | Type | Description |
 |--------|------|-------------|
 | 0 | Int16 | Tile latitude (SW corner) |
@@ -41,6 +43,7 @@ Following the header is an index entry for each tile. Entry size depends on file
 | 8 | UInt32 | Data length in bytes |
 
 **Version 2 (16 bytes per entry):**
+
 | Offset | Type | Description |
 |--------|------|-------------|
 | 0 | Int16 | Tile latitude (SW corner) |
@@ -51,6 +54,7 @@ Following the header is an index entry for each tile. Entry size depends on file
 Version 2 uses 64-bit offsets to support files larger than 4 GB.
 
 **Version 3 (20 bytes per entry):**
+
 | Offset | Type | Description |
 |--------|------|-------------|
 | 0 | Int16 | Tile latitude (SW corner) |
@@ -120,6 +124,7 @@ if let elevation = await service.elevation(at: coordinate) {
 For v3 files, tile data is LZFSE-compressed on disk. On first access, a tile is decompressed into an LRU cache (up to ~30 MB / 10 tiles). Subsequent reads from the same tile are served directly from the cache. Since terrain profile queries are spatially localized (typically touching 1-3 tiles), the cache hit rate is very high after the first query in a tile.
 
 This enables:
+
 - Fast random access to any coordinate
 - Minimal memory footprint regardless of file size
 - Bilinear interpolation for sub-sample precision
@@ -132,6 +137,7 @@ This enables:
 ### TerrainManifest
 
 ``TerrainManifest`` contains metadata about available terrain downloads, loaded from a bundled JSON file. It provides:
+
 - Download URLs
 - File sizes for accurate progress reporting
 - Version information

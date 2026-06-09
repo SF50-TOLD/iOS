@@ -28,6 +28,7 @@ The NOTAM API provides real-time FAA NOTAM data for runway closures and conditio
 ## Building
 
 After configuration, build and run SF50 TOLD. If the NOTAM API credentials are missing or invalid:
+
 - The app will still run
 - NOTAM features will be unavailable
 - A warning will be logged at startup

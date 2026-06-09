@@ -58,7 +58,7 @@ The ``GeoTIFFParser`` handles the complexity of TIFF parsing, including decompre
 
 For each region, the processor downloads all tiles that fall within the region's bounding boxes:
 
-```
+```text
 Region: North America
 Bounding boxes: 5 (Continental, Alaska, Aleutians, Arctic Canada, Caribbean)
 Tiles to download: ~3,500
@@ -86,6 +86,7 @@ Each tile's elevation data is individually compressed using LZFSE (Apple's Compr
 - **Variable-size tiles**: Unlike v2 (where all tiles were the same size), v3 tiles have variable compressed sizes. The tile index records each tile's actual compressed and uncompressed lengths.
 
 Expected compression results for North America (~6,700 tiles):
+
 - ~40-50% void tiles (ocean) → 0 bytes each
 - ~50-60% land tiles → ~30-40% of original size
 - **Overall: ~19 GB uncompressed → ~5-6 GB with LZFSE**
