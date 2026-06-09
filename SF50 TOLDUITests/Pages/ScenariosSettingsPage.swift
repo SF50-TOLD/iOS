@@ -65,13 +65,11 @@ final class ScenariosSettingsPage: BasePage {
     }
 
     if deleteButton.waitForExistence(timeout: 2) {
-      forceTap(deleteButton)
-      // Tap again if a confirmation button appears
-      if deleteButton.exists {
-        forceTap(deleteButton)
-      }
+      // The Delete button (and any confirmation) disappears once the tap
+      // registers; a single forceTap is intermittently dropped on iPad, so
+      // retry until it's gone.
+      deleteButton.tap(until: { deleteButton.waitForNonExistence(timeout: 2) })
     }
-    _ = deleteButton.waitForNonExistence(timeout: 2)
   }
 
   func openScenario(_ name: String) -> ScenarioDetailPage {

@@ -1,5 +1,6 @@
 // swiftlint:disable prefer_nimble
 import XCTest
+import XCUITestKit
 
 final class NOTAMPage: BasePage {
 
@@ -42,10 +43,12 @@ final class NOTAMPage: BasePage {
   func selectContamination(_ type: String) {
     if contaminationTypePicker.waitForExistence(timeout: 2) {
       ensureHittable(contaminationTypePicker)
-      forceTap(contaminationTypePicker)
       let option = app.buttons[type]
+      // Opening the picker is a single tap that iPad/Liquid Glass can drop,
+      // leaving the menu closed; retry until the option becomes hittable.
+      let opened = contaminationTypePicker.tap(until: { self.waitForHittable(option, timeout: 5) })
       XCTAssertTrue(
-        waitForHittable(option, timeout: 5),
+        opened,
         "Contamination option \"\(type)\" should be hittable after opening the picker"
       )
       forceTap(option)

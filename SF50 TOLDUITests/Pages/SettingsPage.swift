@@ -1,5 +1,6 @@
 // swiftlint:disable prefer_nimble
 import XCTest
+import XCUITestKit
 
 final class SettingsPage: BasePage {
 
@@ -26,8 +27,11 @@ final class SettingsPage: BasePage {
   func selectAircraftModel(_ model: String) {
     XCTAssertTrue(aircraftTypePicker.waitForExistence(timeout: 2), "Aircraft picker should exist")
     ensureHittable(aircraftTypePicker)
-    forceTap(aircraftTypePicker)
     let option = app.buttons[model]
+    // Opening the picker is a single tap that iPad/Liquid Glass can drop;
+    // retry until the option appears before selecting it.
+    let opened = aircraftTypePicker.tap(until: { option.waitForExistence(timeout: 5) })
+    XCTAssertTrue(opened, "Aircraft option \"\(model)\" should appear after opening the picker")
     forceTap(option)
   }
 
@@ -73,11 +77,12 @@ final class SettingsPage: BasePage {
   func selectTimeZone(_ zone: String) {
     let picker = scrollToElement(timeZoneDisplayPicker)
     XCTAssertNotNil(picker, "Time zone picker should exist")
-    forceTap(picker!)
     let option = app.buttons[zone]
-    if option.exists {
-      forceTap(option)
-    }
+    // Opening the picker is a single tap that iPad/Liquid Glass can drop;
+    // retry until the option appears before selecting it.
+    let opened = picker!.tap(until: { option.waitForExistence(timeout: 5) })
+    XCTAssertTrue(opened, "Time zone option \"\(zone)\" should appear after opening the picker")
+    forceTap(option)
   }
 
   // MARK: - Navigation
