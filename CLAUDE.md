@@ -39,12 +39,6 @@ type_contents_order:
 - Consecutive capitalized acronyms should be separated by an underscore (e.g., `IAS_KPH`). Do not use an underscore except to separate two acronyms (e.g., not for `IASKts`).
 - Do not abbreviate words unless it definitely enhances readability (e.g., do not use "seg" for "segment", but "TAS" for "trueAirspeed" is sometimes OK). Long variable names are acceptable if it enhances understanding.
 
-## Documentation & Comments
-
-- Swift-DocC comments are only necessary for public/package types and members.
-- Favor smaller functions with self-documenting names over comments to explain longer code blocks.
-- Do not use comments to explain changes in code (e.g., "this used to be like this; now it's like that"). Comments should only be used to help the reader understand the state of the code as it currently is, not how it was.
-
 ## Code Structure
 
 - Complex functions should be orchestrators that call out to smaller functions.
