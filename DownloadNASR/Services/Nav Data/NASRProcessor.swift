@@ -115,16 +115,7 @@ struct NASRProcessor {
           onProgress: onProgress
         )
       },
-      errorHandler: { error in
-        var metadata: Logger.Metadata = ["error": "\(String(describing: error))"]
-        if let localizedError = error as? LocalizedError {
-          if let reason = localizedError.failureReason {
-            metadata["reason"] = "\(reason)"
-          }
-        }
-        self.logger.error("Parse error", metadata: metadata)
-        return true
-      }
+      errorHandler: { error in self.handleParseError(error, context: "airport") }
     )
     await onProgress?(Self.airportsProgressEnd, 100)
 
@@ -141,16 +132,7 @@ struct NASRProcessor {
           onProgress: onProgress
         )
       },
-      errorHandler: { error in
-        var metadata: Logger.Metadata = ["error": "\(String(describing: error))"]
-        if let localizedError = error as? LocalizedError {
-          if let reason = localizedError.failureReason {
-            metadata["reason"] = "\(reason)"
-          }
-        }
-        self.logger.warning("ILS parse error", metadata: metadata)
-        return true
-      }
+      errorHandler: { error in self.handleParseError(error, context: "ILS") }
     )
     await onProgress?(Self.ilsProgressEnd, 100)
 
@@ -243,6 +225,36 @@ struct NASRProcessor {
     }
 
     return codableAirports
+  }
+
+  /// Logs a SwiftNASR record-parse problem and tells the parser to keep going.
+  ///
+  /// SwiftNASR distinguishes a dropped record (one that couldn't be constructed) from a
+  /// kept record with a single unrepresentable field. Both are logged for diagnostics, but
+  /// parsing always proceeds so one bad field or record never aborts the entire import.
+  /// - Parameters:
+  ///   - error: The record-parse problem reported by SwiftNASR.
+  ///   - context: Short label for the record category being parsed (e.g. `"airport"`).
+  /// - Returns: Always ``ParseDisposition/proceed``.
+  private func handleParseError(_ error: RecordParseError, context: String) -> ParseDisposition {
+    var metadata: Logger.Metadata = ["context": "\(context)"]
+
+    switch error {
+      case let .recordError(recordType, recordID, underlying):
+        metadata["recordType"] = "\(recordType.rawValue)"
+        if let recordID { metadata["recordID"] = "\(recordID)" }
+        metadata["underlying"] = "\(String(describing: underlying))"
+        logger.warning("Dropped \(context) record", metadata: metadata)
+      case let .fieldError(recordType, recordID, field, value, underlying):
+        metadata["recordType"] = "\(recordType.rawValue)"
+        if let recordID { metadata["recordID"] = "\(recordID)" }
+        metadata["field"] = "\(field)"
+        if let value { metadata["value"] = "\(value)" }
+        metadata["underlying"] = "\(String(describing: underlying))"
+        logger.notice("Kept \(context) record with unrepresentable field", metadata: metadata)
+    }
+
+    return .proceed
   }
 
   /// Sets up KVO observation on a Progress object and maps updates to the target range.
