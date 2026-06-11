@@ -82,7 +82,7 @@ struct SF50_TOLDApp: App {
       ContentView()
         .modelContainer(sharedModelContainer)
         .task {
-          ScenarioSeeder(container: sharedModelContainer).seedDefaultScenariosIfNeeded()
+          await ScenarioSeeder(container: sharedModelContainer).seedDefaultScenariosIfNeeded()
           _ = TerrainDataLoader.shared
         }
     }

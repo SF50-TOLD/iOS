@@ -48,25 +48,46 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     setupObservation()
   }
 
+  /// Creates a standalone container on the same store for the importer.
+  ///
+  /// The importer's bulk transactions then queue on their own persistent store
+  /// coordinator, so main-context work (`@Query` fetches, model faults, history
+  /// merges) never waits behind them — with WAL journaling, readers on another
+  /// coordinator are not blocked by an in-flight write transaction.
+  nonisolated private static func makeImportContainer(
+    matching container: ModelContainer
+  ) throws -> ModelContainer {
+    // In-memory stores (used by UI tests) cannot be shared between containers.
+    guard !container.configurations.contains(where: \.isStoredInMemoryOnly) else {
+      return container
+    }
+    return try ModelContainer(
+      for: container.schema,
+      configurations: Array(container.configurations)
+    )
+  }
+
   private func setupObservation() {
     addTask(schemaVersionObservationTask())
     addTask(statePollingTask())
   }
 
   private func schemaVersionObservationTask() -> Task<Void, Never> {
-    Task.detached { [container] in
+    Task.detached { [weak self, container] in
       let context = ModelContext(container)
       for await _ in Defaults.updates(.schemaVersion)
       where !Task.isCancelled {
+        guard let self else { return }
         await self.refreshState(from: context, fingerprint: "recalculate")
       }
     }
   }
 
   private func statePollingTask() -> Task<Void, Never> {
-    Task.detached { [container] in
+    Task.detached { [weak self, container] in
       let context = ModelContext(container)
       while !Task.isCancelled {
+        guard let self else { return }
         await self.refreshState(from: context, fingerprint: "airportCheck")
         try? await Task.sleep(for: .seconds(0.5))
       }
@@ -97,7 +118,40 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   func load() {
-    let loader = NavDataLoader(modelContainer: container)
+    // A second tap must not spawn a concurrent importer on the same store
+    switch state {
+      case .idle, .finished: break
+      default: return
+    }
+
+    let loader: NavDataLoader
+    do {
+      loader = NavDataLoader(modelContainer: try Self.makeImportContainer(matching: container))
+    } catch {
+      SentrySDK.capture(error: error) { scope in
+        scope.setTag(value: "importContainer", key: "navData.operation")
+        scope.setFingerprint(["navData", "importContainer"])
+      }
+      self.error = error
+      return
+    }
+
+    // Block re-entry and switch to the progress UI before the actor reports
+    state = .downloading(progress: nil)
+
+    let progressTask = Task { [weak self] in
+      while !Task.isCancelled {
+        let loaderState = await loader.state
+        guard !Task.isCancelled else { return }
+        if case .idle = loaderState {
+          // The actor hasn't begun loading; don't regress the UI to consent
+        } else {
+          self?.state = loaderState
+        }
+        try? await Task.sleep(for: .seconds(0.25))
+      }
+    }
+    addTask(progressTask)
 
     addTask(
       Task {
@@ -105,11 +159,13 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
           name: "Nav Data Load",
           operation: "navData.load"
         )
+        defer { progressTask.cancel() }
         do {
           error = nil
           try await loader.clearCycles()
           Defaults[.ourAirportsLastUpdated] = nil
           let result = try await loader.load()
+          state = await loader.state
 
           Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
           Defaults[.schemaVersion] = latestSchemaVersion
@@ -121,16 +177,10 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
             scope.setFingerprint(["navData", "load"])
           }
           self.error = error
-        }
-      }
-    )
 
-    addTask(
-      Task { [weak self] in
-        while !Task.isCancelled {
-          let state = await loader.state
-          self?.state = state
-          try? await Task.sleep(for: .seconds(0.25))
+          // Return to the consent screen so the user can retry the download
+          progressTask.cancel()
+          state = .idle
         }
       }
     )

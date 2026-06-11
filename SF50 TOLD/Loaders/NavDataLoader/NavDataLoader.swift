@@ -78,6 +78,16 @@ actor NavDataLoader {
   private static let dataURLTemplate =
     "https://github.com/SF50-TOLD/Airport-Data/blob/main/3.0/%@.plist.lzma?raw=true"
 
+  /// Maximum number of rows inserted per save.
+  ///
+  /// Each save holds the store's write lock for its full commit, growing the
+  /// WAL and stalling other store users (the widget process, background
+  /// readers), so transactions are kept small and frequent.
+  private static let saveBatchRowLimit = 2000
+
+  /// Pause between batch saves so other store users can interleave.
+  private static let interBatchPause: Duration = .milliseconds(50)
+
   var state: State = .idle
 
   private let decoder = PropertyListDecoder()
@@ -100,8 +110,11 @@ actor NavDataLoader {
     state = .extracting(progress: nil)
     let nasr = try decompress(data: data)
 
+    // The replacement data is fully decoded, so the old dataset can go
+    try await resetData()
+
     // Load navaids first so they're available for leg relationships
-    loadNavaids(nasr.navaids ?? [])
+    try await loadNavaids(nasr.navaids ?? [])
 
     // Combined progress tracking across both loading phases
     state = .loading(progress: 0)
@@ -188,20 +201,26 @@ actor NavDataLoader {
     _ airports: [AirportDataCodable.AirportCodable],
     progress: (Int) -> Void
   ) async throws {
-    try resetData()
+    var processed = 0,
+      rowsSinceLastSave = 0
 
-    var processed = 0
+    // An airport carries nested runway/procedure/segment/leg inserts, so
+    // batches are bounded by total inserted rows rather than airport count.
+    for airport in airports {
+      rowsSinceLastSave += addAirport(airport)
+      processed += 1
 
-    for batch in airports.chunks(ofCount: 500) {
-      for airport in batch {
-        addAirport(airport)
+      if rowsSinceLastSave >= Self.saveBatchRowLimit {
+        try modelContext.save()
+        rowsSinceLastSave = 0
+        progress(processed)
+        try await Task.sleep(for: Self.interBatchPause)
       }
+    }
 
+    if modelContext.hasChanges {
       try modelContext.save()
-
-      processed += batch.count
       progress(processed)
-      try await Task.sleep(for: .milliseconds(50))
     }
   }
 
@@ -211,7 +230,7 @@ actor NavDataLoader {
   ) async throws {
     var processed = 0
 
-    for batch in obstacles.chunks(ofCount: 5000) {
+    for batch in obstacles.chunks(ofCount: Self.saveBatchRowLimit) {
       for obstacleData in batch {
         let obstacle = Obstacle(
           heightMSL: .init(value: Double(obstacleData.heightFtMSL), unit: .feet),
@@ -225,7 +244,7 @@ actor NavDataLoader {
 
       processed += batch.count
       progress(processed)
-      try await Task.sleep(for: .milliseconds(50))
+      try await Task.sleep(for: Self.interBatchPause)
     }
   }
 
@@ -236,35 +255,54 @@ actor NavDataLoader {
     return navaidLookup["\(id):\(icao)"]
   }
 
-  private func loadNavaids(_ navaids: [NavaidCodable]) {
+  private func loadNavaids(_ navaids: [NavaidCodable]) async throws {
     navaidLookup.removeAll()
-    for navaidData in navaids {
-      let navaid = SF50_Shared.Navaid(
-        identifier: navaidData.identifier,
-        icaoRegion: navaidData.icaoRegion,
-        type: navaidData.type,
-        latitude: .init(value: navaidData.latitude, unit: .degrees),
-        longitude: .init(value: navaidData.longitude, unit: .degrees),
-        elevation: navaidData.elevationFt.map { .init(value: $0, unit: .feet) }
-      )
-      modelContext.insert(navaid)
-      navaidLookup["\(navaidData.identifier):\(navaidData.icaoRegion)"] = navaid
+    for batch in navaids.chunks(ofCount: Self.saveBatchRowLimit) {
+      for navaidData in batch {
+        let navaid = SF50_Shared.Navaid(
+          identifier: navaidData.identifier,
+          icaoRegion: navaidData.icaoRegion,
+          type: navaidData.type,
+          latitude: .init(value: navaidData.latitude, unit: .degrees),
+          longitude: .init(value: navaidData.longitude, unit: .degrees),
+          elevation: navaidData.elevationFt.map { .init(value: $0, unit: .feet) }
+        )
+        modelContext.insert(navaid)
+        navaidLookup["\(navaidData.identifier):\(navaidData.icaoRegion)"] = navaid
+      }
+      try modelContext.save()
+      try await Task.sleep(for: Self.interBatchPause)
     }
   }
 
-  private func resetData() throws {
-    try modelContext.delete(model: SF50_Shared.Airport.self)
-    try modelContext.delete(model: SF50_Shared.Runway.self)
-    try modelContext.delete(model: SF50_Shared.Procedure.self)
-    try modelContext.delete(model: SF50_Shared.ProcedureSegment.self)
-    try modelContext.delete(model: SF50_Shared.Leg.self)
-    try modelContext.delete(model: SF50_Shared.Navaid.self)
-    try modelContext.delete(model: SF50_Shared.Obstacle.self)
-    try modelContext.delete(model: NOTAM.self)
-    try modelContext.save()
+  /// Deletes the previous dataset, one entity type per transaction.
+  ///
+  /// Child entities are deleted before their parents so each delete touches
+  /// only its own table instead of fanning out through cascade rules, and each
+  /// transaction commits separately to bound how long the store's write lock
+  /// is held.
+  private func resetData() async throws {
+    try await deleteAll(NOTAM.self)
+    try await deleteAll(SF50_Shared.Leg.self)
+    try await deleteAll(SF50_Shared.ProcedureSegment.self)
+    try await deleteAll(SF50_Shared.Procedure.self)
+    try await deleteAll(SF50_Shared.Runway.self)
+    try await deleteAll(SF50_Shared.Airport.self)
+    try await deleteAll(SF50_Shared.Navaid.self)
+    try await deleteAll(SF50_Shared.Obstacle.self)
   }
 
-  private func addAirport(_ airport: AirportDataCodable.AirportCodable) {
+  private func deleteAll<Model: PersistentModel>(_ model: Model.Type) async throws {
+    try modelContext.delete(model: model)
+    try modelContext.save()
+    try await Task.sleep(for: Self.interBatchPause)
+  }
+
+  /// Inserts an airport and its runways, procedures, segments, and legs.
+  ///
+  /// - Returns: The number of rows inserted, so callers can bound save batches
+  ///   by row count.
+  private func addAirport(_ airport: AirportDataCodable.AirportCodable) -> Int {
     let dataSource = DataSource(rawValue: airport.dataSource) ?? .NASR
     let timeZone = airport.timeZone.flatMap { TimeZone(identifier: $0) }
 
@@ -319,7 +357,9 @@ actor NavDataLoader {
     }
 
     // Only insert the airport and runways if we have runways
-    guard !runwayMap.isEmpty else { return }
+    guard !runwayMap.isEmpty else { return 0 }
+
+    var insertedRows = 1 + runwayMap.count
 
     modelContext.insert(record)
     for runway in runwayMap.values {
@@ -345,6 +385,7 @@ actor NavDataLoader {
         airport: record
       )
       modelContext.insert(procedure)
+      insertedRows += 1
 
       for segmentData in procedureData.segments ?? [] {
         let segment = ProcedureSegment(
@@ -352,6 +393,7 @@ actor NavDataLoader {
           procedure: procedure
         )
         modelContext.insert(segment)
+        insertedRows += 1
 
         for (index, legData) in segmentData.legs.enumerated() {
           let altitudeRestriction = legData.altitudeRestriction.map {
@@ -371,9 +413,12 @@ actor NavDataLoader {
             theta: legData.thetaDeg.map { .init(value: $0, unit: .degrees) }
           )
           modelContext.insert(leg)
+          insertedRows += 1
         }
       }
     }
+
+    return insertedRows
   }
 
   /// Current state of the loading process.

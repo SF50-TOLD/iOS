@@ -105,10 +105,6 @@ public final class WeatherViewModel: WithIdentifiableError {
     setupObservation(container: container)
   }
 
-  //    deinit {
-  //        defaultsTask?.cancel()
-  //    }
-
   public func load(force: Bool = false) async {
     // When force is true, it means user clicked "Use Downloaded Weather"
     // Reset manual weather mode in that case
@@ -133,8 +129,9 @@ public final class WeatherViewModel: WithIdentifiableError {
 
   private func setupObservation(container: ModelContainer) {
     let key = airportKey
-    defaultsTask = Task.detached { [container] in
+    defaultsTask = Task.detached { [weak self, container] in
       for await airportID in Defaults.updates(key) where !Task.isCancelled {
+        guard let self else { return }
         do {
           let context = ModelContext(container)
           let airport = try findAirport(for: airportID, in: context)
@@ -164,17 +161,16 @@ public final class WeatherViewModel: WithIdentifiableError {
       return
     }
 
-    let key = WeatherLoader.Key(airport: airport, time: time)
+    let key = WeatherLoader.Key(airport: airport, time: time),
+      loader = loader
     subscription = Task { [weak self] in
-      guard let self else {
-        return
-      }
-      await MainActor.run { self.error = nil }
+      self?.error = nil
 
       await withTaskGroup(of: Void.self) { group in
-        group.addTask { [self] in
+        group.addTask { [weak self] in
           let stream = await loader.streamConditions(for: key)
           for await conditions in stream where !Task.isCancelled {
+            guard let self else { return }
             await MainActor.run {
               // Preserve manual weather if user has entered custom values
               // Use the tracked state to avoid losing manual mode during re-subscriptions
@@ -210,25 +206,33 @@ public final class WeatherViewModel: WithIdentifiableError {
             }
           }
         }
-        group.addTask { [self] in
+        group.addTask { [weak self] in
           let stream = await loader.streamMETAR(for: key)
           for await value in stream where !Task.isCancelled {
+            guard let self else { return }
             await MainActor.run { self.METAR = value }
           }
         }
-        group.addTask { [self] in
+        group.addTask { [weak self] in
           let stream = await loader.streamTAF(for: key)
           for await value in stream where !Task.isCancelled {
+            guard let self else { return }
             await MainActor.run { self.TAF = value }
           }
         }
-        group.addTask { [self] in
+        group.addTask { [weak self] in
           let stream = await loader.streamWindsAloft(for: key)
           for await value in stream where !Task.isCancelled {
+            guard let self else { return }
             await MainActor.run { self.windsAloft = value }
           }
         }
       }
     }
+  }
+
+  isolated deinit {
+    subscription?.cancel()
+    defaultsTask?.cancel()
   }
 }

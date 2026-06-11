@@ -21,7 +21,9 @@ struct ContentView: View {
       content
     }
     .onAppear {
-      loader = .init(container: context.container)
+      if loader == nil {
+        loader = .init(container: context.container)
+      }
     }
     .environment(\.locationStreamer, CoreLocationStreamer())
   }

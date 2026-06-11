@@ -4,7 +4,6 @@ import SF50_Shared
 import Sentry
 import SwiftData
 
-@MainActor
 struct ScenarioSeeder {
   private static let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",
@@ -13,37 +12,43 @@ struct ScenarioSeeder {
 
   let container: ModelContainer
 
-  func seedDefaultScenariosIfNeeded() {
+  /// Seeds the default scenarios on first launch.
+  ///
+  /// The insert and save run on a background `ModelContext` so launch never
+  /// performs main-thread SwiftData work.
+  func seedDefaultScenariosIfNeeded() async {
     // Check if we've already seeded default scenarios via the flag
     guard !Defaults[.defaultScenariosSeeded] else { return }
 
-    let context = container.mainContext
+    await Task.detached { [container] in
+      let context = ModelContext(container)
 
-    // Insert default scenarios
-    for scenario in Scenario.defaultScenarios() {
-      context.insert(scenario)
-    }
-
-    do {
-      try context.save()
-      Defaults[.defaultScenariosSeeded] = true
-    } catch {
-      // If save fails, rollback the context to avoid leaving it in a bad state
-      context.rollback()
-
-      // Report error to Sentry so we can track this issue
-      SentrySDK.capture(error: error) { scope in
-        scope.setTag(value: "scenario", key: "swiftData.entity")
-        scope.setFingerprint(["swiftData", "save"])
-        scope.setContext(
-          value: [
-            "scenarioCount": Scenario.defaultScenarios().count
-          ],
-          key: "scenarioSeeding"
-        )
+      // Insert default scenarios
+      for scenario in Scenario.defaultScenarios() {
+        context.insert(scenario)
       }
 
-      Self.logger.error("Failed to seed default scenarios: \(error.localizedDescription)")
-    }
+      do {
+        try context.save()
+        Defaults[.defaultScenariosSeeded] = true
+      } catch {
+        // If save fails, rollback the context to avoid leaving it in a bad state
+        context.rollback()
+
+        // Report error to Sentry so we can track this issue
+        SentrySDK.capture(error: error) { scope in
+          scope.setTag(value: "scenario", key: "swiftData.entity")
+          scope.setFingerprint(["swiftData", "save"])
+          scope.setContext(
+            value: [
+              "scenarioCount": Scenario.defaultScenarios().count
+            ],
+            key: "scenarioSeeding"
+          )
+        }
+
+        Self.logger.error("Failed to seed default scenarios: \(error.localizedDescription)")
+      }
+    }.value
   }
 }

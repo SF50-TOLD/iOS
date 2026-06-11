@@ -150,9 +150,10 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     let airportKey = airportDefaultsKey
     let runwayKey = runwayDefaultsKey
     addTask(
-      Task.detached { [container] in
+      Task.detached { [weak self, container] in
         for await (airportID, runwayID) in Defaults.updates(airportKey, runwayKey)
         where !Task.isCancelled {
+          guard let self else { return }
           do {
             let context = ModelContext(container)
             let (fetchedAirport, fetchedRunway) = try findAirportAndRunway(
@@ -184,14 +185,16 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     )
 
     // Observe weight changes
+    let fuelKey = fuelDefaultsKey
     addTask(
-      Task {
+      Task { [weak self] in
         for await (emptyWeight, fuelDensity, payload, fuel) in Defaults.updates(
           .emptyWeight,
           .fuelDensity,
           .payload,
-          fuelDefaultsKey
+          fuelKey
         ) where !Task.isCancelled {
+          guard let self else { return }
           weight = emptyWeight + payload + fuel * fuelDensity
         }
       }
@@ -199,11 +202,12 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
     // Observe aircraft type and model type changes
     addTask(
-      Task {
+      Task { [weak self] in
         for await _
           in Defaults
           .updates(.aircraftTypeSetting, .updatedThrustSchedule, .useRegressionModel)
         where !Task.isCancelled {
+          guard let self else { return }
           model = initializeModel()
           recalculate()
         }
@@ -212,9 +216,10 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
     // Observe safety factor changes
     addTask(
-      Task {
+      Task { [weak self] in
         for await _ in Defaults.updates(.safetyFactorDry, .safetyFactorWet, .VREFAdditive)
         where !Task.isCancelled {
+          guard let self else { return }
           recalculate()
         }
       }
@@ -235,10 +240,11 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     guard runway != nil else { return }
 
     // Poll for changes to the NOTAM's snapshot
-    runwayNOTAMObservationTask = Task { @MainActor in
-      var lastSnapshot = notam.map { NOTAMInput(from: $0) }
+    runwayNOTAMObservationTask = Task { @MainActor [weak self] in
+      var lastSnapshot = self?.notam.map { NOTAMInput(from: $0) }
       while !Task.isCancelled {
         try? await Task.sleep(for: .milliseconds(500))
+        guard let self else { return }
 
         // Access the current NOTAM (SwiftData should automatically fetch latest)
         let currentSnapshot = notam.map { NOTAMInput(from: $0) }
