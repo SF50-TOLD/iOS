@@ -64,7 +64,7 @@ struct GoAroundProfileView: View {
     .onReceive(NotificationCenter.default.publisher(for: .terrainRegionsDidChange)) { _ in
       terrainRevision += 1
     }
-    .onChange(of: hasPlottableApproaches) { _, hasPlottable in
+    .onChange(of: hasPlottableApproaches, initial: true) { _, hasPlottable in
       if !hasPlottable && goAroundType == .publishedMissed {
         goAroundType = .vectors
       }
