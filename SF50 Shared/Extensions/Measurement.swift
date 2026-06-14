@@ -57,4 +57,13 @@ extension Measurement where UnitType == UnitAngle {
       .truncatingRemainder(dividingBy: 360)
     return .init(value: trueDeg < 0 ? trueDeg + 360 : trueDeg, unit: .degrees)
   }
+
+  /// Converts a true bearing to magnetic bearing using the given variation.
+  public func toMagnetic(variation: Measurement<UnitAngle>) -> Measurement<UnitAngle> {
+    let magneticDeg =
+      (converted(to: .degrees).value
+      - variation.converted(to: .degrees).value)
+      .truncatingRemainder(dividingBy: 360)
+    return .init(value: magneticDeg < 0 ? magneticDeg + 360 : magneticDeg, unit: .degrees)
+  }
 }

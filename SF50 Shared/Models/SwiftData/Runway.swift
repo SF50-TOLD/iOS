@@ -155,7 +155,9 @@ public final class Runway {
   public var landingDistanceOrLength: Measurement<UnitLength> { landingDistance ?? length }
 
   /// Runway magnetic heading, calculated from true heading and airport magnetic variation
-  public var magneticHeading: Measurement<UnitAngle> { trueHeading + airport.variation }
+  public var magneticHeading: Measurement<UnitAngle> {
+    trueHeading.toMagnetic(variation: airport.variation)
+  }
 
   /// Threshold coordinate if available, or `nil` if coordinates are not known
   public var thresholdCoordinate: CLLocationCoordinate2D? {
