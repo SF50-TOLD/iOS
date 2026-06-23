@@ -89,10 +89,8 @@ public class NearestAirportViewModel {
 
       // Subscribe to location updates
       for await newLocation in streamer.locationUpdates() where !Task.isCancelled {
-        await MainActor.run {
-          self.location = newLocation
-          self.error = nil
-        }
+        location = newLocation
+        error = nil
       }
     }
   }
@@ -104,7 +102,6 @@ public class NearestAirportViewModel {
     }
 
     let capturedLocation = location
-    let container = self.container
 
     // Build predicate bounds on main thread (cheap math)
     let lat = capturedLocation.coordinate.latitude
@@ -129,48 +126,71 @@ public class NearestAirportViewModel {
     let maxResults = Self.maxResults
 
     fetchTask?.cancel()
-    fetchTask = Task.detached {
+    fetchTask = Task { [weak self] in
+      guard let self else { return }
       do {
-        let context = ModelContext(container)
-
-        let predicate: Predicate<Airport>
-        if wrapAround {
-          // Wrap-around case: split longitude range
-          predicate = #Predicate { airport in
-            airport._latitude >= clampedMinLat && airport._latitude <= clampedMaxLat
-              && (airport._longitude >= minLon || airport._longitude <= maxLon)
-          }
-        } else {
-          // Normal case: no wrap-around
-          predicate = #Predicate { airport in
-            airport._latitude >= clampedMinLat && airport._latitude <= clampedMaxLat
-              && airport._longitude >= minLon && airport._longitude <= maxLon
-          }
-        }
-
-        let descriptor = FetchDescriptor(predicate: predicate)
-        let unsortedAirports = try context.fetch(descriptor)
-
-        let sorted =
-          unsortedAirports
-          .map { ($0, capturedLocation.distance(from: $0.location)) }
-          .sorted { $0.1 < $1.1 }
-          .prefix(maxResults)
-          .map(\.0)
-
+        let sorted = try await fetchNearbyAirports(
+          from: capturedLocation,
+          minLat: clampedMinLat,
+          maxLat: clampedMaxLat,
+          minLon: minLon,
+          maxLon: maxLon,
+          wrapAround: wrapAround,
+          maxResults: maxResults
+        )
         guard !Task.isCancelled else { return }
-        await MainActor.run {
-          self.airports = sorted
-        }
+        airports = sorted
       } catch {
         guard !Task.isCancelled else { return }
-        await MainActor.run {
-          SentrySDK.capture(error: error) { scope in
-            scope.setFingerprint(["swiftData", "fetch"])
-          }
-          self.error = error
-        }
+        recordError(error)
       }
     }
+  }
+
+  /// Fetches and distance-sorts airports within the bounding box on a background
+  /// context.
+  @concurrent
+  private func fetchNearbyAirports(
+    from location: CLLocation,
+    minLat: Double,
+    maxLat: Double,
+    minLon: Double,
+    maxLon: Double,
+    wrapAround: Bool,
+    maxResults: Int
+  ) async throws -> sending [Airport] {
+    let context = ModelContext(container)
+
+    let predicate: Predicate<Airport>
+    if wrapAround {
+      // Wrap-around case: split longitude range
+      predicate = #Predicate { airport in
+        airport._latitude >= minLat && airport._latitude <= maxLat
+          && (airport._longitude >= minLon || airport._longitude <= maxLon)
+      }
+    } else {
+      // Normal case: no wrap-around
+      predicate = #Predicate { airport in
+        airport._latitude >= minLat && airport._latitude <= maxLat
+          && airport._longitude >= minLon && airport._longitude <= maxLon
+      }
+    }
+
+    let descriptor = FetchDescriptor(predicate: predicate)
+    let unsortedAirports = try context.fetch(descriptor)
+
+    return
+      unsortedAirports
+      .map { ($0, location.distance(from: $0.location)) }
+      .sorted { $0.1 < $1.1 }
+      .prefix(maxResults)
+      .map(\.0)
+  }
+
+  private func recordError(_ error: Error) {
+    SentrySDK.capture(error: error) { scope in
+      scope.setFingerprint(["swiftData", "fetch"])
+    }
+    self.error = error
   }
 }

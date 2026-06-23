@@ -129,25 +129,33 @@ public final class WeatherViewModel: WithIdentifiableError {
 
   private func setupObservation(container: ModelContainer) {
     let key = airportKey
-    defaultsTask = Task.detached { [weak self, container] in
+    defaultsTask = Task { [weak self, container] in
       for await airportID in Defaults.updates(key) where !Task.isCancelled {
         guard let self else { return }
         do {
-          let context = ModelContext(container)
-          let airport = try findAirport(for: airportID, in: context)
-          await MainActor.run {
-            self.airport = airport
-          }
+          self.airport = try await fetchAirport(for: airportID, container: container)
         } catch {
-          await MainActor.run {
-            SentrySDK.capture(error: error) { scope in
-              scope.setFingerprint(["swiftData", "fetch"])
-            }
-            self.error = error
-          }
+          recordError(error)
         }
       }
     }
+  }
+
+  /// Resolves the selected airport on a background context.
+  @concurrent
+  private func fetchAirport(
+    for airportID: String?,
+    container: ModelContainer
+  ) async throws -> sending Airport? {
+    let context = ModelContext(container)
+    return try findAirport(for: airportID, in: context)
+  }
+
+  private func recordError(_ error: Error) {
+    SentrySDK.capture(error: error) { scope in
+      scope.setFingerprint(["swiftData", "fetch"])
+    }
+    self.error = error
   }
 
   private func subscribe() {

@@ -1,13 +1,16 @@
 import CoreLocation
 import Foundation
+import Synchronization
 
 /// Shared geographic calculation utilities.
 public enum GeoCalculations {
-  /// Shared Geomagnetism instance for calculating magnetic variation.
-  /// Reused to avoid expensive initialization on each calculation.
-  /// Note: nonisolated(unsafe) is used because Geomagnetism doesn't conform to Sendable,
-  /// but in practice it's used safely with temporary instance state.
-  nonisolated(unsafe) private static let geomagnetism = Geomagnetism()
+  /// Shared ``Geomagnetism`` instance for calculating magnetic variation, reused to
+  /// avoid expensive re-initialization on each calculation.
+  ///
+  /// ``Geomagnetism/calculate(longitude:latitude:)`` mutates the instance's stored
+  /// `declination` before it is read back, so access is serialized through a `Mutex`
+  /// to keep ``calculateMagneticVariation(_:_:)`` safe to call from concurrent tasks.
+  private static let geomagnetism = Mutex(Geomagnetism())
 
   /// Calculates bearing between two points specified in arcseconds.
   /// - Parameters:
@@ -34,8 +37,10 @@ public enum GeoCalculations {
   public static func calculateMagneticVariation(_ latitudeDeg: Double, _ longitudeDeg: Double)
     -> Double
   {
-    geomagnetism.calculate(longitude: longitudeDeg, latitude: latitudeDeg)
-    return geomagnetism.declination
+    geomagnetism.withLock { geomagnetism in
+      geomagnetism.calculate(longitude: longitudeDeg, latitude: latitudeDeg)
+      return geomagnetism.declination
+    }
   }
 
   /// Calculates distance in nautical miles between two coordinates using the Haversine formula.

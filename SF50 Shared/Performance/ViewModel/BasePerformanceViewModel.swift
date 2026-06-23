@@ -150,35 +150,15 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     let airportKey = airportDefaultsKey
     let runwayKey = runwayDefaultsKey
     addTask(
-      Task.detached { [weak self, container] in
+      Task { [weak self] in
         for await (airportID, runwayID) in Defaults.updates(airportKey, runwayKey)
         where !Task.isCancelled {
           guard let self else { return }
           do {
-            let context = ModelContext(container)
-            let (fetchedAirport, fetchedRunway) = try findAirportAndRunway(
-              airportID: airportID,
-              runwayID: runwayID,
-              in: context
-            )
-            let airportPersistentID = fetchedAirport?.persistentModelID
-            let runwayPersistentID = fetchedRunway?.persistentModelID
-            await MainActor.run {
-              let mainContext = container.mainContext
-              let airport = airportPersistentID.flatMap { mainContext.model(for: $0) as? Airport }
-              let runway = runwayPersistentID.flatMap { mainContext.model(for: $0) as? Runway }
-              if airport == nil { Defaults[airportKey] = nil }
-              if runway == nil { Defaults[runwayKey] = nil }
-              self.airport = airport
-              self.runway = runway
-            }
+            let ids = try await fetchSelectionIDs(airportID: airportID, runwayID: runwayID)
+            applyObservedSelection(ids, airportKey: airportKey, runwayKey: runwayKey)
           } catch {
-            await MainActor.run {
-              SentrySDK.capture(error: error) { scope in
-                scope.setFingerprint(["swiftData", "fetch"])
-              }
-              self.error = error
-            }
+            recordObservationError(error)
           }
         }
       }
@@ -228,6 +208,44 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   private func addTask(_ task: Task<Void, Never>) {
     cancellables.insert(task)
+  }
+
+  /// Resolves the selected airport and runway on a background context, returning
+  /// only their `Sendable` persistent identifiers; the models are re-resolved
+  /// against the main context in ``applyObservedSelection(_:airportKey:runwayKey:)``.
+  @concurrent
+  private func fetchSelectionIDs(
+    airportID: String?,
+    runwayID: String?
+  ) async throws -> (airport: PersistentIdentifier?, runway: PersistentIdentifier?) {
+    let context = ModelContext(container)
+    let (fetchedAirport, fetchedRunway) = try findAirportAndRunway(
+      airportID: airportID,
+      runwayID: runwayID,
+      in: context
+    )
+    return (fetchedAirport?.persistentModelID, fetchedRunway?.persistentModelID)
+  }
+
+  private func applyObservedSelection(
+    _ ids: (airport: PersistentIdentifier?, runway: PersistentIdentifier?),
+    airportKey: Defaults.Key<String?>,
+    runwayKey: Defaults.Key<String?>
+  ) {
+    let mainContext = container.mainContext
+    let airport = ids.airport.flatMap { mainContext.model(for: $0) as? Airport }
+    let runway = ids.runway.flatMap { mainContext.model(for: $0) as? Runway }
+    if airport == nil { Defaults[airportKey] = nil }
+    if runway == nil { Defaults[runwayKey] = nil }
+    self.airport = airport
+    self.runway = runway
+  }
+
+  private func recordObservationError(_ error: Error) {
+    SentrySDK.capture(error: error) { scope in
+      scope.setFingerprint(["swiftData", "fetch"])
+    }
+    self.error = error
   }
 
   // MARK: - NOTAM Observation

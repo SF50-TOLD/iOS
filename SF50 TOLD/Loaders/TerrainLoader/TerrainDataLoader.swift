@@ -184,39 +184,47 @@ final class TerrainDataLoader: ObservableObject {
   /// runs on a background task so the main actor is never blocked.
   func refreshAvailableRegions() {
     let corrupted = corruptedRegions
-    Task.detached(priority: .userInitiated) { [self] in
-      var available = Set<TerrainRegion>()
-      var pendingDecompression = [TerrainRegion]()
+    Task { [weak self] in
+      guard let self else { return }
+      let scan = await scanAvailableRegions(excluding: corrupted)
 
-      for region in TerrainRegion.allCases where !corrupted.contains(region) {
-        if let url = decompressedFileURL(for: region),
-          FileManager.default.fileExists(atPath: url.path)
-        {
-          available.insert(region)
-        } else if let compressed = compressedFileURL(for: region),
-          FileManager.default.fileExists(atPath: compressed.path)
-        {
-          logger.info(
-            "Found BA-downloaded compressed file for \(region.rawValue), queuing decompression"
-          )
-          pendingDecompression.append(region)
-        }
-      }
+      availableRegions = scan.available
+      logger.info("Available terrain regions: \(scan.available.map(\.rawValue))")
 
-      await MainActor.run {
-        self.availableRegions = available
-        self.logger.info("Available terrain regions: \(available.map(\.rawValue))")
+      loadAvailableRegionsIntoService()
 
-        self.loadAvailableRegionsIntoService()
-
-        // Decompress any files left by the Background Assets extension
-        for region in pendingDecompression {
-          Task {
-            await self.decompressPendingDownload(for: region)
-          }
-        }
+      // Decompress any files left by the Background Assets extension
+      for region in scan.pendingDecompression {
+        Task { await self.decompressPendingDownload(for: region) }
       }
     }
+  }
+
+  /// Scans the terrain directory for decompressed regions and compressed files
+  /// left by the Background Assets extension.
+  @concurrent
+  private func scanAvailableRegions(
+    excluding corrupted: Set<TerrainRegion>
+  ) async -> (available: Set<TerrainRegion>, pendingDecompression: [TerrainRegion]) {
+    var available = Set<TerrainRegion>()
+    var pendingDecompression = [TerrainRegion]()
+
+    for region in TerrainRegion.allCases where !corrupted.contains(region) {
+      if let url = decompressedFileURL(for: region),
+        FileManager.default.fileExists(atPath: url.path)
+      {
+        available.insert(region)
+      } else if let compressed = compressedFileURL(for: region),
+        FileManager.default.fileExists(atPath: compressed.path)
+      {
+        logger.info(
+          "Found BA-downloaded compressed file for \(region.rawValue), queuing decompression"
+        )
+        pendingDecompression.append(region)
+      }
+    }
+
+    return (available, pendingDecompression)
   }
 
   /// Deletes terrain data files for a region from disk and clears all tracking state.
