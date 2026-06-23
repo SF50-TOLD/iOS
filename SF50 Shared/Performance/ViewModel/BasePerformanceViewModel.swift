@@ -45,7 +45,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   private let container: ModelContainer
   internal var model: PerformanceModel?
   private var cancellables: Set<Task<Void, Never>> = []
-  private var runwayNOTAMObservationTask: Task<Void, Never>?
+  private var notamObservationToken = UUID()
   internal let calculationService: PerformanceCalculationService
 
   // MARK: - Inputs (to be overridden or used by subclasses)
@@ -233,35 +233,30 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   // MARK: - NOTAM Observation
 
   private func setupRunwayNOTAMObservation() {
-    // Cancel any existing observation
-    runwayNOTAMObservationTask?.cancel()
-    runwayNOTAMObservationTask = nil
-
+    // Invalidate any observation registered for a previous runway selection.
+    notamObservationToken = UUID()
     guard runway != nil else { return }
+    observeNOTAMChanges(token: notamObservationToken)
+  }
 
-    // Poll for changes to the NOTAM's snapshot
-    runwayNOTAMObservationTask = Task { @MainActor [weak self] in
-      var lastSnapshot = self?.notam.map { NOTAMInput(from: $0) }
-      while !Task.isCancelled {
-        try? await Task.sleep(for: .milliseconds(500))
-        guard let self else { return }
-
-        // Access the current NOTAM (SwiftData should automatically fetch latest)
-        let currentSnapshot = notam.map { NOTAMInput(from: $0) }
-
-        // Compare snapshots to detect changes
-        if let last = lastSnapshot, let current = currentSnapshot {
-          if last != current {
-            lastSnapshot = currentSnapshot
-            model = initializeModel()
-            recalculate()
-          }
-        } else if lastSnapshot != nil || currentSnapshot != nil {
-          // NOTAM added or removed
-          lastSnapshot = currentSnapshot
-          model = initializeModel()
-          recalculate()
-        }
+  /// Recomputes performance whenever the selected runway's NOTAM changes.
+  ///
+  /// Observes the NOTAM with `withObservationTracking` rather than a recurring
+  /// timer. The previous 500ms poll faulted the runway's NOTAM through the main
+  /// context twice a second for the lifetime of the screen, contending with
+  /// other main-thread SwiftData access and contributing to launch-time app
+  /// hangs. Observation touches SwiftData on the main actor only when the NOTAM
+  /// actually changes — the same mechanism the NOTAM editing views rely on — and
+  /// re-arms itself after each change.
+  private func observeNOTAMChanges(token: UUID) {
+    withObservationTracking {
+      _ = notam.map { NOTAMInput(from: $0) }
+    } onChange: { [weak self] in
+      Task { @MainActor [weak self] in
+        guard let self, token == notamObservationToken else { return }
+        model = initializeModel()
+        recalculate()
+        observeNOTAMChanges(token: token)
       }
     }
   }
