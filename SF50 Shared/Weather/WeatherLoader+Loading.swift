@@ -13,7 +13,8 @@ extension WeatherLoader {
     .dnsLookupFailed,
     .cannotConnectToHost,
     .internationalRoamingOff,
-    .dataNotAllowed
+    .dataNotAllowed,
+    .secureConnectionFailed
   ]
 
   static func isNetworkCancellation(_ error: some Swift.Error) -> Bool {
