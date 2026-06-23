@@ -86,9 +86,17 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   private func statePollingTask() -> Task<Void, Never> {
     Task.detached { [weak self, container] in
       let context = ModelContext(container)
+      // Resolve the loader state at launch, then keep polling only while the
+      // loader is still needed (no data yet, or a download in progress). Once
+      // data is present and current the loader is dismissed and the poll
+      // stops, so it never contends with the main context's SwiftData access
+      // for the lifetime of the app — the dominant contributor to the
+      // launch-time main-thread hangs. The schema-version observer revives
+      // state when a reload becomes necessary.
       while !Task.isCancelled {
         guard let self else { return }
         await self.refreshState(from: context, fingerprint: "airportCheck")
+        guard await self.showLoader else { return }
         try? await Task.sleep(for: .seconds(0.5))
       }
     }
