@@ -46,7 +46,7 @@ struct ModelToggleView: View {
             )
           }
         }
-      }.font(.system(size: 11))
+      }.font(.footnote)
     }
   }
 }

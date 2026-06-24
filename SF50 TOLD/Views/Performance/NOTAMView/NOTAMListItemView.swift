@@ -10,7 +10,7 @@ struct NOTAMListItemView: View {
       // NOTAM ID and badges
       HStack {
         Text(notam.notamId)
-          .font(.system(size: 14, weight: .medium, design: .monospaced))
+          .font(.system(.subheadline, design: .monospaced).weight(.medium))
           .multilineTextAlignment(.leading)
 
         Spacer()
@@ -20,7 +20,7 @@ struct NOTAMListItemView: View {
 
       // NOTAM text - wrap instead of horizontal scroll
       Text(notam.notamText)
-        .font(.system(size: 12, weight: .regular, design: .monospaced))
+        .font(.system(.footnote, design: .monospaced))
         .fixedSize(horizontal: false, vertical: true)
 
       // Effective times

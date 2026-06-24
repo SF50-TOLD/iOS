@@ -74,7 +74,7 @@ struct NavDataView: View {
       if let cycle, let date = cycle.effectiveDate, let endDate = cycle.expirationDate {
         Text(date..<endDate, format: .interval.year().month().day())
           .foregroundStyle(.secondary)
-          .font(.system(size: 12))
+          .font(.caption)
       }
 
       // Processing UI

@@ -88,7 +88,7 @@ struct AboutView: View {
               "with Cirrus Perspective Touch Avionics System and FL280 Maximum Operating Altitude"
             )
             .bold()
-            .font(.system(size: 14))
+            .font(.subheadline)
           }
 
           LabeledContent("P/N") {
@@ -108,7 +108,7 @@ struct AboutView: View {
               "with Cirrus Perspective Touch+ Avionics System and FL310 Maximum Operating Altitude"
             )
             .bold()
-            .font(.system(size: 14))
+            .font(.subheadline)
           }
 
           LabeledContent("P/N") {
@@ -126,7 +126,7 @@ struct AboutView: View {
           LabeledContent("Serials") {
             Text("26000-004 or Compliance with SB5X-72-01")
               .bold()
-              .font(.system(size: 14))
+              .font(.subheadline)
           }
 
           LabeledContent("P/N") {
@@ -144,7 +144,7 @@ struct AboutView: View {
           "This app has not been approved by the FAA or by Cirrus Aircraft as an official source of performance information. Always verify performance information with official sources when using this app.",
           systemImage: "exclamationmark.triangle"
         )
-        .font(.system(size: 14))
+        .font(.footnote)
         .foregroundStyle(.secondary)
       }.navigationTitle("About")
     }

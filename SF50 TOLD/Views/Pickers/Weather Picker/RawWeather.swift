@@ -16,12 +16,12 @@ struct RawWeather: View {
       case .value(let rawText):
         ScrollView(.horizontal) {
           Text(rawText!)
-            .font(.system(size: 14, weight: .regular, design: .monospaced))
+            .font(.system(.subheadline, design: .monospaced))
             .multilineTextAlignment(.leading)
         }
       case .error(let error):
         Text(error.localizedDescription).foregroundStyle(.red)
-          .font(.system(size: 14))
+          .font(.subheadline)
           .multilineTextAlignment(.leading)
     }
   }

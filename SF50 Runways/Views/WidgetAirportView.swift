@@ -6,8 +6,7 @@ struct WidgetAirportView: View {
   var body: some View {
     if let name {
       Text(name)
-        .font(.system(size: 11))
-        .bold()
+        .font(.headline)
     } else {
       Text("Airport Name").redacted(reason: .placeholder)
     }

@@ -56,7 +56,7 @@ struct SettingsView: View {
               Text(
                 "Turn this setting on if your Vision Jet has SB5X-72-01 completed (G2+ equivalent)."
               )
-              .font(.system(size: 11))
+              .font(.footnote)
               .fixedSize(horizontal: false, vertical: true)
             }
           }

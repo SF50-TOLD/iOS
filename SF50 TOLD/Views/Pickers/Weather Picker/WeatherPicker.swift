@@ -32,7 +32,7 @@ struct WeatherPicker: View {
         if let densityAltitude {
           Text("Density altitude: \(densityAltitude.converted(to: heightUnit), format: .height)")
             .foregroundStyle(.secondary)
-            .font(.system(size: 14))
+            .font(.subheadline)
         }
       }
     }.navigationTitle("Weather")
