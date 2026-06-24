@@ -15,27 +15,31 @@ class BasePage {
     element.forceTap()
   }
 
-  /// Nudge content to make an element hittable.
-  /// Handles iOS 26 Liquid Glass nav bar/tab bar overlaying elements.
+  /// Nudge content so an element sits clear of the iOS 26 Liquid Glass bars.
+  ///
+  /// The translucent glass nav bar and floating tab bar report an element that
+  /// underlaps them as `isHittable`, yet a tap there is swallowed by the bar.
+  /// So scroll on the element's POSITION into a safe middle band rather than
+  /// trusting `isHittable`, which keeps taps from landing on the bars.
   func ensureHittable(_ element: XCUIElement) {
-    guard element.exists, !element.isHittable else { return }
+    guard element.exists else { return }
     let collectionView = app.collectionViews.firstMatch
     guard collectionView.exists else { return }
     let windowHeight = app.windows.firstMatch.frame.height
 
     for _ in 0..<5 {
-      if element.frame.minY < windowHeight * 0.35 {
+      if element.frame.minY < windowHeight * 0.20 {
         let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
         let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
         start.press(forDuration: 0.01, thenDragTo: end)
-      } else if element.frame.maxY > windowHeight * 0.70 {
+      } else if element.frame.maxY > windowHeight * 0.66 {
         let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
         let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
         start.press(forDuration: 0.01, thenDragTo: end)
       } else {
-        break
+        return
       }
-      if element.isHittable || !element.exists { return }
+      if !element.exists { return }
     }
   }
 

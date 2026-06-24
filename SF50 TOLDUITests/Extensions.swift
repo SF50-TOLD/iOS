@@ -103,10 +103,19 @@ func tapAndEnsureNavigation(
   ]
 
   for strategy in strategies {
-    guard element.exists else { return }
+    if expectedElement.exists { return }
+    // Once the source element is gone the tap has already navigated; stop tapping
+    // and fall through to the final wait so a slow-rendering destination is not
+    // abandoned mid-transition.
+    guard element.exists else { break }
     strategy(element)
     if expectedElement.waitForExistence(timeout: ScaledTimeouts.scaled(timeout)) { return }
   }
+
+  // A tap can navigate even though the destination has not yet appeared within a
+  // per-strategy window — the destination view sometimes renders slower than
+  // `timeout` under simulator load. Give it a final, generous wait before giving up.
+  _ = expectedElement.waitForExistence(timeout: ScaledTimeouts.scaled(timeout * 2))
 }
 
 extension XCUIApplication {

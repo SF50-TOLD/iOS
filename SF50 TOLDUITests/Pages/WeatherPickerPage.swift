@@ -1,5 +1,6 @@
 // swiftlint:disable prefer_nimble
 import XCTest
+import XCUITestKit
 
 final class WeatherPickerPage: BasePage {
 
@@ -11,6 +12,20 @@ final class WeatherPickerPage: BasePage {
   var altimeterField: XCUIElement { app.textFields["altimeterField"] }
 
   // MARK: - Actions
+
+  /// Reveals the editable weather form by cancelling any in-progress fetch.
+  ///
+  /// ``WeatherPicker`` hides the customize form behind a loading indicator until
+  /// the weather fetch settles; that fetch can stall under simulator network
+  /// conditions, so cancel it to surface the fields the tests drive.
+  func dismissInProgressLoad() {
+    if windDirectionField.exists { return }
+    let cancelButton = app.buttons["cancelWeatherUpdateButton"]
+    if cancelButton.waitForExistence(timeout: ScaledTimeouts.scaled(3)) {
+      cancelButton.forceTap()
+    }
+    _ = windDirectionField.waitForExistence(timeout: ScaledTimeouts.scaled(10))
+  }
 
   func setWindDirection(_ value: String) {
     let field = scrollToElement(windDirectionField)

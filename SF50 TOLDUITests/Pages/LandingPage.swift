@@ -110,7 +110,9 @@ final class LandingPage: BasePage {
     XCTAssertNotNil(selector, "Weather selector should be accessible")
     let windField = app.textFields["windDirectionField"].firstMatch
     tapAndEnsureNavigation(element: selector!, expectedElement: windField)
-    return WeatherPickerPage(app: app)
+    let weatherPicker = WeatherPickerPage(app: app)
+    weatherPicker.dismissInProgressLoad()
+    return weatherPicker
   }
 
   func openNOTAMs() -> NOTAMPage {

@@ -813,12 +813,12 @@ final class SF50_TOLDUITests: XCTestCase {
     settings2.selectTimeZone("UTC")
 
     let takeoff2 = tabBar.goToTakeoff()
-    // On iPhone SE, scroll up to ensure Payload field is visible
-    takeoff2.app.scrollToTop()
-    XCTAssertTrue(
-      tabBar.app.textFields["Payload"].waitForExistence(timeout: 5),
-      "Should still be on Takeoff tab"
-    )
+    // The Takeoff form can retain a scrolled-down position from the earlier
+    // visit, and a SwiftUI List does not reliably honor a status-bar
+    // scroll-to-top, so scroll directly to the Payload field to confirm the
+    // Takeoff tab is showing.
+    let payloadField = takeoff2.scrollToElement(takeoff2.payloadField)
+    XCTAssertNotNil(payloadField, "Should still be on Takeoff tab")
   }
 
   // MARK: - New Tests

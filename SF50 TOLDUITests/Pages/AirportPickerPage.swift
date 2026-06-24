@@ -31,16 +31,8 @@ final class AirportPickerPage: BasePage {
   // MARK: - Actions
 
   func search(for query: String) {
+    revealSearchField()
     let searchField = app.searchFields.firstMatch
-
-    // On iOS 26, .searchable renders at the bottom in compact form.
-    // It may need a swipe-up or tap to expand.
-    if !searchField.waitForExistence(timeout: 5) {
-      // Try scrolling to reveal the search field
-      app.swipeUp()
-      _ = searchField.waitForExistence(timeout: 3)
-    }
-
     XCTAssertTrue(searchField.exists, "Search field should appear")
 
     // Tap the search field and wait for keyboard to gain focus
@@ -50,6 +42,28 @@ final class AirportPickerPage: BasePage {
     }
 
     searchField.typeText(query)
+  }
+
+  /// Surfaces the `.searchable` text field, whose presentation depends on size class.
+  ///
+  /// In compact width (iPhone) the field is inline and may sit offscreen, so a
+  /// swipe-up reveals it. In regular width (iPad) it collapses into a
+  /// navigation-bar search button that must be tapped to expand into the field.
+  private func revealSearchField() {
+    let searchField = app.searchFields.firstMatch
+    if searchField.waitForExistence(timeout: 5) { return }
+
+    // Retry to absorb the slow Liquid Glass nav-bar settle under full-suite
+    // load, during which the collapsed search button is briefly unhittable.
+    for _ in 0..<3 {
+      let searchButton = app.navigationBars.buttons["Search"].firstMatch
+      if searchButton.exists {
+        if waitForHittable(searchButton, timeout: 3) { forceTap(searchButton) }
+      } else {
+        app.swipeUp()
+      }
+      if searchField.waitForExistence(timeout: 3) { return }
+    }
   }
 
   func selectAirport(_ identifier: String) {
