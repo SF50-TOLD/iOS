@@ -39,6 +39,8 @@ struct TerrainDataStatusButton: View {
         hasIssue
           ? String(localized: "Incomplete data") : String(localized: "Up-to-date data")
       )
+      .contentTransition(.symbolEffect)
+      .animation(.snappy, value: hasIssue)
     }
     .sheet(isPresented: $showingSheet) {
       NavigationStack {

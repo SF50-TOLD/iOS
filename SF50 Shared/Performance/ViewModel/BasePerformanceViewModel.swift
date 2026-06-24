@@ -45,7 +45,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   private let container: ModelContainer
   internal var model: PerformanceModel?
   private var cancellables: Set<Task<Void, Never>> = []
-  private var notamObservationToken = UUID()
+  private var notamObservationTask: Task<Void, Never>?
   internal let calculationService: PerformanceCalculationService
 
   // MARK: - Inputs (to be overridden or used by subclasses)
@@ -250,31 +250,39 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   // MARK: - NOTAM Observation
 
-  private func setupRunwayNOTAMObservation() {
-    // Invalidate any observation registered for a previous runway selection.
-    notamObservationToken = UUID()
-    guard runway != nil else { return }
-    observeNOTAMChanges(token: notamObservationToken)
-  }
-
   /// Recomputes performance whenever the selected runway's NOTAM changes.
   ///
-  /// Observes the NOTAM with `withObservationTracking` rather than a recurring
-  /// timer. The previous 500ms poll faulted the runway's NOTAM through the main
-  /// context twice a second for the lifetime of the screen, contending with
-  /// other main-thread SwiftData access and contributing to launch-time app
-  /// hangs. Observation touches SwiftData on the main actor only when the NOTAM
-  /// actually changes — the same mechanism the NOTAM editing views rely on — and
-  /// re-arms itself after each change.
-  private func observeNOTAMChanges(token: UUID) {
-    withObservationTracking {
-      _ = notam.map { NOTAMInput(from: $0) }
-    } onChange: { [weak self] in
-      Task { @MainActor [weak self] in
-        guard let self, token == notamObservationToken else { return }
+  /// Spawns a dedicated task that iterates an `Observations` async sequence whose
+  /// emit closure reads the selected runway's NOTAM. Each time any tracked NOTAM
+  /// property changes, the sequence emits the new snapshot and performance is
+  /// recomputed on the main actor — the same dependency set the NOTAM editing
+  /// views observe. The first emission is the current value and is skipped,
+  /// because the recompute for the initial selection is already driven by
+  /// ``runway``'s `didSet`.
+  ///
+  /// The loop re-acquires `self` weakly on each element, so it holds no strong
+  /// reference across the sequence's suspension points and the view model stays
+  /// deallocatable; deallocation cancels the task through `deinit`.
+  private func setupRunwayNOTAMObservation() {
+    notamObservationTask?.cancel()
+    guard runway != nil else {
+      notamObservationTask = nil
+      return
+    }
+    notamObservationTask = Task { [weak self] in
+      let changes = Observations { [weak self] () -> NOTAMInput? in
+        guard let self else { return nil }
+        return notam.map { NOTAMInput(from: $0) }
+      }
+      var isFirstEmission = true
+      for await _ in changes where !Task.isCancelled {
+        guard let self else { return }
+        guard !isFirstEmission else {
+          isFirstEmission = false
+          continue
+        }
         model = initializeModel()
         recalculate()
-        observeNOTAMChanges(token: token)
       }
     }
   }
@@ -474,4 +482,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   open func recalculate() {  // swiftlint:disable:this unavailable_function
     fatalError("Subclasses must override recalculate()")
   }
+
+  // MARK: - Deinitialization
+
+  isolated deinit { notamObservationTask?.cancel() }
 }

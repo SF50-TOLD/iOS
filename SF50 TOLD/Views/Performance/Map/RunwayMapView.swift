@@ -222,7 +222,6 @@ struct RunwayMapView: View {
     .mapStyle(.imagery(elevation: .realistic))
     .navigationTitle("Runway \(runway.name)")
     .navigationBarTitleDisplayMode(.inline)
-    .toolbarBackground(.visible, for: .navigationBar)
     .onAppear {
       setupCamera()
     }
