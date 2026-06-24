@@ -15,7 +15,7 @@ struct HTMLReportViewer: View {
   @State private var isGeneratingPDF = false
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       HTMLWebView(htmlContent: htmlContent, webView: $webView, onLoadComplete: generatePDF)
         .navigationTitle(reportTitle)
         .navigationBarTitleDisplayMode(.inline)

@@ -1,14 +1,9 @@
+import BackgroundTasks
 import SF50_Shared
 import Sentry
 import SwiftData
 import SwiftUI
 import WidgetKit
-
-#if canImport(UIKit)
-  @MainActor let navigationStyle = StackNavigationViewStyle()
-#else
-  @MainActor let navigationStyle = DefaultNavigationViewStyle()
-#endif
 
 // periphery:ignore - side-effect-only observer retained by @StateObject below
 private class WidgetReloadObserver: ObservableObject {
@@ -77,6 +72,9 @@ struct SF50_TOLDApp: App {
   // periphery:ignore - side-effect-only observer; retained for its lifetime, never read
   @StateObject private var widgetReloadObserver = WidgetReloadObserver()
 
+  @Environment(\.scenePhase)
+  private var scenePhase
+
   var body: some Scene {
     WindowGroup {
       ContentView()
@@ -85,6 +83,14 @@ struct SF50_TOLDApp: App {
           await ScenarioSeeder(container: sharedModelContainer).seedDefaultScenariosIfNeeded()
           _ = TerrainDataLoader.shared
         }
+    }
+    .backgroundTask(.appRefresh(BackgroundRefreshScheduler.appRefreshIdentifier)) {
+      await BackgroundRefreshScheduler.shared.handleAppRefresh()
+    }
+    .onChange(of: scenePhase) { _, newPhase in
+      if newPhase == .background {
+        BackgroundRefreshScheduler.shared.scheduleAppRefresh()
+      }
     }
   }
 

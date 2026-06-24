@@ -8,6 +8,9 @@ import SwiftData
 /// wind speed, weight, flap settings, and runway contamination.
 @Model
 public final class Scenario {
+  /// Accelerates ``ScenarioFetcher`` queries that filter on ``_operation`` and sort by ``name``.
+  #Index<Scenario>([\._operation, \.name])
+
   /// Scenario name
   public var name: String
 

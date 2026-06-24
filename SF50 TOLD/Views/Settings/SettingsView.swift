@@ -39,7 +39,7 @@ struct SettingsView: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       Form {
         Section("Aircraft") {
           Picker("Aircraft Model", selection: aircraftTypeSettingBinding) {
@@ -134,7 +134,7 @@ struct SettingsView: View {
             .accessibilityIdentifier("terrainNavigationLink")
         }
       }.navigationTitle("Settings")
-    }.navigationViewStyle(navigationStyle)
+    }
   }
 
   private var aircraftTypeSettingBinding: Binding<AircraftTypeSetting> {

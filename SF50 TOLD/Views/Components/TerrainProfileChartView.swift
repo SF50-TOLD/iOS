@@ -1,3 +1,4 @@
+import Accessibility
 import Charts
 import SF50_Shared
 import SwiftUI
@@ -41,6 +42,16 @@ struct TerrainProfileChartView: View {
       }
     }
     .accessibilityIdentifier("terrainProfileChart")
+    .accessibilityChartDescriptor(
+      TerrainProfileChartDescriptor(
+        distancesNM: chartPoints.map(\.distanceNM),
+        aircraftAltitudesFt: chartPoints.map(\.aircraftAltitudeFt),
+        terrainAltitudesFt: filledTerrainFt,
+        fieldElevationFt: fieldElevationFt,
+        maxDistanceNM: maxDistanceNM,
+        maxAltitudeFt: maxAltitudeFt
+      )
+    )
   }
 
   // MARK: - Layers
@@ -319,6 +330,84 @@ struct TerrainProfileChartView: View {
         p.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
         p.closeSubpath()
       }
+    }
+  }
+
+  /// Maps the terrain profile's two altitude-vs-distance series into an
+  /// `AXChartDescriptor` so VoiceOver users can play an audio graph of the
+  /// climb path and underlying terrain.
+  private struct TerrainProfileChartDescriptor: AXChartDescriptorRepresentable {
+    /// Minimum width applied to a degenerate (equal-bound) axis range so the
+    /// audio graph spans a non-zero interval rather than collapsing to a point.
+    private static let minimumAxisSpan = 1.0
+
+    let distancesNM: [Double]
+    let aircraftAltitudesFt: [Double]
+    let terrainAltitudesFt: [Double]
+    let fieldElevationFt: Double
+    let maxDistanceNM: Double
+    let maxAltitudeFt: Double
+
+    private var distanceAxis: AXNumericDataAxisDescriptor {
+      AXNumericDataAxisDescriptor(
+        title: String(localized: "Distance (NM)"),
+        range: nonDegenerateRange(lowerBound: 0, upperBound: maxDistanceNM),
+        gridlinePositions: [],
+        valueDescriptionProvider: { distanceNM in
+          distanceNM.formatted(.number.precision(.fractionLength(0...1)))
+        }
+      )
+    }
+
+    private var altitudeAxis: AXNumericDataAxisDescriptor {
+      AXNumericDataAxisDescriptor(
+        title: String(localized: "Altitude MSL (ft)"),
+        range: nonDegenerateRange(lowerBound: fieldElevationFt, upperBound: maxAltitudeFt),
+        gridlinePositions: [],
+        valueDescriptionProvider: { altitudeFt in
+          Measurement(value: altitudeFt, unit: UnitLength.feet)
+            .formatted(.measurement(width: .abbreviated, usage: .asProvided))
+        }
+      )
+    }
+
+    private var climbPathSeries: AXDataSeriesDescriptor {
+      AXDataSeriesDescriptor(
+        name: String(localized: "Climb path"),
+        isContinuous: true,
+        dataPoints: zip(distancesNM, aircraftAltitudesFt).map { distanceNM, altitudeFt in
+          AXDataPoint(x: distanceNM, y: altitudeFt)
+        }
+      )
+    }
+
+    private var terrainSeries: AXDataSeriesDescriptor {
+      AXDataSeriesDescriptor(
+        name: String(localized: "Terrain"),
+        isContinuous: true,
+        dataPoints: zip(distancesNM, terrainAltitudesFt).map { distanceNM, terrainFt in
+          AXDataPoint(x: distanceNM, y: terrainFt)
+        }
+      )
+    }
+
+    func makeChartDescriptor() -> AXChartDescriptor {
+      AXChartDescriptor(
+        title: String(localized: "Terrain Profile"),
+        summary: String(localized: "Aircraft climb path and terrain elevation versus distance."),
+        xAxis: distanceAxis,
+        yAxis: altitudeAxis,
+        series: [climbPathSeries, terrainSeries]
+      )
+    }
+
+    /// Returns a closed range widened to ``minimumAxisSpan`` when the bounds are
+    /// equal, avoiding a zero-width audio-graph axis on degenerate paths.
+    private func nonDegenerateRange(lowerBound: Double, upperBound: Double) -> ClosedRange<Double> {
+      guard upperBound > lowerBound else {
+        return lowerBound...(lowerBound + Self.minimumAxisSpan)
+      }
+      return lowerBound...upperBound
     }
   }
 }

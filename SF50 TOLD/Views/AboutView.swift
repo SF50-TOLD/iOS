@@ -41,7 +41,7 @@ struct AboutView: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       Form {
         Section("Application") {
           LabeledContent("Aircraft") {
@@ -147,7 +147,7 @@ struct AboutView: View {
         .font(.system(size: 14))
         .foregroundStyle(.secondary)
       }.navigationTitle("About")
-    }.navigationViewStyle(navigationStyle)
+    }
   }
 }
 
