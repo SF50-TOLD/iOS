@@ -43,6 +43,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   private static let logger = Logger(label: "codes.tim.SF50-TOLD.BasePerformanceViewModel")
 
   private let container: ModelContainer
+  private let notamLoader: any NOTAMLoaderProtocol
   internal var model: PerformanceModel?
   private var cancellables: Set<Task<Void, Never>> = []
   private var notamObservationTask: Task<Void, Never>?
@@ -126,10 +127,12 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   public init(
     container: ModelContainer,
     calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared,
+    notamLoader: (any NOTAMLoaderProtocol)? = nil,
     defaultFlapSetting: FlapSetting
   ) {
     self.container = container
     self.calculationService = calculationService
+    self.notamLoader = notamLoader ?? NOTAMLoader.shared
 
     // temporary values, overwritten by recalculate()
     model = nil
@@ -318,15 +321,15 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       let endDate = Calendar.current.date(byAdding: .day, value: 30, to: plannedTime)
 
       // Try primary identifier first
-      var response = try await NOTAMLoader.shared.fetchNOTAMs(
+      var notams = try await notamLoader.fetchNOTAMs(
         for: primaryIdentifier,
         startDate: startDate,
         endDate: endDate
       )
 
       // If no results and we have a fallback identifier, try that
-      if response.data.isEmpty, let fallbackIdentifier, fallbackIdentifier != primaryIdentifier {
-        response = try await NOTAMLoader.shared.fetchNOTAMs(
+      if notams.isEmpty, let fallbackIdentifier, fallbackIdentifier != primaryIdentifier {
+        notams = try await notamLoader.fetchNOTAMs(
           for: fallbackIdentifier,
           startDate: startDate,
           endDate: endDate
@@ -337,10 +340,10 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       await NOTAMCache.shared.invalidate(for: primaryIdentifier)
 
       // Cache the new results
-      await NOTAMCache.shared.set(response.data, for: primaryIdentifier)
+      await NOTAMCache.shared.set(notams, for: primaryIdentifier)
 
       // Filter for relevant NOTAMs
-      downloadedNOTAMs = filterNOTAMs(response.data, relativeTo: plannedTime)
+      downloadedNOTAMs = filterNOTAMs(notams, relativeTo: plannedTime)
 
       // Mark that we've attempted to fetch NOTAMs
       hasAttemptedNOTAMFetch = true

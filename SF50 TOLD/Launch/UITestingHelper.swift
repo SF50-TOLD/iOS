@@ -9,6 +9,11 @@ enum UITestingHelper {
     return UITestingWeatherLoader()
   }
 
+  static var notamLoader: (any NOTAMLoaderProtocol)? {
+    guard ProcessInfo.processInfo.arguments.contains("UI-TESTING") else { return nil }
+    return UITestingNOTAMLoader()
+  }
+
   static func setupUITestingEnvironment(container: ModelContainer) {
     // Reset all defaults
     Defaults.removeAll(suite: UserDefaults(suiteName: "group.codes.tim.TOLD")!)

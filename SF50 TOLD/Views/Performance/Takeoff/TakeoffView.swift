@@ -29,7 +29,10 @@ struct TakeoffView: View {
     .withErrorSheet(state: performance)
     .onAppear {
       if performance == nil {
-        performance = .init(container: modelContext.container)
+        performance = .init(
+          container: modelContext.container,
+          notamLoader: UITestingHelper.notamLoader
+        )
       }
       if weather == nil {
         weather = .init(

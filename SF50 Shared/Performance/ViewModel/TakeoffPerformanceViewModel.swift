@@ -99,7 +99,8 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
 
   public init(
     container: ModelContainer,
-    calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared
+    calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared,
+    notamLoader: (any NOTAMLoaderProtocol)? = nil
   ) {
     takeoffRun = .notAvailable
     takeoffDistance = .notAvailable
@@ -109,6 +110,7 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
     super.init(
       container: container,
       calculationService: calculationService,
+      notamLoader: notamLoader,
       defaultFlapSetting: .flaps50
     )
   }

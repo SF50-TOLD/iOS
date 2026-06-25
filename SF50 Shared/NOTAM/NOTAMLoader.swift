@@ -2,6 +2,22 @@ import Foundation
 import Logging
 import Sentry
 
+/// Abstracts NOTAM retrieval so callers can inject deterministic data — notably
+/// to keep UI tests off the network.
+public protocol NOTAMLoaderProtocol: Actor {
+  /// Fetches NOTAMs for an airport over an effective-date range.
+  /// - Parameters:
+  ///   - icao: The airport identifier to query.
+  ///   - startDate: Optional start of the effective-date filter.
+  ///   - endDate: Optional end of the effective-date filter.
+  /// - Returns: The matching NOTAMs.
+  func fetchNOTAMs(
+    for icao: String,
+    startDate: Date?,
+    endDate: Date?
+  ) async throws -> [NOTAMResponse]
+}
+
 /**
  * Actor responsible for fetching NOTAM data from the NOTAM API.
  *
@@ -42,7 +58,7 @@ import Sentry
  * }
  * ```
  */
-public actor NOTAMLoader {
+public actor NOTAMLoader: NOTAMLoaderProtocol {
   /// Shared singleton instance
   public static let shared = NOTAMLoader()
 
@@ -110,6 +126,27 @@ public actor NOTAMLoader {
         "NOTAM API configuration not found in bundle. Using defaults. API calls will fail."
       )
     }
+  }
+
+  /// Fetches NOTAMs for an airport over an effective-date range.
+  ///
+  /// Satisfies ``NOTAMLoaderProtocol`` by forwarding to
+  /// ``fetchNOTAMs(for:startDate:endDate:purpose:scope:limit:offset:)`` with
+  /// default filters and returning just the NOTAM entries.
+  public func fetchNOTAMs(
+    for icao: String,
+    startDate: Date?,
+    endDate: Date?
+  ) async throws -> [NOTAMResponse] {
+    try await fetchNOTAMs(
+      for: icao,
+      startDate: startDate,
+      endDate: endDate,
+      purpose: nil,
+      scope: nil,
+      limit: 100,
+      offset: 0
+    ).data
   }
 
   /// Fetches NOTAMs for a specific ICAO location.

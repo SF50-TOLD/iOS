@@ -78,7 +78,8 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
 
   public init(
     container: ModelContainer,
-    calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared
+    calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared,
+    notamLoader: (any NOTAMLoaderProtocol)? = nil
   ) {
     Vref = .notAvailable
     landingRun = .notAvailable
@@ -88,6 +89,7 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
     super.init(
       container: container,
       calculationService: calculationService,
+      notamLoader: notamLoader,
       defaultFlapSetting: .flaps100
     )
   }
