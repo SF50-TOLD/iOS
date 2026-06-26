@@ -4,6 +4,10 @@ import SF50_Shared
 import SwiftData
 
 enum UITestingHelper {
+  static var isUITesting: Bool {
+    ProcessInfo.processInfo.arguments.contains("UI-TESTING")
+  }
+
   static var weatherLoader: (any WeatherLoaderProtocol)? {
     guard ProcessInfo.processInfo.arguments.contains("UI-TESTING") else { return nil }
     return UITestingWeatherLoader()
