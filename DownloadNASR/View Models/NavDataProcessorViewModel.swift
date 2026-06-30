@@ -34,20 +34,12 @@ private struct ActorLogHandler: LogHandler {
   var logLevel: Logger.Level = .notice
   var metadata: Logger.Metadata = [:]
 
-  func log(
-    level: Logger.Level,
-    message: Logger.Message,
-    metadata: Logger.Metadata?,
-    source _: String,
-    file _: String,
-    function _: String,
-    line _: UInt
-  ) {
-    guard level >= logLevel else { return }
+  func log(event: LogEvent) {
+    guard event.level >= logLevel else { return }
 
     var mergedMetadata = self.metadata
-    if let metadata {
-      mergedMetadata.merge(metadata) { _, new in new }
+    if let eventMetadata = event.metadata {
+      mergedMetadata.merge(eventMetadata) { _, new in new }
     }
 
     // Convert Logger.Metadata to [String: String] for Sendable conformance
@@ -56,8 +48,8 @@ private struct ActorLogHandler: LogHandler {
 
     let entry = LogEntry(
       timestamp: Date(),
-      level: level,
-      message: message.description,
+      level: event.level,
+      message: event.message.description,
       metadata: sendableMetadata
     )
 
