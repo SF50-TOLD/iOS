@@ -37,21 +37,21 @@ struct WeatherSource: View {
         switch weather.conditions.source {
           case .NWS, .augmented:
             Text("Using downloaded weather from NWS")
-              .font(.system(size: 14))
+              .font(.subheadline)
           case .WeatherKit:
             Text("Using downloaded weather from Apple Weather")
-              .font(.system(size: 14))
+              .font(.subheadline)
           case .entered:
             Text("Using your custom weather")
-              .font(.system(size: 14))
+              .font(.subheadline)
           case .ISA:
             if weather.error != nil {
               Text("Couldn’t load weather — using ISA")
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.red)
             } else {
               Text("Using ISA weather")
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             }
         }

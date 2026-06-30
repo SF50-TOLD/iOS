@@ -110,7 +110,7 @@ private struct LoadedWeatherRow: View {
       .foregroundStyle(DAColor)
     }
     .labelStyle(CompactLabelStyle())
-    .font(.system(size: 14))
+    .font(.subheadline)
     .accessibilityIdentifier("weatherSummary")
   }
 }

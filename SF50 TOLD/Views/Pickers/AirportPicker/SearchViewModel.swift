@@ -68,56 +68,59 @@ final class SearchViewModel: WithIdentifiableError {
     isLoading = true
     let searchTextCopy = searchText
 
-    Task.detached { [container] in
-      let context = ModelContext(container)
-      let uppercaseText = searchTextCopy.uppercased()
-
-      let predicate = #Predicate<Airport> { airport in
-        airport.locationID == uppercaseText
-          || airport.name.localizedStandardContains(searchTextCopy)
-          || airport.ICAO_ID == uppercaseText
-          || airport.city?.localizedStandardContains(searchTextCopy) == true
-      }
-
-      let descriptor = FetchDescriptor(predicate: predicate)
-
+    Task { [weak self] in
+      guard let self else { return }
       do {
-        let results = try context.fetch(descriptor)
-
-        // Pre-compute scores on background thread to avoid redundant
-        // computation in sort comparator (O(n) vs O(n log n) calls)
-        let scored: [(airport: Airport, relevance: Int, similarity: Double)] = results.map {
-          airport in
-          let relevance = Self.relevanceScore(for: airport, searchText: searchTextCopy)
-          let nameSim = Self.nameSimilarity(airport.name, to: searchTextCopy)
-          let citySim = Self.citySimilarity(airport.city, to: searchTextCopy)
-          return (airport: airport, relevance: relevance, similarity: max(nameSim, citySim))
-        }
-
-        let sorted = scored.sorted { a, b in
-          if a.relevance != b.relevance { return a.relevance > b.relevance }
-          if a.similarity != b.similarity { return a.similarity > b.similarity }
-          return a.airport.name.localizedStandardCompare(b.airport.name) == .orderedAscending
-        }
-
-        let topResults = Array(sorted.prefix(10).map(\.airport))
-
-        await MainActor.run {
-          // Only update if search text hasn't changed
-          if searchTextCopy == self.searchText {
-            self.sortedAirports = topResults
-            self.isLoading = false
-            self.error = nil
-          }
-        }
+        let topResults = try await searchAirports(matching: searchTextCopy)
+        // Only update if search text hasn't changed
+        guard searchTextCopy == searchText else { return }
+        sortedAirports = topResults
+        isLoading = false
+        error = nil
       } catch {
-        await MainActor.run {
-          SentrySDK.capture(error: error)
-          self.sortedAirports = []
-          self.isLoading = false
-          self.error = error
-        }
+        SentrySDK.capture(error: error)
+        sortedAirports = []
+        isLoading = false
+        self.error = error
       }
     }
+  }
+
+  /// Fetches and relevance-ranks airports matching the query on a background
+  /// context.
+  @concurrent
+  private func searchAirports(matching searchText: String) async throws
+    -> sending [Airport]
+  {
+    let context = ModelContext(container)
+    let uppercaseText = searchText.uppercased()
+
+    let predicate = #Predicate<Airport> { airport in
+      airport.locationID == uppercaseText
+        || airport.name.localizedStandardContains(searchText)
+        || airport.ICAO_ID == uppercaseText
+        || airport.city?.localizedStandardContains(searchText) == true
+    }
+
+    let descriptor = FetchDescriptor(predicate: predicate)
+    let results = try context.fetch(descriptor)
+
+    // Pre-compute scores off the main actor to avoid redundant computation in
+    // the sort comparator (O(n) vs O(n log n) calls)
+    let scored: [(airport: Airport, relevance: Int, similarity: Double)] = results.map {
+      airport in
+      let relevance = Self.relevanceScore(for: airport, searchText: searchText)
+      let nameSim = Self.nameSimilarity(airport.name, to: searchText)
+      let citySim = Self.citySimilarity(airport.city, to: searchText)
+      return (airport: airport, relevance: relevance, similarity: max(nameSim, citySim))
+    }
+
+    let sorted = scored.sorted { a, b in
+      if a.relevance != b.relevance { return a.relevance > b.relevance }
+      if a.similarity != b.similarity { return a.similarity > b.similarity }
+      return a.airport.name.localizedStandardCompare(b.airport.name) == .orderedAscending
+    }
+
+    return Array(sorted.prefix(10).map(\.airport))
   }
 }

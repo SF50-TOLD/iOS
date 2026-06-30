@@ -46,7 +46,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   private let notamLoader: any NOTAMLoaderProtocol
   internal var model: PerformanceModel?
   private var cancellables: Set<Task<Void, Never>> = []
-  private var notamObservationToken = UUID()
+  private var notamObservationTask: Task<Void, Never>?
   internal let calculationService: PerformanceCalculationService
 
   // MARK: - Inputs (to be overridden or used by subclasses)
@@ -153,35 +153,15 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     let airportKey = airportDefaultsKey
     let runwayKey = runwayDefaultsKey
     addTask(
-      Task.detached { [weak self, container] in
+      Task { [weak self] in
         for await (airportID, runwayID) in Defaults.updates(airportKey, runwayKey)
         where !Task.isCancelled {
           guard let self else { return }
           do {
-            let context = ModelContext(container)
-            let (fetchedAirport, fetchedRunway) = try findAirportAndRunway(
-              airportID: airportID,
-              runwayID: runwayID,
-              in: context
-            )
-            let airportPersistentID = fetchedAirport?.persistentModelID
-            let runwayPersistentID = fetchedRunway?.persistentModelID
-            await MainActor.run {
-              let mainContext = container.mainContext
-              let airport = airportPersistentID.flatMap { mainContext.model(for: $0) as? Airport }
-              let runway = runwayPersistentID.flatMap { mainContext.model(for: $0) as? Runway }
-              if airport == nil { Defaults[airportKey] = nil }
-              if runway == nil { Defaults[runwayKey] = nil }
-              self.airport = airport
-              self.runway = runway
-            }
+            let ids = try await fetchSelectionIDs(airportID: airportID, runwayID: runwayID)
+            applyObservedSelection(ids, airportKey: airportKey, runwayKey: runwayKey)
           } catch {
-            await MainActor.run {
-              SentrySDK.capture(error: error) { scope in
-                scope.setFingerprint(["swiftData", "fetch"])
-              }
-              self.error = error
-            }
+            recordObservationError(error)
           }
         }
       }
@@ -233,33 +213,79 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     cancellables.insert(task)
   }
 
-  // MARK: - NOTAM Observation
-
-  private func setupRunwayNOTAMObservation() {
-    // Invalidate any observation registered for a previous runway selection.
-    notamObservationToken = UUID()
-    guard runway != nil else { return }
-    observeNOTAMChanges(token: notamObservationToken)
+  /// Resolves the selected airport and runway on a background context, returning
+  /// only their `Sendable` persistent identifiers; the models are re-resolved
+  /// against the main context in ``applyObservedSelection(_:airportKey:runwayKey:)``.
+  @concurrent
+  private func fetchSelectionIDs(
+    airportID: String?,
+    runwayID: String?
+  ) async throws -> (airport: PersistentIdentifier?, runway: PersistentIdentifier?) {
+    let context = ModelContext(container)
+    let (fetchedAirport, fetchedRunway) = try findAirportAndRunway(
+      airportID: airportID,
+      runwayID: runwayID,
+      in: context
+    )
+    return (fetchedAirport?.persistentModelID, fetchedRunway?.persistentModelID)
   }
+
+  private func applyObservedSelection(
+    _ ids: (airport: PersistentIdentifier?, runway: PersistentIdentifier?),
+    airportKey: Defaults.Key<String?>,
+    runwayKey: Defaults.Key<String?>
+  ) {
+    let mainContext = container.mainContext
+    let airport = ids.airport.flatMap { mainContext.model(for: $0) as? Airport }
+    let runway = ids.runway.flatMap { mainContext.model(for: $0) as? Runway }
+    if airport == nil { Defaults[airportKey] = nil }
+    if runway == nil { Defaults[runwayKey] = nil }
+    self.airport = airport
+    self.runway = runway
+  }
+
+  private func recordObservationError(_ error: Error) {
+    SentrySDK.capture(error: error) { scope in
+      scope.setFingerprint(["swiftData", "fetch"])
+    }
+    self.error = error
+  }
+
+  // MARK: - NOTAM Observation
 
   /// Recomputes performance whenever the selected runway's NOTAM changes.
   ///
-  /// Observes the NOTAM with `withObservationTracking` rather than a recurring
-  /// timer. The previous 500ms poll faulted the runway's NOTAM through the main
-  /// context twice a second for the lifetime of the screen, contending with
-  /// other main-thread SwiftData access and contributing to launch-time app
-  /// hangs. Observation touches SwiftData on the main actor only when the NOTAM
-  /// actually changes — the same mechanism the NOTAM editing views rely on — and
-  /// re-arms itself after each change.
-  private func observeNOTAMChanges(token: UUID) {
-    withObservationTracking {
-      _ = notam.map { NOTAMInput(from: $0) }
-    } onChange: { [weak self] in
-      Task { @MainActor [weak self] in
-        guard let self, token == notamObservationToken else { return }
+  /// Spawns a dedicated task that iterates an `Observations` async sequence whose
+  /// emit closure reads the selected runway's NOTAM. Each time any tracked NOTAM
+  /// property changes, the sequence emits the new snapshot and performance is
+  /// recomputed on the main actor — the same dependency set the NOTAM editing
+  /// views observe. The first emission is the current value and is skipped,
+  /// because the recompute for the initial selection is already driven by
+  /// ``runway``'s `didSet`.
+  ///
+  /// The loop re-acquires `self` weakly on each element, so it holds no strong
+  /// reference across the sequence's suspension points and the view model stays
+  /// deallocatable; deallocation cancels the task through `deinit`.
+  private func setupRunwayNOTAMObservation() {
+    notamObservationTask?.cancel()
+    guard runway != nil else {
+      notamObservationTask = nil
+      return
+    }
+    notamObservationTask = Task { [weak self] in
+      let changes = Observations { [weak self] () -> NOTAMInput? in
+        guard let self else { return nil }
+        return notam.map { NOTAMInput(from: $0) }
+      }
+      var isFirstEmission = true
+      for await _ in changes where !Task.isCancelled {
+        guard let self else { return }
+        guard !isFirstEmission else {
+          isFirstEmission = false
+          continue
+        }
         model = initializeModel()
         recalculate()
-        observeNOTAMChanges(token: token)
       }
     }
   }
@@ -459,4 +485,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   open func recalculate() {  // swiftlint:disable:this unavailable_function
     fatalError("Subclasses must override recalculate()")
   }
+
+  // MARK: - Deinitialization
+
+  isolated deinit { notamObservationTask?.cancel() }
 }

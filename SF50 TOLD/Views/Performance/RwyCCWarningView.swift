@@ -18,7 +18,7 @@ struct RwyCCWarningView: View {
         "AC 91-79B landing distance factors are applied. The configured safety factor is not applied to RwyCC landing distances.",
         systemImage: "info.circle"
       )
-      .font(.system(size: 14))
+      .font(.subheadline)
       .foregroundColor(.secondary)
     }
   }

@@ -9,6 +9,9 @@ struct ClimbResultsView: View {
   @Default(.speedUnit)
   private var speedUnit
 
+  @ScaledMetric(relativeTo: .largeTitle)
+  private var speedFontSize = 48.0
+
   private var showMach: Bool {
     performance.altitude.converted(to: .feet).value >= 18400
   }
@@ -28,9 +31,9 @@ struct ClimbResultsView: View {
             displayValue: { mach in
               HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text("M")
-                  .font(.system(size: 48, weight: .light, design: .rounded))
+                  .font(.system(size: speedFontSize, weight: .light, design: .rounded))
                 Text(mach, format: .mach)
-                  .font(.system(size: 48, weight: .bold, design: .rounded))
+                  .font(.system(size: speedFontSize, weight: .bold, design: .rounded))
                   .padding(.trailing, 4)
 
                 // Secondary IAS display
@@ -55,7 +58,7 @@ struct ClimbResultsView: View {
             value: performance.climbSpeed,
             displayValue: { speed in
               Text(speed.converted(to: speedUnit), format: .speed)
-                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .font(.system(size: speedFontSize, weight: .bold, design: .rounded))
                 .accessibilityIdentifier("climbSpeedValue")
             }
           )

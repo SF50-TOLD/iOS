@@ -23,7 +23,7 @@ struct RegionStatusView: View {
             .controlSize(.small)
         }
         .foregroundStyle(.red)
-        .font(.system(size: 14))
+        .font(.subheadline)
 
       case .notDownloaded:
         Button("Download") { onDownload() }

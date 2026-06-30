@@ -112,7 +112,7 @@ private struct NoteRow: View {
       Text(note.localizedDescription)
         .foregroundStyle(note.severity == .warning ? .red : .secondary)
     }
-    .font(.system(size: 14))
+    .font(.subheadline)
   }
 }
 

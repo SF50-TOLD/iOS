@@ -23,14 +23,14 @@ struct RunwayDistances: View {
                 distance: runway.notamedTakeoffRun,
                 NOTAMed: runway.hasTakeoffDistanceNOTAM
               )
-              Text("TORA").font(.system(size: 9)).padding(.bottom, 2)
+              Text("TORA").font(.caption2).padding(.bottom, 2)
             }
             HStack(alignment: .bottom, spacing: 3) {
               RunwayDistance(
                 distance: runway.notamedTakeoffDistance,
                 NOTAMed: runway.hasTakeoffDistanceNOTAM
               )
-              Text("TODA").font(.system(size: 9)).padding(.bottom, 2)
+              Text("TODA").font(.caption2).padding(.bottom, 2)
             }
           }
         }

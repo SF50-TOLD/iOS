@@ -39,7 +39,7 @@ struct SettingsView: View {
   }
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       Form {
         Section("Aircraft") {
           Picker("Aircraft Model", selection: aircraftTypeSettingBinding) {
@@ -56,7 +56,7 @@ struct SettingsView: View {
               Text(
                 "Turn this setting on if your Vision Jet has SB5X-72-01 completed (G2+ equivalent)."
               )
-              .font(.system(size: 11))
+              .font(.footnote)
               .fixedSize(horizontal: false, vertical: true)
             }
           }
@@ -134,7 +134,7 @@ struct SettingsView: View {
             .accessibilityIdentifier("terrainNavigationLink")
         }
       }.navigationTitle("Settings")
-    }.navigationViewStyle(navigationStyle)
+    }
   }
 
   private var aircraftTypeSettingBinding: Binding<AircraftTypeSetting> {

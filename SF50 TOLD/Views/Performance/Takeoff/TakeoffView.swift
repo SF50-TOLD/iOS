@@ -10,7 +10,7 @@ struct TakeoffView: View {
   @State private var weather: WeatherViewModel?
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       if performance != nil && weather != nil {
         Form {
           TakeoffPerformanceView()
@@ -23,7 +23,6 @@ struct TakeoffView: View {
           .navigationTitle("Takeoff")
       }
     }
-    .navigationViewStyle(navigationStyle)
     .environment(performance)
     .environment(weather)
     .environment(\.operation, .takeoff)

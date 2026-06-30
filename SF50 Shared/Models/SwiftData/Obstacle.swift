@@ -9,6 +9,9 @@ import SwiftData
 /// is used for departure procedure planning and obstacle clearance calculations.
 @Model
 public final class Obstacle {
+  /// Composite index accelerating the bounding-box predicate in ``fetchDescriptor(minLat:maxLat:minLon:maxLon:)``.
+  #Index<Obstacle>([\._latitude, \._longitude])
+
   private var _heightMSL: Double  // meters
   private var _latitude: Double  // decimal degrees
   private var _longitude: Double  // decimal degrees

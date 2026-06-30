@@ -73,19 +73,17 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   private func schemaVersionObservationTask() -> Task<Void, Never> {
-    Task.detached { [weak self, container] in
-      let context = ModelContext(container)
+    Task { [weak self] in
       for await _ in Defaults.updates(.schemaVersion)
       where !Task.isCancelled {
         guard let self else { return }
-        await self.refreshState(from: context, fingerprint: "recalculate")
+        await refreshState(fingerprint: "recalculate")
       }
     }
   }
 
   private func statePollingTask() -> Task<Void, Never> {
-    Task.detached { [weak self, container] in
-      let context = ModelContext(container)
+    Task { [weak self] in
       // Resolve the loader state at launch, then keep polling only while the
       // loader is still needed (no data yet, or a download in progress). Once
       // data is present and current the loader is dismissed and the poll
@@ -95,29 +93,23 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       // state when a reload becomes necessary.
       while !Task.isCancelled {
         guard let self else { return }
-        await self.refreshState(from: context, fingerprint: "airportCheck")
-        guard await self.showLoader else { return }
+        await refreshState(fingerprint: "airportCheck")
+        guard showLoader else { return }
         try? await Task.sleep(for: .seconds(0.5))
       }
     }
   }
 
-  nonisolated private func refreshState(
-    from context: ModelContext,
-    fingerprint: String
-  ) async {
+  /// Reads the nav-data loader state on a background context, then applies it on
+  /// the main actor — keeping launch-time SwiftData work off the main context.
+  @concurrent
+  private func refreshState(fingerprint: String) async {
     do {
+      let context = ModelContext(container)
       let state = try NavDataStateHelper.fetchState(context: context)
-      await MainActor.run {
-        self.applyState(state)
-      }
+      await applyState(state)
     } catch {
-      await MainActor.run {
-        SentrySDK.capture(error: error) { scope in
-          scope.setFingerprint(["navData", fingerprint])
-        }
-        self.error = error
-      }
+      await recordError(error, fingerprint: fingerprint)
     }
   }
 
@@ -202,6 +194,13 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     if noData != state.noData { self.noData = state.noData }
     if needsLoad != state.needsLoad { self.needsLoad = state.needsLoad }
     if canSkip != state.canSkip { self.canSkip = state.canSkip }
+  }
+
+  private func recordError(_ error: Swift.Error, fingerprint: String) {
+    SentrySDK.capture(error: error) { scope in
+      scope.setFingerprint(["navData", fingerprint])
+    }
+    self.error = error
   }
 }
 

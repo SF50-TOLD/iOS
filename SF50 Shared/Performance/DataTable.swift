@@ -31,8 +31,26 @@ import Foundation
 class DataTable {
   private typealias Row = [Double]
 
+  /// The largest absolute difference at which two grid values are considered an
+  /// exact match when scanning rows for the requested inputs.
+  private static let matchEpsilon = 1e-10
+
+  /// Relative factor applied to a dimension's bound magnitude to derive the
+  /// clamping tolerance, providing margin above `Double`'s precision.
+  private static let clampToleranceFactor = 1e-9
+
   private var data: [Row] = []
   private var nInputs: Int = 0
+
+  /// For each input dimension, the sorted-ascending array of unique axis values.
+  private var sortedAxes: [[Double]] = []
+
+  /// Per-dimension minimum and maximum input values.
+  private var dimMin: [Double] = []
+  private var dimMax: [Double] = []
+
+  /// Maps an exact grid coordinate to that row's output value.
+  private var cornerIndex: [CornerKey: Double] = [:]
 
   /// Returns all data rows for iteration
   var rows: [[Double]] {
@@ -69,6 +87,7 @@ class DataTable {
     if let first = data.first {
       nInputs = first.count - 1
     }
+    prepare()
   }
 
   /// Creates a data table from raw data arrays.
@@ -81,6 +100,27 @@ class DataTable {
     self.data = data
     if let first = data.first {
       nInputs = first.count - 1
+    }
+    prepare()
+  }
+
+  /// Precomputes the sorted axes, per-dimension bounds, and corner index used by
+  /// the interpolation hot path.
+  ///
+  /// Called once from each initializer after `data` and `nInputs` are set. The
+  /// `data` array is immutable thereafter, so these structures stay valid for the
+  /// table's lifetime.
+  private func prepare() {
+    guard !data.isEmpty, nInputs > 0 else { return }
+
+    sortedAxes = (0..<nInputs).map { dim in
+      Array(Set(data.map { $0[dim] })).sorted()
+    }
+    dimMin = (0..<nInputs).map { dim in data.map { $0[dim] }.min()! }
+    dimMax = (0..<nInputs).map { dim in data.map { $0[dim] }.max()! }
+
+    for row in data {
+      cornerIndex[CornerKey(coordinates: Array(row.prefix(nInputs)))] = row.last!
     }
   }
 
@@ -108,8 +148,8 @@ class DataTable {
     var clampedInputs: [Double] = []
     for dim in 0..<nInputs {
       let input = inputs[dim]
-      let minVal = self.min(dimension: dim)
-      let maxVal = self.max(dimension: dim)
+      let minVal = dimMin[dim]
+      let maxVal = dimMax[dim]
 
       // Use a relative tolerance for floating-point comparisons based on the magnitude
       // of the bound value. This handles precision loss proportional to value size
@@ -117,7 +157,7 @@ class DataTable {
       // of magnitude margin above Double's ~1e-15 relative precision, accommodating
       // accumulated rounding from arithmetic operations while remaining far smaller
       // than any meaningful data resolution.
-      let tolerance = 1e-9 * Swift.max(abs(minVal), abs(maxVal), 1.0)
+      let tolerance = Self.clampToleranceFactor * Swift.max(abs(minVal), abs(maxVal), 1.0)
 
       switch clampingModes[dim] {
         case .none:
@@ -146,7 +186,9 @@ class DataTable {
 
     // Check for exact match first
     for row in data {
-      let matches = (0..<nInputs).allSatisfy { abs(row[$0] - clampedInputs[$0]) <= 1e-10 }
+      let matches = (0..<nInputs).allSatisfy {
+        abs(row[$0] - clampedInputs[$0]) <= Self.matchEpsilon
+      }
       if matches {
         return .value(row.last!)
       }
@@ -167,139 +209,72 @@ class DataTable {
   }
 
   private func interpolate1D(input: Double) -> Value<Double> {
-    // Sort data by first column
-    let sortedData = data.sorted { $0[0] < $1[0] }
-
-    // Find bounding points
-    var lower: Row?
-    var upper: Row?
-
-    for i in 0..<sortedData.count {
-      if sortedData[i][0] <= input {
-        lower = sortedData[i]
-      }
-      if sortedData[i][0] >= input && upper == nil {
-        upper = sortedData[i]
-        break
-      }
-    }
-
-    guard let lowerPoint = lower, let upperPoint = upper else {
+    guard let (x0, x1) = bounds(forAxis: 0, value: input),
+      let lowerValue = cornerValue(at: [x0]),
+      let upperValue = cornerValue(at: [x1])
+    else {
       return .offscaleHigh
     }
 
-    if lowerPoint[0] == upperPoint[0] {
-      return .value(lowerPoint[1])
+    if x0 == x1 {
+      return .value(lowerValue)
     }
 
-    let t = (input - lowerPoint[0]) / (upperPoint[0] - lowerPoint[0])
-    return .value(lowerPoint[1] + t * (upperPoint[1] - lowerPoint[1]))
+    let t = (input - x0) / (x1 - x0)
+    return .value(lowerValue + t * (upperValue - lowerValue))
   }
 
   private func interpolate2D(inputs: [Double]) -> Value<Double> {
-    // Find the four corner points
-    // First, find x bounds from all data
-    var xValues = Set<Double>()
-
-    for row in data {
-      xValues.insert(row[0])
+    // Find the x bounds from the sorted x axis.
+    guard let (x0, x1) = bounds(forAxis: 0, value: inputs[0]) else {
+      return .offscaleHigh
     }
 
-    // Sort and find x bounds
-    let xSorted = xValues.sorted()
+    // Restrict the candidate y values to those present at the chosen x bounds.
+    let yCandidates = innerCandidates(outer: [x0, x1], innerDim: 1)
 
-    var x0 = -Double.infinity
-    var x1 = Double.infinity
-
-    for val in xSorted {
-      if val <= inputs[0] && val > x0 { x0 = val }
-      if val >= inputs[0] && val < x1 { x1 = val }
-    }
-
-    // Now find y values only at the x bounds we found
-    var yValues = Set<Double>()
-    for row in data {
-      let xMatch = abs(row[0] - x0) < 1e-10 || abs(row[0] - x1) < 1e-10
-      if xMatch {
-        yValues.insert(row[1])
-      }
-    }
-
-    // Sort y values
-    let ySorted = yValues.sorted()
-
-    // Find valid y bounds where all 4 corners exist
-    var y0 = -Double.infinity
-    var y1 = Double.infinity
-    var foundValidBounds = false
-
-    // Build a set of existing corners for fast lookup
-    var existingCorners = Set<String>()
-    for row in data {
-      if abs(row[0] - x0) < 1e-10 || abs(row[0] - x1) < 1e-10 {
-        existingCorners.insert("\(row[0]),\(row[1])")
-      }
-    }
-
-    // Try all possible y bound combinations, preferring tighter bounds
+    // Find valid y bounds where all 4 corners exist, preferring the tightest bracket.
     var bestY0 = -Double.infinity
     var bestY1 = Double.infinity
     var bestSpan = Double.infinity
+    var foundValidBounds = false
 
-    for i in 0..<ySorted.count {
-      for j in i..<ySorted.count {
-        let yLower = ySorted[i]
-        let yUpper = ySorted[j]
+    for i in 0..<yCandidates.count {
+      for j in i..<yCandidates.count {
+        let yLower = yCandidates[i]
+        let yUpper = yCandidates[j]
 
         // Check if input y is within these bounds
-        if yLower <= inputs[1] && inputs[1] <= yUpper {
-          // Check if all 4 corners exist
-          let cornersNeeded = [
-            "\(x0),\(yLower)", "\(x1),\(yLower)",
-            "\(x0),\(yUpper)", "\(x1),\(yUpper)"
-          ]
+        guard yLower <= inputs[1] && inputs[1] <= yUpper else { continue }
 
-          let allCornersExist = cornersNeeded.allSatisfy { existingCorners.contains($0) }
+        // Check if all 4 corners exist
+        let allCornersExist =
+          cornerExists(at: [x0, yLower]) && cornerExists(at: [x1, yLower])
+          && cornerExists(at: [x0, yUpper]) && cornerExists(at: [x1, yUpper])
 
-          // If all corners exist, check if this is a better (tighter) bound
-          if allCornersExist {
-            let span = yUpper - yLower
-            if span < bestSpan {
-              bestY0 = yLower
-              bestY1 = yUpper
-              bestSpan = span
-              foundValidBounds = true
-            }
+        // If all corners exist, check if this is a better (tighter) bound
+        if allCornersExist {
+          let span = yUpper - yLower
+          if span < bestSpan {
+            bestY0 = yLower
+            bestY1 = yUpper
+            bestSpan = span
+            foundValidBounds = true
           }
         }
       }
     }
 
-    if foundValidBounds {
-      y0 = bestY0
-      y1 = bestY1
-    }
-
     // If no valid bounds found, return offscale
-    if !foundValidBounds {
-      return .offscaleHigh
-    }
+    guard foundValidBounds else { return .offscaleHigh }
+    let (y0, y1) = (bestY0, bestY1)
 
-    // Find the four corner values
-    var v00: Double?
-    var v01: Double?
-    var v10: Double?
-    var v11: Double?
-
-    for row in data {
-      if abs(row[0] - x0) < 1e-10 && abs(row[1] - y0) < 1e-10 { v00 = row[2] }
-      if abs(row[0] - x0) < 1e-10 && abs(row[1] - y1) < 1e-10 { v01 = row[2] }
-      if abs(row[0] - x1) < 1e-10 && abs(row[1] - y0) < 1e-10 { v10 = row[2] }
-      if abs(row[0] - x1) < 1e-10 && abs(row[1] - y1) < 1e-10 { v11 = row[2] }
-    }
-
-    // If we don't have all four corners, return offscale high (no extrapolation)
-    if v00 == nil || v01 == nil || v10 == nil || v11 == nil {
+    // Find the four corner values; if any is missing, return offscale high (no extrapolation)
+    guard let v00 = cornerValue(at: [x0, y0]),
+      let v01 = cornerValue(at: [x0, y1]),
+      let v10 = cornerValue(at: [x1, y0]),
+      let v11 = cornerValue(at: [x1, y1])
+    else {
       return .offscaleHigh
     }
 
@@ -307,151 +282,74 @@ class DataTable {
     let tx = (x0 == x1) ? 0.0 : (inputs[0] - x0) / (x1 - x0)
     let ty = (y0 == y1) ? 0.0 : (inputs[1] - y0) / (y1 - y0)
 
-    let v0 = v00! + tx * (v10! - v00!)
-    let v1 = v01! + tx * (v11! - v01!)
+    let v0 = v00 + tx * (v10 - v00)
+    let v1 = v01 + tx * (v11 - v01)
 
     return .value(v0 + ty * (v1 - v0))
   }
 
   private func interpolate3D(inputs: [Double]) -> Value<Double> {
-    // Find the eight corner points
-    // First, find x bounds from all data
-    var xValues = Set<Double>()
-
-    for row in data {
-      xValues.insert(row[0])
+    // Find the x bounds, then the y bounds restricted to the chosen x bounds.
+    guard let (x0, x1) = bounds(forAxis: 0, value: inputs[0]) else {
+      return .offscaleHigh
     }
 
-    // Sort and find x bounds
-    let xSorted = xValues.sorted()
-
-    var x0 = -Double.infinity
-    var x1 = Double.infinity
-
-    for val in xSorted {
-      if val <= inputs[0] && val > x0 { x0 = val }
-      if val >= inputs[0] && val < x1 { x1 = val }
+    let yCandidates = innerCandidates(outer: [x0, x1], innerDim: 1)
+    guard let (y0, y1) = bracket(in: yCandidates, value: inputs[1]) else {
+      return .offscaleHigh
     }
 
-    // Now find y values ONLY at the x bounds we found
-    var yValues = Set<Double>()
-    for row in data {
-      let xMatch = abs(row[0] - x0) < 1e-10 || abs(row[0] - x1) < 1e-10
-      if xMatch {
-        yValues.insert(row[1])
-      }
-    }
+    // Restrict the candidate z values to those present at the chosen x,y bounds.
+    let zCandidates = innerCandidates(outerX: [x0, x1], outerY: [y0, y1], innerDim: 2)
 
-    // Sort and find y bounds
-    let ySorted = yValues.sorted()
-
-    var y0 = -Double.infinity
-    var y1 = Double.infinity
-
-    for val in ySorted {
-      if val <= inputs[1] && val > y0 { y0 = val }
-      if val >= inputs[1] && val < y1 { y1 = val }
-    }
-
-    // Now find z values only at the x,y bounds we found
-    var zValues = Set<Double>()
-    for row in data {
-      let xMatch = abs(row[0] - x0) < 1e-10 || abs(row[0] - x1) < 1e-10
-      let yMatch = abs(row[1] - y0) < 1e-10 || abs(row[1] - y1) < 1e-10
-      if xMatch && yMatch {
-        zValues.insert(row[2])
-      }
-    }
-
-    // Sort z values
-    let zSorted = zValues.sorted()
-
-    // Find valid z bounds where all 8 corners exist
-    var z0 = -Double.infinity
-    var z1 = Double.infinity
-    var foundValidBounds = false
-
-    // Build a set of existing corners for fast lookup
-    var existingCorners = Set<String>()
-    for row in data {
-      // Only consider corners at our x,y bounds
-      if (abs(row[0] - x0) < 1e-10 || abs(row[0] - x1) < 1e-10)
-        && (abs(row[1] - y0) < 1e-10 || abs(row[1] - y1) < 1e-10)
-      {
-        existingCorners.insert("\(row[0]),\(row[1]),\(row[2])")
-      }
-    }
-
-    // Try all possible z bound combinations, preferring tighter bounds
+    // Find valid z bounds where all 8 corners exist, preferring the tightest bracket.
     var bestZ0 = -Double.infinity
     var bestZ1 = Double.infinity
     var bestSpan = Double.infinity
+    var foundValidBounds = false
 
-    for i in 0..<zSorted.count {
-      for j in i..<zSorted.count {
-        let zLower = zSorted[i]
-        let zUpper = zSorted[j]
+    for i in 0..<zCandidates.count {
+      for j in i..<zCandidates.count {
+        let zLower = zCandidates[i]
+        let zUpper = zCandidates[j]
 
         // Check if input z is within these bounds
-        if zLower <= inputs[2] && inputs[2] <= zUpper {
-          // Check if all 8 corners exist for these bounds
-          let cornersNeeded = [
-            "\(x0),\(y0),\(zLower)", "\(x1),\(y0),\(zLower)",
-            "\(x0),\(y1),\(zLower)", "\(x1),\(y1),\(zLower)",
-            "\(x0),\(y0),\(zUpper)", "\(x1),\(y0),\(zUpper)",
-            "\(x0),\(y1),\(zUpper)", "\(x1),\(y1),\(zUpper)"
-          ]
+        guard zLower <= inputs[2] && inputs[2] <= zUpper else { continue }
 
-          let allCornersExist = cornersNeeded.allSatisfy { existingCorners.contains($0) }
+        // Check if all 8 corners exist for these bounds
+        let allCornersExist =
+          cornerExists(at: [x0, y0, zLower]) && cornerExists(at: [x1, y0, zLower])
+          && cornerExists(at: [x0, y1, zLower]) && cornerExists(at: [x1, y1, zLower])
+          && cornerExists(at: [x0, y0, zUpper]) && cornerExists(at: [x1, y0, zUpper])
+          && cornerExists(at: [x0, y1, zUpper]) && cornerExists(at: [x1, y1, zUpper])
 
-          // If all corners exist, check if this is a better (tighter) bound
-          if allCornersExist {
-            let span = zUpper - zLower
-            if span < bestSpan {
-              bestZ0 = zLower
-              bestZ1 = zUpper
-              bestSpan = span
-              foundValidBounds = true
-            }
+        // If all corners exist, check if this is a better (tighter) bound
+        if allCornersExist {
+          let span = zUpper - zLower
+          if span < bestSpan {
+            bestZ0 = zLower
+            bestZ1 = zUpper
+            bestSpan = span
+            foundValidBounds = true
           }
         }
       }
     }
 
-    if foundValidBounds {
-      z0 = bestZ0
-      z1 = bestZ1
-    }
-
     // If no valid bounds found, return offscale
-    if !foundValidBounds {
-      return .offscaleHigh
-    }
+    guard foundValidBounds else { return .offscaleHigh }
+    let (z0, z1) = (bestZ0, bestZ1)
 
-    // Find the eight corner values
-    var corners: [Double?] = Array(repeating: nil, count: 8)
-
-    for row in data {
-      let xMatch0 = abs(row[0] - x0) < 1e-10
-      let xMatch1 = abs(row[0] - x1) < 1e-10
-      let yMatch0 = abs(row[1] - y0) < 1e-10
-      let yMatch1 = abs(row[1] - y1) < 1e-10
-      let zMatch0 = abs(row[2] - z0) < 1e-10
-      let zMatch1 = abs(row[2] - z1) < 1e-10
-
-      if xMatch0 && yMatch0 && zMatch0 { corners[0] = row[3] }
-      if xMatch1 && yMatch0 && zMatch0 { corners[1] = row[3] }
-      if xMatch0 && yMatch1 && zMatch0 { corners[2] = row[3] }
-      if xMatch1 && yMatch1 && zMatch0 { corners[3] = row[3] }
-      if xMatch0 && yMatch0 && zMatch1 { corners[4] = row[3] }
-      if xMatch1 && yMatch0 && zMatch1 { corners[5] = row[3] }
-      if xMatch0 && yMatch1 && zMatch1 { corners[6] = row[3] }
-      if xMatch1 && yMatch1 && zMatch1 { corners[7] = row[3] }
-    }
-
-    // Check if we have all corners
-    let hasAllCorners = corners.allSatisfy { $0 != nil }
-    if !hasAllCorners {
+    // Find the eight corner values; if any is missing, return offscale high (no extrapolation)
+    guard let c0 = cornerValue(at: [x0, y0, z0]),
+      let c1 = cornerValue(at: [x1, y0, z0]),
+      let c2 = cornerValue(at: [x0, y1, z0]),
+      let c3 = cornerValue(at: [x1, y1, z0]),
+      let c4 = cornerValue(at: [x0, y0, z1]),
+      let c5 = cornerValue(at: [x1, y0, z1]),
+      let c6 = cornerValue(at: [x0, y1, z1]),
+      let c7 = cornerValue(at: [x1, y1, z1])
+    else {
       return .offscaleHigh
     }
 
@@ -461,10 +359,10 @@ class DataTable {
     let tz = (z0 == z1) ? 0.0 : (inputs[2] - z0) / (z1 - z0)
 
     // Interpolate along x
-    let v00 = corners[0]! + tx * (corners[1]! - corners[0]!)
-    let v01 = corners[2]! + tx * (corners[3]! - corners[2]!)
-    let v10 = corners[4]! + tx * (corners[5]! - corners[4]!)
-    let v11 = corners[6]! + tx * (corners[7]! - corners[6]!)
+    let v00 = c0 + tx * (c1 - c0)
+    let v01 = c2 + tx * (c3 - c2)
+    let v10 = c4 + tx * (c5 - c4)
+    let v11 = c6 + tx * (c7 - c6)
 
     // Interpolate along y
     let v0 = v00 + ty * (v01 - v00)
@@ -486,7 +384,7 @@ class DataTable {
   /// - Returns: The minimum value found in that dimension across all data rows.
   func min(dimension: Int) -> Double {
     precondition((0..<nInputs).contains(dimension), "Invalid dimension")
-    return data.map { $0[dimension] }.min()!
+    return dimMin[dimension]
   }
 
   /// Returns the maximum value in the specified input dimension.
@@ -495,7 +393,7 @@ class DataTable {
   /// - Returns: The maximum value found in that dimension across all data rows.
   func max(dimension: Int) -> Double {
     precondition((0..<nInputs).contains(dimension), "Invalid dimension")
-    return data.map { $0[dimension] }.max()!
+    return dimMax[dimension]
   }
 
   /// Extracts the input values from a data row.
@@ -514,6 +412,95 @@ class DataTable {
   func output(from row: [Double]) -> Double {
     precondition(row.count == nInputs + 1, "Invalid row format")
     return row.last!
+  }
+
+  /// Finds the bracketing axis values around `value` on the given input dimension.
+  ///
+  /// Bisects `sortedAxes[dim]` to find the largest axis value `<= value` (lower)
+  /// and the smallest axis value `>= value` (upper). When `value` lies below the
+  /// smallest or above the largest axis value, the corresponding bound is the
+  /// infinite sentinel, so downstream corner lookups miss and interpolation
+  /// returns `.offscaleHigh` — matching the original behavior.
+  private func bounds(forAxis dim: Int, value: Double) -> (lower: Double, upper: Double)? {
+    return bracket(in: sortedAxes[dim], value: value)
+  }
+
+  /// Finds the bracketing values around `value` within a sorted-ascending array.
+  ///
+  /// Returns the largest element `<= value` as the lower bound and the smallest
+  /// element `>= value` as the upper bound, falling back to `-infinity` /
+  /// `+infinity` when no element satisfies the corresponding inequality.
+  private func bracket(in axis: [Double], value: Double) -> (lower: Double, upper: Double)? {
+    var lower = -Double.infinity
+    var upper = Double.infinity
+
+    // Largest axis value <= value: rightmost element not exceeding value.
+    var low = 0
+    var high = axis.count
+    while low < high {
+      let mid = low + (high - low) / 2
+      if axis[mid] <= value {
+        lower = axis[mid]
+        low = mid + 1
+      } else {
+        high = mid
+      }
+    }
+
+    // Smallest axis value >= value: leftmost element not below value.
+    low = 0
+    high = axis.count
+    while low < high {
+      let mid = low + (high - low) / 2
+      if axis[mid] >= value {
+        upper = axis[mid]
+        high = mid
+      } else {
+        low = mid + 1
+      }
+    }
+
+    return (lower, upper)
+  }
+
+  /// Returns the sorted-ascending inner-axis values present at the given outer-axis bounds.
+  ///
+  /// Mirrors the original restriction of candidate values to rows whose leading
+  /// input column matches one of the chosen outer bounds.
+  private func innerCandidates(outer: [Double], innerDim: Int) -> [Double] {
+    var values = Set<Double>()
+    for row in data where outer.contains(row[0]) {
+      values.insert(row[innerDim])
+    }
+    return values.sorted()
+  }
+
+  /// Returns the sorted-ascending inner-axis values present at the given x and y bounds.
+  private func innerCandidates(outerX: [Double], outerY: [Double], innerDim: Int) -> [Double] {
+    var values = Set<Double>()
+    for row in data where outerX.contains(row[0]) && outerY.contains(row[1]) {
+      values.insert(row[innerDim])
+    }
+    return values.sorted()
+  }
+
+  /// Looks up the output value stored at an exact grid coordinate.
+  private func cornerValue(at coordinates: [Double]) -> Double? {
+    return cornerIndex[CornerKey(coordinates: coordinates)]
+  }
+
+  /// Reports whether a row exists at an exact grid coordinate.
+  private func cornerExists(at coordinates: [Double]) -> Bool {
+    return cornerIndex[CornerKey(coordinates: coordinates)] != nil
+  }
+
+  /// An exact grid coordinate keying a row's output value in ``cornerIndex``.
+  ///
+  /// Coordinates are taken verbatim from the table's data columns, so the stored
+  /// `Double` bit patterns are identical to the axis values used for lookups and
+  /// equality is exact — reproducing the original string-equality corner test.
+  private struct CornerKey: Hashable {
+    let coordinates: [Double]
   }
 
   /// Errors that can occur during data table operations.

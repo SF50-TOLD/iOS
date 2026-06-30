@@ -5,17 +5,17 @@ struct WidgetNoAirportView: View {
   @Environment(\.widgetFamily)
   var family
 
-  private var fontSize: CGFloat {
+  private var font: Font {
     switch family {
-      case .systemSmall: return 12
-      default: return 14
+      case .systemSmall: return .footnote
+      default: return .subheadline
     }
   }
 
   var body: some View {
     Text("Select an airport from the SF50 TOLD app first.")
       .foregroundColor(.secondary)
-      .font(.system(size: fontSize))
+      .font(font)
       .containerBackground(.background, for: .widget)
   }
 }

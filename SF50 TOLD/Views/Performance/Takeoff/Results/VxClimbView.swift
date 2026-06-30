@@ -56,7 +56,7 @@ struct VxClimbView: View {
           "A climb gradient of \(requiredClimbGradientIfNotMet.asGradient, format: .gradient) is required.",
           systemImage: "exclamationmark.triangle"
         )
-        .font(.system(size: 14))
+        .font(.subheadline)
         .foregroundColor(.red)
       }
     }

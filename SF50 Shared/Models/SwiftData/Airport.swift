@@ -20,6 +20,9 @@ public enum DataSource: String, Codable {
 /// persisted using SwiftData and can be sourced from NASR or OurAirports.
 @Model
 public final class Airport {
+  /// Composite index accelerating nearest-airport bounding-box queries on latitude/longitude.
+  #Index<Airport>([\._latitude, \._longitude])
+
   /// Unique identifier for SwiftData persistence
   @Attribute(.unique)
   public var recordID: String

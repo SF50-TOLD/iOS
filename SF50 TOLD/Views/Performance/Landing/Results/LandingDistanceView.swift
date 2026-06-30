@@ -25,7 +25,7 @@ struct LandingDistanceView: View {
       label: {
         Text("Total Distance")
         Text("over a 50-foot obstacle")
-          .font(.system(size: 11))
+          .font(.caption)
           .fixedSize(horizontal: false, vertical: true)
       }
     )

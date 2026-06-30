@@ -9,7 +9,7 @@ struct ClimbView: View {
   @State private var performance: ClimbPerformanceViewModel?
 
   var body: some View {
-    NavigationView {
+    NavigationStack {
       if performance != nil {
         Form {
           ClimbConfigView()
@@ -21,7 +21,6 @@ struct ClimbView: View {
           .navigationTitle("Climb")
       }
     }
-    .navigationViewStyle(navigationStyle)
     .environment(performance)
     .onAppear {
       if performance == nil {

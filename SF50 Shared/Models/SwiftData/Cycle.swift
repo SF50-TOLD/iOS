@@ -27,6 +27,9 @@ public enum CycleDataSource: String, Codable, CaseIterable {
 /// different effective and expiration dates.
 @Model
 public final class Cycle: AnyCycle {
+  /// Accelerates the launch-time single-source lookup that filters on ``_dataSource``.
+  #Index<Cycle>([\._dataSource])
+
   /// Identifies the data source (NASR, CIFP, DOF).
   ///
   /// Stored as a string for SwiftData compatibility but exposed as
