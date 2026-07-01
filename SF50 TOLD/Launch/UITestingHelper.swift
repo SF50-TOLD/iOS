@@ -8,6 +8,10 @@ enum UITestingHelper {
     ProcessInfo.processInfo.arguments.contains("UI-TESTING")
   }
 
+  static var isGeneratingScreenshots: Bool {
+    ProcessInfo.processInfo.arguments.contains("GENERATE-SCREENSHOTS")
+  }
+
   static var weatherLoader: (any WeatherLoaderProtocol)? {
     guard ProcessInfo.processInfo.arguments.contains("UI-TESTING") else { return nil }
     return UITestingWeatherLoader()

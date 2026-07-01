@@ -126,6 +126,7 @@ struct ClimbProfileView: View {
           Text(type.label).tag(type)
         }
       }
+      .accessibilityIdentifier("departureTypePicker")
       switch departureType {
         case .runwayHeading:
           EmptyView()
@@ -151,6 +152,7 @@ struct ClimbProfileView: View {
                 )
             }
           }
+          .accessibilityIdentifier("departureProcedurePicker")
       }
     }
   }

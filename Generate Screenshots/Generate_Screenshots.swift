@@ -5,10 +5,13 @@
 //  Created by Tim Morgan on 10/5/25.
 //
 
+import UIKit
 import XCTest
 import XCUITestKit
 
 final class Generate_Screenshots: XCTestCase {
+
+  @MainActor private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
   override func setUpWithError() throws {
     // In UI tests it is usually best to stop immediately when a failure occurs.
@@ -87,7 +90,7 @@ final class Generate_Screenshots: XCTestCase {
       element: app.buttons["terrainNavigationLink"]
     )
     XCTAssertNotNil(terrainLink, "Terrain navigation link should be accessible")
-    terrainLink!.tap()
+    terrainLink!.forceTap()
 
     // Tap Download for North America (skip if already downloaded)
     let naDownloadButton = app.buttons["terrainDownload-na"]
@@ -153,10 +156,11 @@ final class Generate_Screenshots: XCTestCase {
       element: app.buttons["runwaySelector"]
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
-    runwaySelector!.tap()
 
-    // Select runway 33
+    // Open the runway picker with the same robust navigation the airport selector
+    // uses, so the iOS 26 Liquid Glass bar can't swallow the tap that presents it.
     let takeoffRunwayRow = app.buttons["runwayRow-33"].firstMatch
+    tapAndEnsureNavigation(element: runwaySelector!, expectedElement: takeoffRunwayRow)
     XCTAssertTrue(takeoffRunwayRow.waitForExistence(timeout: 2), "Runway 33 should appear")
     takeoffRunwayRow.tap()
 
@@ -170,24 +174,32 @@ final class Generate_Screenshots: XCTestCase {
       element: app.buttons["weatherSelector"]
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be accessible")
-    weatherSelector!.tap()
+
+    // Open the weather picker with robust navigation so the iOS 26 Liquid Glass
+    // bar can't swallow the tap that presents it.
+    let windField = app.textFields["windDirectionField"].firstMatch
+    tapAndEnsureNavigation(element: weatherSelector!, expectedElement: windField)
 
     snapshot("10-weather")
 
     // Go back from weather
-    app.navigationBars.buttons.element(boundBy: 0).tap()
+    app.navigationBars.buttons.element(boundBy: 0).forceTap()
 
     // Verify takeoff distances are displayed
     let takeoffGroundRun = app.staticTexts["takeoffGroundRunValue"]
     let takeoffDistance = app.staticTexts["takeoffDistanceValue"]
 
-    // Scroll to bottom to show results
-    let takeoffCollectionView = app.collectionViews.firstMatch
-    var takeoffScrollAttempts = 0
-    while takeoffScrollAttempts < 3 {
-      takeoffCollectionView.swipeUp()
-      Thread.sleep(forTimeInterval: 0.3)
-      takeoffScrollAttempts += 1
+    // On a phone the results sit below the fold, so scroll down and capture them
+    // as a separate screenshot. On iPad the whole takeoff view fits on one screen
+    // (02 already shows the results), so the scrolled capture is redundant.
+    if !isPad {
+      let takeoffCollectionView = app.collectionViews.firstMatch
+      var takeoffScrollAttempts = 0
+      while takeoffScrollAttempts < 3 {
+        takeoffCollectionView.swipeUp()
+        Thread.sleep(forTimeInterval: 0.3)
+        takeoffScrollAttempts += 1
+      }
     }
 
     XCTAssertTrue(
@@ -199,51 +211,64 @@ final class Generate_Screenshots: XCTestCase {
       "Takeoff distance should be displayed"
     )
 
-    snapshot("03-takeoff-results")
+    if !isPad {
+      snapshot("03-takeoff-results")
+    }
 
     // Generate takeoff report
     let takeoffReportButton = app.collectionViews.firstMatch.makeVisible(
       element: app.buttons["generateTakeoffReportButton"]
     )
     XCTAssertNotNil(takeoffReportButton, "Generate takeoff report button should be accessible")
-    takeoffReportButton!.tap()
+
+    // Present the report sheet with robust navigation, waiting for its web view so
+    // the snapshot captures rendered content.
+    tapAndEnsureNavigation(
+      element: takeoffReportButton!,
+      expectedElement: app.webViews.firstMatch
+    )
 
     snapshot("04-takeoff-report")
 
-    // Close the report sheet by swiping down from top
-    let sheet = app.otherElements.containing(.webView, identifier: nil).firstMatch
-    if sheet.exists {
-      // Swipe down to dismiss
-      let start = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1))
-      let end = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
-      start.press(forDuration: 0.1, thenDragTo: end)
+    // Dismiss the report sheet via its Done button, the same reliable path the
+    // regular UI suite uses. A coordinate swipe-down is unreliable on iOS 26: the
+    // embedded web view swallows the drag, leaving the sheet up to intercept the
+    // next tap so the climb-profile navigation never fires.
+    let doneButton = app.buttons["Done"].firstMatch
+    if doneButton.waitForExistence(timeout: 5) {
+      doneButton.forceTap()
     }
 
-    // Wait for sheet to fully dismiss
-    Thread.sleep(forTimeInterval: 2.0)
+    // Confirm the sheet is gone before continuing so its web view can't swallow
+    // the climb-profile tap.
+    _ = app.webViews.firstMatch.waitForNonExistence(timeout: 10)
 
     // Show climb profile
     let showClimbButton = app.collectionViews.firstMatch.makeVisible(
       element: app.buttons["showClimbProfileButton"]
     )
     if let showClimbButton, showClimbButton.isEnabled {
-      showClimbButton.tap()
-
-      // Wait for terrain chart to render
       let climbNavBar = app.navigationBars["Climb Profile"]
-      XCTAssertTrue(
-        climbNavBar.waitForExistence(timeout: 30),
-        "Climb Profile nav bar should appear"
-      )
 
-      let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
-      _ = terrainChart.waitForExistence(timeout: 30)
+      // The climb NavigationLink sits just above the Liquid Glass tab bar and, on this
+      // data-heavy screen, ignores a synthesized forceTap. tapAndEnsureNavigation escalates
+      // through held-press and coordinate-press strategies until the climb screen pushes.
+      tapAndEnsureNavigation(element: showClimbButton, expectedElement: climbNavBar)
 
-      Thread.sleep(forTimeInterval: 2.0)
-      snapshot("05-climb-profile")
+      // Best-effort: capturing the climb profile must not abort the whole run, so
+      // skip its snapshot rather than fail if the push never registers.
+      if climbNavBar.waitForExistence(timeout: 20) {
+        selectLINDZDeparture(in: app)
 
-      // Navigate back
-      app.navigationBars.buttons.element(boundBy: 0).tap()
+        let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
+        _ = terrainChart.waitForExistence(timeout: 30)
+
+        Thread.sleep(forTimeInterval: 2.0)
+        snapshot("05-climb-profile")
+
+        // Navigate back
+        app.navigationBars.buttons.element(boundBy: 0).forceTap()
+      }
     }
 
     // Navigate to Landing tab
@@ -297,10 +322,11 @@ final class Generate_Screenshots: XCTestCase {
       element: app.buttons["runwaySelector"]
     )
     XCTAssertNotNil(landingRunwaySelector, "Landing runway selector should be accessible")
-    landingRunwaySelector!.tap()
 
-    // Select runway 15
+    // Open the runway picker with robust navigation so the iOS 26 Liquid Glass
+    // bar can't swallow the tap that presents it.
     let landingRunwayRow = app.buttons["runwayRow-15"].firstMatch
+    tapAndEnsureNavigation(element: landingRunwaySelector!, expectedElement: landingRunwayRow)
     if landingRunwayRow.waitForExistence(timeout: 2) {
       landingRunwayRow.tap()
     }
@@ -314,13 +340,16 @@ final class Generate_Screenshots: XCTestCase {
     // Verify landing distance is displayed
     let landingDistance = app.staticTexts["landingDistanceValue"]
 
-    // Scroll to bottom to show results
+    // Phone-only scrolled results capture (see takeoff above); on iPad the
+    // landing results are visible without scrolling, so 06 already covers them.
     let collectionView = app.collectionViews.firstMatch
-    var scrollAttempts = 0
-    while scrollAttempts < 3 {
-      collectionView.swipeUp()
-      Thread.sleep(forTimeInterval: 0.3)
-      scrollAttempts += 1
+    if !isPad {
+      var scrollAttempts = 0
+      while scrollAttempts < 3 {
+        collectionView.swipeUp()
+        Thread.sleep(forTimeInterval: 0.3)
+        scrollAttempts += 1
+      }
     }
 
     XCTAssertTrue(
@@ -328,7 +357,9 @@ final class Generate_Screenshots: XCTestCase {
       "Landing distance should be displayed"
     )
 
-    snapshot("07-landing-results")
+    if !isPad {
+      snapshot("07-landing-results")
+    }
 
     // Show landing map view
     let showLandingMapButton = collectionView.makeVisible(
@@ -339,7 +370,7 @@ final class Generate_Screenshots: XCTestCase {
       showLandingMapButton!.isEnabled,
       "Show landing map button should be enabled (runway must have threshold coordinates)"
     )
-    showLandingMapButton!.tap()
+    showLandingMapButton!.forceTap()
 
     // Wait for map to render
     Thread.sleep(forTimeInterval: 2.0)
@@ -349,11 +380,53 @@ final class Generate_Screenshots: XCTestCase {
     // Go back from map view
     let mapBackButton = app.navigationBars.buttons.element(boundBy: 0)
     XCTAssertTrue(mapBackButton.waitForExistence(timeout: 5), "Map view back button should exist")
-    mapBackButton.tap()
+    mapBackButton.forceTap()
 
     // Navigate to Climb tab
     app.tapTab("Climb")
 
     snapshot("09-climb")
+  }
+
+  // MARK: - Helpers
+
+  /// Switch the climb profile's departure to the published LINDZ procedure at
+  /// KASE so the terrain chart shows real departure routing instead of a
+  /// straight-out runway-heading climb. Best-effort: if LINDZ isn't published for
+  /// the selected runway, the first plottable departure stays auto-selected.
+  @MainActor
+  private func selectLINDZDeparture(in app: XCUIApplication) {
+    let typePicker = app.descendants(matching: .any)["departureTypePicker"].firstMatch
+    guard typePicker.waitForExistence(timeout: 5) else { return }
+
+    let procedureOption = app.buttons["Procedure"]
+    guard typePicker.tap(untilExists: procedureOption, using: XCUIElement.TapStrategy.escalating)
+    else { return }
+    procedureOption.forceTap()
+
+    let sidPicker = app.descendants(matching: .any)["departureProcedurePicker"].firstMatch
+    guard sidPicker.waitForExistence(timeout: 5) else { return }
+
+    // The first plottable SID auto-selects, which at KASE is LINDZ. If it's
+    // already chosen, leave the menu closed — re-picking it risks the menu
+    // lingering open in the snapshot. Only open the picker to correct a
+    // different auto-selection.
+    let currentSID = "\(sidPicker.label) \((sidPicker.value as? String) ?? "")"
+    if currentSID.localizedCaseInsensitiveContains("LINDZ") { return }
+
+    // Match the menu option, not the picker cell (whose label carries the
+    // selected SID), so the closing tap dismisses the menu instead of reopening.
+    let lindz = app.buttons
+      .matching(
+        NSPredicate(
+          format: "label CONTAINS[c] %@ AND identifier != %@",
+          "LINDZ",
+          "departureProcedurePicker"
+        )
+      )
+      .firstMatch
+    if sidPicker.tap(untilExists: lindz, using: XCUIElement.TapStrategy.escalating) {
+      lindz.forceTap()
+    }
   }
 }

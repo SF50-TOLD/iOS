@@ -60,8 +60,19 @@ concurrent_simulators false
 # Output simulator logs
 output_simulator_logs true
 
-# Result bundle
-result_bundle true
+# Result bundle.
+# Disabled so retries work: with a result bundle, snapshot reuses the same
+# .xcresult path on a retry and xcodebuild aborts with "Existing file at
+# -resultBundlePath" (exit 64), which turns any one-off flake (e.g. a simulator
+# "Timed out while loading Accessibility" stall) into a hard device failure
+# instead of a recovered retry. The screenshots are copied out regardless.
+result_bundle false
+
+# Reuse a single derived-data directory instead of letting snapshot create a
+# fresh ~4 GB copy (snapshot_derived-<pid>) on every run/retry and never clean it
+# up — those accumulate quickly and fill the disk. The path matches the
+# gitignored `DerivedData/` pattern.
+derived_data_path "./fastlane/DerivedData"
 
 # For more information about all available options run
 # fastlane action snapshot

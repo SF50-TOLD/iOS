@@ -52,9 +52,7 @@ struct TakeoffAirportView: View {
 
     Section("Takeoff") {
       HStack {
-        DatePicker("Date", selection: $weather.time, in: Date()...)
-          .environment(\.timeZone, displayTimeZone)
-          .accessibilityIdentifier("dateSelector")
+        DateField("Date", time: $weather.time, timeZone: displayTimeZone)
         Text(displayTimeZone.abbreviation() ?? displayTimeZone.identifier)
           .font(.caption)
           .foregroundStyle(.secondary)

@@ -36,6 +36,9 @@ extension WeatherLoader {
     /// Time for which conditions are requested.
     let time: Date
 
+    /// Weather station identifier (typically the ICAO code) for this request.
+    public var stationID: String { id }
+
     /// Creates a key for the specified airport and time.
     /// - Parameters:
     ///   - airport: The airport to fetch weather for.
