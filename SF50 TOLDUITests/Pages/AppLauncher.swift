@@ -11,6 +11,7 @@ struct AppLauncher {
   var weatherMode: WeatherMode = .ISA
   var useRegressionModel: Bool = false
   var skipScenarioSeeding: Bool = false
+  var favoriteAirportIDs: [String] = []
 
   @MainActor
   func launch() -> WelcomePage {
@@ -26,6 +27,9 @@ struct AppLauncher {
     }
     if skipScenarioSeeding {
       args.append("SKIP-SCENARIO-SEEDING")
+    }
+    if !favoriteAirportIDs.isEmpty {
+      args.append("FAVORITE-AIRPORTS=\(favoriteAirportIDs.joined(separator: ","))")
     }
     app.launchArguments = args
     app.disableLogStderrMirroring()

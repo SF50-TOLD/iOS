@@ -4,9 +4,18 @@ import SF50_Shared
 import SwiftData
 
 enum UITestingHelper {
+  static var isUITesting: Bool {
+    ProcessInfo.processInfo.arguments.contains("UI-TESTING")
+  }
+
   static var weatherLoader: (any WeatherLoaderProtocol)? {
     guard ProcessInfo.processInfo.arguments.contains("UI-TESTING") else { return nil }
     return UITestingWeatherLoader()
+  }
+
+  static var notamLoader: (any NOTAMLoaderProtocol)? {
+    guard ProcessInfo.processInfo.arguments.contains("UI-TESTING") else { return nil }
+    return UITestingNOTAMLoader()
   }
 
   static func setupUITestingEnvironment(container: ModelContainer) {
@@ -18,7 +27,7 @@ enum UITestingHelper {
 
     // Set minimal configuration for testing - let tests go through setup flow
     Defaults[.schemaVersion] = latestSchemaVersion
-    Defaults[.favoriteAirports] = []  // Ensure no favorites at start
+    Defaults[.favoriteAirports] = seededFavoriteAirports()
 
     if ProcessInfo.processInfo.arguments.contains("USE-REGRESSION-MODEL") {
       Defaults[.useRegressionModel] = true
@@ -35,6 +44,16 @@ enum UITestingHelper {
         seedTestData(container: container)
       }
     }
+  }
+
+  /// Favorite airports requested via the `FAVORITE-AIRPORTS=ID1,ID2` launch
+  /// argument, so a test can open the picker straight to a seeded favorite
+  /// without driving the search field. Empty when the argument is absent.
+  private static func seededFavoriteAirports() -> Set<String> {
+    let prefix = "FAVORITE-AIRPORTS="
+    guard let argument = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix(prefix) })
+    else { return [] }
+    return Set(argument.dropFirst(prefix.count).split(separator: ",").map(String.init))
   }
 
   @MainActor

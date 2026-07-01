@@ -15,28 +15,11 @@ class BasePage {
     element.forceTap()
   }
 
-  /// Nudge content to make an element hittable.
-  /// Handles iOS 26 Liquid Glass nav bar/tab bar overlaying elements.
+  /// Nudge content so an element sits clear of the iOS 26 Liquid Glass bars,
+  /// whose translucent nav/tab bars report an underlapping element as
+  /// `isHittable` yet swallow taps that land on them.
   func ensureHittable(_ element: XCUIElement) {
-    guard element.exists, !element.isHittable else { return }
-    let collectionView = app.collectionViews.firstMatch
-    guard collectionView.exists else { return }
-    let windowHeight = app.windows.firstMatch.frame.height
-
-    for _ in 0..<5 {
-      if element.frame.minY < windowHeight * 0.35 {
-        let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25))
-        let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        start.press(forDuration: 0.01, thenDragTo: end)
-      } else if element.frame.maxY > windowHeight * 0.70 {
-        let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
-        let end = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
-        start.press(forDuration: 0.01, thenDragTo: end)
-      } else {
-        break
-      }
-      if element.isHittable || !element.exists { return }
-    }
+    app.scrollIntoSafeBand(element)
   }
 
   func extractNumericValue(from text: String) -> Double? {
@@ -108,7 +91,27 @@ class BasePage {
 
   func tapBackButton() {
     let button = app.navigationBars.buttons.element(boundBy: 0)
+    _ = button.waitUntilHittable()
     forceTap(button)
+  }
+
+  /// Tap an element until it reports selected, retrying a dropped tap. On iOS 26
+  /// the first tap on a Liquid Glass segmented control or tab bar can be absorbed
+  /// by an animating overlay, silently leaving the previous selection in place.
+  func tapUntilSelected(_ element: XCUIElement, attempts: Int = 6) {
+    for _ in 0..<attempts {
+      if element.isSelected { return }
+      forceTap(element)
+      _ = XCTWaiter().wait(
+        for: [
+          XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "isSelected == true"),
+            object: element
+          )
+        ],
+        timeout: 2
+      )
+    }
   }
 
   /// Polls an element's label until it differs from the given value, then returns the new label.
@@ -137,21 +140,6 @@ class BasePage {
       Thread.sleep(forTimeInterval: 0.2)
     }
     return scrollToElement(element)?.label ?? ""
-  }
-
-  /// Polls until the element exists and is hittable, then returns whether it is.
-  ///
-  /// Use for elements presented behind an animation (menu/picker options),
-  /// whose frame is briefly invalid before presentation settles — tapping
-  /// during that window fails with "Activation point invalid".
-  @discardableResult
-  func waitForHittable(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
-    let deadline = Date().addingTimeInterval(timeout)
-    while Date() < deadline {
-      if element.exists, element.isHittable { return true }
-      Thread.sleep(forTimeInterval: 0.2)
-    }
-    return element.exists && element.isHittable
   }
 
   func clearAndType(_ element: XCUIElement, _ text: String) {

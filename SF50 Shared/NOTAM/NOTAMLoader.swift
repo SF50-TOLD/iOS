@@ -2,6 +2,22 @@ import Foundation
 import Logging
 import Sentry
 
+/// Abstracts NOTAM retrieval so callers can inject deterministic data — notably
+/// to keep UI tests off the network.
+public protocol NOTAMLoaderProtocol: Actor {
+  /// Fetches NOTAMs for an airport over an effective-date range.
+  /// - Parameters:
+  ///   - icao: The airport identifier to query.
+  ///   - startDate: Optional start of the effective-date filter.
+  ///   - endDate: Optional end of the effective-date filter.
+  /// - Returns: The matching NOTAMs.
+  func fetchNOTAMs(
+    for icao: String,
+    startDate: Date?,
+    endDate: Date?
+  ) async throws -> [NOTAMResponse]
+}
+
 /**
  * Actor responsible for fetching NOTAM data from the NOTAM API.
  *
@@ -42,7 +58,7 @@ import Sentry
  * }
  * ```
  */
-public actor NOTAMLoader {
+public actor NOTAMLoader: NOTAMLoaderProtocol {
   /// Shared singleton instance
   public static let shared = NOTAMLoader()
 
@@ -110,6 +126,27 @@ public actor NOTAMLoader {
         "NOTAM API configuration not found in bundle. Using defaults. API calls will fail."
       )
     }
+  }
+
+  /// Fetches NOTAMs for an airport over an effective-date range.
+  ///
+  /// Satisfies ``NOTAMLoaderProtocol`` by forwarding to
+  /// ``fetchNOTAMs(for:startDate:endDate:purpose:scope:limit:offset:)`` with
+  /// default filters and returning just the NOTAM entries.
+  public func fetchNOTAMs(
+    for icao: String,
+    startDate: Date?,
+    endDate: Date?
+  ) async throws -> [NOTAMResponse] {
+    try await fetchNOTAMs(
+      for: icao,
+      startDate: startDate,
+      endDate: endDate,
+      purpose: nil,
+      scope: nil,
+      limit: 100,
+      offset: 0
+    ).data
   }
 
   /// Fetches NOTAMs for a specific ICAO location.
@@ -222,70 +259,6 @@ public actor NOTAMLoader {
       SentrySDK.capture(error: error) { scope in
         scope.setLevel(.warning)
         scope.setTag(value: icao, key: "airport")
-        scope.setFingerprint(["notam-decoding"])
-      }
-      Self.logger.error("Failed to decode NOTAM response", metadata: ["error": "\(error)"])
-      throw Errors.decodingFailed(error)
-    }
-  }
-
-  /// Fetches a single NOTAM by its ID.
-  ///
-  /// - Parameter notamId: The NOTAM identifier (e.g., "FDC 2/1234")
-  /// - Returns: NOTAM response including raw message
-  /// - Throws: `NOTAMLoader.Errors` on failure
-  public func fetchNOTAM(id notamId: String) async throws -> NOTAMResponse {
-    // URL-encode the NOTAM ID
-    guard
-      let encodedId = notamId.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
-    else {
-      throw Errors.invalidURL
-    }
-
-    guard let url = URL(string: "\(baseURL)/api/notams/\(encodedId)") else {
-      throw Errors.invalidURL
-    }
-
-    Self.logger.info("Fetching single NOTAM", metadata: ["notamId": "\(notamId)"])
-
-    // Create request with authentication
-    var request = URLRequest(url: url)
-    request.setValue("Bearer \(apiToken)", forHTTPHeaderField: "Authorization")
-    request.setValue("application/json", forHTTPHeaderField: "Accept")
-    request.timeoutInterval = 30
-
-    // Perform request
-    let (data, response) = try await session.data(for: request)
-
-    guard let httpResponse = response as? HTTPURLResponse else {
-      throw Errors.invalidResponse
-    }
-
-    // Handle errors
-    if httpResponse.statusCode != 200 {
-      if let errorResponse = try? decoder.decode(NOTAMErrorResponse.self, from: data) {
-        throw Errors.apiError(
-          statusCode: httpResponse.statusCode,
-          code: errorResponse.error.code,
-          message: errorResponse.error.message
-        )
-      }
-      throw Errors.badResponse(httpResponse)
-    }
-
-    // Decode response (single NOTAM endpoint returns { "data": {...} })
-    struct SingleNOTAMResponse: Decodable {
-      let data: NOTAMResponse
-    }
-
-    do {
-      let singleResponse = try decoder.decode(SingleNOTAMResponse.self, from: data)
-      Self.logger.info("Successfully fetched NOTAM", metadata: ["notamId": "\(notamId)"])
-      return singleResponse.data
-    } catch {
-      SentrySDK.capture(error: error) { scope in
-        scope.setLevel(.warning)
-        scope.setTag(value: notamId, key: "notam.id")
         scope.setFingerprint(["notam-decoding"])
       }
       Self.logger.error("Failed to decode NOTAM response", metadata: ["error": "\(error)"])

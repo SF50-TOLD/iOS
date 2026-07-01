@@ -18,6 +18,8 @@ jobs:
       scheme: "SF50 TOLD"
       unit-test-plan: "SF50 Shared Unit Tests"
       ui-test-plan: "SF50 TOLD UI Tests"
+      ui-timeout-minutes: 240
+      test-execution-time-allowance: 900
       build-matrix: |
         {"include":[
           {"ios-label":"latest","runner":"macos-26","device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"},

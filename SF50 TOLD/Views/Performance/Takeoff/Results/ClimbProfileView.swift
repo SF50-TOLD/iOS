@@ -160,7 +160,7 @@ struct ClimbProfileView: View {
       if isComputing {
         HStack {
           Spacer()
-          ProgressView("Computing terrain path…")
+          TerrainComputingIndicator()
           Spacer()
         }
         .padding()

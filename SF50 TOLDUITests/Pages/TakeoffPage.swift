@@ -87,23 +87,28 @@ final class TakeoffPage: BasePage {
     XCTAssertNotNil(selector, "Weather selector should be accessible")
     let windField = app.textFields["windDirectionField"].firstMatch
     tapAndEnsureNavigation(element: selector!, expectedElement: windField)
-    return WeatherPickerPage(app: app)
+    let weatherPicker = WeatherPickerPage(app: app)
+    weatherPicker.dismissInProgressLoad()
+    return weatherPicker
   }
 
   func openNOTAMs() -> NOTAMPage {
     let selector = scrollToElement(NOTAMSelector)
-    XCTAssertTrue(
-      NOTAMSelector.waitForExistence(timeout: 2),
-      "NOTAM selector should exist"
+    XCTAssertNotNil(selector, "NOTAM selector should be accessible")
+    tapAndEnsureNavigation(
+      element: selector!,
+      expectedElement: app.textFields["obstacleHeightField"].firstMatch
     )
-    if let selector { forceTap(selector) }
     return NOTAMPage(app: app)
   }
 
   func openReport() -> ReportViewerPage {
     let reportButton = scrollToElement(app.buttons["generateTakeoffReportButton"])
     XCTAssertNotNil(reportButton, "Report button should be accessible")
-    forceTap(reportButton!)
+    tapAndEnsureNavigation(
+      element: reportButton!,
+      expectedElement: app.navigationBars["Takeoff Report"]
+    )
     return ReportViewerPage(app: app, title: "Takeoff Report")
   }
 
@@ -111,7 +116,10 @@ final class TakeoffPage: BasePage {
     let button = scrollToElement(app.buttons["showClimbProfileButton"])
     XCTAssertNotNil(button, "Show Climb button should be accessible")
     XCTAssertTrue(button!.isEnabled, "Show Climb button should be enabled")
-    forceTap(button!)
+    tapAndEnsureNavigation(
+      element: button!,
+      expectedElement: app.navigationBars["Climb Profile"]
+    )
     return ClimbProfilePage(app: app)
   }
 

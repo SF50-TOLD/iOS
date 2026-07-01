@@ -69,14 +69,26 @@ final class LandingPage: BasePage {
   }
 
   func selectFlaps(_ flapSetting: String) {
+    let resultValue = app.staticTexts["landingDistanceValue"]
+    let previousDistance = scrollToElement(resultValue)?.label ?? ""
     app.collectionViews.firstMatch.swipeDown()
     let button = scrollToElement(flapsButton)
     XCTAssertNotNil(button, "Flaps button should exist")
-    forceTap(button!)
     let option = app.buttons[flapSetting]
+    // Opening the menu is a single tap that Liquid Glass can drop, leaving the
+    // menu closed; escalate the tap until the option appears.
+    let opened = button!.tap(
+      untilExists: option,
+      using: XCUIElement.TapStrategy.escalating
+    )
+    XCTAssertTrue(
+      opened,
+      "Flaps option \"\(flapSetting)\" should appear after opening the menu"
+    )
     forceTap(option)
-    // Wait for async recalculation to propagate
-    Thread.sleep(forTimeInterval: 1.0)
+    // Wait for the asynchronous recalculation to update the landing distance.
+    scrollToElement(resultValue)
+    _ = waitForLabelChange(resultValue, from: previousDistance, timeout: 2)
   }
 
   func setVREFAdditive(_ value: String) {
@@ -100,7 +112,10 @@ final class LandingPage: BasePage {
   func openRunwayPicker() -> RunwayPickerPage {
     let selector = scrollToElement(runwaySelector)
     XCTAssertNotNil(selector, "Runway selector should be accessible")
-    forceTap(selector!)
+    let anyRunwayRow = app.buttons.matching(
+      NSPredicate(format: "identifier BEGINSWITH 'runwayRow-'")
+    ).firstMatch
+    tapAndEnsureNavigation(element: selector!, expectedElement: anyRunwayRow)
     return RunwayPickerPage(app: app)
   }
 
@@ -110,23 +125,28 @@ final class LandingPage: BasePage {
     XCTAssertNotNil(selector, "Weather selector should be accessible")
     let windField = app.textFields["windDirectionField"].firstMatch
     tapAndEnsureNavigation(element: selector!, expectedElement: windField)
-    return WeatherPickerPage(app: app)
+    let weatherPicker = WeatherPickerPage(app: app)
+    weatherPicker.dismissInProgressLoad()
+    return weatherPicker
   }
 
   func openNOTAMs() -> NOTAMPage {
     let selector = scrollToElement(NOTAMSelector)
-    XCTAssertTrue(
-      NOTAMSelector.waitForExistence(timeout: 2),
-      "NOTAM selector should exist"
+    XCTAssertNotNil(selector, "NOTAM selector should be accessible")
+    tapAndEnsureNavigation(
+      element: selector!,
+      expectedElement: app.buttons["clearNOTAMsButton"]
     )
-    if let selector { forceTap(selector) }
     return NOTAMPage(app: app)
   }
 
   func openReport() -> ReportViewerPage {
     let reportButton = scrollToElement(app.buttons["generateLandingReportButton"])
     XCTAssertNotNil(reportButton, "Report button should be accessible")
-    forceTap(reportButton!)
+    tapAndEnsureNavigation(
+      element: reportButton!,
+      expectedElement: app.navigationBars["Landing Report"]
+    )
     return ReportViewerPage(app: app, title: "Landing Report")
   }
 
@@ -143,7 +163,10 @@ final class LandingPage: BasePage {
       app.descendants(matching: .any)["landingAdjustmentsLink"].firstMatch
     )
     XCTAssertNotNil(link, "Landing adjustments link should be accessible")
-    forceTap(link!)
+    tapAndEnsureNavigation(
+      element: link!,
+      expectedElement: app.navigationBars["Landing Adjustments"]
+    )
     return LandingAdjustmentsPage(app: app)
   }
 

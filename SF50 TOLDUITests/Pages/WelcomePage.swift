@@ -32,7 +32,7 @@ final class WelcomePage: BasePage {
     let button = modelPicker.buttons[model]
     XCTAssertTrue(button.waitForExistence(timeout: 2), "\(model) button should exist in picker")
     ensureHittable(button)
-    forceTap(button)
+    tapUntilSelected(button)
   }
 
   func setEmptyWeight(_ weight: String) {
@@ -62,7 +62,7 @@ final class WelcomePage: BasePage {
       "Continue button should be tappable"
     )
     ensureHittable(continueButton)
-    forceTap(continueButton)
+    tapAndEnsureNavigation(element: continueButton, expectedElement: app.textFields["Payload"])
 
     // If the data loader appears after setup, defer it
     let deferButton = app.buttons["deferDataButton"]

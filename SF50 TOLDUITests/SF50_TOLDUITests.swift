@@ -95,7 +95,7 @@ final class SF50_TOLDUITests: XCTestCase {
   // MARK: - Scenario Management Tests
 
   @MainActor
-  func testScenarioManagement() throws {
+  func testScenarioManagement() async throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
     let scenarios = settings.openScenarios()
@@ -108,7 +108,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     XCTAssertTrue(scenarios.scenarioExists("Hot Day Test"))
 
-    scenarios.deleteScenario("Hot Day Test")
+    await scenarios.deleteScenario("Hot Day Test")
 
     XCTAssertFalse(
       scenarios.scenarioExists("Hot Day Test"),
@@ -363,7 +363,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     let settings = tabBar.goToSettings()
     XCTAssertTrue(
-      settings.app.staticTexts["Settings"].exists,
+      settings.app.staticTexts["Settings"].waitForExistence(timeout: 2),
       "Should be on Settings screen"
     )
   }
@@ -649,7 +649,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     let notams = takeoff.openNOTAMs()
     notams.setObstacleHeight("75")
-    notams.setObstacleDistance("4000")
+    notams.setObstacleDistance("0.5")
     notams.goBack()
 
     let badgeLabel = takeoff.waitForLabel(of: takeoff.NOTAMSelector, toContain: "1 configured")
@@ -794,15 +794,20 @@ final class SF50_TOLDUITests: XCTestCase {
 
   @MainActor
   func testTimeZoneDisplayToggle() throws {
-    let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
+    let tabBar = AppLauncher(favoriteAirportIDs: ["OAK"])
+      .launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
 
     settings.selectTimeZone("Airport Local")
 
     let takeoff = tabBar.goToTakeoff()
 
+    // Select the seeded favorite rather than searching: a `.searchable` keyboard
+    // left up by Search detaches onto the next screen on iOS 26 and covers the tab
+    // bar, swallowing the following tab switch. Favorites needs no keyboard.
     let picker = takeoff.openAirportPicker()
-    picker.searchAndSelect("OAK")
+    picker.switchToFavorites()
+    picker.selectAirport("OAK")
 
     let dateSelector = takeoff.app.buttons["dateSelector"]
     if dateSelector.waitForExistence(timeout: 2) {
@@ -813,12 +818,12 @@ final class SF50_TOLDUITests: XCTestCase {
     settings2.selectTimeZone("UTC")
 
     let takeoff2 = tabBar.goToTakeoff()
-    // On iPhone SE, scroll up to ensure Payload field is visible
-    takeoff2.app.scrollToTop()
-    XCTAssertTrue(
-      tabBar.app.textFields["Payload"].waitForExistence(timeout: 5),
-      "Should still be on Takeoff tab"
-    )
+    // The Takeoff form can retain a scrolled-down position from the earlier
+    // visit, and a SwiftUI List does not reliably honor a status-bar
+    // scroll-to-top, so scroll directly to the Payload field to confirm the
+    // Takeoff tab is showing.
+    let payloadField = takeoff2.scrollToElement(takeoff2.payloadField)
+    XCTAssertNotNil(payloadField, "Should still be on Takeoff tab")
   }
 
   // MARK: - New Tests
@@ -925,7 +930,7 @@ final class SF50_TOLDUITests: XCTestCase {
   }
 
   @MainActor
-  func testScenarioFieldsPersistAfterNavigation() throws {
+  func testScenarioFieldsPersistAfterNavigation() async throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
     let scenarios = settings.openScenarios()
@@ -955,7 +960,7 @@ final class SF50_TOLDUITests: XCTestCase {
     detail2.goBack()
 
     // Cleanup
-    scenarios.deleteScenario("Persist Test")
+    await scenarios.deleteScenario("Persist Test")
   }
 
   @MainActor

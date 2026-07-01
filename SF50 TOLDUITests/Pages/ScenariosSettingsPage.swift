@@ -27,7 +27,10 @@ final class ScenariosSettingsPage: BasePage {
       addButton.waitForExistence(timeout: 2),
       "Add Scenario button should exist"
     )
-    forceTap(addButton)
+    tapAndEnsureNavigation(
+      element: addButton,
+      expectedElement: app.textFields["scenarioNameField"]
+    )
     return ScenarioDetailPage(app: app)
   }
 
@@ -49,7 +52,7 @@ final class ScenariosSettingsPage: BasePage {
     return text.exists
   }
 
-  func deleteScenario(_ name: String) {
+  func deleteScenario(_ name: String) async {
     let deleteButton = app.buttons["Delete"]
 
     for _ in 0..<5 {
@@ -68,7 +71,7 @@ final class ScenariosSettingsPage: BasePage {
       // The Delete button (and any confirmation) disappears once the tap
       // registers; a single forceTap is intermittently dropped on iPad, so
       // retry until it's gone.
-      deleteButton.tap(until: { deleteButton.waitForNonExistence(timeout: 2) })
+      await deleteButton.tap(until: { deleteButton.waitForNonExistence(timeout: 2) })
     }
   }
 
@@ -78,18 +81,21 @@ final class ScenariosSettingsPage: BasePage {
     // is still settling, then scroll to find it if it landed below the fold.
     XCTAssertTrue(scenarioExists(name), "Scenario \(name) should exist")
     let text = app.staticTexts[name]
-    forceTap(text)
+    tapAndEnsureNavigation(
+      element: text,
+      expectedElement: app.textFields["scenarioNameField"]
+    )
     return ScenarioDetailPage(app: app)
   }
 
-  func deleteAllScenarios() {
+  func deleteAllScenarios() async {
     // Delete each default scenario by name. Each name may appear in both the
     // takeoff and landing sections, so loop until it no longer exists.
     for name in Self.defaultScenarioNames {
       app.scrollToTop()
       var iterations = 0
       while app.staticTexts[name].exists && iterations < 5 {
-        deleteScenario(name)
+        await deleteScenario(name)
         app.scrollToTop()
         iterations += 1
       }

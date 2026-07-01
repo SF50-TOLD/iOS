@@ -45,11 +45,14 @@ final class NOTAMPage: BasePage {
       ensureHittable(contaminationTypePicker)
       let option = app.buttons[type]
       // Opening the picker is a single tap that iPad/Liquid Glass can drop,
-      // leaving the menu closed; retry until the option becomes hittable.
-      let opened = contaminationTypePicker.tap(until: { self.waitForHittable(option, timeout: 5) })
+      // leaving the menu closed; escalate the tap until the option appears.
+      let opened = contaminationTypePicker.tap(
+        untilExists: option,
+        using: XCUIElement.TapStrategy.escalating
+      )
       XCTAssertTrue(
         opened,
-        "Contamination option \"\(type)\" should be hittable after opening the picker"
+        "Contamination option \"\(type)\" should appear after opening the picker"
       )
       forceTap(option)
     }
@@ -65,7 +68,7 @@ final class NOTAMPage: BasePage {
 
   func clearAllNOTAMs() {
     let clearButton = app.buttons["clearNOTAMsButton"]
-    XCTAssertTrue(clearButton.exists, "Clear NOTAMs button should exist")
+    XCTAssertTrue(clearButton.waitForExistence(timeout: 2), "Clear NOTAMs button should exist")
     ensureHittable(clearButton)
     forceTap(clearButton)
   }
