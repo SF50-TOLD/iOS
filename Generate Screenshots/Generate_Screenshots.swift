@@ -11,6 +11,12 @@ import XCUITestKit
 
 final class Generate_Screenshots: XCTestCase {
 
+  /// KASE's NASR record ID (its FAA site number). Seeding it as a favorite lets
+  /// the flow select Aspen from the Favorites tab instead of the airport search
+  /// field, whose keyboard and search bar orphan themselves over the popped-to
+  /// form on iOS 26 under a fresh run's load and block the runway picker.
+  private static let aspenRecordID = "02517.*A"
+
   @MainActor private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
   override func setUpWithError() throws {
@@ -24,7 +30,9 @@ final class Generate_Screenshots: XCTestCase {
   @MainActor
   func testGenerateScreenshots() throws {
     let app = XCUIApplication()
-    app.launchArguments = ["UI-TESTING", "GENERATE-SCREENSHOTS"]
+    app.launchArguments = [
+      "UI-TESTING", "GENERATE-SCREENSHOTS", "FAVORITE-AIRPORTS=\(Self.aspenRecordID)"
+    ]
     setupSnapshot(app)
     app.launch()
 
@@ -129,25 +137,15 @@ final class Generate_Screenshots: XCTestCase {
       expectedElement: app.segmentedControls["airportListPicker"]
     )
 
-    // Switch to Search tab
-    let airportPicker = app.segmentedControls["airportListPicker"]
-    XCTAssertTrue(
-      airportPicker.waitForExistence(timeout: 2),
-      "Airport picker should appear"
-    )
-    airportPicker.buttons["Search"].tap()
-
-    // Search for ASE
-    let searchField = app.searchFields.firstMatch
-    XCTAssertTrue(searchField.waitForExistence(timeout: 2), "Search field should appear")
-    searchField.tap()
-    searchField.typeText("ASE")
-
-    // Select KASE
+    // Select KASE from the Favorites tab (the picker's default), where it is
+    // seeded via the FAVORITE-AIRPORTS launch argument. The Favorites list has
+    // no `.searchable` field, so selecting from it avoids the orphaned search
+    // keyboard that otherwise floats over the popped-to form and swallows the
+    // tap that opens the runway picker.
     let takeoffAirportRow = app.buttons["airportRow-ASE"].firstMatch
     XCTAssertTrue(
-      takeoffAirportRow.waitForExistence(timeout: 3),
-      "ASE airport should appear in results"
+      takeoffAirportRow.waitForExistence(timeout: 10),
+      "ASE favorite should appear"
     )
     takeoffAirportRow.tap()
 
@@ -298,22 +296,9 @@ final class Generate_Screenshots: XCTestCase {
       expectedElement: app.segmentedControls["airportListPicker"]
     )
 
-    // Search for ASE
-    let landingAirportPicker = app.segmentedControls["airportListPicker"]
-    if landingAirportPicker.waitForExistence(timeout: 2) {
-      landingAirportPicker.buttons["Search"].tap()
-    }
-
-    let landingSearchField = app.searchFields.firstMatch
-    if landingSearchField.waitForExistence(timeout: 2) {
-      landingSearchField.tap()
-      landingSearchField.typeText("ASE")
-      Thread.sleep(forTimeInterval: 0.5)
-    }
-
-    // Select KASE
+    // Select KASE from the Favorites tab (see the takeoff flow above).
     let landingAirportRow = app.buttons["airportRow-ASE"].firstMatch
-    if landingAirportRow.waitForExistence(timeout: 3) {
+    if landingAirportRow.waitForExistence(timeout: 10) {
       landingAirportRow.tap()
     }
 
