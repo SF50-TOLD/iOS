@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import NavData
 import SwiftData
 
 /// Generates a ``ProcedureTerrainPath`` by combining a ``ProcedurePath`` with

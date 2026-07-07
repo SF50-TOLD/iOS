@@ -1,4 +1,5 @@
 import CoreLocation
+import NavData
 
 /// Protocol for items with a geographic location.
 public protocol Locatable {

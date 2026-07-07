@@ -1,5 +1,6 @@
 import Foundation
 import Logging
+import NavDataGeneration
 import SwiftNASR
 
 /// Actor that collects log entries from any thread and provides them to the UI.
@@ -161,15 +162,12 @@ class NavDataProcessorViewModel {
       return handler
     }
 
-    // Callbacks for progress updates - these update the MainActor Progress object
+    // Callbacks for progress updates - these update the MainActor Progress object.
+    // Generation reports 0–100; map it onto 0–93 so the upload phase occupies 93–100.
     let onProgress: @MainActor @Sendable (Int64, String) -> Void = {
       [weak self] completed, description in
-      self?.progressObject?.completedUnitCount = completed
+      self?.progressObject?.completedUnitCount = Int64(Double(completed) * 0.93)
       self?.progressObject?.localizedDescription = description
-    }
-
-    let onUploadError: @MainActor @Sendable (NSError) -> Void = { [weak self] error in
-      self?.uploadError = error
     }
 
     processingTask = Task.detached {
@@ -180,9 +178,21 @@ class NavDataProcessorViewModel {
           logger: logger
         )
         processor.onProgress = onProgress
-        processor.onUploadError = onUploadError
 
-        try await processor.process()
+        let file = try await processor.process()
+
+        // Upload to GitHub (best-effort); drives the progress bar from 93 → 100.
+        await MainActor.run { [weak self] in
+          self?.progressObject?.completedUnitCount = 93
+          self?.progressObject?.localizedDescription = String(localized: "Uploading to GitHub…")
+        }
+        if let uploadError = await NavDataUploader(cycle: cycle, logger: logger).upload(file: file)
+        {
+          await MainActor.run { [weak self] in self?.uploadError = uploadError }
+        }
+        await MainActor.run { [weak self] in
+          self?.progressObject?.completedUnitCount = 100
+        }
 
         await MainActor.run { [weak self] in
           self?.statusMessage = String(

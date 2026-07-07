@@ -1,11 +1,6 @@
 import Foundation
+import NavData
 import SwiftData
-
-/// Common interface for types that represent a publication cycle.
-public protocol AnyCycle {
-  var name: String { get }
-  var isEffective: Bool { get }
-}
 
 /// Identifies the data source for cycle information.
 ///

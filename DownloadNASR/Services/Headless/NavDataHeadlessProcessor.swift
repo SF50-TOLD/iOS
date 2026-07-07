@@ -1,5 +1,6 @@
 import Foundation
 import Logging
+import NavDataGeneration
 import SwiftNASR
 
 /// Handles headless/automated execution of the NASR processor via environment variables.
@@ -83,15 +84,21 @@ enum NavDataHeadlessProcessor {
       outputLocation: outputURL,
       logger: logger
     )
-    processor.skipUpload = env["NASR_SKIP_UPLOAD"] == "1"
 
     // For headless mode, just log progress
     processor.onProgress = { completed, description in
       logger.info("Progress: \(completed)/100 - \(description)")
     }
 
+    let skipUpload = env["NASR_SKIP_UPLOAD"] == "1"
+
     do {
-      try await processor.process()
+      let file = try await processor.process()
+      if !skipUpload,
+        let uploadError = await NavDataUploader(cycle: cycle, logger: logger).upload(file: file)
+      {
+        logger.warning("GitHub upload failed: \(uploadError.localizedDescription)")
+      }
       logger.notice("Processing complete. Output saved to: \(outputURL.path)")
       return 0
     } catch {

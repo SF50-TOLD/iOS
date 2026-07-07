@@ -1,4 +1,5 @@
 import Foundation
+import NavData
 
 /// Altitude restriction for a fix in a departure procedure.
 ///

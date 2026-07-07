@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import NavData
 import SwiftData
 
 /// A leg in an instrument procedure.

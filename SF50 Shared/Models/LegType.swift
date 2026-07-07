@@ -1,4 +1,5 @@
 import Foundation
+import NavData
 
 /// The type of procedure leg geometry used for plotting a fix on a chart.
 ///

@@ -19,8 +19,9 @@ import SwiftNASR
 ///
 /// ## Data Source
 ///
-/// Navigation data is pre-processed and hosted at:
-/// `github.com/SF50-TOLD/Airport-Data`
+/// Navigation data is pre-processed and published as GitHub release assets at:
+/// `github.com/SF50-TOLD/NavDataDistribution`, with one compressed property
+/// list per publication cycle.
 ///
 /// The data combines FAA NASR (National Airspace System Resources) with
 /// OurAirports for international coverage, CIFP for departure procedures,
@@ -76,7 +77,7 @@ import SwiftNASR
 @ModelActor
 actor NavDataLoader {
   private static let dataURLTemplate =
-    "https://github.com/SF50-TOLD/Airport-Data/blob/main/3.0/%@.plist.lzma?raw=true"
+    "https://github.com/SF50-TOLD/NavDataDistribution/releases/download/%1$@/%1$@.plist.lzma"
 
   /// Maximum number of rows inserted per save.
   ///

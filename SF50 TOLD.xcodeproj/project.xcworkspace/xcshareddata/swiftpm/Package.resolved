@@ -1,5 +1,5 @@
 {
-  "originHash" : "15986c67b0277257a20b8bb10eb16633b0f849ac4bbb7a00d3892e06be3ffc87",
+  "originHash" : "29a89efcbcfc6955bf7aba6ef77cc58f3d20a328be8c96a45f914ab771f3f13d",
   "pins" : [
     {
       "identity" : "buildablemacro",
@@ -29,6 +29,24 @@
       }
     },
     {
+      "identity" : "navdata",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SF50-TOLD/NavData",
+      "state" : {
+        "revision" : "5006219d0446bb9034570abefbad84d427a78251",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "navdatadistribution",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SF50-TOLD/NavDataDistribution",
+      "state" : {
+        "revision" : "aa0f6204df3e36d8b2ac8aa63d9b7172d362f0e9",
+        "version" : "1.0.0"
+      }
+    },
+    {
       "identity" : "sentry-cocoa",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/getsentry/sentry-cocoa/",
@@ -51,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/StreamingLZMA",
       "state" : {
-        "revision" : "748b562b64863d97055aeb7ece6d779268463a8e",
-        "version" : "1.3.0"
+        "revision" : "51e43c72c0a337d05d1546cc549e31938750b79d",
+        "version" : "1.3.1"
       }
     },
     {
@@ -132,8 +150,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftCIFP.git",
       "state" : {
-        "revision" : "6b11542cf4cdb4bcf55ae198e256122085c679d9",
-        "version" : "1.1.0"
+        "revision" : "4349937f2ad955aada2c5de89f13c810e7bce72f",
+        "version" : "1.2.0"
       }
     },
     {
@@ -141,8 +159,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftDOF.git",
       "state" : {
-        "revision" : "6803de4cad7288d30d6f9463216f1540f06fd738",
-        "version" : "1.1.0"
+        "revision" : "f054244e8671e17e9424b14a689ca869d067062a",
+        "version" : "1.2.0"
       }
     },
     {
@@ -159,8 +177,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftNASR",
       "state" : {
-        "revision" : "47cf455cb76513cc15afc2b14a23a26e1be542c4",
-        "version" : "4.0.0"
+        "revision" : "fba98e390d7ff0f87ad6543f4de4f2041db1c722",
+        "version" : "4.1.0"
       }
     },
     {

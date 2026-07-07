@@ -1,4 +1,5 @@
 import Foundation
+import NavData
 
 /// Sendable snapshot of NOTAM data for background performance calculations.
 ///
