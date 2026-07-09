@@ -12,8 +12,6 @@ xcuserdata/
 .swiftlint/RemoteConfigCache
 .swift-format
 
-# Sentry CLI config
-.sentryclirc
 
 # NOTAM API Configuration (contains API token)
 SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig
@@ -23,3 +21,5 @@ scripts/regression_plots/
 
 # Credentials Configuration (contains API tokens)
 DownloadNASR/Credentials.xcconfig
+.claude/settings.local.json
+.mcp.json
