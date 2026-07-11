@@ -76,5 +76,23 @@ final class WelcomePage: BasePage {
     )
     return TabBarPage(app: app)
   }
+
+  /// Taps Continue when the nav-data loader is expected to gate entry, landing
+  /// on the consent screen rather than the main tab view.
+  func tapContinueExpectingConsent() -> LoadingConsentPage {
+    if app.keyboards.count > 0 {  // swiftlint:disable:this empty_count
+      app.swipeDown()
+    }
+    XCTAssertTrue(
+      continueButton.waitForExistence(timeout: 5),
+      "Continue button should be tappable"
+    )
+    ensureHittable(continueButton)
+    tapAndEnsureNavigation(
+      element: continueButton,
+      expectedElement: app.buttons["downloadDataButton"]
+    )
+    return LoadingConsentPage(app: app)
+  }
 }
 // swiftlint:enable prefer_nimble

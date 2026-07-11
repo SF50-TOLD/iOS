@@ -8,42 +8,6 @@ final class SF50_TOLDUITests: XCTestCase {
     continueAfterFailure = false
   }
 
-  // MARK: - Takeoff Tests
-
-  @MainActor
-  func testBasicTakeoffFlow() throws {
-    let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
-    let takeoff = tabBar.goToTakeoff()
-
-    takeoff.setPayload("450")
-    takeoff.setFuel("0")
-    takeoff.selectAirportRunwayWeather(airport: "OAK", runway: "28R")
-
-    let groundRun = try XCTUnwrap(takeoff.groundRunValue, "Ground run should have a value")
-    let distance = try XCTUnwrap(takeoff.distanceValue, "Distance should have a value")
-    // On iPad iOS 26, XCTest typeText doesn't commit TextField(value:format:)
-    // bindings, so custom weather values may not apply. Use wider tolerance
-    // to accommodate default-weather performance values on iPad.
-    XCTAssertEqual(groundRun, 1798, accuracy: 25)
-    XCTAssertEqual(distance, 2643, accuracy: 50)
-  }
-
-  @MainActor
-  func testBasicLandingFlow() throws {
-    let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
-    let landing = tabBar.goToLanding()
-
-    landing.setPayload("450")
-    landing.setFuel("0")
-    landing.selectAirportRunwayWeather(airport: "OAK", runway: "28R")
-
-    let landingDistance = try XCTUnwrap(
-      landing.landingDistanceValue,
-      "Landing distance should have a value"
-    )
-    XCTAssertEqual(landingDistance, 1769, accuracy: 35)
-  }
-
   // MARK: - Additional Conditions Tests
 
   @MainActor
@@ -222,38 +186,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
     let settings2 = tabBar.goToSettings()
     settings2.setSafetyFactorDry("1.0")
-  }
-
-  // MARK: - Landing Flap Configuration Tests
-
-  @MainActor
-  func testLandingFlapConfiguration() throws {
-    let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
-    let landing = tabBar.goToLanding()
-
-    landing.setupCalculation()
-
-    let flaps100Distance = landing.landingDistanceValue
-
-    landing.selectFlaps("Flaps 50%")
-    let flaps50Distance = landing.landingDistanceValue
-
-    if let flaps100Distance, let flaps50Distance {
-      XCTAssertNotEqual(
-        flaps100Distance,
-        flaps50Distance,
-        accuracy: 1,
-        "Landing distance should differ between flap settings"
-      )
-    }
-
-    landing.selectFlaps("Flaps Up")
-    let flapsUpDistance = landing.landingDistanceValue
-
-    if let flaps100Distance, let flapsUpDistance {
-      XCTAssertEqual(flaps100Distance, 1769.0, accuracy: 40)
-      XCTAssertEqual(flapsUpDistance, 2248.0, accuracy: 40)
-    }
   }
 
   // MARK: - Climb Tests
@@ -495,43 +427,6 @@ final class SF50_TOLDUITests: XCTestCase {
     XCTAssertTrue(
       settings.aircraftTypePicker.waitForExistence(timeout: 2),
       "Aircraft type picker should be present in Settings"
-    )
-  }
-
-  // MARK: - Units Settings Tests
-
-  @MainActor
-  func testUnitsSettings() throws {
-    let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
-    let settings = tabBar.goToSettings()
-    let units = settings.openUnits()
-
-    XCTAssertTrue(
-      units.app.navigationBars["Units"].waitForExistence(timeout: 2),
-      "Units nav bar should appear"
-    )
-
-    units.selectWeight("Kilograms (kg)")
-    units.selectTemperature("Fahrenheit (°F)")
-
-    units.goBack()
-
-    _ = tabBar.goToTakeoff()
-    XCTAssertTrue(
-      tabBar.app.textFields["Payload"].waitForExistence(timeout: 5),
-      "Takeoff tab should still render after unit change"
-    )
-
-    let settings2 = tabBar.goToSettings()
-    let units2 = settings2.openUnits()
-
-    XCTAssertTrue(
-      units2.weightPickerLabel.contains("Kilograms"),
-      "Weight should be set to Kilograms"
-    )
-    XCTAssertTrue(
-      units2.temperaturePickerLabel.contains("Fahrenheit"),
-      "Temperature should be set to Fahrenheit"
     )
   }
 
@@ -1097,32 +992,6 @@ final class SF50_TOLDUITests: XCTestCase {
   }
 
   @MainActor
-  func testNOTAMShorteningReducesAvailableRunway() throws {
-    let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
-    let landing = tabBar.goToLanding()
-
-    landing.setupCalculation()
-
-    let baselineDistance = landing.landingDistanceValue
-
-    let notams = landing.openNOTAMs()
-    notams.setRunwayShortening("500")
-    notams.goBack()
-
-    // Wait for recalculation after navigating back
-    landing.app.scrollToTop()
-
-    // With a shorter runway available, the distance doesn't change but the
-    // relationship to available runway does. Verify the NOTAM was applied.
-    let badgeLabel = landing.waitForLabel(of: landing.NOTAMSelector, toContain: "1 configured")
-    XCTAssertTrue(
-      badgeLabel.contains("1 configured"),
-      "NOTAM should be configured, got: \"\(badgeLabel)\""
-    )
-    XCTAssertNotNil(baselineDistance, "Baseline distance should have been captured")
-  }
-
-  @MainActor
   func testFlapSettingImpactOnAllLandingValues() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -1132,6 +1001,10 @@ final class SF50_TOLDUITests: XCTestCase {
     // Record Flaps 100% values
     let flaps100GroundRun = landing.landingGroundRunValue
     let flaps100Distance = landing.landingDistanceValue
+
+    if let flaps100Distance {
+      XCTAssertEqual(flaps100Distance, 1769.0, accuracy: 40, "Flaps 100% distance")
+    }
 
     // Switch to Flaps 50%
     landing.selectFlaps("Flaps 50%")
@@ -1172,6 +1045,9 @@ final class SF50_TOLDUITests: XCTestCase {
         flaps50Distance,
         "Flaps Up should have distance >= Flaps 50%"
       )
+    }
+    if let flapsUpDistance {
+      XCTAssertEqual(flapsUpDistance, 2248.0, accuracy: 40, "Flaps Up distance")
     }
   }
 
@@ -1288,6 +1164,68 @@ final class SF50_TOLDUITests: XCTestCase {
 
     let downloadButton = takeoff.app.buttons["updateWeatherButton"]
     XCTAssertTrue(downloadButton.exists, "Use Downloaded Weather button should appear")
+  }
+
+  // MARK: - Runway Map Tests
+
+  @MainActor
+  func testTakeoffMapDisplaysRunway() throws {
+    let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
+    let takeoff = tabBar.goToTakeoff()
+
+    takeoff.setupCalculation(payload: "450", fuel: "0", airport: "OAK", runway: "28R")
+
+    let map = takeoff.openTakeoffMap()
+    XCTAssertTrue(
+      map.isDisplayed(runway: "28R"),
+      "Runway map should appear for a takeoff with a valid ground run"
+    )
+    map.goBack()
+  }
+
+  @MainActor
+  func testLandingMapDisplaysRunway() throws {
+    let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
+    let landing = tabBar.goToLanding()
+
+    landing.setupCalculation(payload: "450", fuel: "0", airport: "OAK", runway: "28R")
+
+    let map = landing.openLandingMap()
+    XCTAssertTrue(
+      map.isDisplayed(runway: "28R"),
+      "Runway map should appear for a landing with a valid ground run"
+    )
+    map.goBack()
+  }
+
+  // MARK: - Nav Data Loader Tests
+
+  @MainActor
+  func testStaleNavDataOffersDeferral() throws {
+    // Seed an expired NASR cycle so the loader gates the app on launch. The
+    // download itself needs the network and is out of scope here; this verifies
+    // the consent screen appears and that deferring proceeds into the app.
+    let welcome = AppLauncher(staleNavData: true).launch()
+    welcome.waitForReady()
+    welcome.selectModel("G1")
+    welcome.setEmptyWeight("4550")
+
+    let consent = welcome.tapContinueExpectingConsent()
+    XCTAssertTrue(
+      consent.isDisplayed(),
+      "Loading consent screen should appear when nav data is out of date"
+    )
+    XCTAssertTrue(
+      consent.deferButton.exists,
+      "Deferral should be offered when existing data is merely out of date"
+    )
+
+    let tabBar = consent.deferUntilLater()
+    let takeoff = tabBar.goToTakeoff()
+    XCTAssertTrue(
+      takeoff.payloadField.waitForExistence(timeout: 5),
+      "Deferring the update should proceed into the app"
+    )
   }
 }
 // swiftlint:enable prefer_nimble

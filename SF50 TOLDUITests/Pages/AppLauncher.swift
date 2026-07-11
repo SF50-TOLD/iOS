@@ -11,6 +11,7 @@ struct AppLauncher {
   var weatherMode: WeatherMode = .ISA
   var useRegressionModel: Bool = false
   var skipScenarioSeeding: Bool = false
+  var staleNavData: Bool = false
   var favoriteAirportIDs: [String] = []
 
   @MainActor
@@ -27,6 +28,9 @@ struct AppLauncher {
     }
     if skipScenarioSeeding {
       args.append("SKIP-SCENARIO-SEEDING")
+    }
+    if staleNavData {
+      args.append("STALE-NAV-DATA")
     }
     if !favoriteAirportIDs.isEmpty {
       args.append("FAVORITE-AIRPORTS=\(favoriteAirportIDs.joined(separator: ","))")

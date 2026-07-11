@@ -80,9 +80,13 @@ enum UITestingHelper {
     try? insertAirport(.KSQL, context: context)
     try? insertAirport(.K1C9, context: context)
 
-    // Set expiration date 28 days in the future to prevent database loader from appearing
+    // Expire the cycles 1 day in the past when the test forces stale nav data so
+    // the loading consent screen gates the app; otherwise set expiration 28 days
+    // in the future to keep the database loader from appearing.
     let effectiveDate = Date()
-    let expirationDate = effectiveDate.addingTimeInterval(28 * 24 * 60 * 60)
+    let forceStale = ProcessInfo.processInfo.arguments.contains("STALE-NAV-DATA")
+    let expirationInterval: TimeInterval = forceStale ? -24 * 60 * 60 : 28 * 24 * 60 * 60
+    let expirationDate = effectiveDate.addingTimeInterval(expirationInterval)
     context.insert(
       Cycle(
         dataSource: .nasr,
