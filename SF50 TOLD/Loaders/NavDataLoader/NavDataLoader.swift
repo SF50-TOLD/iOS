@@ -276,12 +276,10 @@ actor NavDataLoader {
     }
   }
 
-  /// Deletes the previous dataset, one entity type per transaction.
+  /// Deletes the previous dataset in bounded batches, one entity type at a time.
   ///
   /// Child entities are deleted before their parents so each delete touches
-  /// only its own table instead of fanning out through cascade rules, and each
-  /// transaction commits separately to bound how long the store's write lock
-  /// is held.
+  /// only its own table instead of fanning out through cascade rules.
   private func resetData() async throws {
     try await deleteAll(NOTAM.self)
     try await deleteAll(SF50_Shared.Leg.self)
@@ -293,10 +291,22 @@ actor NavDataLoader {
     try await deleteAll(SF50_Shared.Obstacle.self)
   }
 
-  private func deleteAll<Model: PersistentModel>(_ model: Model.Type) async throws {
-    try modelContext.delete(model: model)
-    try modelContext.save()
-    try await Task.sleep(for: Self.interBatchPause)
+  /// Deletes every row of `model` in `saveBatchRowLimit`-sized transactions.
+  ///
+  /// SwiftData's bulk `delete(model:)` removes all rows in a single transaction
+  /// that holds the store's write lock for its full duration, stalling
+  /// concurrent main-context reads long enough to trip an app-hang report.
+  /// Deleting in bounded transactions with a pause between them keeps each lock
+  /// hold short so other store users can interleave, mirroring the insert path.
+  private func deleteAll<Model: PersistentModel>(_: Model.Type) async throws {
+    var descriptor = FetchDescriptor<Model>()
+    descriptor.fetchLimit = Self.saveBatchRowLimit
+
+    while case let batch = try modelContext.fetch(descriptor), !batch.isEmpty {
+      for object in batch { modelContext.delete(object) }
+      try modelContext.save()
+      try await Task.sleep(for: Self.interBatchPause)
+    }
   }
 
   /// Inserts an airport and its runways, procedures, segments, and legs.
