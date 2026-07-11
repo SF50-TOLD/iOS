@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 import XCUITestKit
 
@@ -17,4 +16,3 @@ final class LoadingConsentPage: BasePage {
     return TabBarPage(app: app)
   }
 }
-// swiftlint:enable prefer_nimble

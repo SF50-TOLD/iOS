@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 import XCUITestKit
 
@@ -147,4 +146,3 @@ final class SettingsPage: BasePage {
     return TerrainSettingsPage(app: app)
   }
 }
-// swiftlint:enable prefer_nimble

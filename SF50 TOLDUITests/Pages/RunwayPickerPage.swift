@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 
 final class RunwayPickerPage: BasePage {
@@ -21,4 +20,3 @@ final class RunwayPickerPage: BasePage {
     return row.label
   }
 }
-// swiftlint:enable prefer_nimble

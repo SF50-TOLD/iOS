@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 import XCUITestKit
 
@@ -57,4 +56,3 @@ final class ScenarioDetailPage: BasePage {
     _ = app.navigationBars["Scenarios"].waitForExistence(timeout: 3)
   }
 }
-// swiftlint:enable prefer_nimble

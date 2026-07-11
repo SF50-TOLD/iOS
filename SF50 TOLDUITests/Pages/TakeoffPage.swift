@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 import XCUITestKit
 
@@ -172,4 +171,3 @@ final class TakeoffPage: BasePage {
     selectAirportRunwayWeather(airport: airport, runway: runway)
   }
 }
-// swiftlint:enable prefer_nimble

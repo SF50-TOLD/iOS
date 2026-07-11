@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 
 final class WelcomePage: BasePage {
@@ -95,4 +94,3 @@ final class WelcomePage: BasePage {
     return LoadingConsentPage(app: app)
   }
 }
-// swiftlint:enable prefer_nimble

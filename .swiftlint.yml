@@ -6,3 +6,8 @@ excluded:
 disabled_rules:
   - missing_docs
   - pattern_matching_keywords
+  # This project uses Swift Testing for unit tests and XCUITest for UI tests;
+  # Quick and Nimble are not used, so their opt-in rules do not apply.
+  - prefer_nimble
+  - quick_discouraged_focused_test
+  - quick_discouraged_pending_test

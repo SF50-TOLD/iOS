@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 
 final class UnitsSettingsPage: BasePage {
@@ -74,4 +73,3 @@ final class UnitsSettingsPage: BasePage {
     forceTap(option)
   }
 }
-// swiftlint:enable prefer_nimble

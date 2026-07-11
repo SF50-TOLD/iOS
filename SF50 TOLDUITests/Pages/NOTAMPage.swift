@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 import XCUITestKit
 
@@ -77,4 +76,3 @@ final class NOTAMPage: BasePage {
     tapBackButton()
   }
 }
-// swiftlint:enable prefer_nimble

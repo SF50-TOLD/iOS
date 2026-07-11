@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 
 final class ReportViewerPage: BasePage {
@@ -20,4 +19,3 @@ final class ReportViewerPage: BasePage {
     forceTap(doneButton)
   }
 }
-// swiftlint:enable prefer_nimble

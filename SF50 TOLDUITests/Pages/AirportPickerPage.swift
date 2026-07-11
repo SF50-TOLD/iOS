@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 import XCUITestKit
 
@@ -119,4 +118,3 @@ final class AirportPickerPage: BasePage {
     ).count
   }
 }
-// swiftlint:enable prefer_nimble

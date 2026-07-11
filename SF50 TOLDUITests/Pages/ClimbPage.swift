@@ -1,4 +1,3 @@
-// swiftlint:disable prefer_nimble
 import XCTest
 
 final class ClimbPage: BasePage {
@@ -85,4 +84,3 @@ final class ClimbPage: BasePage {
     )
   }
 }
-// swiftlint:enable prefer_nimble
