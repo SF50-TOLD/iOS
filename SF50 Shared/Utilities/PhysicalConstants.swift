@@ -8,9 +8,6 @@ public let earthRadiusM: Double = 6_371_000
 /// Meters per nautical mile (exact by definition).
 private let metersPerNauticalMile: Double = 1852
 
-/// Mean radius of the Earth in nautical miles.
-public let earthRadiusNM: Double = earthRadiusM / metersPerNauticalMile
-
 // MARK: - Standard Atmosphere (ISA)
 
 /// ISA sea-level temperature in Kelvin.
