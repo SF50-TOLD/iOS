@@ -143,7 +143,7 @@ open class Snapshot: NSObject {
         range: NSRange(location: 0, length: launchArguments.count)
       )
       let results = matches.map { result -> String in
-        String(launchArguments[Range(result.range, in: launchArguments)!])
+        (launchArguments as NSString).substring(with: result.range)
       }
       app.launchArguments += results
     } catch {
@@ -156,8 +156,7 @@ open class Snapshot: NSObject {
       waitForLoadingIndicatorToDisappear(within: timeout)
     }
 
-    // more information about this, check out https://docs.fastlane.tools/actions/snapshot/#how-does-it-work
-    NSLog("snapshot: \(name)")
+    NSLog("snapshot: \(name)")  // more information about this, check out https://docs.fastlane.tools/actions/snapshot/#how-does-it-work
 
     if Self.waitForAnimations {
       sleep(1)  // Waiting for the animation to be finished (kind of)
@@ -264,8 +263,8 @@ open class Snapshot: NSObject {
   }
 }
 
-extension XCUIElementAttributes {
-  fileprivate var isNetworkLoadingIndicator: Bool {
+private extension XCUIElementAttributes {
+  var isNetworkLoadingIndicator: Bool {
     if hasAllowListedIdentifier { return false }
 
     let hasOldLoadingIndicatorSize = frame.size == CGSize(width: 10, height: 20)
@@ -275,13 +274,13 @@ extension XCUIElementAttributes {
     return hasOldLoadingIndicatorSize || hasNewLoadingIndicatorSize
   }
 
-  fileprivate var hasAllowListedIdentifier: Bool {
+  var hasAllowListedIdentifier: Bool {
     let allowListedIdentifiers = ["GeofenceLocationTrackingOn", "StandardLocationTrackingOn"]
 
     return allowListedIdentifiers.contains(identifier)
   }
 
-  fileprivate func isStatusBar(_ deviceWidth: CGFloat) -> Bool {
+  func isStatusBar(_ deviceWidth: CGFloat) -> Bool {
     if elementType == .statusBar { return true }
     guard frame.origin == .zero else { return false }
 
@@ -292,8 +291,8 @@ extension XCUIElementAttributes {
   }
 }
 
-extension XCUIElementQuery {
-  fileprivate var networkLoadingIndicators: XCUIElementQuery {
+private extension XCUIElementQuery {
+  var networkLoadingIndicators: XCUIElementQuery {
     let isNetworkLoadingIndicator = NSPredicate { evaluatedObject, _ in
       guard let element = evaluatedObject as? XCUIElementAttributes else { return false }
 
@@ -303,7 +302,8 @@ extension XCUIElementQuery {
     return self.containing(isNetworkLoadingIndicator)
   }
 
-  @MainActor fileprivate var deviceStatusBars: XCUIElementQuery {
+  @MainActor
+  var deviceStatusBars: XCUIElementQuery {
     guard let app = Snapshot.app else {
       fatalError("XCUIApplication is not set. Please call setupSnapshot(app) before snapshot().")
     }
@@ -320,8 +320,8 @@ extension XCUIElementQuery {
   }
 }
 
-extension CGFloat {
-  fileprivate func isBetween(_ numberA: CGFloat, and numberB: CGFloat) -> Bool {
+private extension CGFloat {
+  func isBetween(_ numberA: CGFloat, and numberB: CGFloat) -> Bool {
     return numberA...numberB ~= self
   }
 }
