@@ -41,4 +41,11 @@ jobs:
           apt-get update && apt-get install -y wget
           wget -O .swift-format https://gist.githubusercontent.com/RISCfuture/e0c21afb7bd80a88d128a42bf40d2ecd/raw/.swift-format
       - name: Run swift-format lint
-        run: swift format lint --strict -r .
+        # Enumerates sources rather than recursing from the root so that
+        # "Generate Screenshots/SnapshotHelper.swift" -- fastlane's verbatim
+        # vendored helper -- stays exempt.
+        run: |
+          swift format lint --strict -r \
+            "SF50 TOLD" "SF50 TOLDUITests" "SF50 Shared" "SF50 SharedTests" \
+            "SF50 Runways" DownloadNASR TerrainAssets \
+            "Generate Screenshots/Generate_Screenshots.swift"
