@@ -59,6 +59,12 @@ digraph NavDataProcessingPipeline {
             color="#4a90d9"
         ]
 
+        dtpp [
+            label="FAA d-TPP\n(chart metafile)"
+            fillcolor="#e7f1ff"
+            color="#4a90d9"
+        ]
+
         dof [
             label="FAA DOF\n(via SwiftDOF)"
             fillcolor="#e7f1ff"
@@ -81,6 +87,12 @@ digraph NavDataProcessingPipeline {
 
     parse_cifp [
         label="Parse SIDs &\nApproaches"
+        fillcolor="#f3e8ff"
+        color="#8b5cf6"
+    ]
+
+    parse_dtpp [
+        label="Match Official\nChart Names"
         fillcolor="#f3e8ff"
         color="#8b5cf6"
     ]
@@ -127,12 +139,14 @@ digraph NavDataProcessingPipeline {
     nasr -> parse_nasr
     ourairports -> parse_csv
     cifp -> parse_cifp
+    dtpp -> parse_dtpp
     dof -> parse_dof
     parse_nasr -> merge
     parse_csv -> merge
     merge -> enrich
     enrich -> link
     parse_cifp -> link
+    parse_dtpp -> link
     link -> encode
     parse_dof -> encode
     encode -> upload

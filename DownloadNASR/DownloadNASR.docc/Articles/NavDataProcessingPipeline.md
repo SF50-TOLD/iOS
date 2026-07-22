@@ -16,7 +16,7 @@ data transformations applied.
 ## Stage 1: FAA NASR Download
 
 The FAA publishes National Airspace System Resources (NASR) data every 28 days
-(AIRAC cycle). ``NASRProcessor`` uses the SwiftNASR library to:
+(AIRAC cycle). `NASRProcessor` uses the SwiftNASR library to:
 
 1. Download the NASR archive for the current cycle
 2. Parse airport and runway records
@@ -32,7 +32,7 @@ NASR data is authoritative for US airports and includes:
 
 ## Stage 2: OurAirports Download
 
-``OurAirportsLoader`` downloads community-maintained CSV data to supplement
+`OurAirportsLoader` downloads community-maintained CSV data to supplement
 NASR with international airports:
 
 ```swift
@@ -48,7 +48,7 @@ The loader filters to:
 
 ## Stage 3: FAA CIFP Download
 
-``CIFPProcessor`` downloads and parses Coded Instrument Flight Procedures for the
+`CIFPProcessor` downloads and parses Coded Instrument Flight Procedures for the
 same AIRAC cycle. CIFP data provides:
 
 - **Departure procedures** (SIDs): Organized into segments per runway transition
@@ -58,19 +58,43 @@ same AIRAC cycle. CIFP data provides:
 - **DME-capable navaids**: VOR/DME, VORTAC, DME, and TACAN facilities referenced
   by procedure legs for DME distance termination
 
-Each procedure leg is converted to a ``LegTypeCodable`` with the path terminator
+Each procedure leg is converted to a `LegTypeCodable` with the path terminator
 type, magnetic course, turn direction (for holds), and arc radius (for RF/DME arcs).
 DME-terminated legs also include the recommended navaid identifier and termination
 distance. Legs with missing required data (e.g., a course-to-fix without a course)
 are skipped with a warning.
 
-## Stage 4: FAA DOF Download
+## Stage 4: FAA d-TPP Chart Names
 
-``DOFProcessor`` downloads the FAA Digital Obstacle File and extracts obstacles
+`DTPPLoader` downloads the FAA Digital Terminal Procedures Publication (d-TPP)
+metafile for the same AIRAC cycle and extracts the official, as-charted title of
+every instrument procedure. `ProcedureNameResolver` applies these so each
+procedure carries its published name rather than one synthesized from CIFP
+metadata:
+
+- **Approaches** match a chart title on a key of navaid family, runway, and
+  multiple indicator. When several charts share a key — a base chart alongside
+  its CAT II/III or special-minimums variants — the lowest-penalty chart wins, so
+  the approach keeps its primary charted name (`I28L` → “ILS RWY 28L”). The same
+  key parses the runway from the CIFP identifier, which SwiftCIFP leaves unset.
+- **Departures** cannot be matched from chart titles alone: a navaid-named SID
+  charts as “VENTURA EIGHT” while CIFP calls it `VTU8`. NASR `STARDP` computer
+  codes bridge the CIFP identifier to the official name, which is then joined to
+  the chart title to recover suffixes NASR omits (“SSTIK FIVE” →
+  “SSTIK FIVE (RNAV)”).
+
+Naming is a nicety, so a failure here degrades procedure names rather than failing
+the run: departures keep their NASR names and approaches fall back to names
+generated from CIFP metadata. Against live FAA data, roughly 99.8% of approaches
+and 99.5% of departures receive an official name.
+
+## Stage 5: FAA DOF Download
+
+`DOFProcessor` downloads the FAA Digital Obstacle File and extracts obstacles
 (towers, buildings, terrain) with their coordinates and MSL heights. Only obstacles
 near airports in the dataset are included to minimize file size.
 
-## Stage 5: Merge and Deduplicate
+## Stage 6: Merge and Deduplicate
 
 NASR data takes priority over OurAirports. The merge process:
 
@@ -83,7 +107,7 @@ NASR data takes priority over OurAirports. The merge process:
 This ensures US airports use authoritative FAA data while international
 airports use OurAirports data.
 
-## Stage 6: Data Enrichment
+## Stage 7: Data Enrichment
 
 Each airport record is enriched with:
 
@@ -97,7 +121,7 @@ coordinates. This enables local time display in the app.
 Using the `Geomagnetism` model (World Magnetic Model), magnetic declination
 is calculated for airports without NASR-provided variation data.
 
-## Stage 7: Encoding and Compression
+## Stage 8: Encoding and Compression
 
 The final data structure is encoded as:
 
@@ -106,7 +130,7 @@ The final data structure is encoded as:
 
 The output filename follows the pattern: `{cycle}.plist.lzma` (e.g., `2501.plist.lzma`)
 
-## Stage 8: GitHub Upload
+## Stage 9: GitHub Upload
 
 If a GitHub token is configured, ``GitHubUploader`` pushes the compressed file
 to the Airport-Data repository. The iOS app downloads from this location.
@@ -115,7 +139,7 @@ Upload path: `3.0/{cycle}.plist.lzma`
 
 ## Data Format
 
-The compressed file contains an ``AirportDataCodable`` structure:
+The compressed file contains an `AirportDataCodable` structure:
 
 ```text
 AirportDataCodable
@@ -138,7 +162,7 @@ AirportDataCodable
 │   │   └── thresholdCrossingHeight?, glidepathAngle?
 │   └── procedures: [ProcedureCodable]?
 │       ├── type: "departure" | "approach"
-│       ├── identifier, name? (approaches), runwayName? (approaches)
+│       ├── identifier, name? (official chart title), runwayName? (approaches)
 │       ├── requiredClimbGradientFtPerNM? (departures)
 │       └── segments: [SegmentCodable]?
 │           ├── runwayNames: [String]? (nil for common route or missed approach)
@@ -158,13 +182,10 @@ AirportDataCodable
     └── latitude, longitude
 ```
 
-Each ``LegTypeCodable`` stores a discriminator (`type`) plus optional `course`
+Each `LegTypeCodable` stores a discriminator (`type`) plus optional `course`
 (degrees), `turnDirection`, and `arcRadius` (nautical miles).
 
 ## See Also
 
-- ``NASRProcessor``
-- ``CIFPProcessor``
-- ``DOFProcessor``
-- ``OurAirportsLoader``
+- ``NavDataProcessorViewModel``
 - ``GitHubUploader``
