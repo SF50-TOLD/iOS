@@ -17,7 +17,7 @@ final class Generate_Screenshots: XCTestCase {
   /// form on iOS 26 under a fresh run's load and block the runway picker.
   private static let aspenRecordID = "02517.*A"
 
-  @MainActor private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+  private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
   override func setUpWithError() throws {
     // In UI tests it is usually best to stop immediately when a failure occurs.
@@ -27,7 +27,6 @@ final class Generate_Screenshots: XCTestCase {
   override func tearDownWithError() throws {
   }
 
-  @MainActor
   func testGenerateScreenshots() throws {
     let app = XCUIApplication()
     app.launchArguments = [
@@ -379,7 +378,6 @@ final class Generate_Screenshots: XCTestCase {
   /// KASE so the terrain chart shows real departure routing instead of a
   /// straight-out runway-heading climb. Best-effort: if LINDZ isn't published for
   /// the selected runway, the first plottable departure stays auto-selected.
-  @MainActor
   private func selectLINDZDeparture(in app: XCUIApplication) {
     let typePicker = app.descendants(matching: .any)["departureTypePicker"].firstMatch
     guard typePicker.waitForExistence(timeout: 5) else { return }

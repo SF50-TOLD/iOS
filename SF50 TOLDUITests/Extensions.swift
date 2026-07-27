@@ -28,7 +28,6 @@ extension XCUIElement {
 /// Tap `element` with escalating strategies until `expectedElement` appears,
 /// handling Liquid Glass overlays and iPad layouts. `timeout` is the base
 /// per-strategy wait in seconds; CI scaling is applied here.
-@MainActor
 func tapAndEnsureNavigation(
   element: XCUIElement,
   expectedElement: XCUIElement,
