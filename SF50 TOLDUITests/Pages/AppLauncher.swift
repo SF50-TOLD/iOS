@@ -14,7 +14,6 @@ struct AppLauncher {
   var staleNavData: Bool = false
   var favoriteAirportIDs: [String] = []
 
-  @MainActor
   func launch() -> WelcomePage {
     let app = XCUIApplication()
     var args = [
@@ -45,7 +44,6 @@ struct AppLauncher {
     return WelcomePage(app: app)
   }
 
-  @MainActor
   func launchAndCompleteSetup(
     emptyWeight: String,
     model: String = "G1"

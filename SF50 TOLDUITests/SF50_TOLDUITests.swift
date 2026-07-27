@@ -9,7 +9,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Additional Conditions Tests
 
-  @MainActor
   func testTakeoffWithDifferentConditions() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -37,7 +36,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Report Generation Tests
 
-  @MainActor
   func testTakeoffReportGeneration() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -57,7 +55,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Scenario Management Tests
 
-  @MainActor
   func testScenarioManagement() async throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
@@ -81,7 +78,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Airport Favorites Tests
 
-  @MainActor
   func testAirportFavoritesFlow() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -123,7 +119,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - NOTAM Management Tests
 
-  @MainActor
   func testNOTAMManagement() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -162,7 +157,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Settings Impact Tests
 
-  @MainActor
   func testSettingsChangesImpact() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -189,7 +183,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Climb Tests
 
-  @MainActor
   func testClimbViewInteraction() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let climb = tabBar.goToClimb()
@@ -227,7 +220,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Profile View Tests
 
-  @MainActor
   func testClimbProfileView() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -249,7 +241,6 @@ final class SF50_TOLDUITests: XCTestCase {
     profile.goBack()
   }
 
-  @MainActor
   func testGoAroundProfileView() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let landing = tabBar.goToLanding()
@@ -273,7 +264,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Welcome Flow Variations Tests
 
-  @MainActor
   func testWelcomeFlowModelSelection() throws {
     let welcome = AppLauncher().launch()
     welcome.handleDatabaseLoaderIfNeeded()
@@ -301,7 +291,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Offscale Warning Tests
 
-  @MainActor
   func testOffscaleWarning() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "3000")
     let takeoff = tabBar.goToTakeoff()
@@ -336,7 +325,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Landing Report Generation Tests
 
-  @MainActor
   func testLandingReportGeneration() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -350,7 +338,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - About Tab Tests
 
-  @MainActor
   func testAboutTabContent() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let about = tabBar.goToAbout()
@@ -366,7 +353,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Adjustments View Tests
 
-  @MainActor
   func testTakeoffAdjustmentsView() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -383,7 +369,6 @@ final class SF50_TOLDUITests: XCTestCase {
     adjustments.goBack()
   }
 
-  @MainActor
   func testLandingAdjustmentsView() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -402,7 +387,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Welcome Flow G2 With Thrust Schedule Tests
 
-  @MainActor
   func testWelcomeFlowG2WithThrustSchedule() throws {
     let welcome = AppLauncher().launch()
     welcome.handleDatabaseLoaderIfNeeded()
@@ -431,7 +415,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Aircraft Model Change Tests
 
-  @MainActor
   func testAircraftModelChangeInSettings() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
@@ -458,7 +441,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Performance Model Toggle Tests
 
-  @MainActor
   func testPerformanceModelToggle() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
@@ -498,7 +480,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Terrain Settings Navigation Tests
 
-  @MainActor
   func testTerrainSettingsNavigation() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
@@ -514,7 +495,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - NOTAM Runway Shortening Tests
 
-  @MainActor
   func testNOTAMRunwayShortening() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -534,7 +514,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - NOTAM Obstacle Tests
 
-  @MainActor
   func testNOTAMObstacleTakeoff() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -555,7 +534,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Airport Recents Tab Tests
 
-  @MainActor
   func testAirportRecentsTab() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -577,7 +555,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Airport Search Variations Tests
 
-  @MainActor
   func testAirportSearchVariations() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -602,7 +579,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Payload Change Impact Tests
 
-  @MainActor
   func testPayloadChangeImpact() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -635,7 +611,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Empty Weight Change Impact Tests
 
-  @MainActor
   func testEmptyWeightChangeInSettings() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -661,7 +636,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - VREF Additive Impact Tests
 
-  @MainActor
   func testVREFAdditiveImpact() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -686,7 +660,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Time Zone Display Tests
 
-  @MainActor
   func testTimeZoneDisplayToggle() throws {
     let tabBar = AppLauncher(favoriteAirportIDs: ["OAK"])
       .launchAndCompleteSetup(emptyWeight: "4550")
@@ -722,7 +695,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - New Tests
 
-  @MainActor
   func testLandingResultsValueCorrectness() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -744,7 +716,6 @@ final class SF50_TOLDUITests: XCTestCase {
     )
   }
 
-  @MainActor
   func testTakeoffResultsValueCorrectness() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -763,7 +734,6 @@ final class SF50_TOLDUITests: XCTestCase {
     XCTAssertFalse(rateText.isEmpty, "Vx climb rate should have a value")
   }
 
-  @MainActor
   func testNOTAMClearMultipleResetsBadge() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -793,7 +763,6 @@ final class SF50_TOLDUITests: XCTestCase {
     )
   }
 
-  @MainActor
   func testRunwayPickerShowsCorrectWindComponents() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -823,7 +792,6 @@ final class SF50_TOLDUITests: XCTestCase {
     XCTAssertFalse(label.isEmpty, "Runway row label should have content")
   }
 
-  @MainActor
   func testScenarioFieldsPersistAfterNavigation() async throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
@@ -857,7 +825,6 @@ final class SF50_TOLDUITests: XCTestCase {
     await scenarios.deleteScenario("Persist Test")
   }
 
-  @MainActor
   func testRestoreDefaultScenariosReturnsDefaults() throws {
     // Launch without default scenarios so the Restore button is immediately visible
     let tabBar = AppLauncher(skipScenarioSeeding: true)
@@ -874,7 +841,6 @@ final class SF50_TOLDUITests: XCTestCase {
     )
   }
 
-  @MainActor
   func testPerformanceModelImpactOnResults() throws {
     // Use weight between AFM grid points (5000, 5500 lbs) to maximize model divergence
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
@@ -899,7 +865,6 @@ final class SF50_TOLDUITests: XCTestCase {
     }
   }
 
-  @MainActor
   func testAllUnitsPersistAcrossNavigation() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
@@ -935,7 +900,6 @@ final class SF50_TOLDUITests: XCTestCase {
     )
   }
 
-  @MainActor
   func testUseAFMSafetyFactorsResetsValues() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
@@ -965,7 +929,6 @@ final class SF50_TOLDUITests: XCTestCase {
     )
   }
 
-  @MainActor
   func testWeatherChangesUpdateResults() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -990,7 +953,6 @@ final class SF50_TOLDUITests: XCTestCase {
     }
   }
 
-  @MainActor
   func testFlapSettingImpactOnAllLandingValues() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -1050,7 +1012,6 @@ final class SF50_TOLDUITests: XCTestCase {
     }
   }
 
-  @MainActor
   func testClimbIceProtectionReducesPerformance() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let climb = tabBar.goToClimb()
@@ -1095,7 +1056,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Weather Mode Tests
 
-  @MainActor
   func testWeatherDownloadedMode() throws {
     let tabBar = AppLauncher(weatherMode: .NWS).launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -1116,7 +1076,6 @@ final class SF50_TOLDUITests: XCTestCase {
     XCTAssertTrue(windDir.contains("350"), "Wind direction should be pre-populated with 350")
   }
 
-  @MainActor
   func testWeatherErrorMode() throws {
     let tabBar = AppLauncher(weatherMode: .error).launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -1138,7 +1097,6 @@ final class SF50_TOLDUITests: XCTestCase {
     XCTAssertTrue(tryAgainButton.exists, "Update weather button should appear")
   }
 
-  @MainActor
   func testWeatherUserEnteredMode() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -1167,7 +1125,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Runway Map Tests
 
-  @MainActor
   func testTakeoffMapDisplaysRunway() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let takeoff = tabBar.goToTakeoff()
@@ -1182,7 +1139,6 @@ final class SF50_TOLDUITests: XCTestCase {
     map.goBack()
   }
 
-  @MainActor
   func testLandingMapDisplaysRunway() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4050")
     let landing = tabBar.goToLanding()
@@ -1199,7 +1155,6 @@ final class SF50_TOLDUITests: XCTestCase {
 
   // MARK: - Nav Data Loader Tests
 
-  @MainActor
   func testStaleNavDataOffersDeferral() throws {
     // Seed an expired NASR cycle so the loader gates the app on launch. The
     // download itself needs the network and is out of scope here; this verifies
