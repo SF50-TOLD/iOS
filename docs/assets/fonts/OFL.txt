@@ -1,0 +1,8 @@
+Saira, Barlow, and IBM Plex Mono are distributed under the SIL Open Font
+License, Version 1.1, which permits redistribution and self-hosting.
+
+Saira — Copyright (c) The Saira Project Authors (https://github.com/NDISCOVER/Saira)
+Barlow — Copyright (c) The Barlow Project Authors (https://github.com/jpt/barlow)
+IBM Plex Mono — Copyright (c) 2017 IBM Corp. (https://github.com/IBM/plex)
+
+Full license text: https://scripts.sil.org/OFL

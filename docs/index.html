@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SF50 TOLD — Takeoff &amp; Landing Data for the Cirrus Vision Jet</title>
+    <meta
+      name="description"
+      content="Free TOLD calculator for the Cirrus SF50 Vision Jet. AFM takeoff, climb, and landing performance for G1, G2, and G2+, with terrain and obstacle clearance."
+    />
+    <link rel="canonical" href="https://sf50-told.github.io/iOS/" />
+    <meta name="author" content="Tim Morgan" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#080b16" />
+    <meta name="apple-itunes-app" content="app-id=1552835232" />
+
+    <link rel="icon" href="assets/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+    <link
+      rel="preload"
+      href="assets/fonts/saira-700.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="assets/fonts/barlow-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="css/style.css" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SF50 TOLD" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://sf50-told.github.io/iOS/" />
+    <meta
+      property="og:title"
+      content="SF50 TOLD — Takeoff &amp; Landing Data for the Cirrus Vision Jet"
+    />
+    <meta
+      property="og:description"
+      content="Free TOLD calculator for the Cirrus SF50 Vision Jet. AFM performance for G1, G2, and G2+, with terrain and obstacle clearance along your departure."
+    />
+    <meta property="og:image" content="https://sf50-told.github.io/iOS/assets/og-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="SF50 TOLD — know your numbers before you release the brakes. A climb profile rising over terrain."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="SF50 TOLD — Takeoff &amp; Landing Data for the Cirrus Vision Jet"
+    />
+    <meta
+      name="twitter:description"
+      content="Free TOLD calculator for the Cirrus SF50 Vision Jet. AFM performance for G1, G2, and G2+, with terrain and obstacle clearance along your departure."
+    />
+    <meta name="twitter:image" content="https://sf50-told.github.io/iOS/assets/og-card.png" />
+    <meta
+      name="twitter:image:alt"
+      content="SF50 TOLD — know your numbers before you release the brakes. A climb profile rising over terrain."
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://sf50-told.github.io/iOS/#website",
+            "url": "https://sf50-told.github.io/iOS/",
+            "name": "SF50 TOLD",
+            "description": "Free TOLD calculator for the Cirrus SF50 Vision Jet. AFM takeoff, climb, and landing performance for G1, G2, and G2+, with terrain and obstacle clearance.",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://sf50-told.github.io/iOS/#author" }
+          },
+          {
+            "@type": "Person",
+            "@id": "https://sf50-told.github.io/iOS/#author",
+            "name": "Tim Morgan",
+            "url": "https://github.com/RISCfuture"
+          },
+          {
+            "@type": "MobileApplication",
+            "@id": "https://sf50-told.github.io/iOS/#app",
+            "name": "SF50 TOLD",
+            "description": "Takeoff and landing data calculator for the Cirrus SF50 Vision Jet, computing AFM takeoff, climb, and landing performance with terrain and obstacle clearance along departure and missed-approach procedures.",
+            "url": "https://sf50-told.github.io/iOS/",
+            "applicationCategory": "TravelApplication",
+            "applicationSubCategory": "Aviation",
+            "operatingSystem": "iOS 26.0 or later",
+            "downloadUrl": "https://apps.apple.com/us/app/sf50-told/id1552835232",
+            "installUrl": "https://apps.apple.com/us/app/sf50-told/id1552835232",
+            "screenshot": "https://sf50-told.github.io/iOS/assets/screenshots/03-takeoff-results.png",
+            "image": "https://sf50-told.github.io/iOS/assets/og-card.png",
+            "license": "https://opensource.org/licenses/MIT",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": { "@id": "https://sf50-told.github.io/iOS/#author" }
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap site-header__inner">
+        <a class="brand" href="index.html">
+          <img class="brand__icon" src="assets/app-icon.png" alt="" width="32" height="32" />
+          <span class="brand__name">SF50 TOLD</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="site-nav"
+        >
+          Menu
+        </button>
+
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <ul class="site-nav__list">
+            <li><a href="#performance">Features</a></li>
+            <li><a href="#specs">Requirements</a></li>
+            <li><a href="privacy.html">Privacy</a></li>
+            <li><a href="https://github.com/SF50-TOLD/iOS">Source</a></li>
+            <li>
+              <a class="button button--primary" href="https://apps.apple.com/us/app/sf50-told/id1552835232"
+                >Download</a
+              >
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero">
+        <div class="wrap hero__inner">
+          <div class="hero__copy">
+            <h1 class="hero__title">Know your numbers before you release the brakes.</h1>
+            <p class="hero__subtitle">
+              Takeoff, climb, and landing performance for the Cirrus Vision Jet, computed
+              straight from the AFM tables — for the runway you are actually sitting on, in the
+              weather you are actually flying, over the terrain you actually have to clear.
+            </p>
+            <p class="hero__actions">
+              <a class="button button--primary button--large" href="https://apps.apple.com/us/app/sf50-told/id1552835232"
+                >Download on the App Store</a
+              >
+              <a class="button button--quiet button--large" href="https://github.com/SF50-TOLD/iOS"
+                >View the source</a
+              >
+            </p>
+            <p class="hero__meta">Free · iPhone and iPad · Requires iOS 26 or later</p>
+          </div>
+
+          <figure class="device device--phone hero__device">
+            <img
+              src="assets/screenshots/03-takeoff-results.png"
+              width="720"
+              height="1564"
+              alt="Takeoff results showing ground run, distance over a 50-foot obstacle, V-speeds, and the limiting factor for the selected runway."
+            />
+          </figure>
+        </div>
+
+        <svg
+          class="climb-profile"
+          viewBox="0 0 1200 260"
+          role="img"
+          aria-label="A climb profile: the aircraft’s flight path rising away from the runway, over rising terrain, past two altitude-restricted fixes."
+        >
+          <path
+            class="climb-profile__terrain"
+            d="M0,260 L0,250 L70,246 L140,252 L210,232 L280,240 L350,218 L420,228 L500,205
+               L570,218 L650,196 L720,209 L800,188 L880,201 L960,182 L1040,194 L1120,174
+               L1200,186 L1200,260 Z"
+          />
+          <line class="climb-profile__marker" x1="400" y1="150" x2="400" y2="260" />
+          <line class="climb-profile__marker" x1="920" y1="77" x2="920" y2="260" />
+          <text class="climb-profile__label" x="390" y="138">9,100′</text>
+          <text class="climb-profile__label" x="910" y="65">16,000′</text>
+          <path
+            class="climb-profile__path"
+            d="M0,248 C160,200 300,164 460,140 C620,116 840,84 1200,44"
+          />
+        </svg>
+      </section>
+
+      <section class="spotlight" id="performance">
+        <div class="wrap spotlight__inner">
+          <div class="spotlight__copy">
+            <p class="eyebrow">Takeoff &amp; Landing</p>
+            <h2>Every number the AFM gives you.</h2>
+            <p>
+              Ground run, distance over a 50-foot obstacle, V-speeds, and V<sub>X</sub> climb
+              gradient for takeoff. Landing distance, ground run, V<sub>REF</sub>, and go-around
+              gradient at flaps 50 or 100. Each one interpolated from the official tables for
+              your airframe — G1, G2, or G2+ with the updated thrust schedule.
+            </p>
+            <p>
+              Every runway at the field gets analyzed, each with the maximum weight it will take
+              today and the reason for it — the AFM, field length, an obstacle, or climb
+              gradient. Exceed a published limit along the way, whether crosswind, tailwind, max
+              takeoff or zero-fuel weight, or fuel capacity, and the app says so rather than
+              quietly handing back a number.
+            </p>
+          </div>
+          <figure class="device device--phone spotlight__device">
+            <img
+              src="assets/screenshots/07-landing-results.png"
+              width="720"
+              height="1564"
+              alt="Landing results listing distances, V-speeds, and the factor limiting the selected runway."
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="spotlight spotlight--reversed">
+        <div class="wrap spotlight__inner">
+          <div class="spotlight__copy">
+            <p class="eyebrow">Climb &amp; Terrain</p>
+            <h2>See what you have to clear.</h2>
+            <p>
+              This is the part most performance apps leave to you. SF50 TOLD builds a real climb
+              profile from winds aloft, your weight, and the AFM climb tables, then flies it
+              down the legs of your actual departure or missed approach — course to fix, heading
+              to altitude, DME arcs — correcting for wind the whole way.
+            </p>
+            <p>
+              Along that path it samples SRTM terrain and the FAA obstacle file in a corridor
+              around your track, and shows you where the ground rises toward you. Anti-ice on or
+              off, V<sub>X</sub> or enroute obstacle speed — the profile changes with the
+              schedule you would actually fly.
+            </p>
+          </div>
+          <figure class="device device--phone spotlight__device">
+            <img
+              src="assets/screenshots/05-climb-profile.png"
+              width="720"
+              height="1564"
+              alt="Climb profile charting aircraft altitude against terrain and obstacle heights along a departure procedure."
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="spotlight">
+        <div class="wrap spotlight__inner">
+          <div class="spotlight__copy">
+            <p class="eyebrow">Scenarios &amp; Reports</p>
+            <h2>Ask what if, before it matters.</h2>
+            <p>
+              Ten degrees hotter. Five knots less headwind. A hundred pounds heavier. A wet
+              runway instead of the dry one you were promised, or a dry one despite the NOTAM.
+            </p>
+            <p>
+              Build the scenarios your operation cares about once, and every Takeoff and Landing
+              Report shows them beside the forecast conditions — so the margin you have is
+              something you read, not something you estimate on the roll. Share the finished
+              report as a PDF, or keep it with the rest of your paperwork.
+            </p>
+          </div>
+          <figure class="device device--phone spotlight__device">
+            <img
+              src="assets/screenshots/04-takeoff-report.png"
+              width="720"
+              height="1564"
+              alt="Takeoff and Landing Report showing performance under forecast conditions alongside what-if scenarios."
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="spotlight spotlight--reversed">
+        <div class="wrap spotlight__inner">
+          <div class="spotlight__copy">
+            <p class="eyebrow">Weather &amp; NOTAMs</p>
+            <h2>Real weather. Real runway condition.</h2>
+            <p>
+              METAR and TAF arrive automatically from the Aviation Weather Center, with Apple
+              Weather filling the gaps at fields that do not report, and the app always tells you
+              which source a number came from. Where no report exists — or where you have better
+              information than the one that does — enter the conditions yourself and every number
+              follows from what you entered.
+            </p>
+            <p>
+              Then the NOTAMs: water, slush, snow, or ice with depth, a displaced threshold, a
+              closure, an obstacle. Charted distances assume a dry, level, unobstructed runway.
+              Yours rarely is, and the corrections are applied for you.
+            </p>
+          </div>
+          <figure class="device device--phone spotlight__device">
+            <img
+              src="assets/screenshots/10-weather.png"
+              width="720"
+              height="1564"
+              alt="Weather screen showing observed conditions and their source, with manual entry available."
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="grid-section">
+        <div class="wrap">
+          <p class="eyebrow">Also aboard</p>
+          <h2 class="grid-section__title">And the details that add up.</h2>
+          <ul class="feature-grid">
+            <li class="feature">
+              <h3>Every Vision Jet</h3>
+              <p>
+                G1, G2, and G2+ performance models, including the updated thrust schedule.
+              </p>
+            </li>
+            <li class="feature">
+              <h3>Your ground run, on the runway</h3>
+              <p>
+                A satellite map draws the calculated roll onto the actual pavement, offset for a
+                displaced threshold.
+              </p>
+            </li>
+            <li class="feature">
+              <h3>Your operation’s margins</h3>
+              <p>
+                Separate safety factors for dry and wet runways, plus a V<sub>REF</sub> additive,
+                applied to every result automatically.
+              </p>
+            </li>
+            <li class="feature">
+              <h3>Home screen widget</h3>
+              <p>Runway data for your selected airport, without launching the app.</p>
+            </li>
+            <li class="feature">
+              <h3>Nearest airport, favorites, recents</h3>
+              <p>
+                Tens of thousands of fields from the FAA NASR cycle and OurAirports, sorted by
+                where you are.
+              </p>
+            </li>
+            <li class="feature">
+              <h3>Works without a signal</h3>
+              <p>
+                Airports, terrain, and obstacles live on your device, so a ramp with no bars
+                still gives you numbers.
+              </p>
+            </li>
+            <li class="feature">
+              <h3>Enroute climb too</h3>
+              <p>
+                Gradient, rate, and speed at altitude — normal or ice-contaminated, anti-ice on
+                or off.
+              </p>
+            </li>
+            <li class="feature">
+              <h3>Open source</h3>
+              <p>
+                MIT licensed and developed in the open. Read the performance code that produces
+                your numbers.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="specs" id="specs">
+        <div class="wrap">
+          <h2 class="eyebrow">Requirements</h2>
+          <dl class="specs__list">
+            <div class="spec">
+              <dt>Aircraft</dt>
+              <dd>Cirrus SF50 Vision Jet — G1, G2, G2+</dd>
+            </div>
+            <div class="spec">
+              <dt>Devices</dt>
+              <dd>iPhone and iPad</dd>
+            </div>
+            <div class="spec">
+              <dt>System</dt>
+              <dd>iOS 26 or later</dd>
+            </div>
+            <div class="spec">
+              <dt>Price</dt>
+              <dd>Free, MIT licensed</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="cta">
+        <div class="wrap cta__inner">
+          <h2 class="cta__title">Fly with the numbers in front of you.</h2>
+          <p class="cta__actions">
+            <a class="button button--primary button--large" href="https://apps.apple.com/us/app/sf50-told/id1552835232"
+              >Download on the App Store</a
+            >
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap site-footer__inner">
+        <p class="disclaimer">
+          SF50 TOLD has not been approved by the FAA or by Cirrus Aircraft as an official source
+          of performance information. Always verify performance information against official
+          sources. The pilot in command remains responsible for every number used in flight.
+        </p>
+        <nav class="footer-nav" aria-label="Footer">
+          <ul class="footer-nav__list">
+            <li><a href="privacy.html">Privacy</a></li>
+            <li><a href="https://github.com/SF50-TOLD/iOS">Source</a></li>
+            <li><a href="https://github.com/SF50-TOLD/iOS/issues">Support</a></li>
+            <li><a href="https://apps.apple.com/us/app/sf50-told/id1552835232">App Store</a></li>
+          </ul>
+        </nav>
+        <p class="copyright">© 2026 Tim Morgan. Released under the MIT License.</p>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+  </body>
+</html>
