@@ -63,8 +63,13 @@ jobs:
           EOF
       - name: Enable macros
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+      # The runner image freezes Homebrew's formula index at the image's build date, so a bare
+      # `brew install` can resolve to a Periphery old enough to analyze this project differently
+      # than a current one does. Refresh the index first so every run agrees on the version.
       - name: Install Periphery and jq
-        run: brew install periphery jq
+        run: |
+          brew update
+          brew install periphery jq
       # iOS pass: gates the app and its iOS extensions. Uses .periphery.yml,
       # which report-excludes SF50 Shared (judged by the intersection job below).
       - name: Run Periphery (iOS)
