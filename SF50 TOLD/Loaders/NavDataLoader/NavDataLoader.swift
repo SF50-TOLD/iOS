@@ -50,13 +50,15 @@ import SwiftNASR
 ///
 /// ## Progress Tracking
 ///
-/// Poll the ``state`` property to track loading progress:
+/// Iterate ``stateUpdates()`` to follow the loader's progress. The loader pushes
+/// each new ``State`` into the stream:
 ///
 /// ```swift
 /// let loader = NavDataLoader(modelContainer: container)
+/// let updates = await loader.stateUpdates()
 /// Task {
-///     while true {
-///         switch await loader.state {
+///     for await state in updates {
+///         switch state {
 ///         case .downloading(let progress):
 ///             print("Downloading: \(progress ?? 0)")
 ///         case .loading(let progress):
@@ -64,11 +66,26 @@ import SwiftNASR
 ///         default:
 ///             break
 ///         }
-///         try? await Task.sleep(for: .seconds(0.25))
 ///     }
 /// }
 /// let result = try await loader.load()
 /// ```
+///
+/// ## Executor Constraints
+///
+/// A `@ModelActor`'s serial executor is its `NSManagedObjectContext`'s dispatch
+/// queue, and SwiftData enqueues jobs onto that executor with
+/// `-[NSManagedObjectContext performBlockAndWait:]`. Enqueueing therefore blocks
+/// the *calling* thread until the executor is free, so every caller — the main
+/// actor included — stalls for as long as this actor stays busy. Two rules
+/// follow, and both are load-bearing for main-thread responsiveness:
+///
+/// - No long-running work may occupy the executor without suspending. CPU-bound
+///   work belongs in a `nonisolated` `@concurrent` function the actor `await`s,
+///   and persistence work is split into bounded batches separated by `await`.
+/// - Progress is pushed out through ``stateUpdates()`` rather than pulled by
+///   callers, because yielding into an `AsyncStream` is nonblocking whereas
+///   reading an isolated property is an enqueue.
 ///
 /// ## See Also
 ///
@@ -89,9 +106,16 @@ actor NavDataLoader {
   /// Pause between batch saves so other store users can interleave.
   private static let interBatchPause: Duration = .milliseconds(50)
 
-  var state: State = .idle
+  /// Smallest change in download progress worth pushing to consumers.
+  ///
+  /// The download reports progress once per 8 KB chunk, which is far finer than
+  /// a progress indicator can show; coarsening it keeps consumers from waking
+  /// hundreds of times a second for changes they cannot render.
+  private static let progressReportingStep: Float = 0.005
 
-  private let decoder = PropertyListDecoder()
+  private(set) var state: State = .idle {
+    didSet { stateContinuation?.yield(state) }
+  }
 
   private let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",
@@ -99,17 +123,46 @@ actor NavDataLoader {
   )
 
   private var navaidLookup: [String: SF50_Shared.Navaid] = [:]
+  private var stateContinuation: AsyncStream<State>.Continuation?
 
   private var dataURL: URL {
     URL(string: String(format: Self.dataURLTemplate, "\(Cycle.effective)"))!
   }
 
+  /// Inflates the LZMA payload and decodes it, off this actor's executor.
+  ///
+  /// Both steps are CPU-bound and touch no `modelContext`, so they run on the
+  /// concurrent pool while the actor suspends.
+  @concurrent
+  nonisolated private static func decompress(data: Data) async throws -> AirportDataCodable {
+    // swiftlint:disable:next legacy_objc_type
+    let inflated = try (data as NSData).decompressed(using: .lzma)
+    return try PropertyListDecoder().decode(AirportDataCodable.self, from: inflated as Data)
+  }
+
+  /// A stream of ``State`` values, starting with the loader's current state and
+  /// finishing when ``load()`` returns or throws.
+  ///
+  /// Only one stream is live at a time; a second call finishes the previous one.
+  func stateUpdates() -> AsyncStream<State> {
+    stateContinuation?.finish()
+    let (stream, continuation) = AsyncStream.makeStream(
+      of: State.self,
+      bufferingPolicy: .bufferingNewest(1)
+    )
+    continuation.yield(state)
+    stateContinuation = continuation
+    return stream
+  }
+
   func load() async throws -> LoadResult {
+    defer { stateContinuation?.finish() }
+
     state = .downloading(progress: 0)
-    let data = try await download { self.state = .downloading(progress: $0) }
+    let data = try await download { self.reportDownloadProgress($0) }
 
     state = .extracting(progress: nil)
-    let nasr = try decompress(data: data)
+    let nasr = try await Self.decompress(data: data)
 
     // The replacement data is fully decoded, so the old dataset can go
     try await resetData()
@@ -170,6 +223,12 @@ actor NavDataLoader {
     )
   }
 
+  private func reportDownloadProgress(_ progress: Float) {
+    guard case .downloading(let reported) = state else { return }
+    if let reported, abs(progress - reported) < Self.progressReportingStep { return }
+    state = .downloading(progress: progress)
+  }
+
   private func download(progress: (Float) -> Void) async throws -> Data {
     try await withRetry(logger: logger, label: "nav data") {
       let session = URLSession(configuration: .ephemeral)
@@ -190,12 +249,6 @@ actor NavDataLoader {
 
       return compressedData
     }
-  }
-
-  private func decompress(data: Data) throws -> AirportDataCodable {
-    // swiftlint:disable:next legacy_objc_type
-    let data = try (data as NSData).decompressed(using: .lzma)
-    return try decoder.decode(AirportDataCodable.self, from: data as Data)
   }
 
   private func loadAirports(
@@ -441,7 +494,7 @@ actor NavDataLoader {
   /// - ``extracting(progress:)``: Decompressing LZMA data
   /// - ``loading(progress:)``: Importing into SwiftData (0.0-1.0)
   /// - ``finished``: Complete
-  enum State {
+  enum State: Sendable {
     case idle
     case downloading(progress: Float?)
     case extracting(progress: Float?)
