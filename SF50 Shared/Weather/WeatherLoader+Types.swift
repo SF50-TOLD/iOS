@@ -10,6 +10,12 @@ extension WeatherLoader {
     /// HTTP response was not successful.
     case badResponse(_ response: HTTPURLResponse)
 
+    /// The server answered successfully but sent no body.
+    ///
+    /// Aviation Weather serves an empty cache file while it is being
+    /// regenerated, so this is distinct from a body that arrived corrupt.
+    case emptyResponse(url: URL)
+
     /// Failed to decompress GZIP data.
     case gzipDecompressionFailed(
       url: URL,
