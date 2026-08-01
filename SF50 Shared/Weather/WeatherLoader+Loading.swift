@@ -27,6 +27,51 @@ extension WeatherLoader {
     guard let urlError = error as? URLError else { return false }
     return transientURLErrorCodes.contains(urlError.code)
   }
+
+  /// Whether `error` is Aviation Weather failing on its own end rather than a defect here.
+  ///
+  /// Its CDN intermittently answers `5xx`, and a cache file being regenerated is served
+  /// as an empty body. A body that arrives corrupt is excluded: that is a real contract
+  /// break worth knowing about.
+  static func isUpstreamServerFailure(_ error: some Swift.Error) -> Bool {
+    switch error as? Errors {
+      case .badResponse(let response): (500..<600).contains(response.statusCode)
+      case .emptyResponse: true
+      default: false
+    }
+  }
+
+  /// Whether `error` points at a defect in this app, and so belongs in Sentry.
+  ///
+  /// A cancelled load, a network the pilot has no coverage on, and Aviation Weather
+  /// failing on its own end are all outside this app's control. Those are logged and
+  /// surfaced to the pilot, who decides whether to retry.
+  static func shouldReport(_ error: some Swift.Error) -> Bool {
+    !isNetworkCancellation(error) && !isTransientNetworkError(error)
+      && !isUpstreamServerFailure(error)
+  }
+
+  /// Logs a weather-load failure, reporting only genuine defects to Sentry.
+  private static func recordLoadFailure(_ error: some Swift.Error, dataType: String) {
+    guard shouldReport(error) else {
+      logger.info(
+        "Not reporting weather load failure; cause is outside this app",
+        metadata: ["error": "\(error)", "dataType": "\(dataType)"]
+      )
+      return
+    }
+
+    SentrySDK.capture(error: error) { scope in
+      scope.setLevel(.warning)
+      scope.setTag(value: dataType, key: "weather.dataType")
+      scope.setFingerprint(["weather-loading", dataType])
+    }
+    logger.error(
+      "Failed to load weather data",
+      metadata: ["error": "\(error)", "dataType": "\(dataType)"]
+    )
+  }
+
   func loadMETARs() async {
     observations = .loading
     await notifySubscribers()
@@ -98,22 +143,10 @@ extension WeatherLoader {
 
       observations = .value(newMETARs)
     } catch {
-      if Self.isNetworkCancellation(error) {
-        // Don't update observations if cancelled
-      } else if Self.isTransientNetworkError(error) {
-        Self.logger.info(
-          "Transient network error loading METARs",
-          metadata: ["error": "\(error)"]
-        )
-        observations = .error(error)
-      } else {
-        SentrySDK.capture(error: error) { scope in
-          scope.setLevel(.warning)
-          scope.setTag(value: "metar", key: "weather.dataType")
-          scope.setFingerprint(["weather-loading", "metar"])
-        }
-        observations = .error(error)
-      }
+      // Don't update observations if cancelled
+      guard !Self.isNetworkCancellation(error) else { return }
+      Self.recordLoadFailure(error, dataType: "metar")
+      observations = .error(error)
     }
   }
 
@@ -187,22 +220,10 @@ extension WeatherLoader {
 
       forecasts = .value(newTAFs)
     } catch {
-      if Self.isNetworkCancellation(error) {
-        // Don't update forecasts if cancelled
-      } else if Self.isTransientNetworkError(error) {
-        Self.logger.info(
-          "Transient network error loading TAFs",
-          metadata: ["error": "\(error)"]
-        )
-        forecasts = .error(error)
-      } else {
-        SentrySDK.capture(error: error) { scope in
-          scope.setLevel(.warning)
-          scope.setTag(value: "taf", key: "weather.dataType")
-          scope.setFingerprint(["weather-loading", "taf"])
-        }
-        forecasts = .error(error)
-      }
+      // Don't update forecasts if cancelled
+      guard !Self.isNetworkCancellation(error) else { return }
+      Self.recordLoadFailure(error, dataType: "taf")
+      forecasts = .error(error)
     }
   }
 
@@ -235,26 +256,10 @@ extension WeatherLoader {
 
       windsAloft = .value(stationData)
     } catch {
-      if Self.isNetworkCancellation(error) {
-        // Don't update windsAloft if cancelled
-      } else if Self.isTransientNetworkError(error) {
-        Self.logger.info(
-          "Transient network error loading winds aloft",
-          metadata: ["error": "\(error)"]
-        )
-        windsAloft = .error(error)
-      } else {
-        SentrySDK.capture(error: error) { scope in
-          scope.setLevel(.warning)
-          scope.setTag(value: "windsAloft", key: "weather.dataType")
-          scope.setFingerprint(["weather-loading", "windsAloft"])
-        }
-        Self.logger.error(
-          "Failed to load winds aloft",
-          metadata: ["error": "\(error)"]
-        )
-        windsAloft = .error(error)
-      }
+      // Don't update windsAloft if cancelled
+      guard !Self.isNetworkCancellation(error) else { return }
+      Self.recordLoadFailure(error, dataType: "windsAloft")
+      windsAloft = .error(error)
     }
   }
 
@@ -273,6 +278,11 @@ extension WeatherLoader {
         )
         throw Errors.badResponse(response)
       }
+    }
+
+    guard !data.isEmpty else {
+      Self.logger.error("Empty weather response", metadata: ["url": "\(url)"])
+      throw Errors.emptyResponse(url: url)
     }
 
     Self.logger.info(

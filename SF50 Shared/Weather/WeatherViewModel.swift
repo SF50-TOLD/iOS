@@ -202,9 +202,7 @@ public final class WeatherViewModel: WithIdentifiableError {
                   }
                 case .error(let error):
                   if !self.isManualMode {
-                    if !WeatherLoader.isTransientNetworkError(error),
-                      !WeatherLoader.isNetworkCancellation(error)
-                    {
+                    if WeatherLoader.shouldReport(error) {
                       SentrySDK.capture(error: error) { scope in
                         scope.setLevel(.warning)
                         scope.setTag(value: "conditions", key: "weather.dataType")
