@@ -43,9 +43,30 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     (noData || needsLoad) && !deferred
   }
 
+  /// Whether a fresh import may start, so a second tap cannot spawn a
+  /// concurrent importer on the same store.
+  private var canStartLoad: Bool {
+    switch state {
+      case .idle, .finished: true
+      default: false
+    }
+  }
+
   init(container: ModelContainer) {
     self.container = container
     setupObservation()
+  }
+
+  /// Builds the importer's loader away from the main actor.
+  ///
+  /// Opening the importer's container brings up a second persistent store
+  /// coordinator, which touches the filesystem, so it runs on the concurrent
+  /// pool rather than on the main thread at the moment the user taps Load.
+  @concurrent
+  nonisolated private static func makeImportLoader(
+    matching container: ModelContainer
+  ) async throws -> NavDataLoader {
+    NavDataLoader(modelContainer: try makeImportContainer(matching: container))
   }
 
   /// Creates a standalone container on the same store for the importer.
@@ -118,76 +139,87 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   func load() {
-    // A second tap must not spawn a concurrent importer on the same store
-    switch state {
-      case .idle, .finished: break
-      default: return
-    }
+    guard canStartLoad else { return }
 
-    let loader: NavDataLoader
+    // Block re-entry and switch to the progress UI before the actor reports
+    state = .downloading(progress: nil)
+
+    addTask(Task { await runLoad() })
+  }
+
+  func loadLater() {
+    if canSkip { deferred = true }
+  }
+
+  private func runLoad() async {
+    guard let loader = await makeLoader() else { return }
+    let progressTask = await observeProgress(of: loader)
+    addTask(progressTask)
+    await performLoad(with: loader, progressTask: progressTask)
+  }
+
+  private func makeLoader() async -> NavDataLoader? {
     do {
-      loader = NavDataLoader(modelContainer: try Self.makeImportContainer(matching: container))
+      return try await Self.makeImportLoader(matching: container)
     } catch {
       SentrySDK.capture(error: error) { scope in
         scope.setTag(value: "importContainer", key: "navData.operation")
         scope.setFingerprint(["navData", "importContainer"])
       }
       self.error = error
-      return
+
+      // Return to the consent screen so the user can retry
+      state = .idle
+      return nil
     }
-
-    // Block re-entry and switch to the progress UI before the actor reports
-    state = .downloading(progress: nil)
-
-    let progressTask = Task { [weak self] in
-      while !Task.isCancelled {
-        let loaderState = await loader.state
-        guard !Task.isCancelled else { return }
-        if case .idle = loaderState {
-          // The actor hasn't begun loading; don't regress the UI to consent
-        } else {
-          self?.state = loaderState
-        }
-        try? await Task.sleep(for: .seconds(0.25))
-      }
-    }
-    addTask(progressTask)
-
-    addTask(
-      Task {
-        let transaction = SentrySDK.startTransaction(
-          name: "Nav Data Load",
-          operation: "navData.load"
-        )
-        defer { progressTask.cancel() }
-        do {
-          error = nil
-          try await loader.clearCycles()
-          Defaults[.ourAirportsLastUpdated] = nil
-          let result = try await loader.load()
-          state = await loader.state
-
-          Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
-          Defaults[.schemaVersion] = latestSchemaVersion
-          transaction.finish()
-        } catch {
-          transaction.finish(status: .internalError)
-          SentrySDK.capture(error: error) { scope in
-            scope.setTag(value: "load", key: "navData.operation")
-            scope.setFingerprint(["navData", "load"])
-          }
-          self.error = error
-
-          // Return to the consent screen so the user can retry the download
-          progressTask.cancel()
-          state = .idle
-        }
-      }
-    )
   }
 
-  func loadLater() {
-    if canSkip { deferred = true }
+  /// Mirrors the loader's pushed state onto the main actor for the progress UI.
+  ///
+  /// The loader yields into an `AsyncStream`, so following its progress never
+  /// enqueues a job onto the loader's executor — an enqueue would block the main
+  /// thread for as long as the import occupies that executor.
+  private func observeProgress(of loader: NavDataLoader) async -> Task<Void, Never> {
+    let updates = await loader.stateUpdates()
+    return Task { [weak self] in
+      for await loaderState in updates where !Task.isCancelled {
+        guard let self else { return }
+
+        // The actor hasn't begun loading; don't regress the UI to consent
+        if case .idle = loaderState { continue }
+        state = loaderState
+      }
+    }
+  }
+
+  private func performLoad(with loader: NavDataLoader, progressTask: Task<Void, Never>) async {
+    let transaction = SentrySDK.startTransaction(
+      name: "Nav Data Load",
+      operation: "navData.load"
+    )
+    defer { progressTask.cancel() }
+    do {
+      error = nil
+      try await loader.clearCycles()
+      Defaults[.ourAirportsLastUpdated] = nil
+      let result = try await loader.load()
+      state = .finished
+
+      Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
+      Defaults[.schemaVersion] = latestSchemaVersion
+      transaction.finish()
+    } catch {
+      transaction.finish(status: .internalError)
+      SentrySDK.capture(error: error) { scope in
+        scope.setTag(value: "load", key: "navData.operation")
+        scope.setFingerprint(["navData", "load"])
+      }
+      self.error = error
+
+      // Return to the consent screen so the user can retry the download
+      progressTask.cancel()
+      state = .idle
+    }
   }
 
   private func applyState(_ state: NavDataStateHelper.State) {
