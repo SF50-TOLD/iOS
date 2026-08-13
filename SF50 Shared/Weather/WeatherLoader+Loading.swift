@@ -227,39 +227,76 @@ extension WeatherLoader {
     }
   }
 
+  /// Loads every winds aloft forecast period the NWS publishes.
+  ///
+  /// Each period is a separate product, so they are downloaded concurrently and independently: a
+  /// bulletin that fails to load is dropped, leaving the pilot whichever periods did arrive.
   func loadWindsAloft() async {
     windsAloft = .loading
     await notifySubscribers()
 
+    let results = await withTaskGroup(of: BulletinResult.self) { group in
+      for forecastHour in Self.windsAloftForecastHours {
+        group.addTask { await self.loadWindsAloftBulletin(forecastHour: forecastHour) }
+      }
+      var results = [BulletinResult]()
+      for await result in group { results.append(result) }
+      return results
+    }
+
+    let failures = results.compactMap(\.failure)
+
+    // Don't update windsAloft if cancelled
+    guard !Task.isCancelled,
+      !failures.contains(where: { Self.isNetworkCancellation($0) })
+    else { return }
+
+    for failure in failures {
+      Self.recordLoadFailure(failure, dataType: "windsAloft")
+    }
+
+    let bulletins = results.compactMap(\.bulletin).sorted { $0.validAt < $1.validAt }
+    guard !bulletins.isEmpty else {
+      if let failure = failures.first { windsAloft = .error(failure) }
+      return
+    }
+
+    Self.logger.info(
+      "Loaded winds aloft data",
+      metadata: [
+        "bulletinCount": "\(bulletins.count)",
+        "stationCount": "\(bulletins.map(\.stations.count).max() ?? 0)"
+      ]
+    )
+
+    windsAloft = .value(bulletins)
+  }
+
+  private func loadWindsAloftBulletin(forecastHour: Int) async -> BulletinResult {
+    let url = Self.windsAloftURL(forecastHour: forecastHour)
+
     do {
-      try Task.checkCancellation()
-      let data = try await load(url: Self.windsAloftURL)
-      try Task.checkCancellation()
+      let data = try await load(url: url)
 
       guard let text = String(data: data, encoding: .utf8) else {
-        Self.logger.error("Failed to decode winds aloft data as UTF-8")
-        windsAloft = .error(Errors.invalidTextEncoding(url: Self.windsAloftURL))
-        return
+        Self.logger.error(
+          "Failed to decode winds aloft data as UTF-8",
+          metadata: ["url": "\(url)"]
+        )
+        throw Errors.invalidTextEncoding(url: url)
       }
 
-      let parsed = try await WindsAloft.from(string: text)
-      let stationData = parsed.stations.reduce(into: [String: WindsAloftData]()) {
-        result,
-        station in
-        result[station.id] = WindsAloftData(from: station)
+      guard let bulletin = WindsAloftBulletin(from: try await WindsAloft.from(string: text)) else {
+        Self.logger.error(
+          "Failed to resolve winds aloft forecast period",
+          metadata: ["url": "\(url)"]
+        )
+        throw Errors.unresolvableForecastPeriod(url: url)
       }
 
-      Self.logger.info(
-        "Loaded winds aloft data",
-        metadata: ["stationCount": "\(stationData.count)"]
-      )
-
-      windsAloft = .value(stationData)
+      return .success(bulletin)
     } catch {
-      // Don't update windsAloft if cancelled
-      guard !Self.isNetworkCancellation(error) else { return }
-      Self.recordLoadFailure(error, dataType: "windsAloft")
-      windsAloft = .error(error)
+      return .failure(error)
     }
   }
 

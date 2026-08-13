@@ -21,9 +21,6 @@ struct LandingAirportView: View {
   @Default(.landingRunway)
   private var runwayID
 
-  @Default(.useAirportLocalTime)
-  private var useAirportLocalTime
-
   private let nowVisibilityTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
   private var elevation: Measurement<UnitLength> {
@@ -32,10 +29,7 @@ struct LandingAirportView: View {
   }
 
   private var displayTimeZone: TimeZone {
-    if useAirportLocalTime {
-      return performance.airport?.timeZone ?? .current
-    }
-    return TimeZone(identifier: "UTC") ?? .current
+    .display(for: performance.airport)
   }
 
   private var runwayNOTAM: NOTAM {

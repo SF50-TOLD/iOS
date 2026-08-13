@@ -1778,8 +1778,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/SwiftMETAR";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 3.0.0;
+				branch = main;
+				kind = branch;
 			};
 		};
 		01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */ = {

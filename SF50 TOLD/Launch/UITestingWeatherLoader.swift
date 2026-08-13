@@ -106,7 +106,7 @@ actor UITestingWeatherLoader: WeatherLoaderProtocol {
     }
   }
 
-  func streamWindsAloft(for _: WeatherLoader.Key) -> AsyncStream<Loadable<WindsAloftData?>> {
+  func streamWindsAloft(for _: WeatherLoader.Key) -> AsyncStream<Loadable<WindsAloftForecast?>> {
     AsyncStream { continuation in
       continuation.yield(.notLoaded)
     }

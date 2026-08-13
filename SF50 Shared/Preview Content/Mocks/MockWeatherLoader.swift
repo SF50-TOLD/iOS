@@ -12,7 +12,7 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
   private var mockTAF: Loadable<String?> = .notLoaded {
     didSet { notifyTAFSubscribers() }
   }
-  private var mockWindsAloft: Loadable<WindsAloftData?> = .notLoaded {
+  private var mockWindsAloft: Loadable<WindsAloftForecast?> = .notLoaded {
     didSet { notifyWindsAloftSubscribers() }
   }
   private var mockInterpolatedEntry: WindsAloftData.Entry?
@@ -21,13 +21,15 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
   private var conditionsSubscribers = [UUID: AsyncStream<Loadable<Conditions>>.Continuation]()
   private var metarSubscribers = [UUID: AsyncStream<Loadable<String?>>.Continuation]()
   private var tafSubscribers = [UUID: AsyncStream<Loadable<String?>>.Continuation]()
-  private var windsAloftSubscribers = [UUID: AsyncStream<Loadable<WindsAloftData?>>.Continuation]()
+  private var windsAloftSubscribers = [
+    UUID: AsyncStream<Loadable<WindsAloftForecast?>>.Continuation
+  ]()
 
   public init(
     mockConditions: Loadable<Conditions> = .notLoaded,
     mockMETAR: Loadable<String?> = .notLoaded,
     mockTAF: Loadable<String?> = .notLoaded,
-    mockWindsAloft: Loadable<WindsAloftData?> = .notLoaded,
+    mockWindsAloft: Loadable<WindsAloftForecast?> = .notLoaded,
     mockError: Error? = nil
   ) {
     self.mockConditions = mockConditions
@@ -49,7 +51,7 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
     mockTAF = taf
   }
 
-  public func setMockWindsAloft(_ windsAloft: Loadable<WindsAloftData?>) {
+  public func setMockWindsAloft(_ windsAloft: Loadable<WindsAloftForecast?>) {
     mockWindsAloft = windsAloft
   }
 
@@ -111,9 +113,11 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
     return stream
   }
 
-  public func streamWindsAloft(for _: WeatherLoader.Key) -> AsyncStream<Loadable<WindsAloftData?>> {
+  public func streamWindsAloft(for _: WeatherLoader.Key) -> AsyncStream<
+    Loadable<WindsAloftForecast?>
+  > {
     let id = UUID()
-    let (stream, continuation) = AsyncStream.makeStream(of: Loadable<WindsAloftData?>.self)
+    let (stream, continuation) = AsyncStream.makeStream(of: Loadable<WindsAloftForecast?>.self)
 
     windsAloftSubscribers[id] = continuation
     continuation.yield(mockWindsAloft)

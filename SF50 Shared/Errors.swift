@@ -15,6 +15,8 @@ extension WeatherLoader.Errors: LocalizedError {
         String(localized: "Downloaded weather data was corrupted or incomplete.")
       case .invalidTextEncoding:
         String(localized: "Downloaded weather data had an invalid text encoding.")
+      case .unresolvableForecastPeriod:
+        String(localized: "A winds aloft forecast didn’t say when it applies.")
     }
   }
 

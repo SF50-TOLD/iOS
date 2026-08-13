@@ -10,8 +10,6 @@ struct GoAroundProfileView: View {
 
   private static let chartHeightPts: CGFloat = 300
   private static let vectorTargetAltitudeFtAFE: Double = 2000
-  private static let maxWindsAltitudeFt: Double = 18000
-  private static let windsAltitudeStepFt: Double = 3000
 
   @Environment(LandingPerformanceViewModel.self)
   private var performance
@@ -50,10 +48,12 @@ struct GoAroundProfileView: View {
     .toolbar {
       ToolbarItem(placement: .topBarTrailing) {
         if let terrainPath {
-          TerrainDataStatusButton(
+          DataStatusButton(
             terrainDataAvailable: terrainPath.terrainDataAvailable,
             terrainDataCorrupted: !TerrainDataLoader.shared.corruptedRegions.isEmpty,
-            obstacleDataAvailable: terrainPath.obstacleDataAvailable
+            obstacleDataAvailable: terrainPath.obstacleDataAvailable,
+            windsAloft: windsAloft,
+            timeZone: displayTimeZone
           )
         }
       }
@@ -175,6 +175,15 @@ struct GoAroundProfileView: View {
     return availableApproaches.first { $0.identifier == id }
   }
 
+  private var windsAloft: WindsAloftForecast? {
+    guard case .value(let forecast) = weather.windsAloft else { return nil }
+    return forecast
+  }
+
+  private var displayTimeZone: TimeZone {
+    .display(for: performance.airport)
+  }
+
   private var computationInputs: ComputationInputs? {
     guard let runway = performance.runway,
       let airport = performance.airport
@@ -183,13 +192,6 @@ struct GoAroundProfileView: View {
     // For published missed, require a plottable approach
     if goAroundType == .publishedMissed {
       guard let approach = selectedApproach, approach.isMissedApproachPlottable else { return nil }
-    }
-
-    let windsHash: Int
-    if case .value(let data) = weather.windsAloft, let data {
-      windsHash = data.entries.count
-    } else {
-      windsHash = 0
     }
 
     return ComputationInputs(
@@ -204,7 +206,7 @@ struct GoAroundProfileView: View {
       approachID: selectedApproach?.identifier,
       vectorHeadingDeg: vectorHeading.converted(to: .degrees).value,
       airportID: airport.recordID,
-      windsHash: windsHash,
+      windsAloft: windsAloft,
       terrainRevision: terrainRevision
     )
   }
@@ -224,7 +226,11 @@ struct GoAroundProfileView: View {
     isComputing = true
     defer { isComputing = false }
 
-    let windsAloftObs = buildWindsAloftObservations()
+    let windsAloftObs = ClimbProfileGenerator.windsAloftObservations(
+      for: windsAloft,
+      surfaceTemperature: performance.conditions.temperature,
+      fieldElevation: airport.elevation
+    )
     let fieldElevationFt = airport.elevation.converted(to: .feet).value
 
     let slpInHg =
@@ -292,40 +298,6 @@ struct GoAroundProfileView: View {
     pathFailed = false
   }
 
-  private func buildWindsAloftObservations() -> [ClimbProfileGenerator.WindsAloftObservation] {
-    guard case .value(let data) = weather.windsAloft, let data else {
-      return defaultWindsAloftObservations()
-    }
-    return data.entries.map { entry in
-      ClimbProfileGenerator.WindsAloftObservation(
-        altitudeFt: entry.altitude.converted(to: .feet).value,
-        temperatureC: entry.temperature?.converted(to: .celsius).value
-          ?? isaTemperature(altitudeFt: entry.altitude.converted(to: .feet).value),
-        windDirectionDeg: entry.windDirection?.converted(to: .degrees).value ?? 0,
-        windSpeedKts: entry.windSpeed.converted(to: .knots).value
-      )
-    }
-  }
-
-  private func defaultWindsAloftObservations() -> [ClimbProfileGenerator.WindsAloftObservation] {
-    let temp =
-      performance.conditions.temperature?.converted(to: .celsius).value
-      ?? seaLevelStandardTempC
-    let fieldElevationFt = performance.airport?.elevation.converted(to: .feet).value ?? 0
-    return stride(
-      from: fieldElevationFt,
-      through: Self.maxWindsAltitudeFt,
-      by: Self.windsAltitudeStepFt
-    ).map { alt in
-      ClimbProfileGenerator.WindsAloftObservation(
-        altitudeFt: alt,
-        temperatureC: alt == fieldElevationFt ? temp : isaTemperature(altitudeFt: alt),
-        windDirectionDeg: performance.conditions.windDirection?.converted(to: .degrees).value ?? 0,
-        windSpeedKts: performance.conditions.windSpeed?.converted(to: .knots).value ?? 0
-      )
-    }
-  }
-
   // MARK: - Types
 
   private struct ComputationInputs: Equatable {
@@ -338,7 +310,7 @@ struct GoAroundProfileView: View {
     let approachID: String?
     let vectorHeadingDeg: Double
     let airportID: String
-    let windsHash: Int
+    let windsAloft: WindsAloftForecast?
     let terrainRevision: Int
   }
 

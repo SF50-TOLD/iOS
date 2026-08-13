@@ -32,10 +32,12 @@ public protocol WeatherLoaderProtocol: Actor {
   func streamTAF(for key: WeatherLoader.Key) async -> AsyncStream<Loadable<String?>>
 
   /// Creates a stream of winds aloft data updates.
-  /// - Parameter key: Identifies the airport to monitor.
+  /// - Parameter key: Identifies the airport and time to monitor.
   /// - Returns: Async stream yielding winds aloft data as it becomes available.
-  ///   Returns `nil` for airports without a winds aloft reporting station.
-  func streamWindsAloft(for key: WeatherLoader.Key) async -> AsyncStream<Loadable<WindsAloftData?>>
+  ///   Returns `nil` for airports without a winds aloft reporting station, and for times no
+  ///   loaded forecast period covers.
+  func streamWindsAloft(for key: WeatherLoader.Key) async
+    -> AsyncStream<Loadable<WindsAloftForecast?>>
 }
 
 /**
@@ -76,9 +78,8 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   static let TAFsURL = URL(
     string: "https://aviationweather.gov/data/cache/tafs.cache.xml.gz"
   )!
-  static let windsAloftURL = URL(
-    string: "https://aviationweather.gov/api/data/windtemp?level=low&fcst=06&region=all&layout=on"
-  )!
+  /// The forecast periods, in hours, the NWS publishes a low-level winds aloft bulletin for.
+  static let windsAloftForecastHours = [6, 12, 24]
   static let logger = Logger(label: "codes.tim.SF50-TOLD.WeatherLoader")
   static let weatherService = WeatherService()
 
@@ -88,7 +89,7 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   var forecasts: Loadable<[String: Forecast]> = .notLoaded {
     didSet { Task { await notifySubscribers() } }
   }
-  var windsAloft: Loadable<[String: WindsAloftData]> = .notLoaded {
+  var windsAloft: Loadable<[WindsAloftBulletin]> = .notLoaded {
     didSet { Task { await notifySubscribers() } }
   }
   var stationLocations: [String: CLLocationCoordinate2D] = [:]
@@ -99,13 +100,23 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   var metarSubscribers = [UUID: (Key, AsyncStream<Loadable<String?>>.Continuation)]()
   var tafSubscribers = [UUID: (Key, AsyncStream<Loadable<String?>>.Continuation)]()
   var windsAloftSubscribers = [
-    UUID: (Key, AsyncStream<Loadable<WindsAloftData?>>.Continuation)
+    UUID: (Key, AsyncStream<Loadable<WindsAloftForecast?>>.Continuation)
   ]()
   var loadingTask: Task<Void, Never>?
 
   var session: URLSession { .init(configuration: .ephemeral) }
 
   private init() {}
+
+  /// The Aviation Weather URL for a low-level winds aloft bulletin.
+  /// - Parameter forecastHour: The forecast period, in hours; see ``windsAloftForecastHours``.
+  /// - Returns: The URL of the nationwide bulletin for that period.
+  static func windsAloftURL(forecastHour: Int) -> URL {
+    .init(
+      string: "https://aviationweather.gov/api/data/windtemp?level=low"
+        + "&fcst=\(String(format: "%02d", forecastHour))&region=all&layout=on"
+    )!
+  }
 
   public func load(force: Bool = false) async {
     if !force, let lastLoaded, lastLoaded.timeIntervalSinceNow > -Self.reloadInterval {
@@ -180,9 +191,9 @@ public actor WeatherLoader: WeatherLoaderProtocol {
     }
   }
 
-  public func streamWindsAloft(for key: Key) -> AsyncStream<Loadable<WindsAloftData?>> {
+  public func streamWindsAloft(for key: Key) -> AsyncStream<Loadable<WindsAloftForecast?>> {
     let id = UUID()
-    let initialData = windsAloftData(for: key)
+    let initialData = windsAloftForecast(for: key)
 
     return AsyncStream { continuation in
       windsAloftSubscribers[id] = (key, continuation)

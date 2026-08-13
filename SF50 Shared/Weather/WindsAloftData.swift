@@ -16,7 +16,7 @@ import SwiftMETAR
 ///     }
 /// }
 /// ```
-public struct WindsAloftData: Sendable, Equatable {
+public struct WindsAloftData: Sendable, Hashable {
 
   /// The station identifier (e.g., "SFO", "OAK").
   public let stationID: String
@@ -80,7 +80,7 @@ public struct WindsAloftData: Sendable, Equatable {
   }
 
   /// A single altitude entry containing wind and temperature data.
-  public struct Entry: Sendable, Equatable {
+  public struct Entry: Sendable, Hashable {
     /// The altitude for this entry.
     public let altitude: Measurement<UnitLength>
 

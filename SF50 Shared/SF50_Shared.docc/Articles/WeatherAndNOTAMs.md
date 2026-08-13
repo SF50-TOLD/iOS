@@ -18,6 +18,7 @@ Weather observation loading, atmospheric condition modeling, and NOTAM-based run
 ### Winds Aloft
 
 - ``WindsAloftData``
+- ``WindsAloftForecast``
 - ``WindsAloftInterpolator``
 
 ### NOTAMs

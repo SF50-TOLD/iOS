@@ -38,8 +38,8 @@ extension WeatherLoader {
 
     // Notify winds aloft subscribers
     for (_, (key, continuation)) in windsAloftSubscribers {
-      let data = windsAloftData(for: key)
-      continuation.yield(data)
+      let forecast = windsAloftForecast(for: key)
+      continuation.yield(forecast)
     }
   }
 }

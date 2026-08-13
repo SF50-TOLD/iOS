@@ -26,6 +26,9 @@ extension WeatherLoader {
 
     /// Failed to decode data as UTF-8 text.
     case invalidTextEncoding(url: URL)
+
+    /// A winds aloft bulletin's valid time or use period couldn't be resolved to a date.
+    case unresolvableForecastPeriod(url: URL)
   }
 
   /// Key identifying a weather data request by airport and time.
@@ -74,6 +77,22 @@ extension WeatherLoader {
   struct Forecast {
     let conditions: [Conditions]
     let raw: String
+  }
+
+  /// The outcome of loading a single winds aloft bulletin.
+  enum BulletinResult: Sendable {
+    case success(WindsAloftBulletin)
+    case failure(any Swift.Error)
+
+    var bulletin: WindsAloftBulletin? {
+      guard case .success(let bulletin) = self else { return nil }
+      return bulletin
+    }
+
+    var failure: (any Swift.Error)? {
+      guard case .failure(let error) = self else { return nil }
+      return error
+    }
   }
 }
 
