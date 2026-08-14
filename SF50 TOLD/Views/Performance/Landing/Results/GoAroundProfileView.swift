@@ -52,7 +52,7 @@ struct GoAroundProfileView: View {
             terrainDataAvailable: terrainPath.terrainDataAvailable,
             terrainDataCorrupted: !TerrainDataLoader.shared.corruptedRegions.isEmpty,
             obstacleDataAvailable: terrainPath.obstacleDataAvailable,
-            windsAloft: windsAloft,
+            windsAloft: weather.windsAloft,
             timeZone: displayTimeZone
           )
         }

@@ -1,126 +1,185 @@
 import CoreLocation
+import Foundation
 
-/// Interpolates winds aloft data from multiple stations using Inverse Distance Weighting (IDW).
+/// Interpolates winds aloft between reporting stations using Inverse Distance Weighting (IDW).
+///
+/// Most airports are not themselves forecast locations — the NWS publishes 233 of them — so their
+/// winds aloft are interpolated from the stations around them. NWS Instruction 10-812 §3 provides
+/// for this directly: "Forecasts for intermediate locations may be determined by interpolation."
 public enum WindsAloftInterpolator {
 
   // MARK: - Public Methods
 
-  /// Interpolates winds aloft for a target location and altitude.
-  ///
-  /// Uses Inverse Distance Weighting (IDW) to combine data from nearby stations.
-  /// Wind direction is averaged using unit vectors to handle circular nature.
+  /// Interpolates a wind and temperature column for a location from the stations around it.
   ///
   /// - Parameters:
-  ///   - coordinate: Target location
-  ///   - altitude: Target altitude
-  ///   - stations: Available winds aloft stations with locations
-  ///   - configuration: Interpolation parameters
-  /// - Returns: Interpolated entry, or `nil` if insufficient nearby stations
+  ///   - coordinate: The location to interpolate for.
+  ///   - bulletin: The bulletin to draw stations from.
+  ///   - configuration: Interpolation parameters.
+  /// - Returns: The interpolated column and where it came from, or `nil` if no station is near
+  ///   enough.
+  static func interpolate(
+    at coordinate: CLLocationCoordinate2D,
+    in bulletin: WindsAloftBulletin,
+    configuration: Configuration = .default
+  ) -> (source: WindsAloftForecast.Source, data: WindsAloftData)? {
+    let located = bulletin.stations.compactMap { stationID, data -> LocatedStation? in
+      guard let station = WindsAloftStation.all[stationID] else { return nil }
+      return .init(stationID: stationID, coordinate: station.coordinate, data: data)
+    }
+
+    let nearby = NearbyFinder.find(
+      near: coordinate,
+      in: located,
+      radiusNM: configuration.maxDistanceNM,
+      limit: configuration.maxStations
+    )
+    guard let closest = nearby.first else { return nil }
+
+    // A station this close is the forecast for this location, not a neighbour of it.
+    if closest.distanceNM < configuration.directUseThresholdNM {
+      return (.station(closest.item.stationID), closest.item.data)
+    }
+
+    let entries = interpolate(neighbors: nearby, configuration: configuration)
+    guard !entries.isEmpty else { return nil }
+
+    return (.interpolated, .init(entries: entries))
+  }
+
+  /// Interpolates a location's winds aloft at a single altitude.
+  ///
+  /// - Parameters:
+  ///   - coordinate: The location to interpolate for.
+  ///   - altitude: The altitude to interpolate at.
+  ///   - stations: The stations available to draw from.
+  ///   - configuration: Interpolation parameters.
+  /// - Returns: The interpolated entry, or `nil` if no station near enough covers that altitude.
   public static func interpolate(
     at coordinate: CLLocationCoordinate2D,
     altitude: Measurement<UnitLength>,
     from stations: [LocatedStation],
     configuration: Configuration = .default
   ) -> WindsAloftData.Entry? {
-    // Find nearby stations
     let nearby = NearbyFinder.find(
       near: coordinate,
       in: stations,
-      radius: configuration.maxDistance,
+      radiusNM: configuration.maxDistanceNM,
       limit: configuration.maxStations
     )
+    guard let closest = nearby.first else { return nil }
 
-    guard !nearby.isEmpty else { return nil }
-
-    // If closest station is very close, use it directly
-    if let closest = nearby.first, closest.distanceNM < configuration.directUseThreshold {
+    if closest.distanceNM < configuration.directUseThresholdNM {
       return closest.item.data.entry(at: altitude)
     }
 
-    // Need minimum stations for interpolation
-    guard nearby.count >= configuration.minStations else {
-      // Use single station if available
-      return nearby.first?.item.data.entry(at: altitude)
-    }
-
-    // Get altitude-interpolated entries from each station
-    let stationEntries: [(entry: WindsAloftData.Entry, distanceNM: Double)] = nearby.compactMap {
-      station in
-      guard let entry = station.item.data.entry(at: altitude) else { return nil }
-      return (entry, station.distanceNM)
-    }
-
-    guard stationEntries.count >= configuration.minStations else {
-      return stationEntries.first?.entry
-    }
-
-    return idwInterpolate(entries: stationEntries, altitude: altitude, power: configuration.power)
+    return interpolate(neighbors: nearby, at: altitude, configuration: configuration)
   }
 
   // MARK: - Private Methods
 
-  /// Performs IDW interpolation on a set of station entries.
+  /// Interpolates a full column at every altitude the neighbouring stations publish.
+  private static func interpolate(
+    neighbors: [(item: LocatedStation, distanceNM: Double)],
+    configuration: Configuration
+  ) -> [WindsAloftData.Entry] {
+    let altitudes = Set(neighbors.flatMap { $0.item.data.entries.map(\.altitude) })
+
+    return
+      altitudes
+      .sorted()
+      .compactMap { interpolate(neighbors: neighbors, at: $0, configuration: configuration) }
+  }
+
+  /// Interpolates one altitude from the neighbouring stations that publish it.
+  ///
+  /// A station only contributes at altitudes it actually reports. The bulletin omits levels within
+  /// 1,500 feet of a station's elevation, so a station on high terrain may start at 9,000 or 12,000
+  /// feet; ``WindsAloftData/entry(at:)`` clamps below its lowest level, which would otherwise let
+  /// that station's 9,000-foot wind stand in for the wind at 3,000 feet.
+  ///
+  /// Too few stations to blend, or neighbours whose winds cancel, both fall back to the nearest
+  /// station's own forecast — the closest thing to an answer there is at that level.
+  private static func interpolate(
+    neighbors: [(item: LocatedStation, distanceNM: Double)],
+    at altitude: Measurement<UnitLength>,
+    configuration: Configuration
+  ) -> WindsAloftData.Entry? {
+    let covering = neighbors.compactMap {
+      neighbor -> (entry: WindsAloftData.Entry, distanceNM: Double)? in
+      guard neighbor.item.data.covers(altitude: altitude),
+        let entry = neighbor.item.data.entry(at: altitude)
+      else { return nil }
+      return (entry, neighbor.distanceNM)
+    }
+
+    guard covering.count >= configuration.minStations else { return covering.first?.entry }
+
+    return idwInterpolate(entries: covering, altitude: altitude, power: configuration.power)
+      ?? covering.first?.entry
+  }
+
+  /// Combines station entries by inverse-distance-weighting their wind vectors.
+  ///
+  /// Wind is averaged as a vector rather than as a speed and a direction separately, which is both
+  /// the standard treatment and the only self-consistent one: opposing winds settle to a light
+  /// resultant instead of retaining their full speed on an arbitrary heading. Light and variable
+  /// entries carry no direction and contribute nothing, which is what a calm station should do.
+  ///
+  /// - Returns: The blended entry, or `nil` if the neighbours' winds cancel: a resultant left over
+  ///   from stations that are themselves blowing hard is unresolved rather than calm, and reporting
+  ///   it as calm would be indistinguishable from a station forecasting light and variable.
   private static func idwInterpolate(
     entries: [(entry: WindsAloftData.Entry, distanceNM: Double)],
     altitude: Measurement<UnitLength>,
     power: Double
-  ) -> WindsAloftData.Entry {
-    // Calculate weights: wi = 1 / di^power
-    let weights = entries.map { 1.0 / pow(max($0.distanceNM, 0.001), power) }
-    let totalWeight = weights.reduce(0, +)
+  ) -> WindsAloftData.Entry? {
+    var northward = 0.0,
+      eastward = 0.0,
+      weightedSpeed = 0.0,
+      totalWeight = 0.0
+    var weightedTemperature = 0.0,
+      temperatureWeight = 0.0
 
-    // Interpolate wind speed
-    var weightedSpeed = 0.0
-    for (i, stationEntry) in entries.enumerated() {
-      let speed = stationEntry.entry.windSpeed.converted(to: .knots).value
-      weightedSpeed += weights[i] * speed
-    }
-    let interpolatedSpeed = weightedSpeed / totalWeight
+    for (entry, distanceNM) in entries {
+      let weight = 1 / pow(max(distanceNM, Self.minimumDistanceNM), power)
+      totalWeight += weight
 
-    // Interpolate wind direction using unit vectors
-    var sumX = 0.0,
-      sumY = 0.0
-    var hasValidDirection = false
-    for (i, stationEntry) in entries.enumerated() {
-      if let direction = stationEntry.entry.windDirection?.converted(to: .degrees).value {
-        let radians = direction * .pi / 180.0
-        sumX += weights[i] * sin(radians)
-        sumY += weights[i] * cos(radians)
-        hasValidDirection = true
+      if let direction = entry.windDirection?.converted(to: .degrees).value {
+        let radians = direction * .pi / 180,
+          speed = entry.windSpeed.converted(to: .knots).value
+        eastward += weight * speed * sin(radians)
+        northward += weight * speed * cos(radians)
+        weightedSpeed += weight * speed
+      }
+
+      if let temperature = entry.temperature?.converted(to: .celsius).value {
+        weightedTemperature += weight * temperature
+        temperatureWeight += weight
       }
     }
 
-    let interpolatedDirection: Measurement<UnitAngle>?
-    if hasValidDirection {
-      var directionDegrees = atan2(sumX, sumY) * 180.0 / .pi
-      if directionDegrees < 0 { directionDegrees += 360.0 }
-      interpolatedDirection = .init(value: directionDegrees, unit: .degrees)
-    } else {
-      interpolatedDirection = nil
-    }
+    let resultantSpeed = hypot(eastward, northward) / totalWeight,
+      meanSpeed = weightedSpeed / totalWeight
+    let isCalm = resultantSpeed < Self.calmThresholdKts
+    guard !isCalm || meanSpeed < Self.calmThresholdKts else { return nil }
 
-    // Interpolate temperature
-    var weightedTemp = 0.0,
-      tempWeight = 0.0
-    for (i, stationEntry) in entries.enumerated() {
-      if let temp = stationEntry.entry.temperature?.converted(to: .celsius).value {
-        weightedTemp += weights[i] * temp
-        tempWeight += weights[i]
-      }
-    }
-    let interpolatedTemp: Measurement<UnitTemperature>?
-    if tempWeight > 0 {
-      interpolatedTemp = .init(value: weightedTemp / tempWeight, unit: .celsius)
-    } else {
-      interpolatedTemp = nil
-    }
-
-    return WindsAloftData.Entry(
+    return .init(
       altitude: altitude,
-      windDirection: interpolatedDirection,
-      windSpeed: .init(value: interpolatedSpeed, unit: .knots),
-      temperature: interpolatedTemp
+      windDirection: isCalm
+        ? nil
+        : .init(value: compassDegrees(eastward: eastward, northward: northward), unit: .degrees),
+      windSpeed: .init(value: isCalm ? 0 : resultantSpeed, unit: .knots),
+      temperature: temperatureWeight > 0
+        ? .init(value: weightedTemperature / temperatureWeight, unit: .celsius)
+        : nil
     )
+  }
+
+  /// The compass bearing of a wind vector, normalized to 0..<360.
+  private static func compassDegrees(eastward: Double, northward: Double) -> Double {
+    let degrees = atan2(eastward, northward) * 180 / .pi
+    return degrees < 0 ? degrees + 360 : degrees
   }
 
   // MARK: - Subtypes
@@ -129,32 +188,33 @@ public enum WindsAloftInterpolator {
   public struct Configuration: Sendable {
     public static let `default` = Self()
 
-    public var maxDistance: Double
+    public var maxDistanceNM: Double
     public var minStations: Int
     public var maxStations: Int
     public var power: Double
-    public var directUseThreshold: Double
+    public var directUseThresholdNM: Double
 
     /// Creates a configuration for spatial interpolation.
     ///
     /// - Parameters:
-    ///   - maxDistance: Maximum distance to consider stations (nautical miles). Default: 150.
+    ///   - maxDistanceNM: Maximum distance to consider stations (nautical miles). Default: 150.
     ///   - minStations: Minimum stations required for interpolation. Default: 2.
     ///   - maxStations: Maximum stations to use. Default: 4.
     ///   - power: IDW power parameter (higher = more weight to closer stations). Default: 2.
-    ///   - directUseThreshold: Distance below which a single station is used directly (nm). Default: 5.
+    ///   - directUseThresholdNM: Distance below which a single station is used directly, in
+    ///     nautical miles. Default: 5.
     public init(
-      maxDistance: Double = 150.0,
+      maxDistanceNM: Double = 150.0,
       minStations: Int = 2,
       maxStations: Int = 4,
       power: Double = 2.0,
-      directUseThreshold: Double = 5.0
+      directUseThresholdNM: Double = 5.0
     ) {
-      self.maxDistance = maxDistance
+      self.maxDistanceNM = maxDistanceNM
       self.minStations = minStations
       self.maxStations = maxStations
       self.power = power
-      self.directUseThreshold = directUseThreshold
+      self.directUseThresholdNM = directUseThresholdNM
     }
   }
 
@@ -170,4 +230,15 @@ public enum WindsAloftInterpolator {
       self.data = data
     }
   }
+}
+
+// MARK: - Constants
+
+extension WindsAloftInterpolator {
+  /// Keeps a station at the interpolation point itself from carrying infinite weight.
+  private static let minimumDistanceNM = 0.001
+
+  /// The speed below which a resultant wind is reported as light and variable rather than given a
+  /// direction, matching how the bulletins themselves encode calm winds.
+  private static let calmThresholdKts = 0.5
 }

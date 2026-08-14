@@ -43,18 +43,18 @@ public enum NearbyFinder {
   /// - Parameters:
   ///   - coordinate: Center point
   ///   - items: Items to search (already filtered by bounding box if from database)
-  ///   - radius: Maximum distance in nautical miles
+  ///   - radiusNM: Maximum distance in nautical miles
   ///   - limit: Maximum results to return
   /// - Returns: Items sorted by distance, closest first
   public static func find<T: Locatable>(
     near coordinate: CLLocationCoordinate2D,
     in items: [T],
-    radius: Double,
+    radiusNM: Double,
     limit: Int = 10
   ) -> [(item: T, distanceNM: Double)] {
     // Stage 1: Bounding box filter (if not already filtered at database level)
     // Use 15% margin to account for longitude convergence at different latitudes
-    let bounds = boundingBox(center: coordinate, radiusNM: radius * 1.15)
+    let bounds = boundingBox(center: coordinate, radiusNM: radiusNM * 1.15)
     let candidates = items.filter { item in
       item.coordinate.latitude >= bounds.minLat
         && item.coordinate.latitude <= bounds.maxLat
@@ -68,7 +68,7 @@ public enum NearbyFinder {
       .map {
         (item: $0, distanceNM: GeoCalculations.distanceNM(from: coordinate, to: $0.coordinate))
       }
-      .filter { $0.distanceNM <= radius }
+      .filter { $0.distanceNM <= radiusNM }
       .sorted { $0.distanceNM < $1.distanceNM }
       .prefix(limit)
       .map(\.self)

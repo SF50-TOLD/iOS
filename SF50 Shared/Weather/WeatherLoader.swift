@@ -92,7 +92,11 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   var windsAloft: Loadable<[WindsAloftBulletin]> = .notLoaded {
     didSet { Task { await notifySubscribers() } }
   }
-  var stationLocations: [String: CLLocationCoordinate2D] = [:]
+  /// Why part of the last winds aloft load failed, when the rest of it succeeded.
+  ///
+  /// The bulletins that did arrive are still published, so the failure is only visible to a pilot
+  /// in the part of the country the missing ones cover; see ``windsAloftForecast(for:)``.
+  var windsAloftPartialFailure: (any Error)?
   var lastLoaded: Date?
   var conditionsSubscribers = [
     UUID: (Key, AsyncStream<Loadable<Conditions>>.Continuation)
@@ -109,12 +113,14 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   private init() {}
 
   /// The Aviation Weather URL for a low-level winds aloft bulletin.
-  /// - Parameter forecastHour: The forecast period, in hours; see ``windsAloftForecastHours``.
-  /// - Returns: The URL of the nationwide bulletin for that period.
-  static func windsAloftURL(forecastHour: Int) -> URL {
+  /// - Parameters:
+  ///   - forecastHour: The forecast period, in hours; see ``windsAloftForecastHours``.
+  ///   - region: The area the bulletin covers.
+  /// - Returns: The URL of that region's bulletin for that period.
+  static func windsAloftURL(forecastHour: Int, region: WindsAloftRegion) -> URL {
     .init(
       string: "https://aviationweather.gov/api/data/windtemp?level=low"
-        + "&fcst=\(String(format: "%02d", forecastHour))&region=all&layout=on"
+        + "&fcst=\(String(format: "%02d", forecastHour))&region=\(region.rawValue)&layout=on"
     )!
   }
 

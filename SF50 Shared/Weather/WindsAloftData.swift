@@ -18,9 +18,6 @@ import SwiftMETAR
 /// ```
 public struct WindsAloftData: Sendable, Hashable {
 
-  /// The station identifier (e.g., "SFO", "OAK").
-  public let stationID: String
-
   /// Wind and temperature entries at various altitudes.
   public let entries: [Entry]
 
@@ -28,18 +25,30 @@ public struct WindsAloftData: Sendable, Hashable {
   ///
   /// - Parameter station: The parsed station data from SwiftMETAR.
   init(from station: WindsAloft.Station) {
-    self.stationID = station.id
     self.entries = station.entries.map { Entry(altitude: $0.altitude, entry: $0.data) }
   }
 
   /// Creates winds aloft data with explicit values (for testing and interpolation).
   ///
-  /// - Parameters:
-  ///   - stationID: Station identifier
-  ///   - entries: Wind/temperature entries at various altitudes
-  public init(stationID: String, entries: [Entry]) {
-    self.stationID = stationID
+  /// - Parameter entries: Wind/temperature entries at various altitudes
+  public init(entries: [Entry]) {
     self.entries = entries
+  }
+
+  /// Whether an altitude falls within the levels this data actually reports.
+  ///
+  /// The bulletins omit levels within 1,500 feet of a station's elevation, so a station on high
+  /// terrain may report nothing below 9,000 or 12,000 feet. ``entry(at:)`` clamps to the nearest
+  /// reported level outside that range, which is right when sampling this station's own column and
+  /// wrong when combining it with others.
+  ///
+  /// - Parameter altitude: The altitude to test.
+  /// - Returns: Whether the altitude is bracketed by reported levels.
+  public func covers(altitude: Measurement<UnitLength>) -> Bool {
+    guard let lowest = entries.map(\.altitude).min(),
+      let highest = entries.map(\.altitude).max()
+    else { return false }
+    return altitude >= lowest && altitude <= highest
   }
 
   /// Returns interpolated wind/temperature data for the specified altitude.
@@ -69,12 +78,7 @@ public struct WindsAloftData: Sendable, Hashable {
     }
 
     let upper = sorted[lowerIndex + 1]
-
-    // Calculate interpolation fraction
-    let targetFeet = altitude.converted(to: .feet).value
-    let lowerFeet = lower.altitude.converted(to: .feet).value
-    let upperFeet = upper.altitude.converted(to: .feet).value
-    let fraction = (targetFeet - lowerFeet) / (upperFeet - lowerFeet)
+    let fraction = (altitude - lower.altitude) / (upper.altitude - lower.altitude)
 
     return Entry.interpolate(from: lower, to: upper, fraction: fraction, altitude: altitude)
   }
@@ -95,12 +99,13 @@ public struct WindsAloftData: Sendable, Hashable {
 
     init(altitude: UInt, entry: WindsAloftEntry) {
       self.altitude = .init(value: Double(altitude), unit: .feet)
-      if entry == .lightAndVariable {
-        self.windDirection = nil
-        self.windSpeed = .init(value: 0, unit: .knots)
-      } else {
-        self.windDirection = entry.directionMeasurement
-        self.windSpeed = entry.speedMeasurement ?? .init(value: 0, unit: .knots)
+      switch entry {
+        case .lightAndVariable:
+          self.windDirection = nil
+          self.windSpeed = .init(value: 0, unit: .knots)
+        case .wind:
+          self.windDirection = entry.directionMeasurement
+          self.windSpeed = entry.speedMeasurement ?? .init(value: 0, unit: .knots)
       }
       self.temperature = entry.temperatureMeasurement
     }
@@ -132,49 +137,44 @@ public struct WindsAloftData: Sendable, Hashable {
       fraction: Double,
       altitude: Measurement<UnitLength>
     ) -> Self {
-      // Interpolate wind speed
-      let fromSpeed = from.windSpeed.converted(to: .knots).value
-      let toSpeed = to.windSpeed.converted(to: .knots).value
-      let interpolatedSpeed = fromSpeed + (toSpeed - fromSpeed) * fraction
-      let windSpeed: Measurement<UnitSpeed> = .init(value: interpolatedSpeed, unit: .knots)
-
-      // Interpolate wind direction (circular interpolation)
-      let windDirection = interpolateDirection(
-        from.windDirection?.converted(to: .degrees).value,
-        to.windDirection?.converted(to: .degrees).value,
-        fraction: fraction
-      ).map { Measurement<UnitAngle>(value: $0, unit: .degrees) }
-
-      // Interpolate temperature
-      let temperature: Measurement<UnitTemperature>?
-      if let fromTemp = from.temperature?.converted(to: .celsius).value,
-        let toTemp = to.temperature?.converted(to: .celsius).value
-      {
-        let interpolatedTemp = fromTemp + (toTemp - fromTemp) * fraction
-        temperature = .init(value: interpolatedTemp, unit: .celsius)
-      } else {
-        temperature = from.temperature ?? to.temperature
-      }
-
-      return Self(
+      .init(
         altitude: altitude,
-        windDirection: windDirection,
-        windSpeed: windSpeed,
-        temperature: temperature
+        windDirection: interpolateDirection(
+          from.windDirection,
+          to.windDirection,
+          fraction: fraction
+        ),
+        windSpeed: from.windSpeed + (to.windSpeed - from.windSpeed) * fraction,
+        temperature: interpolateTemperature(from.temperature, to.temperature, fraction: fraction)
       )
     }
 
     /// Interpolates between two wind directions using shortest path around the compass.
-    private static func interpolateDirection(_ from: Double?, _ to: Double?, fraction: Double)
-      -> Double?
-    {
+    private static func interpolateDirection(
+      _ from: Measurement<UnitAngle>?,
+      _ to: Measurement<UnitAngle>?,
+      fraction: Double
+    ) -> Measurement<UnitAngle>? {
       guard let from, let to else { return from ?? to }
-      var diff = to - from
+
+      let fromDeg = from.converted(to: .degrees).value,
+        toDeg = to.converted(to: .degrees).value
+      var diff = toDeg - fromDeg
       if diff > 180 { diff -= 360 } else if diff < -180 { diff += 360 }
-      var result = from + diff * fraction
+      var result = fromDeg + diff * fraction
       if result < 0 { result += 360 }
       if result >= 360 { result -= 360 }
-      return result
+      return .init(value: result, unit: .degrees)
+    }
+
+    /// Interpolates between two optional temperatures, falling back to whichever side reports one.
+    private static func interpolateTemperature(
+      _ from: Measurement<UnitTemperature>?,
+      _ to: Measurement<UnitTemperature>?,
+      fraction: Double
+    ) -> Measurement<UnitTemperature>? {
+      guard let from, let to else { return from ?? to }
+      return from + (to - from) * fraction
     }
   }
 }

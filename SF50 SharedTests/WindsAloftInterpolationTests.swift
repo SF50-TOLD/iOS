@@ -46,7 +46,7 @@ struct NearbyFinderTests {
     ]
 
     let center = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
-    let nearby = NearbyFinder.find(near: center, in: items, radius: 100.0, limit: 10)
+    let nearby = NearbyFinder.find(near: center, in: items, radiusNM: 100.0, limit: 10)
 
     #expect(nearby.count == 3)  // A, B, C within 100nm
     #expect(nearby[0].item.id == "A")  // Closest first
@@ -70,7 +70,7 @@ struct NearbyFinderTests {
     ]
 
     let center = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
-    let nearby = NearbyFinder.find(near: center, in: items, radius: 100.0, limit: 2)
+    let nearby = NearbyFinder.find(near: center, in: items, radiusNM: 100.0, limit: 2)
 
     #expect(nearby.count == 2)  // Limited to 2
     #expect(nearby[0].item.id == "A")
@@ -252,7 +252,7 @@ struct WindsAloftAltitudeInterpolationTests {
         temperature: .init(value: Double(e.temp), unit: .celsius)
       )
     }
-    return WindsAloftData(stationID: "TEST", entries: entryObjects)
+    return WindsAloftData(entries: entryObjects)
   }
 
   private func makeTestDataWithLV(
@@ -266,7 +266,7 @@ struct WindsAloftAltitudeInterpolationTests {
         temperature: .init(value: Double(e.temp), unit: .celsius)
       )
     }
-    return WindsAloftData(stationID: "TEST", entries: entryObjects)
+    return WindsAloftData(entries: entryObjects)
   }
 }
 
@@ -339,7 +339,7 @@ struct WindsAloftSpatialInterpolationTests {
     ]
 
     let target = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
-    let config = WindsAloftInterpolator.Configuration(maxDistance: 50.0)  // Only 50nm range
+    let config = WindsAloftInterpolator.Configuration(maxDistanceNM: 50.0)  // Only 50nm range
 
     let entry = WindsAloftInterpolator.interpolate(
       at: target,
@@ -376,13 +376,33 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func interpolateDirectionWithUnitVectors() {
-    // WindsAloftInterpolator is a caseless enum used as a namespace
-
-    // Two stations with opposite winds - unit vector averaging should handle this
+  func opposingWindsFallBackToTheNearestStation() throws {
     let stations = [
-      makeStation(id: "A", lat: 37.1, lon: -122.0, direction: 0, speed: 10),  // North wind
-      makeStation(id: "B", lat: 36.9, lon: -122.0, direction: 180, speed: 10)  // South wind
+      makeStation(id: "A", lat: 37.1, lon: -122.0, direction: 0, speed: 10),
+      makeStation(id: "B", lat: 36.9, lon: -122.0, direction: 180, speed: 10)
+    ]
+
+    let target = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
+    let entry = try #require(
+      WindsAloftInterpolator.interpolate(
+        at: target,
+        altitude: .init(value: 6000, unit: .feet),
+        from: stations
+      )
+    )
+
+    // A wind shift lying between two stations blowing 10 kt leaves no resultant to report, but it
+    // is not calm either: the nearest station's own forecast stands rather than a fabricated calm.
+    #expect(entry.windSpeed.converted(to: .knots).value.isApproximatelyEqual(to: 10))
+    let direction = try #require(entry.windDirection).converted(to: .degrees).value
+    #expect(direction.isApproximatelyEqual(to: 0) || direction.isApproximatelyEqual(to: 180))
+  }
+
+  @Test
+  func lightAndVariableStationsInterpolateToCalm() {
+    let stations = [
+      makeStation(id: "A", lat: 37.1, lon: -122.0, direction: nil, speed: 0),
+      makeStation(id: "B", lat: 36.9, lon: -122.0, direction: nil, speed: 0)
     ]
 
     let target = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
@@ -392,13 +412,77 @@ struct WindsAloftSpatialInterpolationTests {
       from: stations
     )
 
+    // Neighbours that are themselves calm genuinely leave a calm point between them, which is a
+    // different thing from neighbours whose winds cancel.
+    #expect(entry?.windSpeed.converted(to: .knots).value == 0)
+    #expect(entry?.windDirection == nil)
+  }
+
+  @Test
+  func perpendicularWindsResolveToTheirVectorSum() throws {
+    let stations = [
+      makeStation(id: "A", lat: 37.1, lon: -122.0, direction: 0, speed: 10),
+      makeStation(id: "B", lat: 36.9, lon: -122.0, direction: 270, speed: 10)
+    ]
+
+    let target = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
+    let entry = try #require(
+      WindsAloftInterpolator.interpolate(
+        at: target,
+        altitude: .init(value: 6000, unit: .feet),
+        from: stations
+      )
+    )
+
+    // A 10 kt northerly and a 10 kt westerly, equally weighted, average to a 7.07 kt
+    // wind from 315°.
+    #expect(
+      entry.windSpeed.converted(to: .knots).value.isApproximatelyEqual(
+        to: 10 / 2.0.squareRoot(),
+        relativeTolerance: 0.05
+      )
+    )
+    let direction = try #require(entry.windDirection)
+    #expect(
+      direction.converted(to: .degrees).value.isApproximatelyEqual(
+        to: 315,
+        relativeTolerance: 0.02
+      )
+    )
+  }
+
+  @Test
+  func stationsDoNotContributeAtAltitudesTheyDoNotReport() {
+    // A station on high terrain publishes nothing below 9,000 ft, because the bulletin omits
+    // levels within 1,500 ft of a station's elevation.
+    let lowland = makeStation(id: "LOW", lat: 37.5, lon: -122.0, direction: 270, speed: 10)
+    let plateau = WindsAloftInterpolator.LocatedStation(
+      stationID: "HIGH",
+      coordinate: .init(latitude: 36.5, longitude: -122.0),
+      data: .init(entries: [
+        .init(
+          altitude: .init(value: 9000, unit: .feet),
+          windDirection: .init(value: 90, unit: .degrees),
+          windSpeed: .init(value: 90, unit: .knots),
+          temperature: nil
+        )
+      ])
+    )
+
+    let target = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
+    let entry = WindsAloftInterpolator.interpolate(
+      at: target,
+      altitude: .init(value: 6000, unit: .feet),
+      from: [lowland, plateau]
+    )
+
+    // Only the lowland station reports 6,000 ft, so the plateau's 9,000 ft wind must not be
+    // clamped down and blended in.
     #expect(entry != nil)
-    // Opposite winds should result in near-zero resultant or indeterminate direction
-    // Speed should still average to 10 knots
     #expect(
       entry?.windSpeed.converted(to: .knots).value.isApproximatelyEqual(
         to: 10.0,
-        relativeTolerance: 0.1
+        relativeTolerance: 0.01
       ) == true
     )
   }
@@ -430,20 +514,140 @@ struct WindsAloftSpatialInterpolationTests {
 
   // MARK: - Test Helpers
 
-  private func makeStation(id: String, lat: Double, lon: Double, direction: Int, speed: Int)
+  private func makeStation(id: String, lat: Double, lon: Double, direction: Int?, speed: Int)
     -> WindsAloftInterpolator.LocatedStation
   {
     let entry = WindsAloftData.Entry(
       altitude: .init(value: 6000, unit: .feet),
-      windDirection: .init(value: Double(direction), unit: .degrees),
+      windDirection: direction.map { .init(value: Double($0), unit: .degrees) },
       windSpeed: .init(value: Double(speed), unit: .knots),
       temperature: .init(value: 0, unit: .celsius)
     )
-    let data = WindsAloftData(stationID: id, entries: [entry])
+    let data = WindsAloftData(entries: [entry])
     return WindsAloftInterpolator.LocatedStation(
       stationID: id,
       coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon),
       data: data
+    )
+  }
+}
+
+// MARK: - Published Forecast Location Table Tests
+
+/// The station table is transcribed by hand from a PDF whose text layer is defective in places, so
+/// it is checked rather than trusted.
+struct WindsAloftStationTableTests {
+
+  @Test
+  func tableCoversEveryPublishedForecastLocation() {
+    #expect(WindsAloftStation.all.count == 233)
+  }
+
+  /// Spot-checks the kinds of location the table has to carry: an airport, a VOR with no airport,
+  /// and an oceanic grid point that is neither.
+  @Test(
+    arguments: [
+      (id: "SFO", latitude: 37.616667, longitude: -122.366667),
+      (id: "EMI", latitude: 39.483333, longitude: -76.966667),
+      (id: "H51", latitude: 26.5, longitude: -95.0)
+    ]
+  )
+  func stationsSitWhereTheDirectiveSaysTheyDo(
+    expected: (id: String, latitude: Double, longitude: Double)
+  ) throws {
+    let station = try #require(WindsAloftStation.all[expected.id])
+
+    #expect(station.latitude.isApproximatelyEqual(to: expected.latitude, absoluteTolerance: 1e-5))
+    #expect(station.longitude.isApproximatelyEqual(to: expected.longitude, absoluteTolerance: 1e-5))
+  }
+
+  /// Three rows are wrong in the directive itself: Berlin's and one Gulf of Alaska point's
+  /// longitudes are printed without their minus signs, putting them in Mongolia and west of Attu,
+  /// and San Antonio's latitude is 54 NM south of the field.
+  @Test
+  func rowsWrongInTheDirectiveAreCorrected() throws {
+    let berlin = try #require(WindsAloftStation.all["BML"])
+    #expect(berlin.longitude < 0)
+    #expect(berlin.longitude.isApproximatelyEqual(to: -71.183333, absoluteTolerance: 1e-5))
+
+    let gulfOfAlaska = try #require(WindsAloftStation.all["5AB"])
+    #expect(gulfOfAlaska.longitude < 0)
+    #expect(gulfOfAlaska.longitude.isApproximatelyEqual(to: -176, absoluteTolerance: 1e-5))
+
+    let sanAntonio = try #require(WindsAloftStation.all["SAT"])
+    #expect(sanAntonio.latitude.isApproximatelyEqual(to: 29.533333, absoluteTolerance: 1e-5))
+  }
+}
+
+// MARK: - Bulletin Interpolation Tests
+
+/// The path the app actually takes: a bulletin keyed by station identifier, resolved against the
+/// bundled table and interpolated for an airport that has no forecast of its own.
+struct WindsAloftBulletinInterpolationTests {
+
+  @Test
+  func airportBetweenStationsGetsAnInterpolatedColumn() throws {
+    // Oakland has no forecast location of its own, and sits between the San Francisco,
+    // Sacramento and Fresno stations.
+    let result = try #require(
+      WindsAloftInterpolator.interpolate(
+        at: .init(latitude: 37.7213, longitude: -122.2207),
+        in: bulletin(stations: ["SFO": 20, "SAC": 30, "FAT": 40])
+      )
+    )
+
+    #expect(result.source == .interpolated)
+    #expect(!result.data.entries.isEmpty)
+
+    let speed = try #require(result.data.entry(at: .init(value: 6000, unit: .feet)))
+      .windSpeed.converted(to: .knots).value
+    // San Francisco is much the closest, so it dominates without the others being ignored.
+    #expect(speed > 20 && speed < 26)
+  }
+
+  @Test
+  func airportBeyondEveryStationGetsNothing() {
+    // Mid-Pacific, thousands of miles from any of these stations.
+    let result = WindsAloftInterpolator.interpolate(
+      at: .init(latitude: 30.0, longitude: -160.0),
+      in: bulletin(stations: ["SFO": 20, "SAC": 30, "FAT": 40])
+    )
+
+    #expect(result?.source == nil)
+  }
+
+  /// A station identifier the bundled table doesn't know contributes nothing, rather than being
+  /// placed at some default position.
+  @Test
+  func unknownStationsAreIgnored() {
+    let result = WindsAloftInterpolator.interpolate(
+      at: .init(latitude: 37.7213, longitude: -122.2207),
+      in: bulletin(stations: ["ZZZ": 20, "QQQ": 30])
+    )
+
+    #expect(result?.source == nil)
+  }
+
+  private func bulletin(stations: [String: Int]) -> WindsAloftBulletin {
+    .init(
+      validAt: .now,
+      usePeriod: .init(start: .now, duration: 3600),
+      stations: stations.mapValues { speed in
+        WindsAloftData(entries: [
+          .init(
+            altitude: .init(value: 3000, unit: .feet),
+            windDirection: .init(value: 270, unit: .degrees),
+            windSpeed: .init(value: Double(speed), unit: .knots),
+            temperature: nil
+          ),
+          .init(
+            altitude: .init(value: 9000, unit: .feet),
+            windDirection: .init(value: 270, unit: .degrees),
+            windSpeed: .init(value: Double(speed), unit: .knots),
+            temperature: nil
+          )
+        ])
+      }
     )
   }
 }

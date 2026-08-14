@@ -3,13 +3,18 @@ import Foundation
 extension WindsAloftForecast {
 
   /// A sample forecast covering the current time, shaped like a 6-hour NWS bulletin.
-  public static var preview: Self {
+  public static var preview: Self { preview(source: .station("SFO")) }
+
+  /// A sample forecast interpolated between stations, as most airports get.
+  public static var previewInterpolated: Self { preview(source: .interpolated) }
+
+  private static func preview(source: Source) -> Self {
     let validAt = Date.now.addingTimeInterval(3 * 3600)
     return .init(
       validAt: validAt,
       usePeriod: .init(start: validAt.addingTimeInterval(-4 * 3600), duration: 7 * 3600),
+      source: source,
       data: .init(
-        stationID: "SFO",
         entries: [
           .init(altitudeFt: 3000, windDirectionDeg: 280, windSpeedKts: 18, temperatureC: nil),
           .init(altitudeFt: 6000, windDirectionDeg: 290, windSpeedKts: 24, temperatureC: 11),

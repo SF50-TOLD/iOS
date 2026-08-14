@@ -7,7 +7,7 @@ struct DataStatusButton: View {
   let terrainDataAvailable: Bool
   let terrainDataCorrupted: Bool
   let obstacleDataAvailable: Bool
-  let windsAloft: WindsAloftForecast?
+  let windsAloft: Loadable<WindsAloftForecast?>
   let timeZone: TimeZone
 
   @Query private var cycles: [Cycle]
@@ -21,12 +21,17 @@ struct DataStatusButton: View {
     cycles.first { $0.dataSource == .dof }
   }
 
+  private var hasWindsAloft: Bool {
+    guard case .value(let forecast) = windsAloft else { return false }
+    return forecast != nil
+  }
+
   private var hasIssue: Bool {
     cifpCycle?.isEffective != true
       || dofCycle?.isEffective != true
       || !terrainDataAvailable
       || !obstacleDataAvailable
-      || windsAloft == nil
+      || !hasWindsAloft
   }
 
   var body: some View {
@@ -87,7 +92,7 @@ struct DataStatusButton: View {
     terrainDataAvailable: Bool,
     terrainDataCorrupted: Bool = false,
     obstacleDataAvailable: Bool,
-    windsAloft: WindsAloftForecast? = nil,
+    windsAloft: Loadable<WindsAloftForecast?> = .notLoaded,
     timeZone: TimeZone = .gmt,
     showingSheet: Bool = false
   ) {
@@ -133,10 +138,13 @@ struct DataStatusButton: View {
   /// cycle.
   ///
   /// A forecast covering the planned time is simply valid; the period it covers is a detail the
-  /// pilot can disclose, and too long to spell out in the row itself.
+  /// pilot can disclose, and too long to spell out in the row itself. Most airports are not
+  /// themselves forecast locations, so the row distinguishes a forecast interpolated between
+  /// nearby stations from one reported for the airport, and a bulletin that failed to download —
+  /// which a retry may well fix — from a time and place nothing is published for.
   private struct ForecastStatusRow: View {
     let label: String
-    let forecast: WindsAloftForecast?
+    let forecast: Loadable<WindsAloftForecast?>
     let timeZone: TimeZone
 
     /// Formatted here rather than interpolated into `Text`, which resolves a format style
@@ -154,19 +162,29 @@ struct DataStatusButton: View {
     }
 
     var body: some View {
-      if let forecast {
-        DisclosureGroup {
-          LabeledContent("Valid At") {
-            Text(forecast.validAt.formatted(timeStyle))
+      switch forecast {
+        case .value(let forecast?):
+          DisclosureGroup {
+            LabeledContent("Valid At") {
+              Text(forecast.validAt.formatted(timeStyle))
+            }
+            LabeledContent("For Use") {
+              Text((forecast.usePeriod.start..<forecast.usePeriod.end).formatted(periodStyle))
+            }
+          } label: {
+            summary(
+              forecast.isInterpolated
+                ? String(localized: "Interpolated") : String(localized: "Valid"),
+              systemImage: "checkmark.circle.fill"
+            )
           }
-          LabeledContent("For Use") {
-            Text((forecast.usePeriod.start..<forecast.usePeriod.end).formatted(periodStyle))
-          }
-        } label: {
-          summary(String(localized: "Valid"), systemImage: "checkmark.circle.fill")
-        }
-      } else {
-        summary(String(localized: "Invalid"), systemImage: "xmark.circle.fill")
+        case .error:
+          summary(
+            String(localized: "Download Failed"),
+            systemImage: "exclamationmark.triangle.fill"
+          )
+        case .value, .loading, .notLoaded:
+          summary(String(localized: "Invalid"), systemImage: "xmark.circle.fill")
       }
     }
 
@@ -227,7 +245,7 @@ struct DataStatusButton: View {
             DataStatusButton(
               terrainDataAvailable: true,
               obstacleDataAvailable: true,
-              windsAloft: .preview
+              windsAloft: .value(.preview)
             )
           }
         }
@@ -265,7 +283,27 @@ struct DataStatusButton: View {
               terrainDataAvailable: false,
               terrainDataCorrupted: true,
               obstacleDataAvailable: true,
-              windsAloft: .preview,
+              windsAloft: .value(.preview),
+              showingSheet: true
+            )
+          }
+        }
+    }
+  }
+}
+
+#Preview("Winds Aloft Interpolated") {
+  PreviewView { helper in
+    helper.insertCurrentCycle(.cifp, name: "AIRAC 2601")
+    helper.insertCurrentCycle(.dof, name: "20260101")
+    return NavigationStack {
+      Text("Climb Profile")
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            DataStatusButton(
+              terrainDataAvailable: true,
+              obstacleDataAvailable: true,
+              windsAloft: .value(.previewInterpolated),
               showingSheet: true
             )
           }
@@ -285,6 +323,27 @@ struct DataStatusButton: View {
             DataStatusButton(
               terrainDataAvailable: true,
               obstacleDataAvailable: true,
+              windsAloft: .value(nil),
+              showingSheet: true
+            )
+          }
+        }
+    }
+  }
+}
+
+#Preview("Winds Aloft Download Failed") {
+  PreviewView { helper in
+    helper.insertCurrentCycle(.cifp, name: "AIRAC 2601")
+    helper.insertCurrentCycle(.dof, name: "20260101")
+    return NavigationStack {
+      Text("Climb Profile")
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            DataStatusButton(
+              terrainDataAvailable: true,
+              obstacleDataAvailable: true,
+              windsAloft: .error(URLError(.timedOut)),
               showingSheet: true
             )
           }

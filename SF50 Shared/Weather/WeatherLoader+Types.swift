@@ -79,6 +79,18 @@ extension WeatherLoader {
     let raw: String
   }
 
+  /// An area the NWS publishes winds aloft bulletins for.
+  ///
+  /// Each area is a separate product covering a disjoint set of forecast locations, so all of them
+  /// are needed to serve the whole country. Hawaii and the Pacific forecast extra levels below
+  /// 3,000 feet and stop at 24,000 rather than 39,000.
+  enum WindsAloftRegion: String, CaseIterable, Sendable {
+    case CONUS = "all"
+    case alaska
+    case hawaii
+    case pacific = "other_pac"
+  }
+
   /// The outcome of loading a single winds aloft bulletin.
   enum BulletinResult: Sendable {
     case success(WindsAloftBulletin)

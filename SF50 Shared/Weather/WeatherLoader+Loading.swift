@@ -227,35 +227,33 @@ extension WeatherLoader {
     }
   }
 
-  /// Loads every winds aloft forecast period the NWS publishes.
+  /// Loads every winds aloft forecast period the NWS publishes, for every region.
   ///
-  /// Each period is a separate product, so they are downloaded concurrently and independently: a
-  /// bulletin that fails to load is dropped, leaving the pilot whichever periods did arrive.
+  /// Each period is published as a separate product for each region, so all of them are downloaded
+  /// concurrently and independently: a bulletin that fails to load is dropped, leaving the pilot
+  /// whichever periods and regions did arrive. The regions covering the same period are then merged
+  /// into one bulletin, since they report disjoint sets of stations.
+  ///
+  /// A region that fails leaves the rest of the country with the winds aloft it did get, and
+  /// records the failure in ``windsAloftPartialFailure`` so that a pilot the missing region covers
+  /// can tell a download that failed from a forecast that was never published.
   func loadWindsAloft() async {
     windsAloft = .loading
     await notifySubscribers()
 
-    let results = await withTaskGroup(of: BulletinResult.self) { group in
-      for forecastHour in Self.windsAloftForecastHours {
-        group.addTask { await self.loadWindsAloftBulletin(forecastHour: forecastHour) }
-      }
-      var results = [BulletinResult]()
-      for await result in group { results.append(result) }
-      return results
-    }
+    let results = await downloadWindsAloftBulletins()
 
-    let failures = results.compactMap(\.failure)
+    // A superseding load has already reset the state, and will publish its own results.
+    guard !Task.isCancelled else { return }
 
-    // Don't update windsAloft if cancelled
-    guard !Task.isCancelled,
-      !failures.contains(where: { Self.isNetworkCancellation($0) })
-    else { return }
-
+    // A bulletin cancelled on its own is spurious rather than superseded: drop it and keep the rest.
+    let failures = results.compactMap(\.failure).filter { !Self.isNetworkCancellation($0) }
     for failure in failures {
       Self.recordLoadFailure(failure, dataType: "windsAloft")
     }
+    windsAloftPartialFailure = failures.first
 
-    let bulletins = results.compactMap(\.bulletin).sorted { $0.validAt < $1.validAt }
+    let bulletins = WindsAloftBulletin.merged(results.compactMap(\.bulletin))
     guard !bulletins.isEmpty else {
       if let failure = failures.first { windsAloft = .error(failure) }
       return
@@ -265,15 +263,36 @@ extension WeatherLoader {
       "Loaded winds aloft data",
       metadata: [
         "bulletinCount": "\(bulletins.count)",
-        "stationCount": "\(bulletins.map(\.stations.count).max() ?? 0)"
+        "stationCount": "\(bulletins.map(\.stations.count).max() ?? 0)",
+        "failureCount": "\(failures.count)"
       ]
     )
 
     windsAloft = .value(bulletins)
   }
 
-  private func loadWindsAloftBulletin(forecastHour: Int) async -> BulletinResult {
-    let url = Self.windsAloftURL(forecastHour: forecastHour)
+  /// Downloads every published period of every region concurrently, each succeeding or failing on
+  /// its own.
+  private func downloadWindsAloftBulletins() async -> [BulletinResult] {
+    await withTaskGroup(of: BulletinResult.self) { group in
+      for forecastHour in Self.windsAloftForecastHours {
+        for region in WindsAloftRegion.allCases {
+          group.addTask {
+            await self.loadWindsAloftBulletin(forecastHour: forecastHour, region: region)
+          }
+        }
+      }
+      var results = [BulletinResult]()
+      for await result in group { results.append(result) }
+      return results
+    }
+  }
+
+  private func loadWindsAloftBulletin(
+    forecastHour: Int,
+    region: WindsAloftRegion
+  ) async -> BulletinResult {
+    let url = Self.windsAloftURL(forecastHour: forecastHour, region: region)
 
     do {
       let data = try await load(url: url)

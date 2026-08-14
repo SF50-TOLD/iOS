@@ -15,7 +15,6 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
   private var mockWindsAloft: Loadable<WindsAloftForecast?> = .notLoaded {
     didSet { notifyWindsAloftSubscribers() }
   }
-  private var mockInterpolatedEntry: WindsAloftData.Entry?
   private var mockError: Error?
 
   private var conditionsSubscribers = [UUID: AsyncStream<Loadable<Conditions>>.Continuation]()
@@ -53,10 +52,6 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
 
   public func setMockWindsAloft(_ windsAloft: Loadable<WindsAloftForecast?>) {
     mockWindsAloft = windsAloft
-  }
-
-  public func setMockInterpolatedEntry(_ entry: WindsAloftData.Entry?) {
-    mockInterpolatedEntry = entry
   }
 
   public func setMockError(_ error: Error?) {
@@ -127,13 +122,6 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
     }
 
     return stream
-  }
-
-  public func interpolatedWindsAloft(
-    at _: CLLocationCoordinate2D,
-    altitude _: Measurement<UnitLength>
-  ) -> WindsAloftData.Entry? {
-    mockInterpolatedEntry
   }
 
   private func removeConditionsSubscriber(id: UUID) {
