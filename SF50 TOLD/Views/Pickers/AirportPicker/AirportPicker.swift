@@ -71,7 +71,9 @@ struct AirportPicker: View {
     Defaults[.favoriteAirports] = ["OAK"]
     Defaults[.recentAirports] = ["SQL"]
 
-    return AirportPicker { _ in }
-      .environment(\.locationStreamer, MockLocationStreamer())
+    return NavigationStack {
+      AirportPicker { _ in }
+        .environment(\.locationStreamer, MockLocationStreamer())
+    }
   }
 }
