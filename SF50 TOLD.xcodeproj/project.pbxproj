@@ -955,6 +955,7 @@
 /* Begin XCBuildConfiguration section */
 		012837612E5B8BB9002195A0 /* Debug configuration for PBXNativeTarget "SF50 RunwaysExtension" */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 01NOTAM01NOTAM01NOTAM /* NOTAMAPIConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
@@ -983,6 +984,7 @@
 		};
 		012837622E5B8BB9002195A0 /* Release configuration for PBXNativeTarget "SF50 RunwaysExtension" */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 01NOTAM01NOTAM01NOTAM /* NOTAMAPIConfig.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;

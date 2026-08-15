@@ -55,8 +55,10 @@ struct DataStatusButton: View {
       NavigationStack {
         List {
           Section("Weather Data") {
+            // Named for the data rather than its publisher: the NWS is only one of the services
+            // it can come from, and the row's status says which answered.
             ForecastStatusRow(
-              label: String(localized: "NWS Winds Aloft"),
+              label: String(localized: "Winds Aloft"),
               forecast: windsAloft,
               timeZone: timeZone
             )
@@ -137,11 +139,11 @@ struct DataStatusButton: View {
   /// Reports a forecast that applies to a period of time, rather than to a coverage area or a
   /// cycle.
   ///
-  /// A forecast covering the planned time is simply valid; the period it covers is a detail the
-  /// pilot can disclose, and too long to spell out in the row itself. Most airports are not
-  /// themselves forecast locations, so the row distinguishes a forecast interpolated between
-  /// nearby stations from one reported for the airport, and a bulletin that failed to download —
-  /// which a retry may well fix — from a time and place nothing is published for.
+  /// A forecast either covers the planned time or it doesn’t, so the row says only that. Which
+  /// service supplied it, the time it is valid at, and the period it is published for are all
+  /// details the pilot can disclose, and too long to spell out in the row itself. A bulletin that
+  /// failed to download — which a retry may well fix — is set apart from a time and place no
+  /// service has a forecast for.
   private struct ForecastStatusRow: View {
     let label: String
     let forecast: Loadable<WindsAloftForecast?>
@@ -165,6 +167,9 @@ struct DataStatusButton: View {
       switch forecast {
         case .value(let forecast?):
           DisclosureGroup {
+            LabeledContent("Source") {
+              Text(forecast.source.attributedDescription)
+            }
             LabeledContent("Valid At") {
               Text(forecast.validAt.formatted(timeStyle))
             }
@@ -172,11 +177,7 @@ struct DataStatusButton: View {
               Text((forecast.usePeriod.start..<forecast.usePeriod.end).formatted(periodStyle))
             }
           } label: {
-            summary(
-              forecast.isInterpolated
-                ? String(localized: "Interpolated") : String(localized: "Valid"),
-              systemImage: "checkmark.circle.fill"
-            )
+            summary(String(localized: "Valid"), systemImage: "checkmark.circle.fill")
           }
         case .error:
           summary(
@@ -184,7 +185,7 @@ struct DataStatusButton: View {
             systemImage: "exclamationmark.triangle.fill"
           )
         case .value, .loading, .notLoaded:
-          summary(String(localized: "Invalid"), systemImage: "xmark.circle.fill")
+          summary(String(localized: "Unavailable"), systemImage: "xmark.circle.fill")
       }
     }
 
@@ -304,6 +305,26 @@ struct DataStatusButton: View {
               terrainDataAvailable: true,
               obstacleDataAvailable: true,
               windsAloft: .value(.previewInterpolated),
+              showingSheet: true
+            )
+          }
+        }
+    }
+  }
+}
+
+#Preview("Winds Aloft Modeled") {
+  PreviewView { helper in
+    helper.insertCurrentCycle(.cifp, name: "AIRAC 2601")
+    helper.insertCurrentCycle(.dof, name: "20260101")
+    return NavigationStack {
+      Text("Climb Profile")
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            DataStatusButton(
+              terrainDataAvailable: true,
+              obstacleDataAvailable: true,
+              windsAloft: .value(.previewModeled),
               showingSheet: true
             )
           }

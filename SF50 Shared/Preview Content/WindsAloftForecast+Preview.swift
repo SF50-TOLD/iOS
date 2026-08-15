@@ -8,11 +8,20 @@ extension WindsAloftForecast {
   /// A sample forecast interpolated between stations, as most airports get.
   public static var previewInterpolated: Self { preview(source: .interpolated) }
 
-  private static func preview(source: Source) -> Self {
+  /// A sample forecast from Open-Meteo, as airports beyond the NWS bulletins get.
+  ///
+  /// A model hour applies to that hour alone, unlike a bulletin published for a period hours wide.
+  public static var previewModeled: Self {
+    let validAt = Date.now.addingTimeInterval(3 * 3600)
+    return preview(source: .openMeteo, usePeriod: .init(start: validAt, duration: 3600))
+  }
+
+  private static func preview(source: Source, usePeriod: DateInterval? = nil) -> Self {
     let validAt = Date.now.addingTimeInterval(3 * 3600)
     return .init(
-      validAt: validAt,
-      usePeriod: .init(start: validAt.addingTimeInterval(-4 * 3600), duration: 7 * 3600),
+      validAt: usePeriod?.start ?? validAt,
+      usePeriod: usePeriod
+        ?? .init(start: validAt.addingTimeInterval(-4 * 3600), duration: 7 * 3600),
       source: source,
       data: .init(
         entries: [

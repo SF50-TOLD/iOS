@@ -71,20 +71,29 @@ extension WeatherLoader {
     return (.station(stationID), data)
   }
 
-  /// Gets the winds aloft forecast for a key, or `nil` if none covers its time and place.
+  /// Gets the winds aloft forecast for a key, or `nil` if no service has one for its time
+  /// and place.
   ///
-  /// A key left without a forecast by a partly failed load reports that failure instead: the
-  /// bulletin covering it may simply be one of the ones that didn’t download, which is worth a
-  /// retry, unlike a period or a place the NWS publishes nothing for.
-  func windsAloftForecast(for key: Key) -> Loadable<WindsAloftForecast?> {
-    let forecast = publishedWindsAloftForecast(for: key)
-    if case .value(nil) = forecast, let windsAloftPartialFailure {
-      return .error(windsAloftPartialFailure)
-    }
-    return forecast
+  /// The NWS bulletins are authoritative and answer first. They cover the United States and forecast
+  /// about a day out, so a departure from elsewhere — or further ahead than they reach — falls to
+  /// Open-Meteo's pressure levels instead of flying through calm air. Their own coverage decides
+  /// this rather than a boundary drawn here: the bulletins yield nothing exactly when no published
+  /// period covers the time and no station lies near enough to interpolate from.
+  ///
+  /// A key neither service can answer reports a partly failed bulletin download, if there was one:
+  /// the bulletin covering it may simply be one that didn’t arrive, which is worth a retry, unlike
+  /// a time and place nothing is published for.
+  func windsAloftForecast(for key: Key) async -> Loadable<WindsAloftForecast?> {
+    let bulletinForecast = bulletinForecast(for: key)
+    guard case .value(let forecast) = bulletinForecast else { return bulletinForecast }
+    if let forecast { return .value(forecast) }
+    if let forecast = await openMeteoForecast(for: key) { return .value(forecast) }
+    if let windsAloftPartialFailure { return .error(windsAloftPartialFailure) }
+    return .value(nil)
   }
 
-  private func publishedWindsAloftForecast(for key: Key) -> Loadable<WindsAloftForecast?> {
+  /// Gets the NWS bulletin forecast for a key, or `nil` if none covers its time and place.
+  private func bulletinForecast(for key: Key) -> Loadable<WindsAloftForecast?> {
     windsAloft.map { bulletins in
       // Regions covering the same period are merged, so normally one bulletin covers a time.
       // Should a region ever publish a period of its own, the first bulletin covering the time
@@ -101,6 +110,19 @@ extension WeatherLoader {
           )
         }
         .first
+    }
+  }
+
+  /// Gets Open-Meteo's winds aloft for a key, or `nil` if it has none or couldn't be reached.
+  ///
+  /// A model that can't be reached leaves the flight without winds aloft rather than failing the
+  /// lookup, so the failure is recorded and swallowed.
+  private func openMeteoForecast(for key: Key) async -> WindsAloftForecast? {
+    do {
+      return try await OpenMeteoService.shared.windsAloft(for: key)
+    } catch {
+      Self.recordLoadFailure(error, dataType: "openMeteo", airport: key.id)
+      return nil
     }
   }
 }

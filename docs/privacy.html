@@ -177,8 +177,9 @@
           </li>
           <li>
             <strong>Weather.</strong> METAR, TAF, and winds-aloft data come from the FAA’s
-            Aviation Weather Center. Where a field does not report, forecast conditions come from
-            Apple Weather.
+            Aviation Weather Center. Where a field does not report, or lies outside the area the
+            FAA publishes winds aloft for, the coordinates of the airport you select are sent to
+            Open-Meteo for a forecast, and to Apple Weather where Open-Meteo has no answer.
           </li>
           <li>
             <strong>NOTAMs.</strong> NOTAM lookups for an airport you select are sent to a
@@ -217,8 +218,9 @@
         <h2>Third-party services</h2>
         <p>
           The services listed above are operated by other parties and handle data under their own
-          policies: Apple (Apple Weather), the FAA (aviation weather and NOTAM data), GitHub (nav
-          data hosting), Cloudflare (terrain data hosting), and Sentry (diagnostics). Downloading
+          policies: Apple (Apple Weather), Open-Meteo (forecast weather), the FAA (aviation
+          weather and NOTAM data), GitHub (nav data hosting), Cloudflare (terrain data hosting),
+          and Sentry (diagnostics). Downloading
           the app from the App Store is a transaction between you and Apple, governed by Apple’s
           privacy policy.
         </p>

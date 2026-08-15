@@ -27,6 +27,12 @@ extension WeatherLoader {
     /// Failed to decode data as UTF-8 text.
     case invalidTextEncoding(url: URL)
 
+    /// The response didn't match the shape the service documents.
+    case decodingFailed(url: URL, underlyingError: any Swift.Error)
+
+    /// The service rejected the request and said why.
+    case serviceError(url: URL, reason: String)
+
     /// A winds aloft bulletin's valid time or use period couldn't be resolved to a date.
     case unresolvableForecastPeriod(url: URL)
   }

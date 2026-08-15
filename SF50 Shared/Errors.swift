@@ -17,6 +17,10 @@ extension WeatherLoader.Errors: LocalizedError {
         String(localized: "Downloaded weather data had an invalid text encoding.")
       case .unresolvableForecastPeriod:
         String(localized: "A winds aloft forecast didn’t say when it applies.")
+      case .decodingFailed:
+        String(localized: "Downloaded weather data wasn’t in the expected format.")
+      case .serviceError(_, let reason):
+        String(localized: "The weather service refused the request: \(reason)")
     }
   }
 

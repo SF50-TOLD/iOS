@@ -2,7 +2,7 @@
 // NOTAMAPIConfig.xcconfig
 // SF50-TOLD
 //
-// NOTAM API Configuration
+// API configuration
 // Copy this file to NOTAMAPIConfig.xcconfig and fill in your values
 // See SF50_TOLD.docc/Articles/GettingStarted.md for setup instructions
 //
@@ -12,3 +12,7 @@ NOTAM_API_TOKEN =
 
 // NOTAM API Base URL
 NOTAM_API_BASE_URL = https:/$()/notams.fly.dev
+
+// Open-Meteo API key, for commercial use of https://open-meteo.com
+// Leave empty to use the free endpoint, which is licensed for non-commercial use only
+OPEN_METEO_API_KEY =

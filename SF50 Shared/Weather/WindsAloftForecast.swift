@@ -30,9 +30,6 @@ public struct WindsAloftForecast: Sendable, Hashable {
   /// The wind and temperature data.
   public let data: WindsAloftData
 
-  /// Whether the forecast was interpolated rather than reported for the airport.
-  public var isInterpolated: Bool { source == .interpolated }
-
   /// Creates a forecast from wind data and the period it came from.
   ///
   /// - Parameters:
@@ -55,8 +52,9 @@ public struct WindsAloftForecast: Sendable, Hashable {
   /// Where a forecast’s winds came from.
   ///
   /// The NWS publishes forecasts for 233 locations, so most airports have no forecast of their own
-  /// and are flown on one interpolated from the stations around them. Which of the two a profile
-  /// was built from is worth telling the pilot.
+  /// and are flown on one interpolated from the stations around them. Beyond the reach of those
+  /// bulletins — outside the regions they cover, or past the day they forecast for — the winds come
+  /// from a model instead. Which of the three a profile was built from is worth telling the pilot.
   public enum Source: Sendable, Hashable {
 
     /// Reported at a station serving the airport.
@@ -64,5 +62,20 @@ public struct WindsAloftForecast: Sendable, Hashable {
 
     /// Interpolated between the reporting stations nearest the airport.
     case interpolated
+
+    /// Taken from Open-Meteo's pressure levels, where the NWS publishes nothing.
+    case openMeteo
+
+    /// The service the forecast came from, with Open-Meteo linked as its licence requires.
+    ///
+    /// The station's own identifier is left out: it is a VOR or an oceanic grid point as often as
+    /// an airport, and naming it would say less than the publisher does.
+    public var attributedDescription: AttributedString {
+      switch self {
+        case .station: .init(String(localized: "FAA"))
+        case .interpolated: .init(String(localized: "FAA (Interpolated)"))
+        case .openMeteo: WeatherProviders.openMeteoCredit
+      }
+    }
   }
 }

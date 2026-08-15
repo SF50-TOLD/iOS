@@ -52,7 +52,19 @@ extension WeatherLoader {
   }
 
   /// Logs a weather-load failure, reporting only genuine defects to Sentry.
-  private static func recordLoadFailure(_ error: some Swift.Error, dataType: String) {
+  ///
+  /// - Parameters:
+  ///   - error: The failure.
+  ///   - dataType: Which feed failed, which tags and fingerprints the report.
+  ///   - airport: The airport being loaded, for feeds fetched per airport.
+  static func recordLoadFailure(
+    _ error: some Swift.Error,
+    dataType: String,
+    airport: String? = nil
+  ) {
+    // A load cancelled by moving on to another airport is routine and not worth a line.
+    guard !isNetworkCancellation(error) else { return }
+
     guard shouldReport(error) else {
       logger.info(
         "Not reporting weather load failure; cause is outside this app",
@@ -64,6 +76,7 @@ extension WeatherLoader {
     SentrySDK.capture(error: error) { scope in
       scope.setLevel(.warning)
       scope.setTag(value: dataType, key: "weather.dataType")
+      if let airport { scope.setTag(value: airport, key: "airport") }
       scope.setFingerprint(["weather-loading", dataType])
     }
     logger.error(

@@ -32,14 +32,11 @@ struct WeatherSource: View {
   }
 
   var body: some View {
-    Section("Source") {
+    Section {
       HStack {
         switch weather.conditions.source {
-          case .NWS, .augmented:
-            Text("Using downloaded weather from NWS")
-              .font(.subheadline)
-          case .WeatherKit:
-            Text("Using downloaded weather from Apple Weather")
+          case .downloaded(let providers):
+            Text("Using downloaded weather from \(providers.localizedDescription)")
               .font(.subheadline)
           case .entered:
             Text("Using your custom weather")
@@ -71,6 +68,12 @@ struct WeatherSource: View {
       if weather.TAF.hasValue {
         RawWeather(rawText: formattedForecast)
       }
+    } header: {
+      Text("Source")
+    } footer: {
+      // A footer rather than a row: these credit the section rather than being weather data of
+      // their own, and a footer already sits outside the section's box.
+      WeatherCredits(providers: weather.conditions.source.providers)
     }
   }
 }
@@ -93,6 +96,26 @@ struct WeatherSource: View {
     return List { WeatherSource() }
       .environment(weatherViewModel)
       .task { await mockLoader.setMockConditions(.value(preview.NWS)) }
+  }
+}
+
+#Preview("Weather from several services") {
+  PreviewView(insert: .KOAK) { preview in
+    let runway = try preview.load(airportID: "OAK", runway: "28R")!
+    preview.setTakeoff(runway: runway)
+
+    let mockLoader = MockWeatherLoader(
+      mockConditions: .value(preview.augmented),
+      mockMETAR: .value(preview.METARString)
+    )
+    let weatherViewModel = WeatherViewModel(
+      operation: .takeoff,
+      container: preview.container,
+      loader: mockLoader
+    )
+
+    return List { WeatherSource() }
+      .environment(weatherViewModel)
   }
 }
 

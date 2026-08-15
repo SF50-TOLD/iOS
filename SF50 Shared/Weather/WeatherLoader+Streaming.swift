@@ -38,7 +38,7 @@ extension WeatherLoader {
 
     // Notify winds aloft subscribers
     for (_, (key, continuation)) in windsAloftSubscribers {
-      let forecast = windsAloftForecast(for: key)
+      let forecast = await windsAloftForecast(for: key)
       continuation.yield(forecast)
     }
   }

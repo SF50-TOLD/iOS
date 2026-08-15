@@ -228,20 +228,12 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     let validTime = conditions.validTime
 
     switch source {
-      case .NWS:
-        // For NWS weather (METAR/TAF), show source and valid period
+      case .downloaded(let providers):
+        // For downloaded weather, name the services it came from and the valid period
         let validPeriod = format(interval: validTime)
-        return String(localized: "Weather: NWS (\(validPeriod))")
-
-      case .WeatherKit:
-        // For Apple WeatherKit, show source and valid period
-        let validPeriod = format(interval: validTime)
-        return String(localized: "Weather: Apple (\(validPeriod))")
-
-      case .augmented:
-        // For augmented weather (combination of sources), show valid period
-        let validPeriod = format(interval: validTime)
-        return String(localized: "Weather: Augmented (\(validPeriod))")
+        return String(
+          localized: "Weather: \(providers.localizedDescription) (\(validPeriod))"
+        )
 
       case .ISA:
         return String(localized: "Weather: ISA")

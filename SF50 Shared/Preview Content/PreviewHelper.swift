@@ -56,6 +56,20 @@ public final class PreviewHelper: Sendable {
     )
   }
 
+  /// Downloaded conditions credited to more than one service, as most of them are: an aviation
+  /// report with its unreported values filled in from a forecast model.
+  public var augmented: Conditions {
+    .init(
+      validTime: .init(start: .now, duration: 3600),
+      providers: [.NWS, .openMeteo],
+      windDirection: .init(value: 310, unit: .degrees),
+      windSpeed: .init(value: 9, unit: .knots),
+      temperature: .init(value: 16, unit: .celsius),
+      dewpoint: .init(value: 11, unit: .celsius),
+      seaLevelPressure: .init(value: 29.98, unit: .inchesOfMercury)
+    )
+  }
+
   public var METARString: String {
     "KSFO 191514Z 00000KT 10SM BKN180 18/13 A3010 RMK AO2 SLP192 T01830128 VISNO $"
   }

@@ -28,6 +28,9 @@ NOTAM_API_TOKEN = ${NOTAM_API_TOKEN}
 
 // NOTAM API Base URL
 NOTAM_API_BASE_URL = ${NOTAM_API_BASE_URL//:/:/\$()}
+
+// Open-Meteo API key; empty falls back to the free, non-commercial endpoint
+OPEN_METEO_API_KEY = ${OPEN_METEO_API_KEY:-}
 EOF
 
 echo "Generated NOTAMAPIConfig.xcconfig"

@@ -43,21 +43,23 @@ public protocol WeatherLoaderProtocol: Actor {
 /**
  * Actor responsible for loading and caching weather data from multiple sources.
  *
- * ``WeatherLoader`` downloads METAR observations and TAF forecasts from Aviation Weather
- * (aviationweather.gov) and supplements them with Apple WeatherKit data. It provides
+ * ``WeatherLoader`` downloads METAR observations, TAF forecasts and winds aloft bulletins from
+ * Aviation Weather (aviationweather.gov) and supplements them with forecast model data. It provides
  * reactive streams of weather conditions that update when new data is loaded.
  *
  * ## Data Sources
  *
- * Weather data is combined from:
- * - **Aviation Weather**: METAR observations and TAF forecasts (primary source for airports)
- * - **WeatherKit**: Current conditions and hourly forecasts (fills gaps in aviation data)
+ * Weather data is combined from, in order of authority:
+ * - **Aviation Weather**: METAR observations, TAF forecasts and winds aloft bulletins
+ * - **Open-Meteo**: A forecast model, which fills gaps in aviation data and covers the places and
+ *   times the NWS publishes no winds aloft for
+ * - **WeatherKit**: Current conditions and hourly forecasts, where Open-Meteo couldn't answer
  *
  * ## Time-Based Conditions
  *
  * The loader automatically selects the appropriate data source based on time:
- * - **Current** (within 1 hour): Uses METAR observation, augmented with WeatherKit
- * - **Future**: Uses TAF forecast period covering the requested time
+ * - **Current** (within 1 hour): Uses METAR observation, supplemented by the forecast models
+ * - **Future**: Uses TAF forecast period covering the requested time, likewise supplemented
  *
  * ## Subscription Model
  *
@@ -130,6 +132,7 @@ public actor WeatherLoader: WeatherLoaderProtocol {
     }
     loadingTask?.cancel()
     loadingTask = Task {
+      await OpenMeteoService.shared.invalidateCache()
       await loadMETARs()
       await loadTAFs()
       await loadWindsAloft()
@@ -197,9 +200,9 @@ public actor WeatherLoader: WeatherLoaderProtocol {
     }
   }
 
-  public func streamWindsAloft(for key: Key) -> AsyncStream<Loadable<WindsAloftForecast?>> {
+  public func streamWindsAloft(for key: Key) async -> AsyncStream<Loadable<WindsAloftForecast?>> {
     let id = UUID()
-    let initialData = windsAloftForecast(for: key)
+    let initialData = await windsAloftForecast(for: key)
 
     return AsyncStream { continuation in
       windsAloftSubscribers[id] = (key, continuation)
