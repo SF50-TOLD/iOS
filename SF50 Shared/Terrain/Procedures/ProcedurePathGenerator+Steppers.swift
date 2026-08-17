@@ -73,9 +73,9 @@ extension ProcedurePathGenerator {
     ) -> Double {
       guard windSpeed > 0 else { return 1.0 }
       let wind = GeoCalculations.windTriangle(
-        trueHeading: .init(value: bearing, unit: .degrees),
+        trueHeadingDeg: bearing,
         TAS_Kts: tas,
-        windFromTrue: .init(value: windDir, unit: .degrees),
+        windFromTrueDeg: windDir,
         windSpeedKts: windSpeed
       )
       return wind.groundSpeedKts / tas
@@ -146,15 +146,12 @@ extension ProcedurePathGenerator {
         case .heading(let trueHeading):
           if windSpeed > 0 {
             let wind = GeoCalculations.windTriangle(
-              trueHeading: .init(value: trueHeading, unit: .degrees),
+              trueHeadingDeg: trueHeading,
               TAS_Kts: tas,
-              windFromTrue: .init(value: windDir, unit: .degrees),
+              windFromTrueDeg: windDir,
               windSpeedKts: windSpeed
             )
-            return (
-              wind.groundTrack.converted(to: .degrees).value,
-              wind.groundSpeedKts / tas
-            )
+            return (wind.groundTrackDeg, wind.groundSpeedKts / tas)
           }
           return (trueHeading, 1.0)
 

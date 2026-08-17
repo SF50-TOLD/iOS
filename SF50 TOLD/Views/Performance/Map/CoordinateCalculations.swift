@@ -41,13 +41,8 @@ func touchdownZoneOffset(
 ) -> Measurement<UnitLength> {
   // If we have TCH and glidepath angle, calculate actual touchdown point
   // Formula: distance = TCH / tan(angle) (since gradient = rise/run = TCH/distance)
-  if let thresholdCrossingHeight, let glidepathAngle,
-    glidepathAngle.converted(to: .degrees).value > 0
-  {
-    let angleRadians = glidepathAngle.converted(to: .radians).value
-    let gradient = tan(angleRadians)
-    let tchMeters = thresholdCrossingHeight.converted(to: .meters).value
-    return .init(value: tchMeters / gradient, unit: .meters)
+  if let thresholdCrossingHeight, let glidepathAngle, glidepathAngle > .zero {
+    return thresholdCrossingHeight / tan(glidepathAngle)
   }
 
   // Fall back to current approximation
@@ -76,18 +71,11 @@ func runwayCorners(
   width: Measurement<UnitLength> = .init(value: 100, unit: .feet)
 ) -> [CLLocationCoordinate2D] {
   let halfWidth = width / 2.0
-  let headingDegrees = heading.converted(to: .degrees).value
+  let quarterTurn = Measurement<UnitAngle>(value: 90, unit: .degrees)
 
   // Calculate the perpendicular bearings (left and right of runway centerline)
-  let
-    leftBearing = Measurement<UnitAngle>(
-      value: (headingDegrees - 90).truncatingRemainder(dividingBy: 360),
-      unit: .degrees
-    ),
-    rightBearing = Measurement<UnitAngle>(
-      value: (headingDegrees + 90).truncatingRemainder(dividingBy: 360),
-      unit: .degrees
-    )
+  let leftBearing = heading - quarterTurn,
+    rightBearing = heading + quarterTurn
 
   // Calculate the far end of the runway
   let farEnd = destination(from: threshold, distance: length, bearing: heading)
@@ -132,37 +120,21 @@ func generateChevrons(
 ) -> [ChevronData] {
   var chevrons: [ChevronData] = []
 
-  let headingDegrees = heading.converted(to: .degrees).value,
-    leftBearing = Measurement<UnitAngle>(
-      value: (headingDegrees - 90).truncatingRemainder(dividingBy: 360),
-      unit: .degrees
-    ),
-    rightBearing = Measurement<UnitAngle>(
-      value: (headingDegrees + 90).truncatingRemainder(dividingBy: 360),
-      unit: .degrees
-    )
+  let quarterTurn = Measurement<UnitAngle>(value: 90, unit: .degrees),
+    leftBearing = heading - quarterTurn,
+    rightBearing = heading + quarterTurn
 
-  let halfWidth = width / 2.0,
-    depthMeters = depth.converted(to: .meters).value,
-    distanceMeters = distance.converted(to: .meters).value
+  let halfWidth = width / 2.0
 
   // Generate tessellated chevrons - alternating forward and backward pointing triangles
   // that fill the entire area with no gaps
-  var currentDistance: Double = 0,
+  var currentDistance = Measurement<UnitLength>.zero,
     isPrimary = true
 
-  while currentDistance < distanceMeters {
+  while currentDistance < distance {
     // Row position along the centerline
-    let rowStart = destination(
-      from: startPoint,
-      distance: .init(value: currentDistance, unit: .meters),
-      bearing: heading
-    )
-    let rowEnd = destination(
-      from: startPoint,
-      distance: .init(value: currentDistance + depthMeters, unit: .meters),
-      bearing: heading
-    )
+    let rowStart = destination(from: startPoint, distance: currentDistance, bearing: heading)
+    let rowEnd = destination(from: startPoint, distance: currentDistance + depth, bearing: heading)
 
     // Corner points
     let startLeft = destination(from: rowStart, distance: halfWidth, bearing: leftBearing)
@@ -196,7 +168,7 @@ func generateChevrons(
     ]
     chevrons.append(ChevronData(coordinates: rightFill, isPrimary: !isPrimary))
 
-    currentDistance += depthMeters
+    currentDistance += depth
     isPrimary.toggle()
   }
 

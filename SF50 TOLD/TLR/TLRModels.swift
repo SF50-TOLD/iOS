@@ -142,12 +142,7 @@ struct PerformanceDistance {
   let availableDistance: Measurement<UnitLength>
 
   /// Remaining runway after the calculated distance (positive = good).
-  var margin: Measurement<UnitLength> {
-    .init(
-      value: availableDistance.converted(to: .feet).value - distance.converted(to: .feet).value,
-      unit: .feet
-    )
-  }
+  var margin: Measurement<UnitLength> { availableDistance - distance }
 }
 
 // MARK: - Takeoff Data Structures

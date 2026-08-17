@@ -413,28 +413,20 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     let limits = Defaults.Keys.aircraftType.limitations
 
     // Wind exceedances
-    if let runway, let windDirection = conditions.windDirection,
-      let windSpeed = conditions.windSpeed
-    {
-      let headingRad =
-        runway.trueHeading.converted(to: .degrees).value * .pi / 180
-      let windRad = windDirection.converted(to: .degrees).value * .pi / 180
-      let angleDiff = windRad - headingRad
-
-      let crosswindKts = abs(sin(angleDiff) * windSpeed.converted(to: .knots).value)
-      let headwindKts = cos(angleDiff) * windSpeed.converted(to: .knots).value
-
+    // An unreported wind comes back calm from both components, which exceeds no limit.
+    if let runway {
       let crosswindLimit: Measurement<UnitSpeed> =
         flapSetting == .flaps100
         ? limits.maxCrosswind_flaps100 : limits.maxCrosswind_flaps50
 
-      let crosswind = Measurement<UnitSpeed>(value: crosswindKts, unit: .knots)
+      let crosswind = runway.crosswind(conditions: conditions).magnitude
       if crosswind > crosswindLimit {
         notes.append(.crosswindExceedance(crosswind: crosswind, limit: crosswindLimit))
       }
 
-      if headwindKts < 0 {
-        let tailwind = Measurement<UnitSpeed>(value: -headwindKts, unit: .knots)
+      let headwind = runway.headwind(conditions: conditions)
+      if headwind < .zero {
+        let tailwind = headwind.magnitude
         if tailwind > limits.maxTailwind {
           notes.append(
             .tailwindExceedance(tailwind: tailwind, limit: limits.maxTailwind)

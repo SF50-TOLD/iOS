@@ -62,20 +62,24 @@ extension GeoCalculations {
 
   /// Computes ground track and ground speed from the wind triangle.
   ///
+  /// Stated in primitives rather than measurements because its only caller is the step engine,
+  /// which integrates a path in degrees and knots: taking measurements here would have every step
+  /// of the loop wrap its numbers and unwrap the answer.
+  ///
   /// - Parameters:
-  ///   - trueHeading: Aircraft true heading (direction nose points)
-  ///   - TAS_Kts: True airspeed in knots
-  ///   - windFromTrue: Direction wind blows FROM (true north ref)
-  ///   - windSpeedKts: Wind speed in knots
-  /// - Returns: (groundTrack: degrees true 0-360, groundSpeedKts: Double)
+  ///   - trueHeadingDeg: Aircraft true heading (direction nose points), in degrees.
+  ///   - TAS_Kts: True airspeed in knots.
+  ///   - windFromTrueDeg: Direction wind blows FROM (true north ref), in degrees.
+  ///   - windSpeedKts: Wind speed in knots.
+  /// - Returns: Ground track in degrees true (0–360) and ground speed in knots.
   public static func windTriangle(
-    trueHeading: Measurement<UnitAngle>,
+    trueHeadingDeg: Double,
     TAS_Kts: Double,
-    windFromTrue: Measurement<UnitAngle>,
+    windFromTrueDeg: Double,
     windSpeedKts: Double
-  ) -> (groundTrack: Measurement<UnitAngle>, groundSpeedKts: Double) {
-    let thRad = trueHeading.converted(to: .radians).value,
-      wdRad = windFromTrue.converted(to: .radians).value
+  ) -> (groundTrackDeg: Double, groundSpeedKts: Double) {
+    let thRad = trueHeadingDeg * .pi / 180,
+      wdRad = windFromTrueDeg * .pi / 180
 
     // Aircraft air velocity
     let airEast = TAS_Kts * sin(thRad),
@@ -93,10 +97,7 @@ extension GeoCalculations {
     let trackRad = atan2(gsEast, gsNorth)
     let trackDeg = (trackRad * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
 
-    return (
-      groundTrack: .init(value: trackDeg, unit: .degrees),
-      groundSpeedKts: groundSpeed
-    )
+    return (groundTrackDeg: trackDeg, groundSpeedKts: groundSpeed)
   }
 
   /// Calculates a destination coordinate given a starting point, distance, and bearing.

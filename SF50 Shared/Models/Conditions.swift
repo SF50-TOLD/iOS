@@ -263,12 +263,6 @@ public struct Conditions: Sendable, Equatable {
     return .init(value: DA, unit: .feet)
   }
 
-  private func ISATemperature(at altitude: Measurement<UnitLength>) -> Measurement<UnitTemperature>
-  {
-    let altFt = altitude.converted(to: .feet).value
-    return .init(value: isaTemperature(altitudeFt: altFt), unit: .celsius)
-  }
-
   private func absolutePressure(elevation: Measurement<UnitLength>) -> Measurement<UnitPressure> {
     let SLP = seaLevelPressure ?? .init(value: standardSeaLevelPressureHPa, unit: .hectopascals)
     return pressure(altimeter: SLP, altitude: elevation)

@@ -82,6 +82,14 @@ public func isaTemperature(altitudeFt: Double) -> Double {
   seaLevelStandardTempC - tempLapseRateCPerFt * altitudeFt
 }
 
+/// The standard-atmosphere temperature at an altitude.
+///
+/// - Parameter altitude: The altitude to read.
+/// - Returns: The ISA temperature there.
+public func ISATemperature(at altitude: Measurement<UnitLength>) -> Measurement<UnitTemperature> {
+  .init(value: isaTemperature(altitudeFt: altitude.converted(to: .feet).value), unit: .celsius)
+}
+
 /// Pressure at altitude using the barometric formula (troposphere).
 ///
 /// - Parameters:

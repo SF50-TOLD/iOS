@@ -66,7 +66,7 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
     let isValid: Bool = {
       if case .value(let valid) = landingDistance.flatMap({ dist in
         report.results.meetsGoAroundClimbGradient.map { meetsReq in
-          dist.margin.converted(to: UnitLength.feet).value >= 0 && meetsReq
+          dist.margin >= .zero && meetsReq
         }
       }) {
         return valid

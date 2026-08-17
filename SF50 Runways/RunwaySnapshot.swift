@@ -32,7 +32,7 @@ struct RunwaySnapshot: Sendable {
   func headwind(conditions: Conditions) -> Measurement<UnitSpeed> {
     guard let windDirection = conditions.windDirection,
       let windSpeed = conditions.windSpeed
-    else { return .init(value: 0, unit: .knots) }
+    else { return .zero }
     let angle = windDirection - trueHeading
     return windSpeed * cos(angle)
   }
@@ -41,7 +41,7 @@ struct RunwaySnapshot: Sendable {
   func crosswind(conditions: Conditions) -> Measurement<UnitSpeed> {
     guard let windDirection = conditions.windDirection,
       let windSpeed = conditions.windSpeed
-    else { return .init(value: 0, unit: .knots) }
+    else { return .zero }
     let angle = windDirection - trueHeading
     return windSpeed * sin(angle)
   }

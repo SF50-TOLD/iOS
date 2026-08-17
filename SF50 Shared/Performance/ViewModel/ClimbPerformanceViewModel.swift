@@ -50,10 +50,7 @@ public final class ClimbPerformanceViewModel {
   }
 
   public var OAT: Measurement<UnitTemperature> {
-    let altitudeFeet = altitude.converted(to: .feet).value
-    let ISATemp = isaTemperature(altitudeFt: altitudeFeet)
-    let OATCelsius = ISATemp + ISADeviation.converted(to: .celsius).value
-    return Measurement(value: OATCelsius, unit: .celsius)
+    ISATemperature(at: altitude).deviated(by: ISADeviation)
   }
 
   public var iceProtection: Bool {
@@ -78,9 +75,7 @@ public final class ClimbPerformanceViewModel {
         altitudeM: altitudeFt * feetToMeters
       )
       let TASMultiplier = trueAirspeed(indicatedAirspeedKts: 1.0, pressurePa: P, temperatureC: OATC)
-      let TAS = Measurement(value: IAS.value * TASMultiplier, unit: IAS.unit)
-      let uncert = uncertainty.map { Measurement(value: $0.value * TASMultiplier, unit: $0.unit) }
-      return (TAS, uncert)
+      return (IAS * TASMultiplier, uncertainty.map { $0 * TASMultiplier })
     }
   }
 

@@ -65,7 +65,7 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
     let isValid: Bool = {
       switch totalDistance {
         case .value(let dist), .valueWithUncertainty(let dist, _):
-          return dist.margin.converted(to: UnitLength.feet).value >= 0
+          return dist.margin >= .zero
         default:
           return false
       }
@@ -82,8 +82,6 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
   override func determineMaxWeight(runway: RunwayInput) throws -> (
     Measurement<UnitMass>, LimitingFactor
   ) {
-    let runwayLength = runway.length.converted(to: .feet).value
-
     let result = try binarySearchMaxWeight(
       runway: runway,
       min: input.emptyWeight,
@@ -116,7 +114,7 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
       }
       if case .value(let dist) = report.results.takeoffDistance {
         // Check runway length
-        if dist.converted(to: .feet).value > runwayLength {
+        if dist > runway.length {
           return (false, .field)
         }
       }
@@ -127,19 +125,19 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
         case .value(let takeoffRun) = report.results.takeoffRun
       {
         let distanceFromRunwayStart =
-          obstacleDistance.converted(to: .feet).value
-          + (runway.notam?.takeoffDistanceShortening.converted(to: .feet).value ?? 0)
-        let distanceFromLiftoff = distanceFromRunwayStart - takeoffRun.converted(to: .feet).value
+          obstacleDistance + (runway.notam?.takeoffDistanceShortening ?? .zero)
+        let distanceFromLiftoff = distanceFromRunwayStart - takeoffRun
 
-        if distanceFromLiftoff > 0 {
-          let requiredGradient = obstacleHeight.converted(to: .feet).value / distanceFromLiftoff
+        if distanceFromLiftoff > .zero {
+          let requiredGradient = Measurement(
+            value: obstacleHeight / distanceFromLiftoff,
+            unit: UnitSlope.gradient
+          )
 
-          if case .value(let climbGradient) = report.results.takeoffClimbGradient {
-            let actualGradient =
-              climbGradient.converted(to: .feetPerNauticalMile).value / 6076.12
-            if actualGradient < requiredGradient {
-              return (false, .obstacle)
-            }
+          if case .value(let climbGradient) = report.results.takeoffClimbGradient,
+            climbGradient < requiredGradient
+          {
+            return (false, .obstacle)
           }
         }
       }

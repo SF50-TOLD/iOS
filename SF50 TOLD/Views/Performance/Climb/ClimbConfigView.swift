@@ -79,9 +79,7 @@ struct ClimbConfigView: View {
   }
 
   private var maxFuel: Measurement<UnitVolume> {
-    let step = fuelStep.converted(to: .gallons).value
-    let rounded = (limitations.maxFuel.value / step).rounded() * step
-    return Measurement(value: rounded, unit: .gallons)
+    (limitations.maxFuel / fuelStep).rounded() * fuelStep
   }
 
   private var minAltitude: Measurement<UnitLength> {
@@ -89,11 +87,11 @@ struct ClimbConfigView: View {
   }
 
   private var maxAltitude: Measurement<UnitLength> {
-    let step = altitudeStep.converted(to: .feet).value
-    let rounded = (limitations.maxEnrouteAltitude.value / step).rounded() * step
-    return Measurement(value: rounded, unit: .feet)
+    (limitations.maxEnrouteAltitude / altitudeStep).rounded() * altitudeStep
   }
 
+  // A deviation is a difference rather than a reading, so its bounds are rounded on the Celsius
+  // scale rather than by dividing two measurements, which would divide their kelvin values.
   private var minISADeviation: Measurement<UnitTemperature> {
     let step = temperatureStep.converted(to: .celsius).value
     let rounded = (-40.0 / step).rounded() * step

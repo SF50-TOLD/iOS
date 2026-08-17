@@ -217,18 +217,10 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
   public func headwind(conditions: Conditions) -> Measurement<UnitSpeed> {
     guard let windDirection = conditions.windDirection,
       let windSpeed = conditions.windSpeed
-    else {
-      return .init(value: 0, unit: .knots)
-    }
+    else { return .zero }
 
     // Wind direction in METAR/TAF is in true degrees, runway heading is also true
-    let windDirectionDeg = windDirection.converted(to: .degrees).value,
-      runwayTrueHeadingDeg = trueHeading.converted(to: .degrees).value
-
-    let angleDiff = windDirectionDeg - runwayTrueHeadingDeg
-    let headwindComponent = cos(angleDiff * .pi / 180) * windSpeed.converted(to: .knots).value
-
-    return .init(value: headwindComponent, unit: .knots)
+    return windSpeed * cos(windDirection - trueHeading)
   }
 
   /// Creates a copy of this runway with contamination override applied
