@@ -25,10 +25,7 @@ public final class Runway {
   private var _takeoffDistance: Double?  // meters
   private var _landingDistance: Double?  // meters
 
-  // swiftlint:disable redundant_type_annotation
-  /// Runway surface type
-  public var surfaceType: SurfaceType = SurfaceType.paved
-  // swiftlint:enable redundant_type_annotation
+  private var _surfaceType: String?
 
   /// Whether the runway surface is turf (grass) rather than paved
   public var isTurf: Bool { surfaceType.isTurf }
@@ -57,6 +54,19 @@ public final class Runway {
   }
 
   #Unique<Runway>([\.airport, \.name])
+
+  /// Runway surface type.
+  ///
+  /// Backed by an optional raw value rather than stored as the enum directly:
+  /// SwiftData hard-casts a stored enum when it faults a row in, so a row
+  /// predating the attribute — or written by a schema version that left the
+  /// column null — traps the process instead of taking a default. Reading
+  /// through a raw value lets an unrecognized or missing surface fall back to
+  /// ``SurfaceType/paved``, the surface nearly every runway has.
+  public var surfaceType: SurfaceType {
+    get { _surfaceType.flatMap(SurfaceType.init(rawValue:)) ?? .paved }
+    set { _surfaceType = newValue.rawValue }
+  }
 
   /// Runway threshold elevation above sea level
   public var elevation: Measurement<UnitLength>? {
@@ -280,7 +290,7 @@ public final class Runway {
     _takeoffRun = takeoffRun?.converted(to: .meters).value
     _takeoffDistance = takeoffDistance?.converted(to: .meters).value
     _landingDistance = landingDistance?.converted(to: .meters).value
-    self.surfaceType = surfaceType
+    _surfaceType = surfaceType.rawValue
     _thresholdLatitude = thresholdCoordinate?.latitude
     _thresholdLongitude = thresholdCoordinate?.longitude
     _thresholdCrossingHeight = thresholdCrossingHeight?.converted(to: .meters).value
