@@ -4,16 +4,74 @@ import SF50_Shared
 import SwiftUI
 
 struct TerrainProfileChartView: View {
+
+  // MARK: - Constants
+
+  /// How much of the terrain fill's colour is gray, the rest being the ground it stands on.
+  private static let terrainGrayFraction = 0.4
+
+  /// The colour terrain is filled with.
+  ///
+  /// Opaque, and mixed against the chart's own background rather than laid over it at a fraction:
+  /// a weather field is drawn into that background, and a translucent fill would let cloud and
+  /// icing show through solid ground.
+  private static let terrainTint = Color(.systemBackground)
+    .mix(with: .gray, by: terrainGrayFraction)
+
+  /// How far from an "at" restriction the aircraft may stand before the mark reads as violated.
+  private static let atRestrictionTolerance = Measurement(value: 100, unit: UnitLength.feet)
+
+  /// Screen height in the feet the chart plots in.
+  private static let screenHeightFt = ProcedurePathGenerator.screenHeight
+    .converted(to: .feet).value
+
+  // MARK: - Inputs
+
   let terrainPath: ProcedureTerrainPath
-  let fieldElevationFt: Double
+
+  /// The elevation of the departure or arrival airport, which the chart is drawn up from.
+  let fieldElevation: Measurement<UnitLength>
+
+  /// The atmosphere along the path, for whichever weather field is showing.
+  var atmosphere: PathAtmosphere?
+
+  /// The climb profile the path was flown on, which the wind barbs are read from.
+  ///
+  /// Reading the barbs from the profile rather than from the forecast behind it is what keeps them
+  /// agreeing with the plotted path, including where the profile carries its lowest reported wind
+  /// down to the ground.
+  var climbProfile: ClimbProfile?
+
+  /// The weather field drawn behind the terrain and the path.
+  var weatherLayer: WeatherProfileLayer = .none
+
+  /// Whether the along-track wind barbs are drawn.
+  var showsWindBarbs = false
 
   var body: some View {
     Chart {
+      // The weather reads behind the ground it describes, so both layers drawn from it are
+      // declared before the terrain that covers them.
+      freezingLevelLayer
+      if showsWindBarbs, let climbProfile {
+        WindBarbLayer(
+          terrainPath: terrainPath,
+          climbProfile: climbProfile,
+          fieldElevation: fieldElevation,
+          maxDistanceNM: maxDistanceNM,
+          maxAltitude: maxAltitude
+        )
+      }
       terrainLayer
       obstacleLayer
       waypointLinesLayer
       climbPathLayer
       waypointLabelsLayer
+    }
+    .chartBackground { proxy in
+      if let atmosphere {
+        WeatherFieldLayer(proxy: proxy, atmosphere: atmosphere, layer: weatherLayer)
+      }
     }
     .chartXAxisLabel("Distance (NM)")
     .chartYAxisLabel("Altitude MSL (ft)")
@@ -64,7 +122,7 @@ struct TerrainProfileChartView: View {
         yStart: .value("Base", fieldElevationFt),
         yEnd: .value("Terrain", terrain[index])
       )
-      .foregroundStyle(Color.gray.opacity(0.4))
+      .foregroundStyle(Self.terrainTint)
     }
     // Red impact overlay using RectangleMark — each rectangle is an
     // independent mark that won't get hidden by the gray AreaMark series.
@@ -89,7 +147,7 @@ struct TerrainProfileChartView: View {
       if let obstacleFt = point.maxObstacleHeightFt, obstacleFt > fieldElevationFt {
         let terrainFt = max(point.terrainElevationFt ?? fieldElevationFt, fieldElevationFt)
         let airborne =
-          point.aircraftAltitudeFt > fieldElevationFt + ProcedurePathGenerator.screenHeightFt
+          point.aircraftAltitudeFt > fieldElevationFt + Self.screenHeightFt
         let violated = airborne && point.aircraftAltitudeFt <= obstacleFt
         if violated {
           RuleMark(
@@ -152,8 +210,38 @@ struct TerrainProfileChartView: View {
         restrictionMarks(
           for: restriction,
           at: point.distanceNM,
-          aircraftAltitudeFt: point.aircraftAltitudeFt
+          aircraftAltitude: .init(value: point.aircraftAltitudeFt, unit: .feet)
         )
+      }
+    }
+  }
+
+  /// Where the temperature crosses freezing, drawn on the temperature and icing fields.
+  @ChartContentBuilder private var freezingLevelLayer: some ChartContent {
+    if weatherLayer == .temperature || weatherLayer == .icing {
+      ForEach(freezingLevelPoints) { point in
+        LineMark(
+          x: .value("Distance", point.distanceNM),
+          y: .value("Freezing level", point.altitudeFt),
+          series: .value("Series", "freezing")
+        )
+        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 3]))
+        .foregroundStyle(.blue)
+      }
+
+      if let freezing = freezingLevelPoints.last {
+        PointMark(
+          x: .value("Distance", freezing.distanceNM),
+          y: .value("Freezing level", freezing.altitudeFt)
+        )
+        .symbolSize(0)
+        .annotation(position: .topTrailing, alignment: .trailing, spacing: 2) {
+          Text("0 °C")
+            .font(.caption2)
+            .foregroundStyle(.blue)
+            .padding(.horizontal, 2)
+            .background(Color(.systemBackground))
+        }
       }
     }
   }
@@ -187,17 +275,30 @@ struct TerrainProfileChartView: View {
     terrainPath.points.map(\.distanceNM).max() ?? 1
   }
 
-  private var maxAltitudeFt: Double {
-    let maxAircraft = terrainPath.points.map(\.aircraftAltitudeFt).max() ?? fieldElevationFt
-    let maxTerrain = filledTerrainFt.max() ?? fieldElevationFt
-    return max(maxAircraft, maxTerrain)
+  private var maxAltitude: Measurement<UnitLength> {
+    terrainPath.maxAltitude(fieldElevation: fieldElevation)
+  }
+
+  // The chart's own scales are plain numbers, so both bounds are read in feet once here and the
+  // marks are plotted from these.
+  private var fieldElevationFt: Double { fieldElevation.converted(to: .feet).value }
+
+  private var maxAltitudeFt: Double { maxAltitude.converted(to: .feet).value }
+
+  private var freezingLevelPoints: [FreezingLevelPoint] {
+    guard let atmosphere else { return [] }
+    return atmosphere.freezingLevel(
+      toDistanceNM: maxDistanceNM,
+      between: fieldElevation,
+      and: maxAltitude
+    )
+    .map { .init(distanceNM: $0.distanceNM, altitudeFt: $0.altitude.converted(to: .feet).value) }
   }
 
   private func interceptsTerrain(at index: Int) -> Bool {
     let point = chartPoints[index]
     let terrainFt = filledTerrainFt[index]
-    let airborne =
-      point.aircraftAltitudeFt > fieldElevationFt + ProcedurePathGenerator.screenHeightFt
+    let airborne = point.aircraftAltitudeFt > fieldElevationFt + Self.screenHeightFt
     return airborne && terrainFt > fieldElevationFt && point.aircraftAltitudeFt <= terrainFt
   }
 
@@ -205,47 +306,42 @@ struct TerrainProfileChartView: View {
   private func restrictionMarks(
     for restriction: AltitudeRestriction,
     at distanceNM: Double,
-    aircraftAltitudeFt: Double
+    aircraftAltitude: Measurement<UnitLength>
   ) -> some ChartContent {
     switch restriction {
       case .atOrAbove(let altitude):
         restrictionMark(
           at: distanceNM,
-          altitudeFt: altitude.converted(to: .feet).value,
+          altitude: altitude,
           triangle: .up,
-          text: altitudeText(altitude),
-          violated: aircraftAltitudeFt < altitude.converted(to: .feet).value
+          violated: aircraftAltitude < altitude
         )
       case .atOrBelow(let altitude):
         restrictionMark(
           at: distanceNM,
-          altitudeFt: altitude.converted(to: .feet).value,
+          altitude: altitude,
           triangle: .down,
-          text: altitudeText(altitude),
-          violated: aircraftAltitudeFt > altitude.converted(to: .feet).value
+          violated: aircraftAltitude > altitude
         )
       case .at(let altitude):
         restrictionMark(
           at: distanceNM,
-          altitudeFt: altitude.converted(to: .feet).value,
+          altitude: altitude,
           triangle: .upAndDown,
-          text: altitudeText(altitude),
-          violated: abs(aircraftAltitudeFt - altitude.converted(to: .feet).value) > 100
+          violated: (aircraftAltitude - altitude).magnitude > Self.atRestrictionTolerance
         )
       case .between(let minAlt, let maxAlt):
         restrictionMark(
           at: distanceNM,
-          altitudeFt: maxAlt.converted(to: .feet).value,
+          altitude: maxAlt,
           triangle: .down,
-          text: altitudeText(maxAlt),
-          violated: aircraftAltitudeFt > maxAlt.converted(to: .feet).value
+          violated: aircraftAltitude > maxAlt
         )
         restrictionMark(
           at: distanceNM,
-          altitudeFt: minAlt.converted(to: .feet).value,
+          altitude: minAlt,
           triangle: .up,
-          text: altitudeText(minAlt),
-          violated: aircraftAltitudeFt < minAlt.converted(to: .feet).value
+          violated: aircraftAltitude < minAlt
         )
     }
   }
@@ -253,11 +349,12 @@ struct TerrainProfileChartView: View {
   @ChartContentBuilder
   private func restrictionMark(
     at distanceNM: Double,
-    altitudeFt: Double,
+    altitude: Measurement<UnitLength>,
     triangle: TriangleDirection,
-    text: String,
     violated: Bool
   ) -> some ChartContent {
+    let altitudeFt = altitude.converted(to: .feet).value
+    let text = altitudeText(altitude)
     let triangleWidth: CGFloat = 10
     let triangleHeight: CGFloat = 8
     let halfHeight = triangleHeight / 2
@@ -306,6 +403,14 @@ struct TerrainProfileChartView: View {
   }
 
   // MARK: - Subtypes
+
+  /// One sample of the freezing level.
+  private struct FreezingLevelPoint: Identifiable {
+    let distanceNM: Double
+    let altitudeFt: Double
+
+    var id: Double { distanceNM }
+  }
 
   private enum TriangleDirection {
     case up, down, upAndDown
@@ -410,4 +515,52 @@ struct TerrainProfileChartView: View {
       return lowerBound...upperBound
     }
   }
+}
+
+// periphery:ignore - consumed only by the #Preview macros below
+private struct ChartPreview: View {
+  let layer: WeatherProfileLayer
+  var showsWindBarbs = false
+  var atmosphere: PathAtmosphere? = .previewMultiColumn
+
+  var body: some View {
+    TerrainProfileChartView(
+      terrainPath: .preview,
+      fieldElevation: .zero,
+      atmosphere: atmosphere,
+      climbProfile: .preview,
+      weatherLayer: layer,
+      showsWindBarbs: showsWindBarbs
+    )
+    .frame(height: 300)
+    .padding()
+  }
+}
+
+#Preview("No weather") {
+  ChartPreview(layer: .none)
+}
+
+#Preview("Temperature") {
+  ChartPreview(layer: .temperature)
+}
+
+#Preview("Clouds") {
+  ChartPreview(layer: .clouds)
+}
+
+#Preview("Icing") {
+  ChartPreview(layer: .icing)
+}
+
+/// Barbs over a field, the two layers the picker and the toggle can show at once. Drawn from the
+/// single column a departure inside one forecast's reach actually gets.
+#Preview("Wind barbs over temperature") {
+  ChartPreview(layer: .temperature, showsWindBarbs: true, atmosphere: .preview)
+}
+
+/// Barbs alone, where the wind below 3,000 ft is carried down from the lowest reported level and
+/// drawn muted to say so.
+#Preview("Wind barbs only") {
+  ChartPreview(layer: .none, showsWindBarbs: true, atmosphere: nil)
 }

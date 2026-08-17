@@ -241,6 +241,68 @@ final class SF50_TOLDUITests: XCTestCase {
     profile.goBack()
   }
 
+  /// Runs in NWS mode, the one that reports a winds aloft forecast — without one the barbs have
+  /// nothing to draw and their toggle is disabled.
+  func testClimbProfileWeatherLayers() throws {
+    let tabBar = AppLauncher(weatherMode: .NWS).launchAndCompleteSetup(emptyWeight: "4550")
+    let takeoff = tabBar.goToTakeoff()
+
+    takeoff.setPayload("450")
+    takeoff.setFuel("100")
+
+    let picker = takeoff.openAirportPicker()
+    picker.searchAndSelect("OAK")
+    let runwayPicker = takeoff.openRunwayPicker()
+    runwayPicker.selectRunway("28R")
+
+    let profile = takeoff.openClimbProfile()
+    XCTAssertTrue(profile.isChartVisible(), "Terrain profile chart should appear")
+
+    for layer in ["Temperature", "Clouds", "Icing", "None"] {
+      profile.selectWeatherLayer(layer)
+      XCTAssertTrue(
+        profile.isChartVisible(timeout: 10),
+        "Terrain profile chart should survive selecting the \(layer) layer"
+      )
+    }
+
+    profile.setWindBarbs(true)
+    XCTAssertTrue(
+      profile.isChartVisible(timeout: 10),
+      "Terrain profile chart should survive turning the wind barbs on"
+    )
+    profile.setWindBarbs(false)
+
+    profile.goBack()
+  }
+
+  /// The go-around case: planning in the air with no connection. The weather layers can't be
+  /// fetched, so the pill that picks them goes dead, but terrain, obstacles, and the path still
+  /// plot.
+  func testGoAroundProfileWithoutConnection() throws {
+    let tabBar = AppLauncher(weatherMode: .error).launchAndCompleteSetup(emptyWeight: "4550")
+    let landing = tabBar.goToLanding()
+
+    landing.setPayload("450")
+    landing.setFuel("100")
+
+    let picker = landing.openAirportPicker()
+    picker.searchAndSelect("OAK")
+    let runwayPicker = landing.openRunwayPicker()
+    runwayPicker.selectRunway("28R")
+
+    let profile = landing.openGoAroundProfile()
+    XCTAssertTrue(
+      profile.isChartVisible(),
+      "Terrain profile should still plot without a connection"
+    )
+    XCTAssertFalse(
+      profile.isWeatherPillEnabled(),
+      "The weather pill should be disabled when the layers can’t be fetched"
+    )
+    profile.goBack()
+  }
+
   func testGoAroundProfileView() throws {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let landing = tabBar.goToLanding()

@@ -24,6 +24,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
         distanceNM: 0,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 100,
         altitudeRestriction: nil,
         fixName: nil,
@@ -33,6 +34,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.1, longitude: -122.0),
         distanceNM: 5.5,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 1700,
         altitudeRestriction: nil,
         fixName: "FIX1",
@@ -53,6 +55,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
         distanceNM: 0,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 100,
         altitudeRestriction: nil,
         fixName: nil,
@@ -62,6 +65,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.1, longitude: -122.0),
         distanceNM: 5.5,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 1700,
         altitudeRestriction: nil,
         fixName: nil,
@@ -79,6 +83,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
         distanceNM: 0,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 100,
         altitudeRestriction: nil,
         fixName: nil,
@@ -88,6 +93,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.1, longitude: -122.0),
         distanceNM: 5.5,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 1700,
         altitudeRestriction: nil,
         fixName: nil,
@@ -107,6 +113,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
         distanceNM: 0,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 100,
         altitudeRestriction: nil,
         fixName: nil,
@@ -116,6 +123,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.1, longitude: -122.0),
         distanceNM: 5.5,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 1700,
         altitudeRestriction: nil,
         fixName: nil,
@@ -133,6 +141,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
         distanceNM: 0,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 100,
         altitudeRestriction: nil,
         fixName: nil,
@@ -142,6 +151,7 @@ struct ProcedureTerrainPathTests {
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 51.5, longitude: -0.1),  // London
         distanceNM: 5.5,
+        track: .init(value: 0, unit: .degrees),
         aircraftAltitudeFt: 1700,
         altitudeRestriction: nil,
         fixName: nil,

@@ -8,8 +8,7 @@ struct GoAroundProfileView: View {
 
   // MARK: - Constants
 
-  private static let chartHeightPts: CGFloat = 300
-  private static let vectorTargetAltitudeFtAFE: Double = 2000
+  private static let vectorTargetAltitudeAFE = Measurement(value: 2000, unit: UnitLength.feet)
 
   @Environment(LandingPerformanceViewModel.self)
   private var performance
@@ -35,14 +34,30 @@ struct GoAroundProfileView: View {
   // MARK: - Output
 
   @State private var terrainPath: ProcedureTerrainPath?
+  @State private var climbProfile: ClimbProfile?
   @State private var isComputing = false
   @State private var pathFailed = false
   @State private var terrainRevision = 0
 
   var body: some View {
     List {
-      goAroundSection
-      chartSection
+      GoAroundSection(
+        goAroundType: $goAroundType,
+        vectorHeading: $vectorHeading,
+        selectedApproachID: $selectedApproachID,
+        availableTypes: availableGoAroundTypes,
+        availableApproaches: availableApproaches
+      )
+      TerrainProfileSection(
+        terrainPath: terrainPath,
+        climbProfile: climbProfile,
+        hasWindsAloft: windsAloft != nil,
+        fieldElevation: performance.airport?.elevation ?? .zero,
+        time: weather.time,
+        isComputing: isComputing,
+        pathFailed: pathFailed,
+        noDataDescription: "Select an approach to view missed approach terrain profile."
+      )
     }
     .navigationTitle("Go-Around Profile")
     .toolbar {
@@ -76,68 +91,6 @@ struct GoAroundProfileView: View {
     .onChange(of: performance.runway?.name, initial: true) { _, _ in
       if let heading = performance.runway?.magneticHeading {
         vectorHeading = heading
-      }
-    }
-  }
-
-  // MARK: - Sections
-
-  private var goAroundSection: some View {
-    Section("Go-Around Procedure") {
-      Picker("Type", selection: $goAroundType) {
-        ForEach(availableGoAroundTypes) { type in
-          Text(type.label).tag(type)
-        }
-      }
-      switch goAroundType {
-        case .publishedMissed:
-          Picker("Approach", selection: $selectedApproachID) {
-            ForEach(availableApproaches, id: \.identifier) { approach in
-              Text(approach.name ?? approach.identifier)
-                .tag(Optional(approach.identifier))
-                .selectionDisabled(
-                  !approach.isMissedApproachPlottable
-                )
-            }
-          }
-        case .vectors:
-          MeasurementField(
-            "Heading",
-            value: $vectorHeading,
-            format: .heading
-          )
-      }
-    }
-  }
-
-  @ViewBuilder private var chartSection: some View {
-    Section {
-      if isComputing {
-        HStack {
-          Spacer()
-          TerrainComputingIndicator()
-          Spacer()
-        }
-        .padding()
-      } else if let terrainPath {
-        let fieldElevation = performance.airport?.elevation.converted(to: .feet).value ?? 0
-        TerrainProfileChartView(
-          terrainPath: terrainPath,
-          fieldElevationFt: fieldElevation
-        )
-        .frame(height: Self.chartHeightPts)
-      } else if pathFailed {
-        ContentUnavailableView(
-          "Unable to Plot",
-          systemImage: "mountain.2",
-          description: Text("The path for this procedure could not be computed.")
-        )
-      } else {
-        ContentUnavailableView(
-          "No Data",
-          systemImage: "mountain.2",
-          description: Text("Select an approach to view missed approach terrain profile.")
-        )
       }
     }
   }
@@ -200,6 +153,8 @@ struct GoAroundProfileView: View {
       slpInHg: performance.conditions.seaLevelPressure?
         .converted(to: .inchesOfMercury).value
         ?? standardSeaLevelPressure.converted(to: .inchesOfMercury).value,
+      surfaceTemperatureC: performance.conditions.temperature?.converted(to: .celsius).value,
+      conditionsSource: performance.conditions.source,
       aircraftType: aircraftType,
       useRegressionModel: useRegressionModel,
       goAroundType: goAroundType,
@@ -219,6 +174,7 @@ struct GoAroundProfileView: View {
       let thresholdCoord = runway.thresholdCoordinate
     else {
       terrainPath = nil
+      climbProfile = nil
       pathFailed = false
       return
     }
@@ -228,10 +184,11 @@ struct GoAroundProfileView: View {
 
     let windsAloftObs = ClimbProfileGenerator.windsAloftObservations(
       for: windsAloft,
-      surfaceTemperature: performance.conditions.temperature,
+      conditions: performance.conditions,
       fieldElevation: airport.elevation
     )
-    let fieldElevationFt = airport.elevation.converted(to: .feet).value
+    let fieldElevation = airport.elevation,
+      fieldElevationFt = fieldElevation.converted(to: .feet).value
 
     let slpInHg =
       performance.conditions.seaLevelPressure?
@@ -245,6 +202,7 @@ struct GoAroundProfileView: View {
       seaLevelPressureInHg: slpInHg,
       useRegressionModel: useRegressionModel
     )
+    self.climbProfile = climbProfile
 
     // Fixed schedule for go-around: TO 2min → Enroute Obstacle
     let schedule = ProcedurePathGenerator.ClimbSchedule(segments: [
@@ -276,7 +234,8 @@ struct GoAroundProfileView: View {
           magneticDirection: vectorHeading,
           isHeading: true,
           startAltitudeFt: fieldElevationFt,
-          targetAltitudeFt: fieldElevationFt + Self.vectorTargetAltitudeFtAFE
+          targetAltitudeFt: (fieldElevation + Self.vectorTargetAltitudeAFE)
+            .converted(to: .feet).value
         )
     }
 
@@ -304,6 +263,19 @@ struct GoAroundProfileView: View {
     let runwayName: String
     let weightLb: Double
     let slpInHg: Double
+
+    /// The temperature at the field.
+    ///
+    /// Only the calm column synthesized when no forecast covers the flight is built from it — but
+    /// that is the column a profile planned in the air, on entered weather, is flown on, so a
+    /// changed temperature has to reach the path.
+    let surfaceTemperatureC: Double?
+
+    /// Where that temperature came from.
+    ///
+    /// Entered weather is carried up the synthesized column and downloaded weather is not, so the
+    /// same reading gives a different climb depending on who said it.
+    let conditionsSource: Conditions.Source
     let aircraftType: AircraftType
     let useRegressionModel: Bool
     let goAroundType: GoAroundType
@@ -328,6 +300,39 @@ struct GoAroundProfileView: View {
   }
 }
 
+/// How the aircraft goes around, and the fields each way of going around needs.
+private struct GoAroundSection: View {
+
+  @Binding var goAroundType: GoAroundProfileView.GoAroundType
+  @Binding var vectorHeading: Measurement<UnitAngle>
+  @Binding var selectedApproachID: String?
+
+  let availableTypes: [GoAroundProfileView.GoAroundType]
+  let availableApproaches: [Procedure]
+
+  var body: some View {
+    Section("Go-Around Procedure") {
+      Picker("Type", selection: $goAroundType) {
+        ForEach(availableTypes) { type in
+          Text(type.label).tag(type)
+        }
+      }
+      switch goAroundType {
+        case .publishedMissed:
+          Picker("Approach", selection: $selectedApproachID) {
+            ForEach(availableApproaches, id: \.identifier) { approach in
+              Text(approach.name ?? approach.identifier)
+                .tag(Optional(approach.identifier))
+                .selectionDisabled(!approach.isMissedApproachPlottable)
+            }
+          }
+        case .vectors:
+          MeasurementField("Heading", value: $vectorHeading, format: .heading)
+      }
+    }
+  }
+}
+
 #Preview {
   PreviewView(insert: .KOAK) { helper in
     let runway = try helper.load(airportID: "OAK", runway: "28L")!
@@ -338,5 +343,6 @@ struct GoAroundProfileView: View {
     }
     .environment(LandingPerformanceViewModel(container: helper.container))
     .environment(WeatherViewModel(operation: .landing, container: helper.container))
+    .environment(\.pathAtmosphereLoader, PreviewPathAtmosphereLoader(.loaded(.preview)))
   }
 }

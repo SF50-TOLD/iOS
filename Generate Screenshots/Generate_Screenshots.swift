@@ -260,6 +260,8 @@ final class Generate_Screenshots: XCTestCase {
         let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
         _ = terrainChart.waitForExistence(timeout: 30)
 
+        showWeatherLayers(in: app)
+
         Thread.sleep(forTimeInterval: 2.0)
         snapshot("05-climb-profile")
 
@@ -373,6 +375,30 @@ final class Generate_Screenshots: XCTestCase {
   }
 
   // MARK: - Helpers
+
+  /// Turn on the climb profile's weather so the chart is captured showing what it can do: the
+  /// temperature field behind the terrain, and the along-track wind barbs over it.
+  ///
+  /// Best-effort throughout — a screenshot of a bare chart beats a failed run.
+  private func showWeatherLayers(in app: XCUIApplication) {
+    selectFromPill("weatherLayerPicker", option: "Temperature", in: app)
+    selectFromPill("windBarbsPicker", option: "On", in: app)
+  }
+
+  /// Pick an option from one of the chart's weather pull-downs.
+  ///
+  /// - Parameters:
+  ///   - identifier: The pill's accessibility identifier.
+  ///   - option: The menu item to choose.
+  ///   - app: The application under test.
+  private func selectFromPill(_ identifier: String, option: String, in app: XCUIApplication) {
+    let pill = app.descendants(matching: .any)[identifier].firstMatch
+    guard pill.waitForExistence(timeout: 10) else { return }
+
+    let menuItem = app.buttons[option].firstMatch
+    guard pill.tap(untilExists: menuItem, using: XCUIElement.TapStrategy.escalating) else { return }
+    menuItem.forceTap()
+  }
 
   /// Switch the climb profile's departure to the published LINDZ procedure at
   /// KASE so the terrain chart shows real departure routing instead of a

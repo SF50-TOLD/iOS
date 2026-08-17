@@ -1,5 +1,29 @@
 import Foundation
 
+extension PathAtmosphereLoader.Failure: LocalizedError {
+  public var errorDescription: String? {
+    String(localized: "Weather layers couldn’t be loaded")
+  }
+
+  public var failureReason: String? {
+    switch self {
+      case .offline:
+        String(localized: "The forecast service couldn’t be reached.")
+      case .unavailable:
+        String(localized: "The forecast service couldn’t answer.")
+    }
+  }
+
+  public var recoverySuggestion: String? {
+    switch self {
+      case .offline:
+        String(localized: "Terrain, obstacles, and winds aloft still plot without a connection.")
+      case .unavailable:
+        String(localized: "Try again later.")
+    }
+  }
+}
+
 extension WeatherLoader.Errors: LocalizedError {
   public var errorDescription: String? {
     String(localized: "Weather information couldn’t be read")

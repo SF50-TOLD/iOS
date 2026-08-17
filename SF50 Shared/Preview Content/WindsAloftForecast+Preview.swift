@@ -24,10 +24,14 @@ extension WindsAloftForecast {
         ?? .init(start: validAt.addingTimeInterval(-4 * 3600), duration: 7 * 3600),
       source: source,
       data: .init(
+        // Veering and strengthening with height, as a bulletin's levels usually do, and carried
+        // high enough that a departure from a mountain field still has barbs that vary.
         entries: [
           .init(altitudeFt: 3000, windDirectionDeg: 280, windSpeedKts: 18, temperatureC: nil),
           .init(altitudeFt: 6000, windDirectionDeg: 290, windSpeedKts: 24, temperatureC: 11),
-          .init(altitudeFt: 9000, windDirectionDeg: 300, windSpeedKts: 31, temperatureC: 5)
+          .init(altitudeFt: 9000, windDirectionDeg: 300, windSpeedKts: 31, temperatureC: 5),
+          .init(altitudeFt: 12000, windDirectionDeg: 305, windSpeedKts: 39, temperatureC: -1),
+          .init(altitudeFt: 18000, windDirectionDeg: 315, windSpeedKts: 52, temperatureC: -14)
         ]
       )
     )

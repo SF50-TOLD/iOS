@@ -26,6 +26,7 @@ struct ContentView: View {
       }
     }
     .environment(\.locationStreamer, CoreLocationStreamer())
+    .environment(\.pathAtmosphereLoader, UITestingHelper.pathAtmosphereLoader)
   }
 
   @ViewBuilder private var content: some View {

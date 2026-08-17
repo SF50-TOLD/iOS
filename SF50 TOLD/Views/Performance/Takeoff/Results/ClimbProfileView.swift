@@ -8,9 +8,8 @@ struct ClimbProfileView: View {
 
   // MARK: - Constants
 
-  private static let chartHeightPts: CGFloat = 300
-  private static let vectorTargetAltitudeFtAFE: Double = 2000
-  private static let obstacleCeilingFtAFE: Double = 600
+  private static let vectorTargetAltitudeAFE = Measurement(value: 2000, unit: UnitLength.feet),
+    obstacleCeilingAFE = Measurement(value: 600, unit: UnitLength.feet)
 
   @Environment(TakeoffPerformanceViewModel.self)
   private var performance
@@ -44,15 +43,38 @@ struct ClimbProfileView: View {
   // MARK: - Output
 
   @State private var terrainPath: ProcedureTerrainPath?
+  @State private var climbProfile: ClimbProfile?
   @State private var isComputing = false
   @State private var pathFailed = false
   @State private var terrainRevision = 0
 
   var body: some View {
     List {
-      climbProfileSection
-      departureSection
-      chartSection
+      ClimbConfigurationSection(
+        firstSegment: $firstSegment,
+        firstSegmentAntiIce: $firstSegmentAntiIce,
+        secondSegment: $secondSegment,
+        secondSegmentAntiIce: $secondSegmentAntiIce
+      )
+      DepartureSection(
+        departureType: $departureType,
+        vectorHeading: $vectorHeading,
+        vectorTrack: $vectorTrack,
+        selectedDepartureID: $selectedDepartureID,
+        availableTypes: availableDepartureTypes,
+        availableDepartures: availableDepartures,
+        runwayName: performance.runway?.name ?? ""
+      )
+      TerrainProfileSection(
+        terrainPath: terrainPath,
+        climbProfile: climbProfile,
+        hasWindsAloft: windsAloft != nil,
+        fieldElevation: performance.airport?.elevation ?? .zero,
+        time: weather.time,
+        isComputing: isComputing,
+        pathFailed: pathFailed,
+        noDataDescription: "Select a departure procedure to view terrain profile."
+      )
     }
     .navigationTitle("Climb Profile")
     .toolbar {
@@ -90,101 +112,6 @@ struct ClimbProfileView: View {
       if let heading = performance.runway?.magneticHeading {
         vectorHeading = heading
         vectorTrack = heading
-      }
-    }
-  }
-
-  // MARK: - Sections
-
-  private var climbProfileSection: some View {
-    Section("Climb Profile") {
-      Picker("First Segment", selection: $firstSegment) {
-        ForEach(FirstSegment.allCases) { segment in
-          Text(segment.label).tag(segment)
-        }
-      }
-      if firstSegment.showsAntiIce {
-        Toggle("Anti-Ice", isOn: $firstSegmentAntiIce)
-      }
-      if firstSegment.showsSecondSegment {
-        Picker("Second Segment", selection: $secondSegment) {
-          ForEach(SecondSegment.allCases) { segment in
-            Text(segment.label).tag(segment)
-          }
-        }
-        if secondSegment.showsAntiIce {
-          Toggle("Anti-Ice", isOn: $secondSegmentAntiIce)
-        }
-      }
-    }
-  }
-
-  private var departureSection: some View {
-    Section("Departure") {
-      Picker("Type", selection: $departureType) {
-        ForEach(availableDepartureTypes) { type in
-          Text(type.label).tag(type)
-        }
-      }
-      .accessibilityIdentifier("departureTypePicker")
-      switch departureType {
-        case .runwayHeading:
-          EmptyView()
-        case .vectorHeading:
-          MeasurementField(
-            "Heading",
-            value: $vectorHeading,
-            format: .heading
-          )
-        case .vectorTrack:
-          MeasurementField(
-            "Track",
-            value: $vectorTrack,
-            format: .heading
-          )
-        case .procedure:
-          Picker("SID", selection: $selectedDepartureID) {
-            ForEach(availableDepartures, id: \.identifier) { departure in
-              Text(departure.identifier)
-                .tag(Optional(departure.identifier))
-                .selectionDisabled(
-                  !departure.isPlottable(forRunway: performance.runway?.name ?? "")
-                )
-            }
-          }
-          .accessibilityIdentifier("departureProcedurePicker")
-      }
-    }
-  }
-
-  @ViewBuilder private var chartSection: some View {
-    Section("Terrain Profile") {
-      if isComputing {
-        HStack {
-          Spacer()
-          TerrainComputingIndicator()
-          Spacer()
-        }
-        .padding()
-      } else if let terrainPath {
-        let fieldElevation = performance.airport?.elevation.converted(to: .feet).value ?? 0
-        TerrainProfileChartView(
-          terrainPath: terrainPath,
-          fieldElevationFt: fieldElevation
-        )
-        .frame(height: Self.chartHeightPts)
-      } else if pathFailed {
-        ContentUnavailableView(
-          "Unable to Plot",
-          systemImage: "mountain.2",
-          description: Text("The path for this procedure could not be computed.")
-        )
-      } else {
-        ContentUnavailableView(
-          "No Data",
-          systemImage: "mountain.2",
-          description: Text("Select a departure procedure to view terrain profile.")
-        )
       }
     }
   }
@@ -240,6 +167,8 @@ struct ClimbProfileView: View {
       slpInHg: performance.conditions.seaLevelPressure?
         .converted(to: .inchesOfMercury).value
         ?? standardSeaLevelPressure.converted(to: .inchesOfMercury).value,
+      surfaceTemperatureC: performance.conditions.temperature?.converted(to: .celsius).value,
+      conditionsSource: performance.conditions.source,
       aircraftType: aircraftType,
       useRegressionModel: useRegressionModel,
       firstSegment: firstSegment,
@@ -264,6 +193,7 @@ struct ClimbProfileView: View {
       let takeoffPoint = runway.takeoffStartCoordinate
     else {
       terrainPath = nil
+      climbProfile = nil
       pathFailed = false
       return
     }
@@ -273,10 +203,13 @@ struct ClimbProfileView: View {
 
     let windsAloftObs = ClimbProfileGenerator.windsAloftObservations(
       for: windsAloft,
-      surfaceTemperature: performance.conditions.temperature,
+      conditions: performance.conditions,
       fieldElevation: airport.elevation
     )
-    let fieldElevationFt = airport.elevation.converted(to: .feet).value
+    let fieldElevation = airport.elevation,
+      fieldElevationFt = fieldElevation.converted(to: .feet).value,
+      targetAltitudeFt = (fieldElevation + Self.vectorTargetAltitudeAFE)
+        .converted(to: .feet).value
 
     let slpInHg =
       performance.conditions.seaLevelPressure?
@@ -290,6 +223,7 @@ struct ClimbProfileView: View {
       seaLevelPressureInHg: slpInHg,
       useRegressionModel: useRegressionModel
     )
+    self.climbProfile = climbProfile
 
     let schedule = buildClimbSchedule()
     let pathGenerator = ProcedurePathGenerator(
@@ -318,7 +252,7 @@ struct ClimbProfileView: View {
           magneticDirection: runway.magneticHeading,
           isHeading: true,
           startAltitudeFt: fieldElevationFt,
-          targetAltitudeFt: fieldElevationFt + Self.vectorTargetAltitudeFtAFE
+          targetAltitudeFt: targetAltitudeFt
         )
       case .vectorHeading:
         procedurePath = pathGenerator.headingPath(
@@ -326,7 +260,7 @@ struct ClimbProfileView: View {
           magneticDirection: vectorHeading,
           isHeading: true,
           startAltitudeFt: fieldElevationFt,
-          targetAltitudeFt: fieldElevationFt + Self.vectorTargetAltitudeFtAFE
+          targetAltitudeFt: targetAltitudeFt
         )
       case .vectorTrack:
         procedurePath = pathGenerator.headingPath(
@@ -334,7 +268,7 @@ struct ClimbProfileView: View {
           magneticDirection: vectorTrack,
           isHeading: false,
           startAltitudeFt: fieldElevationFt,
-          targetAltitudeFt: fieldElevationFt + Self.vectorTargetAltitudeFtAFE
+          targetAltitudeFt: targetAltitudeFt
         )
     }
 
@@ -357,9 +291,9 @@ struct ClimbProfileView: View {
   }
 
   private func buildClimbSchedule() -> ProcedurePathGenerator.ClimbSchedule {
-    let fieldElevationFt = performance.airport?.elevation.converted(to: .feet).value ?? 0
-    let takeoffCeilingFt = fieldElevationFt + ProcedurePathGenerator.screenHeightFt
-    let obstacleCeilingFt = fieldElevationFt + Self.obstacleCeilingFtAFE
+    let fieldElevation = performance.airport?.elevation ?? .zero
+    let takeoffCeiling = fieldElevation + ProcedurePathGenerator.screenHeight,
+      obstacleCeiling = fieldElevation + Self.obstacleCeilingAFE
 
     typealias Segment = ProcedurePathGenerator.ClimbSegment
 
@@ -372,11 +306,11 @@ struct ClimbProfileView: View {
         segments = [
           Segment(
             profile: .takeoff,
-            upperBound: .altitude(.init(value: takeoffCeilingFt, unit: .feet))
+            upperBound: .altitude(takeoffCeiling)
           ),
           Segment(
             profile: .enrouteObstacle(antiIce: antiIce),
-            upperBound: .altitude(.init(value: obstacleCeilingFt, unit: .feet))
+            upperBound: .altitude(obstacleCeiling)
           ),
           Segment(profile: .enroute(antiIce: antiIce))
         ]
@@ -386,7 +320,7 @@ struct ClimbProfileView: View {
         segments = [
           Segment(
             profile: .takeoff,
-            upperBound: .altitude(.init(value: takeoffCeilingFt, unit: .feet))
+            upperBound: .altitude(takeoffCeiling)
           ),
           Segment(profile: .enrouteObstacle(antiIce: antiIce))
         ]
@@ -401,7 +335,7 @@ struct ClimbProfileView: View {
           segments.append(
             Segment(
               profile: .enrouteObstacle(antiIce: secondSegmentAntiIce),
-              upperBound: .altitude(.init(value: obstacleCeilingFt, unit: .feet))
+              upperBound: .altitude(obstacleCeiling)
             )
           )
         }
@@ -424,6 +358,19 @@ struct ClimbProfileView: View {
     let runwayName: String
     let weightLb: Double
     let slpInHg: Double
+
+    /// The temperature at the field.
+    ///
+    /// Only the calm column synthesized when no forecast covers the flight is built from it — but
+    /// that is the column a profile planned in the air, on entered weather, is flown on, so a
+    /// changed temperature has to reach the path.
+    let surfaceTemperatureC: Double?
+
+    /// Where that temperature came from.
+    ///
+    /// Entered weather is carried up the synthesized column and downloaded weather is not, so the
+    /// same reading gives a different climb depending on who said it.
+    let conditionsSource: Conditions.Source
     let aircraftType: AircraftType
     let useRegressionModel: Bool
     let firstSegment: FirstSegment
@@ -500,6 +447,81 @@ struct ClimbProfileView: View {
   }
 }
 
+/// The climb schedule the profile is flown on.
+private struct ClimbConfigurationSection: View {
+
+  @Binding var firstSegment: ClimbProfileView.FirstSegment
+  @Binding var firstSegmentAntiIce: Bool
+  @Binding var secondSegment: ClimbProfileView.SecondSegment
+  @Binding var secondSegmentAntiIce: Bool
+
+  var body: some View {
+    Section("Climb Profile") {
+      Picker("First Segment", selection: $firstSegment) {
+        ForEach(ClimbProfileView.FirstSegment.allCases) { segment in
+          Text(segment.label).tag(segment)
+        }
+      }
+      if firstSegment.showsAntiIce {
+        Toggle("Anti-Ice", isOn: $firstSegmentAntiIce)
+      }
+      if firstSegment.showsSecondSegment {
+        Picker("Second Segment", selection: $secondSegment) {
+          ForEach(ClimbProfileView.SecondSegment.allCases) { segment in
+            Text(segment.label).tag(segment)
+          }
+        }
+        if secondSegment.showsAntiIce {
+          Toggle("Anti-Ice", isOn: $secondSegmentAntiIce)
+        }
+      }
+    }
+  }
+}
+
+/// How the aircraft leaves the runway, and the fields each way of leaving needs.
+private struct DepartureSection: View {
+
+  @Binding var departureType: ClimbProfileView.DepartureType
+  @Binding var vectorHeading: Measurement<UnitAngle>
+  @Binding var vectorTrack: Measurement<UnitAngle>
+  @Binding var selectedDepartureID: String?
+
+  let availableTypes: [ClimbProfileView.DepartureType]
+  let availableDepartures: [Procedure]
+
+  /// The runway being departed, which decides which procedures can be plotted.
+  let runwayName: String
+
+  var body: some View {
+    Section("Departure") {
+      Picker("Type", selection: $departureType) {
+        ForEach(availableTypes) { type in
+          Text(type.label).tag(type)
+        }
+      }
+      .accessibilityIdentifier("departureTypePicker")
+      switch departureType {
+        case .runwayHeading:
+          EmptyView()
+        case .vectorHeading:
+          MeasurementField("Heading", value: $vectorHeading, format: .heading)
+        case .vectorTrack:
+          MeasurementField("Track", value: $vectorTrack, format: .heading)
+        case .procedure:
+          Picker("SID", selection: $selectedDepartureID) {
+            ForEach(availableDepartures, id: \.identifier) { departure in
+              Text(departure.identifier)
+                .tag(Optional(departure.identifier))
+                .selectionDisabled(!departure.isPlottable(forRunway: runwayName))
+            }
+          }
+          .accessibilityIdentifier("departureProcedurePicker")
+      }
+    }
+  }
+}
+
 #Preview {
   PreviewView(insert: .KOAK) { helper in
     let runway = try helper.load(airportID: "OAK", runway: "28L")!
@@ -510,5 +532,6 @@ struct ClimbProfileView: View {
     }
     .environment(TakeoffPerformanceViewModel(container: helper.container))
     .environment(WeatherViewModel(operation: .takeoff, container: helper.container))
+    .environment(\.pathAtmosphereLoader, PreviewPathAtmosphereLoader(.loaded(.preview)))
   }
 }

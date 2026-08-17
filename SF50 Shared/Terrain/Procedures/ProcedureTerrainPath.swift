@@ -30,12 +30,32 @@ public struct ProcedureTerrainPath: Sendable {
   /// Total path distance in nautical miles.
   public var totalDistanceNM: Double { points.last?.distanceNM ?? 0 }
 
+  /// The highest altitude the path reaches, whether aircraft or terrain.
+  ///
+  /// Terrain below the field is read as being at the field: a profile is drawn from the runway
+  /// upwards, so a valley beside it is not what sets the scale.
+  ///
+  /// - Parameter fieldElevation: The elevation of the airport.
+  /// - Returns: The altitude the profile reaches.
+  public func maxAltitude(fieldElevation: Measurement<UnitLength>) -> Measurement<UnitLength> {
+    let fieldElevationFt = fieldElevation.converted(to: .feet).value
+    let maxAircraft = points.map(\.aircraftAltitudeFt).max() ?? fieldElevationFt
+    let maxTerrain =
+      points.map { max($0.terrainElevationFt ?? fieldElevationFt, fieldElevationFt) }.max()
+      ?? fieldElevationFt
+    return .init(value: max(maxAircraft, maxTerrain), unit: .feet)
+  }
+
   /// A single point along the terrain-enriched path.
   public struct Point: Sendable {
     /// Geographic coordinate of this path point.
     public let coordinate: CLLocationCoordinate2D
     /// Cumulative distance in nautical miles from the path origin.
     public let distanceNM: Double
+    /// The path's ground track at this point, referenced to true north.
+    ///
+    /// What a wind is resolved against to say whether it helps or hinders the climb.
+    public let track: Measurement<UnitAngle>
     /// Computed aircraft altitude in feet MSL at this point.
     public let aircraftAltitudeFt: Double
     /// Altitude restriction at this point, if any.

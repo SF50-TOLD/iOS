@@ -54,12 +54,12 @@ public struct ProcedureTerrainPathGenerator {
   private static func pathBearing(
     at index: Int,
     in points: [ProcedurePath.Point]
-  ) -> Double {
+  ) -> Measurement<UnitAngle> {
     let from: CLLocationCoordinate2D,
       to: CLLocationCoordinate2D
 
     if points.count == 1 {
-      return 0
+      return .init(value: 0, unit: .degrees)
     }
     if index == 0 {
       from = points[0].coordinate
@@ -72,7 +72,7 @@ public struct ProcedureTerrainPathGenerator {
       to = points[index + 1].coordinate
     }
 
-    return GeoCalculations.bearing(from: from, to: to).converted(to: .degrees).value
+    return GeoCalculations.bearing(from: from, to: to)
   }
 
   // MARK: - Public API
@@ -107,27 +107,29 @@ public struct ProcedureTerrainPathGenerator {
             bearing = Self.pathBearing(at: i, in: pathPoints)
 
           // Sample terrain at 5 lateral offsets perpendicular to the path
-          let perpLeft = (bearing - 90).normalizedAngle,
-            perpRight = (bearing + 90).normalizedAngle
+          let quarterTurn = Measurement<UnitAngle>(value: 90, unit: .degrees)
+          let perpLeft = bearing - quarterTurn,
+            perpRight = bearing + quarterTurn
 
-          let sampleOffsets: [(distance: Double, bearing: Double)] = [
-            (0, 0),  // center (bearing irrelevant for zero distance)
-            (quarterCorridorNM, perpLeft),
-            (halfCorridorNM, perpLeft),
-            (quarterCorridorNM, perpRight),
-            (halfCorridorNM, perpRight)
-          ]
+          let sampleOffsets:
+            [(distance: Measurement<UnitLength>, bearing: Measurement<UnitAngle>)] = [
+              (.init(value: 0, unit: .nauticalMiles), bearing),  // center; bearing is irrelevant
+              (.init(value: quarterCorridorNM, unit: .nauticalMiles), perpLeft),
+              (.init(value: halfCorridorNM, unit: .nauticalMiles), perpLeft),
+              (.init(value: quarterCorridorNM, unit: .nauticalMiles), perpRight),
+              (.init(value: halfCorridorNM, unit: .nauticalMiles), perpRight)
+            ]
 
           var maxTerrainFt: Double?
           for offset in sampleOffsets {
             let sampleCoord: CLLocationCoordinate2D
-            if offset.distance == 0 {
+            if offset.distance.value == 0 {
               sampleCoord = point.coordinate
             } else {
               sampleCoord = GeoCalculations.destination(
                 from: point.coordinate,
-                distance: .init(value: offset.distance, unit: .nauticalMiles),
-                bearing: .init(value: offset.bearing, unit: .degrees)
+                distance: offset.distance,
+                bearing: offset.bearing
               )
             }
 
@@ -157,6 +159,7 @@ public struct ProcedureTerrainPathGenerator {
             ProcedureTerrainPath.Point(
               coordinate: point.coordinate,
               distanceNM: point.distanceNM,
+              track: bearing,
               aircraftAltitudeFt: point.altitudeFt,
               altitudeRestriction: point.altitudeRestriction,
               fixName: point.fixName,

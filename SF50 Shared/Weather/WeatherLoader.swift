@@ -133,6 +133,9 @@ public actor WeatherLoader: WeatherLoaderProtocol {
     loadingTask?.cancel()
     loadingTask = Task {
       await OpenMeteoService.shared.invalidateCache()
+      // Also forgets a refusal for want of a connection, so asking for weather again is what a
+      // pilot who has regained signal would expect it to be.
+      await PathAtmosphereLoader.shared.invalidateCache()
       await loadMETARs()
       await loadTAFs()
       await loadWindsAloft()

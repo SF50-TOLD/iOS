@@ -106,9 +106,20 @@ actor UITestingWeatherLoader: WeatherLoaderProtocol {
     }
   }
 
+  /// Winds aloft for the modes that report weather at all.
+  ///
+  /// ISA mode stays unreported: it stands for having no downloaded weather, and a climb profile
+  /// built on it should show the calm column and the "no winds aloft forecast" note. The reporting
+  /// modes serve a bulletin-shaped forecast whose lowest level is 3,000 ft, so the profile's wind
+  /// layer exercises carrying that level down to the field.
   func streamWindsAloft(for _: WeatherLoader.Key) -> AsyncStream<Loadable<WindsAloftForecast?>> {
     AsyncStream { continuation in
-      continuation.yield(.notLoaded)
+      switch mode {
+        case .NWS, .screenshots:
+          continuation.yield(.value(.preview))
+        default:
+          continuation.yield(.notLoaded)
+      }
     }
   }
 

@@ -22,6 +22,17 @@ enum UITestingHelper {
     return UITestingNOTAMLoader()
   }
 
+  /// The atmosphere loader the terrain profile's weather layers should use.
+  ///
+  /// Unlike the other loaders this is never `nil`: the environment needs something to hold, so the
+  /// real loader stands in outside of UI testing.
+  static var pathAtmosphereLoader: any PathAtmosphereLoading {
+    guard ProcessInfo.processInfo.arguments.contains("UI-TESTING") else {
+      return PathAtmosphereLoader.shared
+    }
+    return UITestingPathAtmosphereLoader()
+  }
+
   static func setupUITestingEnvironment(container: ModelContainer) {
     // Reset all defaults
     Defaults.removeAll(suite: UserDefaults(suiteName: "group.codes.tim.TOLD")!)

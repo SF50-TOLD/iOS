@@ -41,11 +41,27 @@ public actor OpenMeteoService {
   /// horizon and past the day the winds aloft bulletins forecast for.
   private static let forecastDays = 3
 
+  private static let secondsPerHour: TimeInterval = 3600,
+    secondsPerDay: TimeInterval = 86400
+
+  /// How far either side of the requested hour a profile request reaches.
+  ///
+  /// One hour of slack costs almost nothing and spares the request from turning up empty when the
+  /// requested time falls on an hour boundary the model rounds the other way.
+  private static let hourSlack = secondsPerHour
+
   /// How long a fetch is given before it's abandoned.
   ///
   /// A forecast is a supplement, and a failed one leaves the aviation report as it stands, so it is
   /// not worth making the pilot wait out the sixty seconds a large download is allowed.
   private static let requestTimeout: TimeInterval = 30
+
+  /// How long a profile request waits before giving up.
+  ///
+  /// Shorter still than ``requestTimeout``. The layers it feeds are optional context, and a
+  /// go-around profile is often planned in the air with no connection at all — where a quick refusal
+  /// the UI can act on beats waiting out the longer timeout.
+  private static let profileTimeout: TimeInterval = 10
 
   /// How long a failed fetch is remembered before the service is asked again.
   ///
@@ -55,6 +71,21 @@ public actor OpenMeteoService {
   private static let failureBackoff: TimeInterval = 60
 
   private static let logger = Logger(label: "codes.tim.SF50-TOLD.OpenMeteoService")
+
+  /// The hours a request may ask for.
+  ///
+  /// The response runs from midnight UTC today, and a `start_hour` outside that range is rejected
+  /// outright where `forecast_days` merely answers with no hour covering the time. Profile requests
+  /// are clamped into this window and a time beyond it is refused without a round trip, so a date
+  /// past the horizon reads the same on both paths: a forecast that doesn't reach it, rather than a
+  /// service that couldn't answer.
+  private static var forecastWindow: ClosedRange<Date> {
+    let firstHour = Date.now.startOfDayUTC
+    return
+      firstHour...firstHour.addingTimeInterval(
+        Double(forecastDays) * secondsPerDay - secondsPerHour
+      )
+  }
 
   private let baseURL: URL
 
@@ -100,9 +131,75 @@ public actor OpenMeteoService {
     .init(openMeteo: try await forecast(for: key), at: key.time)
   }
 
+  /// Atmospheric profiles above a set of points, for a time.
+  ///
+  /// Open-Meteo answers for many coordinates in one request, so a path needing several columns costs
+  /// one round trip rather than one per column. The request is bounded to the hours around `time`
+  /// rather than the three days ``conditions(for:)`` asks for, and leaves out the surface variables,
+  /// which keeps a two-dozen-column response to a few tens of kilobytes.
+  ///
+  /// - Parameters:
+  ///   - coordinates: The points to profile.
+  ///   - time: The time the profiles are needed for.
+  /// - Returns: A profile per coordinate, in the order asked for, `nil` where the forecast doesn't
+  ///   reach the time or reports no usable level.
+  /// - Throws: `WeatherLoader.Errors` if the forecast couldn't be fetched.
+  public func profiles(
+    at coordinates: [CLLocationCoordinate2D],
+    for time: Date
+  ) async throws -> [AtmosphericProfile?] {
+    guard !coordinates.isEmpty else { return [] }
+    guard Self.forecastWindow.contains(time.startOfHour) else {
+      Self.logger.info(
+        "Time lies outside the Open-Meteo forecast window",
+        metadata: ["time": "\(time)"]
+      )
+      return coordinates.map { _ in nil }
+    }
+
+    let url = profileURL(at: coordinates, for: time)
+    Self.logger.info(
+      "Loading Open-Meteo profiles",
+      metadata: ["columns": "\(coordinates.count)", "url": "\(url)"]
+    )
+
+    var request = URLRequest(url: url)
+    request.timeoutInterval = Self.profileTimeout
+
+    let (data, response) = try await session.data(for: request)
+    try validate(response, from: data, url: url)
+
+    let responses: [OpenMeteoResponse]
+    do {
+      responses = try decodeProfileResponses(from: data)
+    } catch {
+      Self.logger.error(
+        "Failed to decode Open-Meteo profiles",
+        metadata: ["error": "\(error)", "url": "\(url)"]
+      )
+      throw WeatherLoader.Errors.decodingFailed(url: url, underlyingError: error)
+    }
+
+    return zip(coordinates, responses).map { coordinate, response in
+      .init(openMeteo: response, at: coordinate, for: time)
+    }
+  }
+
   /// Discards held outcomes, successful and failed alike, so the next request fetches afresh.
   public func invalidateCache() {
     cache.removeAll()
+  }
+
+  /// Decodes a forecast response that may describe one location or many.
+  ///
+  /// Open-Meteo answers a single coordinate with an object and several with an array of them, so
+  /// both shapes are accepted and a lone object is read as a list of one.
+  private func decodeProfileResponses(from data: Data) throws -> [OpenMeteoResponse] {
+    do {
+      return try decoder.decode([OpenMeteoResponse].self, from: data)
+    } catch DecodingError.typeMismatch {
+      return [try decoder.decode(OpenMeteoResponse.self, from: data)]
+    }
   }
 
   /// The forecast for an airport, fetching it only when no fresh outcome is already held.
@@ -187,13 +284,43 @@ public actor OpenMeteoService {
       resolvingAgainstBaseURL: false
     )!
     components.queryItems = [
-      .init(name: "latitude", value: coordinate.latitude.formatted(.coordinate)),
-      .init(name: "longitude", value: coordinate.longitude.formatted(.coordinate)),
+      .init(name: "latitude", value: coordinate.latitude.openMeteoCoordinate),
+      .init(name: "longitude", value: coordinate.longitude.openMeteoCoordinate),
       .init(name: "hourly", value: OpenMeteoVariable.requested.joined(separator: ",")),
       .init(name: "wind_speed_unit", value: "kn"),
       .init(name: "temperature_unit", value: "celsius"),
       .init(name: "timeformat", value: "unixtime"),
       .init(name: "forecast_days", value: "\(Self.forecastDays)")
+    ]
+    if let apiKey {
+      components.queryItems?.append(.init(name: "apikey", value: apiKey))
+    }
+    return components.url!
+  }
+
+  private func profileURL(at coordinates: [CLLocationCoordinate2D], for time: Date) -> URL {
+    var components = URLComponents(
+      url: baseURL.appending(path: "v1/forecast"),
+      resolvingAgainstBaseURL: false
+    )!
+    let hour = time.startOfHour,
+      window = Self.forecastWindow
+    let startHour = max(hour.addingTimeInterval(-Self.hourSlack), window.lowerBound),
+      endHour = min(hour.addingTimeInterval(Self.hourSlack), window.upperBound)
+    components.queryItems = [
+      .init(
+        name: "latitude",
+        value: coordinates.map(\.latitude.openMeteoCoordinate).joined(separator: ",")
+      ),
+      .init(
+        name: "longitude",
+        value: coordinates.map(\.longitude.openMeteoCoordinate).joined(separator: ",")
+      ),
+      .init(name: "hourly", value: OpenMeteoVariable.profileRequested.joined(separator: ",")),
+      .init(name: "temperature_unit", value: "celsius"),
+      .init(name: "timeformat", value: "unixtime"),
+      .init(name: "start_hour", value: startHour.openMeteoHour),
+      .init(name: "end_hour", value: endHour.openMeteoHour)
     ]
     if let apiKey {
       components.queryItems?.append(.init(name: "apikey", value: apiKey))
@@ -220,12 +347,54 @@ public actor OpenMeteoService {
   }
 }
 
-extension FormatStyle where Self == FloatingPointFormatStyle<Double> {
-  /// Formats a latitude or longitude for a request.
+extension Date {
+  /// Writes a time the way `start_hour` and `end_hour` expect it: UTC, to the minute, without a
+  /// zone suffix.
+  ///
+  /// Open-Meteo reads this, not a person, so it is pinned to a fixed format on the POSIX locale and
+  /// says the same thing under every locale and calendar the app runs in.
+  ///
+  /// `ISO8601DateFormatter` can't serve: it always writes the seconds this format leaves out.
+  private static var openMeteoHourFormatter: DateFormatter {
+    let formatter = DateFormatter()
+    formatter.locale = .init(identifier: "en_US_POSIX")
+    formatter.timeZone = .gmt
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm"
+    return formatter
+  }
+
+  /// The calendar Open-Meteo lays its hours out on: Gregorian days beginning at midnight UTC,
+  /// whatever the device is set to.
+  private static var utcCalendar: Calendar {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = .gmt
+    return calendar
+  }
+
+  /// Midnight UTC on the day this time falls in, where a forecast's hours start.
+  var startOfDayUTC: Self { Self.utcCalendar.startOfDay(for: self) }
+
+  /// This time truncated to the hour it falls in.
+  var startOfHour: Self {
+    .init(timeIntervalSinceReferenceDate: timeIntervalSinceReferenceDate.rounded(.down) - remainder)
+  }
+
+  private var remainder: TimeInterval {
+    timeIntervalSinceReferenceDate.rounded(.down).truncatingRemainder(dividingBy: 3600)
+  }
+
+  /// This time as `start_hour` and `end_hour` expect it.
+  fileprivate var openMeteoHour: String { Self.openMeteoHourFormatter.string(from: self) }
+}
+
+extension Double {
+  /// This latitude or longitude as a request writes it.
+  ///
+  /// Open-Meteo reads this, not a person, so it is written with `String(format:)`, which is
+  /// independent of locale and so of whichever decimal separator, digits, and grouping the device
+  /// is set to.
   ///
   /// Four decimal places locate a point to about ten metres, which is finer than a forecast model's
   /// grid, and rounding to it lets requests from the same airport share Open-Meteo's cache.
-  fileprivate static var coordinate: Self {
-    .number.precision(.fractionLength(0...4)).grouping(.never).locale(.init(identifier: "en_US"))
-  }
+  fileprivate var openMeteoCoordinate: String { .init(format: "%.4f", self) }
 }
