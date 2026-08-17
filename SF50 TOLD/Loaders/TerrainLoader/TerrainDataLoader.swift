@@ -313,6 +313,10 @@ final class TerrainDataLoader: ObservableObject {
       NotificationCenter.default.post(name: .terrainRegionsDidChange, object: nil)
       logger.info("Region \(region.rawValue) downloaded and loaded")
     } catch {
+      // Writing the payload and moving it into place both fail with a bare
+      // filesystem error when the disk fills, which would otherwise reach the
+      // user as an opaque message and Sentry as a bug report.
+      let error = error.isOutOfDiskSpace ? TerrainDataLoaderError.outOfDiskSpace : error
       transaction.finish(status: .internalError)
       downloadingRegions.remove(region)
       state = .failed(region: region, message: error.localizedDescription)
@@ -622,24 +626,27 @@ enum TerrainDataLoaderError: LocalizedError {
 }
 
 private extension Error {
-  /// Whether this error (or any error in its `NSUnderlyingErrorKey` chain)
-  /// represents a POSIX `ENOSPC` "No space left on device" condition.
+  /// Whether this error, or any error in its `NSUnderlyingErrorKey` chain,
+  /// represents a "No space left on device" condition.
   ///
   /// `StreamingLZMA` surfaces a failed-write `errno` as `LZMAError.ioFailure`,
-  /// which bridges (via `CustomNSError`) to an `NSError` carrying an
-  /// `NSPOSIXErrorDomain` underlying error, so the typed checks below are
-  /// sufficient.
+  /// whose `CustomNSError` bridging leaves the outermost error in the library's
+  /// own domain and carries the `errno` one level down, so recognizing the
+  /// condition means walking the chain rather than inspecting only the error in
+  /// hand.
+  var isOutOfDiskSpace: Bool { (self as NSError).isOutOfDiskSpace }
+}
+
+private extension NSError {
+  /// Whether this error or any error beneath it reports exhausted storage.
+  ///
+  /// `Foundation`'s file APIs report the condition in `NSCocoaErrorDomain`
+  /// while the C-level writes `StreamingLZMA` performs report it as POSIX
+  /// `ENOSPC`, and either can appear at any depth of the chain.
   var isOutOfDiskSpace: Bool {
-    let nsError = self as NSError
-    if nsError.domain == NSPOSIXErrorDomain, nsError.code == Int(ENOSPC) {
-      return true
-    }
-    if let posix = self as? POSIXError, posix.code == .ENOSPC {
-      return true
-    }
-    if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? Self {
-      return underlying.isOutOfDiskSpace
-    }
-    return false
+    if domain == NSPOSIXErrorDomain, code == Int(ENOSPC) { return true }
+    if domain == NSCocoaErrorDomain, code == NSFileWriteOutOfSpaceError { return true }
+    guard let underlying = userInfo[NSUnderlyingErrorKey] as? NSError else { return false }
+    return underlying.isOutOfDiskSpace
   }
 }
