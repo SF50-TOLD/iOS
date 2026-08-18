@@ -96,21 +96,23 @@ actor NavDataLoader {
   private static let dataURLTemplate =
     "https://github.com/SF50-TOLD/NavDataDistribution/releases/download/%1$@/%1$@.plist.lzma"
 
-  /// Maximum number of rows inserted per save.
+  /// Maximum number of rows written per save.
   ///
-  /// Each save holds the store's write lock for its full commit, growing the
-  /// WAL and stalling other store users (the widget process, background
-  /// readers), so transactions are kept small and frequent.
-  private static let saveBatchRowLimit = 2000
-
-  /// Pause between batch saves so other store users can interleave.
-  private static let interBatchPause: Duration = .milliseconds(50)
+  /// Each save holds the store's write lock for its full commit, so the import
+  /// is split into bounded transactions rather than one that spans the whole
+  /// dataset. The bound is generous because the importer writes through its
+  /// own persistent store coordinator against a WAL-journaled store, where
+  /// readers — the main context and the widget process — are never blocked by
+  /// a write in flight; the only cost a long transaction imposes is on this
+  /// actor's own executor, which a smaller bound would trade for many more
+  /// commits.
+  private static let saveBatchRowLimit = 10000
 
   /// Smallest change in download progress worth pushing to consumers.
   ///
-  /// The download reports progress once per 8 KB chunk, which is far finer than
-  /// a progress indicator can show; coarsening it keeps consumers from waking
-  /// hundreds of times a second for changes they cannot render.
+  /// The session reports progress once per received chunk, which is far finer
+  /// than a progress indicator can show; coarsening it keeps consumers from
+  /// waking hundreds of times a second for changes they cannot render.
   private static let progressReportingStep: Float = 0.005
 
   private(set) var state: State = .idle {
@@ -132,12 +134,47 @@ actor NavDataLoader {
   /// Inflates the LZMA payload and decodes it, off this actor's executor.
   ///
   /// Both steps are CPU-bound and touch no `modelContext`, so they run on the
-  /// concurrent pool while the actor suspends.
+  /// concurrent pool while the actor suspends. Mapping the compressed file
+  /// keeps it out of the app's dirty memory, leaving only the inflated
+  /// property list resident.
   @concurrent
-  nonisolated private static func decompress(data: Data) async throws -> AirportDataCodable {
+  nonisolated private static func decompress(fileAt url: URL) async throws -> AirportDataCodable {
+    let compressed = try Data(contentsOf: url, options: .mappedIfSafe)
     // swiftlint:disable:next legacy_objc_type
-    let inflated = try (data as NSData).decompressed(using: .lzma)
+    let inflated = try (compressed as NSData).decompressed(using: .lzma)
     return try PropertyListDecoder().decode(AirportDataCodable.self, from: inflated as Data)
+  }
+
+  /// Downloads the payload to a temporary file, off this actor's executor.
+  ///
+  /// A transfer run on the actor's executor would occupy the backing
+  /// `NSManagedObjectContext`'s queue for the length of the download, so
+  /// anything enqueueing onto this actor would wait on the network.
+  nonisolated private static func fetch(
+    from url: URL,
+    logger: Logger,
+    reportingTo continuation: AsyncStream<Float>.Continuation
+  ) async throws -> URL {
+    defer { continuation.finish() }
+
+    let session = URLSession(configuration: .ephemeral)
+    let (fileURL, response) = try await session.downloadWithRetry(
+      from: url,
+      logger: logger,
+      label: "nav data",
+      delegate: DownloadProgressObserver(reportingTo: continuation)
+    )
+
+    guard let response = response as? HTTPURLResponse else {
+      try? FileManager.default.removeItem(at: fileURL)
+      throw Errors.badResponse(response)
+    }
+    guard response.statusCode == 200 else {
+      try? FileManager.default.removeItem(at: fileURL)
+      throw response.statusCode == 404 ? Errors.cycleNotAvailable : Errors.badResponse(response)
+    }
+
+    return fileURL
   }
 
   /// A stream of ``State`` values, starting with the loader's current state and
@@ -159,28 +196,37 @@ actor NavDataLoader {
     defer { stateContinuation?.finish() }
 
     state = .downloading(progress: 0)
-    let data = try await download { self.reportDownloadProgress($0) }
+    let payload = try await timing("download") {
+      try await download { self.reportDownloadProgress($0) }
+    }
+    defer { try? FileManager.default.removeItem(at: payload) }
 
     state = .extracting(progress: nil)
-    let nasr = try await Self.decompress(data: data)
+    let nasr = try await timing("decode") { try await Self.decompress(fileAt: payload) }
 
     // The replacement data is fully decoded, so the old dataset can go
-    try await resetData()
+    try await timing("reset") { try await resetData() }
 
     // Load navaids first so they're available for leg relationships
-    try await loadNavaids(nasr.navaids ?? [])
+    try await timing("navaids") { try await loadNavaids(nasr.navaids ?? []) }
 
     // Combined progress tracking across both loading phases
     state = .loading(progress: 0)
     let totalItems = nasr.airports.count + nasr.obstacles.count
 
-    try await loadAirports(nasr.airports) { airportsProcessed in
-      self.state = .loading(progress: Float(airportsProcessed) / Float(totalItems))
+    try await timing("airports") {
+      try await loadAirports(nasr.airports) { airportsProcessed in
+        self.state = .loading(progress: Float(airportsProcessed) / Float(totalItems))
+      }
     }
 
     let airportCount = nasr.airports.count
-    try await loadObstacles(nasr.obstacles) { obstaclesProcessed in
-      self.state = .loading(progress: Float(airportCount + obstaclesProcessed) / Float(totalItems))
+    try await timing("obstacles") {
+      try await loadObstacles(nasr.obstacles) { obstaclesProcessed in
+        self.state = .loading(
+          progress: Float(airportCount + obstaclesProcessed) / Float(totalItems)
+        )
+      }
     }
 
     try writeCycles(nasr.cycles)
@@ -190,6 +236,22 @@ actor NavDataLoader {
       cycles: nasr.cycles,
       ourAirportsLastUpdated: nasr.ourAirportsLastUpdated
     )
+  }
+
+  /// Runs an import phase, logging how long it took.
+  ///
+  /// The import's cost is spread across downloading, decoding, and several
+  /// persistence phases whose relative weights shift with the dataset's size
+  /// and with how the writes are batched, so a slowdown is only diagnosable if
+  /// each phase reports its own duration.
+  private func timing<T>(
+    _ label: String,
+    _ phase: () async throws -> T
+  ) async rethrows -> T {
+    let start = ContinuousClock.now
+    let result = try await phase()
+    logger.info("nav data \(label) took \(start.duration(to: .now), privacy: .public)")
+    return result
   }
 
   /// Deletes all persisted ``Cycle`` records on the loader's background context.
@@ -229,26 +291,20 @@ actor NavDataLoader {
     state = .downloading(progress: progress)
   }
 
-  private func download(progress: (Float) -> Void) async throws -> Data {
-    try await withRetry(logger: logger, label: "nav data") {
-      let session = URLSession(configuration: .ephemeral)
-      let (bytes, response) = try await session.bytes(from: self.dataURL)
-      guard let response = response as? HTTPURLResponse else { throw Errors.badResponse(response) }
-      if response.statusCode == 404 { throw Errors.cycleNotAvailable }
-      guard response.statusCode == 200 else { throw Errors.badResponse(response) }
+  /// Downloads the payload, forwarding the transfer's progress to `progress`.
+  ///
+  /// The transfer runs as a child task so this actor stays free to drain its
+  /// progress; the stream closes when the transfer settles, ending the loop.
+  private func download(progress: (Float) -> Void) async throws -> URL {
+    let (progressUpdates, continuation) = AsyncStream<Float>.makeStream(
+      of: Float.self,
+      bufferingPolicy: .bufferingNewest(1)
+    )
 
-      var compressedData = Data(capacity: Int(response.expectedContentLength))
-      for try await byte in bytes {
-        compressedData.append(byte)
-        let completed = compressedData.count
-        if completed.isMultiple(of: 8192) {
-          let downloadProgress = Double(completed) / Double(response.expectedContentLength)
-          progress(Float(downloadProgress))
-        }
-      }
+    async let downloaded = Self.fetch(from: dataURL, logger: logger, reportingTo: continuation)
+    for await completed in progressUpdates { progress(completed) }
 
-      return compressedData
-    }
+    return try await downloaded
   }
 
   private func loadAirports(
@@ -268,7 +324,7 @@ actor NavDataLoader {
         try modelContext.save()
         rowsSinceLastSave = 0
         progress(processed)
-        try await Task.sleep(for: Self.interBatchPause)
+        await Task.yield()
       }
     }
 
@@ -298,7 +354,7 @@ actor NavDataLoader {
 
       processed += batch.count
       progress(processed)
-      try await Task.sleep(for: Self.interBatchPause)
+      await Task.yield()
     }
   }
 
@@ -325,7 +381,7 @@ actor NavDataLoader {
         navaidLookup["\(navaidData.identifier):\(navaidData.icaoRegion)"] = navaid
       }
       try modelContext.save()
-      try await Task.sleep(for: Self.interBatchPause)
+      await Task.yield()
     }
   }
 
@@ -358,7 +414,7 @@ actor NavDataLoader {
     while case let batch = try modelContext.fetch(descriptor), !batch.isEmpty {
       for object in batch { modelContext.delete(object) }
       try modelContext.save()
-      try await Task.sleep(for: Self.interBatchPause)
+      await Task.yield()
     }
   }
 

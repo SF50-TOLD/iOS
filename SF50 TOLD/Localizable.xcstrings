@@ -1382,7 +1382,7 @@
     "This app has not been approved by the FAA or by Cirrus Aircraft as an official source of performance information. Always verify performance information with official sources when using this app." : {
 
     },
-    "This process can take around 30 minutes to complete. It must be done the first time the app launches, and approximately once a month as new navigation data is released. I recommend you keep %@ plugged into a power source." : {
+    "This process usually takes a few minutes. It must be done the first time the app launches, and approximately once a month as new navigation data is released. Leave this app open until it finishes; %@ pauses the download if you switch away." : {
 
     },
     "Time Zone Display" : {

@@ -55,6 +55,7 @@ extension URLSession {
     initialDelaySeconds: Int = 2,
     logger: Logger,
     label: String,
+    delegate: (any URLSessionTaskDelegate)? = nil,
     isolation: isolated (any Actor)? = #isolation  // swiftlint:disable:this unused_parameter
   ) async throws -> (URL, URLResponse) {
     var resumeData: Data?
@@ -71,10 +72,45 @@ extension URLSession {
       },
       operation: {
         if let resumeData {
-          return try await self.download(resumeFrom: resumeData)
+          return try await self.download(resumeFrom: resumeData, delegate: delegate)
         }
-        return try await self.download(from: url)
+        return try await self.download(from: url, delegate: delegate)
       }
     )
   }
+}
+
+/// Reports a download task's completion fraction into an `AsyncStream`.
+///
+/// The alternative way to follow a download from async code is to iterate
+/// `URLSession/bytes(from:)`, whose `AsyncSequence` element is a single byte —
+/// following a multi-megabyte payload that way costs one async resumption per
+/// byte, and leaves the caller assembling the payload itself. A download
+/// delegate reports the same progress while the session writes straight to
+/// disk.
+final class DownloadProgressObserver: NSObject, URLSessionDownloadDelegate {
+  private let continuation: AsyncStream<Float>.Continuation
+
+  init(reportingTo continuation: AsyncStream<Float>.Continuation) {
+    self.continuation = continuation
+  }
+
+  func urlSession(
+    _: URLSession,
+    downloadTask _: URLSessionDownloadTask,
+    didWriteData _: Int64,
+    totalBytesWritten: Int64,
+    totalBytesExpectedToWrite: Int64
+  ) {
+    guard totalBytesExpectedToWrite > 0 else { return }
+    continuation.yield(Float(totalBytesWritten) / Float(totalBytesExpectedToWrite))
+  }
+
+  /// Required by `URLSessionDownloadDelegate`, but the async download API hands
+  /// the finished file back to its caller, so there is nothing to do here.
+  func urlSession(
+    _: URLSession,
+    downloadTask _: URLSessionDownloadTask,
+    didFinishDownloadingTo _: URL
+  ) {}
 }
