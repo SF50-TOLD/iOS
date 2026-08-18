@@ -1757,7 +1757,7 @@
 			repositoryURL = "https://github.com/RISCfuture/StreamingLZMA";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 2.0.0;
 			};
 		};
 		01758ED52F2A9D13001D218C /* XCRemoteSwiftPackageReference "tiff-ios" */ = {

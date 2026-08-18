@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SF50-TOLD/NavData",
       "state" : {
-        "revision" : "5006219d0446bb9034570abefbad84d427a78251",
-        "version" : "1.0.0"
+        "revision" : "684eebb6816dae0fe3a517e3cb7e449eb35c2e90",
+        "version" : "1.0.1"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SF50-TOLD/NavDataDistribution",
       "state" : {
-        "revision" : "62e9e01a82e3537a92713240450b16fa41764e48",
-        "version" : "1.1.0"
+        "revision" : "2e29803dc94e238f5d135b04614e7fef3169f5fa",
+        "version" : "1.2.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/StreamingLZMA",
       "state" : {
-        "revision" : "51e43c72c0a337d05d1546cc549e31938750b79d",
-        "version" : "1.3.1"
+        "revision" : "8b6801824ef33d18e31ffbfda568931951e8d10e",
+        "version" : "2.0.0"
       }
     },
     {
