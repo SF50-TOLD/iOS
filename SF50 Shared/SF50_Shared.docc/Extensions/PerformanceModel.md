@@ -2,17 +2,8 @@
 
 ## Topics
 
-### Input Data
-
-- ``conditions``
-- ``configuration``
-- ``runway``
-- ``notam``
-
 ### Takeoff Performance
 
-- ``takeoffRunFt``
-- ``takeoffDistanceFt``
 - ``takeoffClimbGradientFtNM``
 - ``takeoffClimbRateFtMin``
 
@@ -21,14 +12,10 @@
 - ``enrouteClimbGradientFtNM``
 - ``enrouteClimbRateFtMin``
 - ``enrouteClimbSpeedKIAS``
-- ``enrouteObstacleClimbGradientFtNM``
-- ``enrouteObstacleClimbRateFtMin``
 
 ### Landing Performance
 
 - ``VrefKts``
-- ``landingRunFt``
-- ``landingDistanceFt``
 - ``meetsGoAroundClimbGradient``
 
 ### Bounds Checking

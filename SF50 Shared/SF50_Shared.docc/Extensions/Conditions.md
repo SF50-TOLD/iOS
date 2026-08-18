@@ -31,5 +31,4 @@
 
 ### Combining Conditions
 
-- ``adding(conditions:)``
 - ``userModified(with:)``

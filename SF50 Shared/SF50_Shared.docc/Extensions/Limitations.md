@@ -10,7 +10,6 @@
 
 ### Altitude Limits
 
-- ``maxTakeoffAltitude``
 - ``maxEnrouteAltitude``
 
 ### Wind Limits
@@ -22,6 +21,5 @@
 ### Other Limits
 
 - ``maxFuel``
-- ``minRunwayLength``
 - ``minTemperature``
 - ``maxTemperature``

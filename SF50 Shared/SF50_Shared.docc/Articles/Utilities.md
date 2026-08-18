@@ -26,7 +26,6 @@ Location services, geographic calculations, custom measurement units, state mana
 ### State Management
 
 - ``Loadable``
-- ``ViewState``
 
 ### Error Handling
 

@@ -181,5 +181,3 @@ print("Points sampled: \(profile.points.count)")
 
 - ``TerrainService``
 - ``TerrainRegion``
-- ``TerrainProfile``
-- ``TerrainProfilePoint``

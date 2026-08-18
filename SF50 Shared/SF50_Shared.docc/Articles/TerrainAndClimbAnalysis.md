@@ -18,10 +18,7 @@ Terrain elevation queries, climb profile generation, and obstacle clearance anal
 
 - ``TerrainRegion``
 - ``TerrainBoundingBox``
-- ``TerrainPhase``
 - ``TerrainManifest``
-- ``TerrainProfile``
-- ``TerrainProfilePoint``
 - ``TerrainServiceError``
 
 ### Climb Profile Generation

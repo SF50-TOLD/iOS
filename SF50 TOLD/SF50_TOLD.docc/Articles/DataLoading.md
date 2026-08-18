@@ -185,7 +185,7 @@ Terrain data is organized into geographic regions:
 - **Additional regions**: As needed for coverage
 
 The `TerrainRegion` enum defines available regions and their geographic bounds.
-Use ``TerrainDataLoader/regionStatus(for:)`` to determine which region covers a
+Use `TerrainRegion.containing(coordinate:)` to determine which regions cover a
 specific coordinate.
 
 ## See Also

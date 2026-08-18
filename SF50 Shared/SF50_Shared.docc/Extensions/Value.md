@@ -23,5 +23,5 @@
 
 ### Accessing Values
 
-- ``nominalValue``
+- ``nominal``
 - ``toMeasurement(_:)``

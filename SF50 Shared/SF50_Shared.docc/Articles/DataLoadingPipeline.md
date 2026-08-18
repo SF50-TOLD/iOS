@@ -95,7 +95,7 @@ await NOTAMCache.shared.set(response.data, for: "KJFK")
 
 ## Loading States
 
-Both ``Loadable`` and ``ViewState`` track async loading states:
+``Loadable`` tracks async loading states:
 
 ```swift
 var airports: Loadable<[Airport]> = .notLoaded

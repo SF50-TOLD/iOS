@@ -254,7 +254,7 @@ actor NavDataLoader {
     return result
   }
 
-  /// Deletes all persisted ``Cycle`` records on the loader's background context.
+  /// Deletes all persisted `Cycle` records on the loader's background context.
   ///
   /// Performed off the main thread so it never contends with the main
   /// `NSManagedObjectContext` for the persistent store coordinator.

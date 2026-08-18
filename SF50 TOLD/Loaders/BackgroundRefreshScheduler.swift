@@ -16,11 +16,12 @@ import os
 ///
 /// ## Refresh Work
 ///
-/// The refresh action pre-warms ``WeatherLoader``'s bulk caches. Nav-data is
+/// The refresh action pre-warms `WeatherLoader`'s bulk caches. Nav-data is
 /// intentionally **not** refreshed here: ``NavDataLoader`` deletes the live
 /// dataset before re-importing over several minutes, far longer than an
 /// app-refresh window, so a mid-window force-cancellation could leave the store
-/// empty or partially imported. See ``refreshNavDataIfStale()``.
+/// empty or partially imported. Nav-data staleness is resolved on the next launch
+/// instead.
 @MainActor
 final class BackgroundRefreshScheduler {
   /// Shared singleton owning background-refresh scheduling.
@@ -72,9 +73,9 @@ final class BackgroundRefreshScheduler {
   /// Orchestrates the app-refresh action: reschedules, then pre-warms weather.
   ///
   /// SwiftUI marks the underlying `BGTask` complete when this returns and cancels
-  /// the backing Swift `Task` on expiration. ``prewarmWeather()`` forwards that
-  /// cancellation to ``WeatherLoader`` so an in-flight fetch is abandoned at the
-  /// deadline instead of overrunning the refresh window.
+  /// the backing Swift `Task` on expiration. That cancellation is forwarded to the
+  /// weather loader, so an in-flight fetch is abandoned at the deadline instead of
+  /// overrunning the refresh window.
   func handleAppRefresh() async {
     guard isEnabled else { return }
 
