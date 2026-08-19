@@ -36,3 +36,69 @@ jobs:
         NOTAM_API_BASE_URL = https:/$()/notams.fly.dev
     secrets:
       secret-file-value: ${{ secrets.NOTAM_API_TOKEN }}
+
+  docs:
+    name: Build Documentation
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+      - name: Generate NOTAM API config
+        env:
+          NOTAM_API_TOKEN: ${{ secrets.NOTAM_API_TOKEN }}
+        run: |
+          mkdir -p "SF50 TOLD/NOTAM"
+          cat > "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig" << EOF
+          NOTAM_API_TOKEN = ${NOTAM_API_TOKEN}
+          NOTAM_API_BASE_URL = https:/\$()/notams.fly.dev
+          EOF
+      - name: Generate DownloadNASR credentials
+        run: |
+          cat > "DownloadNASR/Credentials.xcconfig" << EOF
+          R2_ACCOUNT_ID = test
+          R2_ACCESS_KEY_ID = test
+          R2_SECRET_ACCESS_KEY = test
+          R2_BUCKET_NAME = sf50-terrain
+          R2_PUBLIC_URL = https:/\$()/test.invalid
+          GITHUB_TOKEN = test
+          EOF
+      - name: Set up iOS simulator
+        id: sim
+        uses: RISCfuture/XCUITestKit/ci-templates/setup-ios-simulator@main
+        with:
+          device: "iPhone 17 Pro"
+          device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro
+      - name: Enable macros
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+      # The SF50 TOLD scheme reaches every first-party target the app ships — the app, the SF50
+      # Runways extension, TerrainAssets, and the SF50 Shared framework — so one docbuild covers
+      # all of the catalogs that ship with the app. DocC has no strictness build setting of its
+      # own, so `--warnings-as-errors` reaches it through OTHER_DOCC_FLAGS, which the project sets
+      # on its own targets: passing that setting to xcodebuild here would apply it to every Swift
+      # package in the graph too, and a dependency's DocC warnings are not this project's to fix.
+      # Nothing consumes the .doccarchives, so they build into the runner's scratch directory
+      # rather than the checkout.
+      - name: Build documentation
+        run: |
+          set -o pipefail
+          xcodebuild docbuild \
+            -project "SF50 TOLD.xcodeproj" \
+            -scheme "SF50 TOLD" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
+            -destination-timeout 300 \
+            -derivedDataPath "$RUNNER_TEMP/docs-dd" \
+            | xcbeautify --renderer github-actions
+      # DownloadNASR is a macOS build tool outside the SF50 TOLD scheme, so its catalog needs a
+      # docbuild of its own to be gated. Its target inherits the project's OTHER_DOCC_FLAGS, so
+      # this pass is as strict as the iOS one. Unlike the simulator build above, a macOS target
+      # would demand a Mac Development certificate the runner has no keychain for; documentation
+      # is extracted from the compiled sources, so the build has nothing to sign.
+      - name: Build DownloadNASR documentation
+        run: |
+          set -o pipefail
+          xcodebuild docbuild \
+            -project "SF50 TOLD.xcodeproj" \
+            -scheme "DownloadNASR" \
+            -destination "platform=macOS" \
+            -derivedDataPath "$RUNNER_TEMP/docs-dd-nasr" \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify --renderer github-actions
