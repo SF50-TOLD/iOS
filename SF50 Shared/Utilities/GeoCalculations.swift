@@ -1,5 +1,7 @@
 import CoreLocation
 import Foundation
+import MeasurementKit
+import MeasurementKitLocation
 import NavData
 
 extension GeoCalculations {
@@ -37,8 +39,6 @@ extension GeoCalculations {
 
   /// Calculates the initial bearing from one coordinate to another.
   ///
-  /// Uses the forward azimuth formula on a spherical Earth.
-  ///
   /// - Parameters:
   ///   - start: Starting coordinate.
   ///   - end: Destination coordinate.
@@ -47,17 +47,7 @@ extension GeoCalculations {
     from start: CLLocationCoordinate2D,
     to end: CLLocationCoordinate2D
   ) -> Measurement<UnitAngle> {
-    let lat1 = start.latitude * .pi / 180,
-      lat2 = end.latitude * .pi / 180,
-      deltaLon = (end.longitude - start.longitude) * .pi / 180
-
-    let x = sin(deltaLon) * cos(lat2),
-      y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(deltaLon)
-
-    let bearingRadians = atan2(x, y)
-    let bearingDegrees = (bearingRadians * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
-
-    return .init(value: bearingDegrees, unit: .degrees)
+    start.geoCoordinate.initialBearing(to: end.geoCoordinate).angle.converted(to: .degrees)
   }
 
   /// Computes ground track and ground speed from the wind triangle.
@@ -78,31 +68,17 @@ extension GeoCalculations {
     windFromTrueDeg: Double,
     windSpeedKts: Double
   ) -> (groundTrackDeg: Double, groundSpeedKts: Double) {
-    let thRad = trueHeadingDeg * .pi / 180,
-      wdRad = windFromTrueDeg * .pi / 180
+    let triangle = WindTriangle(
+      heading: .init(degrees: trueHeadingDeg),
+      trueAirspeed: .init(value: TAS_Kts, unit: .knots),
+      windFrom: .init(degrees: windFromTrueDeg),
+      windSpeed: .init(value: windSpeedKts, unit: .knots)
+    )
 
-    // Aircraft air velocity
-    let airEast = TAS_Kts * sin(thRad),
-      airNorth = TAS_Kts * cos(thRad)
-
-    // Wind pushes opposite to FROM direction
-    let windEast = -windSpeedKts * sin(wdRad),
-      windNorth = -windSpeedKts * cos(wdRad)
-
-    // Ground velocity
-    let gsEast = airEast + windEast,
-      gsNorth = airNorth + windNorth
-
-    let groundSpeed = (gsEast * gsEast + gsNorth * gsNorth).squareRoot()
-    let trackRad = atan2(gsEast, gsNorth)
-    let trackDeg = (trackRad * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
-
-    return (groundTrackDeg: trackDeg, groundSpeedKts: groundSpeed)
+    return (groundTrackDeg: triangle.track.degrees, groundSpeedKts: triangle.groundSpeed.value)
   }
 
   /// Calculates a destination coordinate given a starting point, distance, and bearing.
-  ///
-  /// Uses the Haversine formula on a spherical Earth.
   ///
   /// - Parameters:
   ///   - start: Starting coordinate.
@@ -114,29 +90,6 @@ extension GeoCalculations {
     distance: Measurement<UnitLength>,
     bearing: Measurement<UnitAngle>
   ) -> CLLocationCoordinate2D {
-    let distanceMeters = distance.converted(to: .meters).value
-    let bearingRadians = bearing.converted(to: .radians).value
-
-    let lat1 = start.latitude * .pi / 180
-    let lon1 = start.longitude * .pi / 180
-
-    let angularDistance = distanceMeters / earthRadiusM
-
-    let lat2 = asin(
-      sin(lat1) * cos(angularDistance)
-        + cos(lat1) * sin(angularDistance) * cos(bearingRadians)
-    )
-
-    let lon2 =
-      lon1
-      + atan2(
-        sin(bearingRadians) * sin(angularDistance) * cos(lat1),
-        cos(angularDistance) - sin(lat1) * sin(lat2)
-      )
-
-    return CLLocationCoordinate2D(
-      latitude: lat2 * 180 / .pi,
-      longitude: lon2 * 180 / .pi
-    )
+    start.geoCoordinate.offset(bearing: .init(bearing), distance: distance).clCoordinate
   }
 }

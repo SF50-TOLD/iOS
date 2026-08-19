@@ -489,7 +489,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     _ = tabBar.goToTakeoff()
     XCTAssertTrue(
-      tabBar.app.textFields["Payload"].waitForExistence(timeout: 5),
+      tabBar.app.textFields["payloadField"].firstMatch.waitForExistence(timeout: 5),
       "Takeoff tab should render after model change"
     )
 
@@ -535,7 +535,7 @@ final class SF50_TOLDUITests: XCTestCase {
 
     _ = tabBar.goToTakeoff()
     XCTAssertTrue(
-      tabBar.app.textFields["Payload"].waitForExistence(timeout: 5),
+      tabBar.app.textFields["payloadField"].firstMatch.waitForExistence(timeout: 5),
       "Takeoff tab should still render after performance model change"
     )
   }

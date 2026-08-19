@@ -1,4 +1,5 @@
 import Defaults
+import MeasurementKitUI
 import SF50_Shared
 import SwiftUI
 
@@ -65,7 +66,7 @@ struct SettingsView: View {
             MeasurementField(
               "Weight",
               value: $emptyWeight,
-              unit: weightUnit,
+              in: weightUnit,
               format: .weight,
               minimum: .init(value: 0, unit: weightUnit)
             )
@@ -75,7 +76,7 @@ struct SettingsView: View {
             MeasurementField(
               "Density",
               value: $fuelDensity,
-              unit: fuelDensityUnit,
+              in: fuelDensityUnit,
               format: .fuelDensity,
               minimum: .init(value: 0, unit: fuelDensityUnit)
             )
@@ -86,23 +87,21 @@ struct SettingsView: View {
         Section("Performance") {
           ModelToggleView()
           LabeledContent("Safety Factor (Dry)") {
-            NumberField(
+            NumericField(
               "Factor",
               value: $safetyFactorDry,
               format: .number.precision(.fractionLength(0...2)),
               minimum: 1.0
             )
-            .multilineTextAlignment(.trailing)
             .accessibilityIdentifier("safetyFactorDryField")
           }
           LabeledContent("Safety Factor (Wet)") {
-            NumberField(
+            NumericField(
               "Factor",
               value: $safetyFactorWet,
               format: .number.precision(.fractionLength(0...2)),
               minimum: 1.0
             )
-            .multilineTextAlignment(.trailing)
             .accessibilityIdentifier("safetyFactorWetField")
           }
 

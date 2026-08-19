@@ -5,8 +5,8 @@ final class LandingPage: BasePage {
 
   // MARK: - Elements
 
-  var payloadField: XCUIElement { app.textFields["Payload"].firstMatch }
-  var fuelField: XCUIElement { app.textFields["Landing Fuel"].firstMatch }
+  var payloadField: XCUIElement { app.textFields["payloadField"].firstMatch }
+  var fuelField: XCUIElement { app.textFields["fuelField"].firstMatch }
   var flapsButton: XCUIElement {
     app.buttons.matching(NSPredicate(format: "label CONTAINS 'Flaps'")).firstMatch
   }

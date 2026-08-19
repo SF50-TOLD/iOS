@@ -1,5 +1,7 @@
 import Combine
 import Defaults
+import MeasurementKit
+import MeasurementKitUI
 import SF50_Shared
 import SwiftData
 import SwiftUI
@@ -505,9 +507,21 @@ private struct DepartureSection: View {
         case .runwayHeading:
           EmptyView()
         case .vectorHeading:
-          MeasurementField("Heading", value: $vectorHeading, format: .heading)
+          MeasurementField(
+            "Heading",
+            value: $vectorHeading,
+            in: .degrees,
+            format: .heading,
+            keypad: .whole
+          )
         case .vectorTrack:
-          MeasurementField("Track", value: $vectorTrack, format: .heading)
+          MeasurementField(
+            "Track",
+            value: $vectorTrack,
+            in: .degrees,
+            format: .heading,
+            keypad: .whole
+          )
         case .procedure:
           Picker("SID", selection: $selectedDepartureID) {
             ForEach(availableDepartures, id: \.identifier) { departure in

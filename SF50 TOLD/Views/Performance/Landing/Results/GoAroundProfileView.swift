@@ -1,5 +1,7 @@
 import Combine
 import Defaults
+import MeasurementKit
+import MeasurementKitUI
 import SF50_Shared
 import SwiftData
 import SwiftUI
@@ -327,7 +329,13 @@ private struct GoAroundSection: View {
             }
           }
         case .vectors:
-          MeasurementField("Heading", value: $vectorHeading, format: .heading)
+          MeasurementField(
+            "Heading",
+            value: $vectorHeading,
+            in: .degrees,
+            format: .heading,
+            keypad: .whole
+          )
       }
     }
   }

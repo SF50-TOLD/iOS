@@ -1,3 +1,4 @@
+import MeasurementKit
 import SwiftUI
 
 /// A wind barb drawn for the component of the wind along a flight path.

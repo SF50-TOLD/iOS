@@ -1,4 +1,5 @@
 import Defaults
+import MeasurementKitUI
 import SF50_Shared
 import SwiftUI
 
@@ -28,15 +29,22 @@ struct TakeoffLoadoutView: View {
   var body: some View {
     Section("Loading") {
       LabeledContent("Payload") {
-        MeasurementField("Payload", value: $payload, unit: weightUnit, format: .weight)
-          .accessibilityIdentifier("payloadField")
+        MeasurementField(
+          "Payload",
+          value: $payload,
+          in: weightUnit,
+          format: .weight,
+          keypad: .whole
+        )
+        .accessibilityIdentifier("payloadField")
       }
       LabeledContent("Takeoff Fuel") {
         MeasurementField(
           "Takeoff Fuel",
           value: $takeoffFuel,
-          unit: fuelVolumeUnit,
-          format: .fuel
+          in: fuelVolumeUnit,
+          format: .fuel,
+          keypad: .whole
         )
         .accessibilityIdentifier("fuelField")
       }

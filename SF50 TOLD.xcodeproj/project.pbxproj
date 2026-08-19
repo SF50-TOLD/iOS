@@ -37,6 +37,13 @@
 		0198B44E2E986226003CB126 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 		01A1014F2E93C12E0032AB29 /* Gzip in Frameworks */ = {isa = PBXBuildFile; productRef = 01A1014E2E93C12E0032AB29 /* Gzip */; };
 		01AA52322F2DDF110085F4C6 /* SwiftR2 in Frameworks */ = {isa = PBXBuildFile; productRef = 01AA52312F2DDF110085F4C6 /* SwiftR2 */; };
+		01AC00202FE0000000000020 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00102FE0000000000010 /* MeasurementKit */; };
+		01AC00212FE0000000000021 /* MeasurementKitLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00112FE0000000000011 /* MeasurementKitLocation */; };
+		01AC00222FE0000000000022 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00122FE0000000000012 /* MeasurementKit */; };
+		01AC00232FE0000000000023 /* MeasurementKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00132FE0000000000013 /* MeasurementKitUI */; };
+		01AC00242FE0000000000024 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00142FE0000000000014 /* MeasurementKit */; };
+		01AC00252FE0000000000025 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00152FE0000000000015 /* MeasurementKit */; };
+		01AC00262FE0000000000026 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00162FE0000000000016 /* MeasurementKit */; };
 		01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01BABAE92F3B12E5000EA5E1 /* Charts.framework */; };
 		01BEBCB82E8A401100631DE6 /* SwiftHtml in Frameworks */ = {isa = PBXBuildFile; productRef = 01BEBCB72E8A401100631DE6 /* SwiftHtml */; };
 		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
@@ -291,6 +298,7 @@
 		012837472E5B8BB8002195A0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01AC00242FE0000000000024 /* MeasurementKit in Frameworks */,
 				0128374E2E5B8BB8002195A0 /* SwiftUI.framework in Frameworks */,
 				0128374C2E5B8BB8002195A0 /* WidgetKit.framework in Frameworks */,
 			);
@@ -298,6 +306,8 @@
 		012B1E382DE2F272000D9ADC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01AC00212FE0000000000021 /* MeasurementKitLocation in Frameworks */,
+				01AC00202FE0000000000020 /* MeasurementKit in Frameworks */,
 				018ED7A62F345C2000D084B4 /* SwiftMETAR in Frameworks */,
 				01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */,
 				C56FF4A70BD4DDF42C6DCBAA /* NavData in Frameworks */,
@@ -311,6 +321,7 @@
 		012B1E422DE2F272000D9ADC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01AC00262FE0000000000026 /* MeasurementKit in Frameworks */,
 				012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */,
 				014457DA2F3125DB003ADBCD /* RealModule in Frameworks */,
 			);
@@ -318,6 +329,8 @@
 		0163BC672DDEE9D3008FEE8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01AC00232FE0000000000023 /* MeasurementKitUI in Frameworks */,
+				01AC00222FE0000000000022 /* MeasurementKit in Frameworks */,
 				0198B44E2E986226003CB126 /* Sentry in Frameworks */,
 				01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */,
 				01714C802F234A7E003DADCF /* Algorithms in Frameworks */,
@@ -361,6 +374,7 @@
 		01714CA22F2451D9003DADCF /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				01AC00252FE0000000000025 /* MeasurementKit in Frameworks */,
 				0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */,
 			);
 		};
@@ -456,6 +470,9 @@
 				0128374F2E5B8BB8002195A0 /* SF50 Runways */,
 			);
 			name = "SF50 RunwaysExtension";
+			packageProductDependencies = (
+				01AC00142FE0000000000014 /* MeasurementKit */,
+			);
 			productName = "SF50 RunwaysExtension";
 			productReference = 0128374A2E5B8BB8002195A0 /* SF50 RunwaysExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -476,6 +493,8 @@
 			);
 			name = "SF50 Shared";
 			packageProductDependencies = (
+				01AC00102FE0000000000010 /* MeasurementKit */,
+				01AC00112FE0000000000011 /* MeasurementKitLocation */,
 				012B1E672DE2F463000D9ADC /* SwiftNASR */,
 				012B1E6B2DE2F463000D9ADC /* Logging */,
 				0179DFBF2DE3CDD3002EC77C /* Defaults */,
@@ -507,6 +526,7 @@
 			);
 			name = "SF50 SharedTests";
 			packageProductDependencies = (
+				01AC00162FE0000000000016 /* MeasurementKit */,
 				014457D92F3125DB003ADBCD /* RealModule */,
 			);
 			productName = "SF50 SharedTests";
@@ -537,6 +557,8 @@
 			);
 			name = "SF50 TOLD";
 			packageProductDependencies = (
+				01AC00122FE0000000000012 /* MeasurementKit */,
+				01AC00132FE0000000000013 /* MeasurementKitUI */,
 				0163BCA82DDEF40D008FEE8F /* SwiftNASR */,
 				01D1E3122DDF890100C1CAC8 /* Logging */,
 				01BEBCB72E8A401100631DE6 /* SwiftHtml */,
@@ -639,6 +661,9 @@
 				01714CA62F2451D9003DADCF /* TerrainAssets */,
 			);
 			name = TerrainAssets;
+			packageProductDependencies = (
+				01AC00152FE0000000000015 /* MeasurementKit */,
+			);
 			productName = TerrainAssets;
 			productReference = 01714CA52F2451D9003DADCF /* TerrainAssets.appex */;
 			productType = "com.apple.product-type.extensionkit-extension";
@@ -738,6 +763,7 @@
 				01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */,
 				018ED7932F340BFD00D084B4 /* XCRemoteSwiftPackageReference "SwiftMETAR" */,
 				01591FEE2FCA2ACB007FB6BB /* XCRemoteSwiftPackageReference "XCUITestKit" */,
+				01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */,
 				2B974702697D0A548EC62991 /* XCRemoteSwiftPackageReference "NavData" */,
 				C9DFF1CEEDEBFDC2A78EDDB0 /* XCRemoteSwiftPackageReference "NavDataDistribution" */,
 			);
@@ -1810,6 +1836,14 @@
 				minimumVersion = 1.0.0;
 			};
 		};
+		01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RISCfuture/MeasurementKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 		01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/BinaryBirds/swift-html";
@@ -1954,6 +1988,41 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */;
 			productName = SwiftR2;
+		};
+		01AC00102FE0000000000010 /* MeasurementKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKit;
+		};
+		01AC00112FE0000000000011 /* MeasurementKitLocation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKitLocation;
+		};
+		01AC00122FE0000000000012 /* MeasurementKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKit;
+		};
+		01AC00132FE0000000000013 /* MeasurementKitUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKitUI;
+		};
+		01AC00142FE0000000000014 /* MeasurementKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKit;
+		};
+		01AC00152FE0000000000015 /* MeasurementKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKit;
+		};
+		01AC00162FE0000000000016 /* MeasurementKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKit;
 		};
 		01BEBCB72E8A401100631DE6 /* SwiftHtml */ = {
 			isa = XCSwiftPackageProductDependency;

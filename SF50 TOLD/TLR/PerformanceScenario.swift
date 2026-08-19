@@ -1,4 +1,5 @@
 import Foundation
+import MeasurementKit
 import SF50_Shared
 import SwiftData
 
@@ -91,7 +92,7 @@ struct PerformanceScenario: Sendable {
     var adjustedWindSpeed = baseConditions.windSpeed.map { $0 + deltaWindSpeed }
     if let speed = adjustedWindSpeed?.value, speed < 0 {
       adjustedWindDirection = adjustedWindDirection?.reciprocal
-      adjustedWindSpeed = adjustedWindSpeed?.absoluteValue
+      adjustedWindSpeed = adjustedWindSpeed?.magnitude
     }
 
     let conditions = Conditions(

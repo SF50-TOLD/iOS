@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import MeasurementKit
 import SF50_Shared
 
 /// Calculates the initial bearing from one coordinate to another.
@@ -168,7 +169,7 @@ func generateChevrons(
     ]
     chevrons.append(ChevronData(coordinates: rightFill, isPrimary: !isPrimary))
 
-    currentDistance += depth
+    currentDistance = currentDistance.adding(depth)
     isPrimary.toggle()
   }
 

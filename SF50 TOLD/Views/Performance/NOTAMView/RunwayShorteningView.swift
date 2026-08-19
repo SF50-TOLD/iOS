@@ -1,4 +1,5 @@
 import Defaults
+import MeasurementKitUI
 import SF50_Shared
 import SwiftUI
 
@@ -56,8 +57,9 @@ struct RunwayShorteningView: View {
         MeasurementField(
           "Distance",
           value: shortenBinding,
-          unit: runwayLengthUnit,
-          format: .length
+          in: runwayLengthUnit,
+          format: .length,
+          keypad: .whole
         )
         .accessibilityIdentifier("distanceField")
       }

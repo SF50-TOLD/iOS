@@ -1,4 +1,5 @@
 import Foundation
+import MeasurementKit
 import SwiftMETAR
 
 /// Winds aloft data for a single station.

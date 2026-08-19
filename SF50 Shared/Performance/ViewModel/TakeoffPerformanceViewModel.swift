@@ -1,5 +1,6 @@
 import Defaults
 import Foundation
+import MeasurementKit
 import Observation
 import Sentry
 import SwiftData
@@ -69,7 +70,7 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
     let distanceFromLiftoffPoint = distanceFromRunwayStart - takeoffRun
 
     let slope = (obstacleHeight / distanceFromLiftoffPoint)
-    return .init(value: slope, unit: .gradient)
+    return .init(value: slope, unit: .ratio)
   }
 
   public var offscaleLow: Bool {

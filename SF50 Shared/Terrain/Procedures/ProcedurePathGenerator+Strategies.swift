@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import MeasurementKit
 import NavData
 
 extension ProcedurePathGenerator {

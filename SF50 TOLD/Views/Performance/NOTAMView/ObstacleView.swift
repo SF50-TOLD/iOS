@@ -1,4 +1,5 @@
 import Defaults
+import MeasurementKitUI
 import SF50_Shared
 import SwiftUI
 
@@ -17,8 +18,9 @@ struct ObstacleView: View {
         MeasurementField(
           "Height",
           value: $notam.obstacleHeight,
-          unit: heightUnit,
-          format: .height
+          in: heightUnit,
+          format: .height,
+          keypad: .whole
         )
         .accessibilityIdentifier("obstacleHeightField")
       }
@@ -27,8 +29,9 @@ struct ObstacleView: View {
         MeasurementField(
           "Distance",
           value: $notam.obstacleDistance,
-          unit: distanceUnit,
-          format: .distance
+          in: distanceUnit,
+          format: .distance,
+          keypad: .decimal
         )
         .accessibilityIdentifier("obstacleDistanceField")
       }

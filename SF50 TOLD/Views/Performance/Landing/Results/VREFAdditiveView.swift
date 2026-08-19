@@ -1,4 +1,5 @@
 import Defaults
+import MeasurementKitUI
 import SF50_Shared
 import SwiftUI
 
@@ -14,7 +15,7 @@ struct VREFAdditiveView: View {
       MeasurementField(
         "Speed",
         value: $VREFAdditive,
-        unit: speedUnit,
+        in: speedUnit,
         format: .speed(plusSign: true),
         minimum: .init(value: 0, unit: .knots)
       )

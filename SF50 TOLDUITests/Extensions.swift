@@ -21,6 +21,16 @@ extension XCUIElement {
       toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
   }
+
+  /// Waits for this element to become first responder, so that typing into it lands here rather
+  /// than failing in a window with no keyboard focus.
+  func waitForKeyboardFocus(timeout: TimeInterval = 5) -> Bool {
+    let focused = XCTNSPredicateExpectation(
+      predicate: NSPredicate(format: "hasKeyboardFocus == true"),
+      object: self
+    )
+    return XCTWaiter().wait(for: [focused], timeout: ScaledTimeouts.scaled(timeout)) == .completed
+  }
 }
 
 // MARK: - Navigation helpers

@@ -1,5 +1,6 @@
 import Defaults
 import Foundation
+import MeasurementKit
 
 /// Protocol for services that calculate aircraft takeoff and landing performance.
 ///

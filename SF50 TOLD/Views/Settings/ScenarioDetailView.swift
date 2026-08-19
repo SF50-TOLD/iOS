@@ -1,4 +1,5 @@
 import Defaults
+import MeasurementKitUI
 import SF50_Shared
 import SwiftData
 import SwiftUI
@@ -27,8 +28,9 @@ struct ScenarioDetailView: View {
           MeasurementField(
             "Temperature",
             value: $scenario.deltaTemperature,
-            unit: temperatureUnit,
-            format: .temperature(plusSign: true)
+            in: temperatureUnit,
+            format: .temperature(plusSign: true),
+            keypad: .signedWhole
           )
           .accessibilityIdentifier("OATDeltaField")
         }
@@ -37,8 +39,9 @@ struct ScenarioDetailView: View {
           MeasurementField(
             "Speed",
             value: $scenario.deltaWindSpeed,
-            unit: speedUnit,
-            format: .speed(plusSign: true)
+            in: speedUnit,
+            format: .speed(plusSign: true),
+            keypad: .signedWhole
           )
           .accessibilityIdentifier("windSpeedDeltaField")
         }
@@ -47,8 +50,9 @@ struct ScenarioDetailView: View {
           MeasurementField(
             "Weight",
             value: $scenario.deltaWeight,
-            unit: weightUnit,
-            format: .weight(plusSign: true)
+            in: weightUnit,
+            format: .weight(plusSign: true),
+            keypad: .signedWhole
           )
           .accessibilityIdentifier("weightDeltaField")
         }
@@ -109,7 +113,7 @@ struct ScenarioDetailView: View {
                 get: { scenario.contaminationDepth ?? .init(value: 0, unit: .inches) },
                 set: { scenario.contaminationDepth = $0 }
               ),
-              unit: .inches,
+              in: .inches,
               format: .depth,
               minimum: .init(value: 0, unit: .inches)
             )

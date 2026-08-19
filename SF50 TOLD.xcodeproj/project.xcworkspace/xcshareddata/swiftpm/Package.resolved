@@ -1,5 +1,5 @@
 {
-  "originHash" : "29a89efcbcfc6955bf7aba6ef77cc58f3d20a328be8c96a45f914ab771f3f13d",
+  "originHash" : "63e41f17d4239b5e2706ac77aa3a56a246aac54e6e2eb90017e19a7a6963e8f6",
   "pins" : [
     {
       "identity" : "buildablemacro",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "41d37421fe2cbbfae4a5593dc29d12999fb73cd7",
         "version" : "7.0.0"
+      }
+    },
+    {
+      "identity" : "measurementkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RISCfuture/MeasurementKit",
+      "state" : {
+        "revision" : "d04642c96f5406ed3b504334593a268d698d47ca",
+        "version" : "1.0.0"
       }
     },
     {

@@ -1,4 +1,5 @@
 import Foundation
+import MeasurementKit
 import SF50_Shared
 
 /// Generates takeoff performance data for all runways and scenarios.
@@ -131,7 +132,7 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
         if distanceFromLiftoff > .zero {
           let requiredGradient = Measurement(
             value: obstacleHeight / distanceFromLiftoff,
-            unit: UnitSlope.gradient
+            unit: UnitSlope.ratio
           )
 
           if case .value(let climbGradient) = report.results.takeoffClimbGradient,

@@ -1,4 +1,5 @@
 import MapKit
+import MeasurementKit
 import SF50_Shared
 import SwiftUI
 
@@ -81,7 +82,7 @@ struct RunwayMapView: View {
 
         // Only add NOTAM offset if shortening is at threshold end
         if shorteningLocation == .thresholdEnd {
-          offset += notamOffset
+          offset = offset.adding(notamOffset)
         }
 
         if offset.value > 0 {

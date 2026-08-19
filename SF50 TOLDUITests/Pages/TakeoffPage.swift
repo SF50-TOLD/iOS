@@ -5,8 +5,8 @@ final class TakeoffPage: BasePage {
 
   // MARK: - Elements
 
-  var payloadField: XCUIElement { app.textFields["Payload"].firstMatch }
-  var fuelField: XCUIElement { app.textFields["Takeoff Fuel"].firstMatch }
+  var payloadField: XCUIElement { app.textFields["payloadField"].firstMatch }
+  var fuelField: XCUIElement { app.textFields["fuelField"].firstMatch }
   var airportSelector: XCUIElement {
     app.descendants(matching: .any)["airportSelector"].firstMatch
   }

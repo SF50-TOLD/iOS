@@ -1,13 +1,5 @@
 import Foundation
 
-// MARK: - Earth
-
-/// Mean radius of the Earth in meters.
-public let earthRadiusM: Double = 6_371_000
-
-/// Meters per nautical mile (exact by definition).
-private let metersPerNauticalMile: Double = 1852
-
 // MARK: - Standard Atmosphere (ISA)
 
 /// ISA sea-level temperature in Kelvin.
@@ -62,6 +54,9 @@ private let barometricExponent: Double =
 private let speedOfSoundCoefficientKts: Double = 38.967854
 
 // MARK: - Unit Conversions
+
+/// Meters per nautical mile (exact by definition).
+private let metersPerNauticalMile: Double = 1852
 
 /// Feet to meters conversion factor.
 public let feetToMeters: Double = 0.3048

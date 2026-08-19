@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import RealModule
 import Testing
@@ -5,6 +6,19 @@ import Testing
 @testable import SF50_Shared
 
 struct GeoCalculationsTests {
+
+  // MARK: - Bearing
+
+  /// The bearing is answered in degrees. The great-circle solver behind it works in radians, so an
+  /// unconverted result would be plausible-looking and wrong by a factor of 57.3.
+  @Test
+  func bearingIsAnsweredInDegrees() {
+    let bearing = GeoCalculations.bearing(
+      from: .init(latitude: 0, longitude: 0),
+      to: .init(latitude: 0, longitude: 1)
+    )
+    #expect(bearing.value.isApproximatelyEqual(to: 90, absoluteTolerance: 0.01))
+  }
 
   // MARK: - Wind Triangle
 

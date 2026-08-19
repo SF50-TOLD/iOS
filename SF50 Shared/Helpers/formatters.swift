@@ -1,4 +1,5 @@
 import Foundation
+import MeasurementKit
 
 extension FormatStyle where Self == FloatingPointFormatStyle<Double> {
   public static var weight: Self { .number.rounded(increment: 1) }
@@ -106,6 +107,21 @@ extension FormatStyle where Self == Measurement<UnitTemperature>.FormatStyle {
         usage: .asProvided,
         numberFormatStyle: .temperature.sign(strategy: .always())
       ) : .temperature
+  }
+}
+
+extension FormatStyle where Self == Measurement<UnitTemperatureDifference>.FormatStyle {
+  public static var temperatureDifference: Self {
+    .measurement(width: .narrow, usage: .asProvided, numberFormatStyle: .temperature)
+  }
+
+  public static func temperatureDifference(plusSign: Bool = false) -> Self {
+    plusSign
+      ? .measurement(
+        width: .narrow,
+        usage: .asProvided,
+        numberFormatStyle: .temperature.sign(strategy: .always())
+      ) : .temperatureDifference
   }
 }
 

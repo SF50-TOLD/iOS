@@ -12,7 +12,10 @@ final class LoadingConsentPage: BasePage {
 
   func deferUntilLater() -> TabBarPage {
     XCTAssertTrue(deferButton.waitForExistence(timeout: 5), "Defer button should exist")
-    tapAndEnsureNavigation(element: deferButton, expectedElement: app.textFields["Payload"])
+    tapAndEnsureNavigation(
+      element: deferButton,
+      expectedElement: app.textFields["payloadField"].firstMatch
+    )
     return TabBarPage(app: app)
   }
 }

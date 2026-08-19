@@ -21,7 +21,6 @@ Location services, geographic calculations, custom measurement units, state mana
 ### Units and Measurements
 
 - ``UnitDensity``
-- ``UnitSlope``
 
 ### State Management
 

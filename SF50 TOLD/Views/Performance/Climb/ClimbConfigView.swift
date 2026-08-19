@@ -1,4 +1,6 @@
 import Defaults
+import MeasurementKit
+import MeasurementKitUI
 import SF50_Shared
 import SwiftUI
 
@@ -42,7 +44,7 @@ struct ClimbConfigView: View {
     }
   }
 
-  private var temperatureStep: Measurement<UnitTemperature> {
+  private var temperatureStep: Measurement<UnitTemperatureDifference> {
     // 5°C or 10°F
     switch temperatureUnit {
       case .fahrenheit:
@@ -52,25 +54,14 @@ struct ClimbConfigView: View {
     }
   }
 
-  private var fuelBinding: Binding<Double> {
-    Binding(
-      get: { performance.fuel.converted(to: UnitVolume.baseUnit()).value },
-      set: { performance.fuel = Measurement(value: $0, unit: UnitVolume.baseUnit()) }
-    )
-  }
-
-  private var altitudeBinding: Binding<Double> {
-    Binding(
-      get: { performance.altitude.converted(to: UnitLength.baseUnit()).value },
-      set: { performance.altitude = Measurement(value: $0, unit: UnitLength.baseUnit()) }
-    )
-  }
-
-  private var ISADeviationBinding: Binding<Double> {
-    Binding(
-      get: { performance.ISADeviation.converted(to: UnitTemperature.baseUnit()).value },
-      set: { performance.ISADeviation = Measurement(value: $0, unit: UnitTemperature.baseUnit()) }
-    )
+  /// The difference unit matching the user's chosen temperature scale, so a deviation reads in the
+  /// degrees the scale is marked in.
+  private var deviationUnit: UnitTemperatureDifference {
+    switch temperatureUnit {
+      case .fahrenheit: .fahrenheit
+      case .kelvin: .kelvin
+      default: .celsius
+    }
   }
 
   // Min/max values rounded to nearest step
@@ -90,18 +81,12 @@ struct ClimbConfigView: View {
     (limitations.maxEnrouteAltitude / altitudeStep).rounded() * altitudeStep
   }
 
-  // A deviation is a difference rather than a reading, so its bounds are rounded on the Celsius
-  // scale rather than by dividing two measurements, which would divide their kelvin values.
-  private var minISADeviation: Measurement<UnitTemperature> {
-    let step = temperatureStep.converted(to: .celsius).value
-    let rounded = (-40.0 / step).rounded() * step
-    return Measurement(value: rounded, unit: .celsius)
+  private var minISADeviation: Measurement<UnitTemperatureDifference> {
+    (Measurement(value: -40, unit: .celsius) / temperatureStep).rounded() * temperatureStep
   }
 
-  private var maxISADeviation: Measurement<UnitTemperature> {
-    let step = temperatureStep.converted(to: .celsius).value
-    let rounded = (35.0 / step).rounded() * step
-    return Measurement(value: rounded, unit: .celsius)
+  private var maxISADeviation: Measurement<UnitTemperatureDifference> {
+    (Measurement(value: 35, unit: .celsius) / temperatureStep).rounded() * temperatureStep
   }
 
   var body: some View {
@@ -122,7 +107,7 @@ struct ClimbConfigView: View {
           step: fuelStep
         )
         Slider(
-          value: fuelBinding,
+          value: $performance.fuel.scalar(in: UnitVolume.baseUnit()),
           in: fuelParams.range,
           step: fuelParams.step
         ) {
@@ -151,7 +136,7 @@ struct ClimbConfigView: View {
           step: altitudeStep
         )
         Slider(
-          value: altitudeBinding,
+          value: $performance.altitude.scalar(in: UnitLength.baseUnit()),
           in: altitudeParams.range,
           step: altitudeParams.step
         ) {
@@ -170,7 +155,7 @@ struct ClimbConfigView: View {
       VStack(alignment: .leading) {
         LabeledContent("OAT (ISA Deviation)") {
           let OAT = performance.OAT.converted(to: temperatureUnit)
-          let deviation = performance.ISADeviation.converted(to: temperatureUnit)
+          let deviation = performance.ISADeviation.converted(to: deviationUnit)
 
           Text(
             "\(OAT, format: .temperature) (ISA\(deviation.value, format: .temperature.sign(strategy: .always())))"
@@ -185,17 +170,23 @@ struct ClimbConfigView: View {
           step: temperatureStep
         )
         Slider(
-          value: ISADeviationBinding,
+          value: $performance.ISADeviation.scalar(in: UnitTemperatureDifference.baseUnit()),
           in: ISAParams.range,
           step: ISAParams.step
         ) {
           Text("ISA Deviation")
         } minimumValueLabel: {
-          Text(minISADeviation.converted(to: temperatureUnit), format: .temperature(plusSign: true))
-            .id(temperatureUnit)
+          Text(
+            minISADeviation.converted(to: deviationUnit),
+            format: .temperatureDifference(plusSign: true)
+          )
+          .id(temperatureUnit)
         } maximumValueLabel: {
-          Text(maxISADeviation.converted(to: temperatureUnit), format: .temperature(plusSign: true))
-            .id(temperatureUnit)
+          Text(
+            maxISADeviation.converted(to: deviationUnit),
+            format: .temperatureDifference(plusSign: true)
+          )
+          .id(temperatureUnit)
         }
         .accessibilityIdentifier("climbISADeviationSlider")
       }
@@ -214,17 +205,7 @@ struct ClimbConfigView: View {
     let baseUnit = UnitType.baseUnit()
     let minValue = min.converted(to: baseUnit).value
     let maxValue = max.converted(to: baseUnit).value
-
-    // For temperature, convert the step as a difference, not an absolute value
-    let stepValue: Double =
-      if step.unit is UnitTemperature {
-        abs(
-          step.unit.converter.baseUnitValue(fromValue: step.value)
-            - step.unit.converter.baseUnitValue(fromValue: 0)
-        )
-      } else {
-        step.converted(to: baseUnit).value
-      }
+    let stepValue = step.converted(to: baseUnit).value
 
     // Ensure step is positive (SwiftUI requirement)
     guard stepValue > 0 else {

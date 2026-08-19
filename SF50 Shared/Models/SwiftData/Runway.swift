@@ -1,5 +1,7 @@
 import CoreLocation
 import Foundation
+import MeasurementKit
+import MeasurementKitLocation
 import NavData
 import SwiftData
 
@@ -182,33 +184,9 @@ public final class Runway {
     }
 
     // Calculate backwards from threshold (opposite of runway heading)
-    let reciprocalHeading = (trueHeading.converted(to: .degrees).value + 180)
-      .truncatingRemainder(dividingBy: 360)
-    let bearingRadians = reciprocalHeading * .pi / 180
-
-    let distanceMeters = displacedThresholdDistance.converted(to: .meters).value
-
-    let lat1 = threshold.latitude * .pi / 180
-    let lon1 = threshold.longitude * .pi / 180
-
-    let angularDistance = distanceMeters / earthRadiusM
-
-    let lat2 = asin(
-      sin(lat1) * cos(angularDistance)
-        + cos(lat1) * sin(angularDistance) * cos(bearingRadians)
-    )
-
-    let lon2 =
-      lon1
-      + atan2(
-        sin(bearingRadians) * sin(angularDistance) * cos(lat1),
-        cos(angularDistance) - sin(lat1) * sin(lat2)
-      )
-
-    return CLLocationCoordinate2D(
-      latitude: lat2 * 180 / .pi,
-      longitude: lon2 * 180 / .pi
-    )
+    return threshold.geoCoordinate
+      .offset(bearing: .init(trueHeading.reciprocal), distance: displacedThresholdDistance)
+      .clCoordinate
   }
 
   /// Takeoff distance available adjusted for any active NOTAM restrictions

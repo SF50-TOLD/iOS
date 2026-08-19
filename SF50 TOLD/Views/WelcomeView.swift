@@ -1,4 +1,5 @@
 import Defaults
+import MeasurementKitUI
 import SF50_Shared
 import SwiftUI
 
@@ -70,8 +71,9 @@ struct WelcomeView: View {
               MeasurementField(
                 "Weight",
                 value: $emptyWeight,
-                unit: weightUnit,
-                format: .weight
+                in: weightUnit,
+                format: .weight,
+                keypad: .whole
               )
               .accessibilityIdentifier("emptyWeightField")
             }

@@ -1,5 +1,6 @@
 import Defaults
 import Foundation
+import MeasurementKit
 import Observation
 import SwiftData
 
@@ -43,7 +44,7 @@ public final class ClimbPerformanceViewModel {
     }
   }
 
-  public var ISADeviation: Measurement<UnitTemperature> {
+  public var ISADeviation: Measurement<UnitTemperatureDifference> {
     didSet {
       recalculate()
     }

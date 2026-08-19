@@ -1,5 +1,6 @@
 import Defaults
 import Foundation
+import MeasurementKit
 import SwiftUI
 
 /// Which distance is being computed.

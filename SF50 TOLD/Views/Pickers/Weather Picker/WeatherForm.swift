@@ -1,5 +1,6 @@
 import Defaults
 import Foundation
+import MeasurementKitUI
 import SF50_Shared
 import SwiftUI
 
@@ -28,8 +29,9 @@ struct WeatherForm: View {
           MeasurementField(
             "Direction",
             value: $windDirection,
-            unit: .degrees,
-            format: .heading
+            in: .degrees,
+            format: .heading,
+            keypad: .whole
           )
           .accessibilityIdentifier("windDirectionField")
           .onSubmit { updateWeatherIfChanged() }
@@ -37,8 +39,9 @@ struct WeatherForm: View {
           MeasurementField(
             "Speed",
             value: $windSpeed,
-            unit: speedUnit,
-            format: .speed
+            in: speedUnit,
+            format: .speed,
+            keypad: .whole
           )
           .frame(maxWidth: 70)
           .accessibilityIdentifier("windSpeedField")
@@ -50,10 +53,10 @@ struct WeatherForm: View {
         MeasurementField(
           "Temperature",
           value: $temperature,
-          unit: temperatureUnit,
-          format: .temperature
+          in: temperatureUnit,
+          format: .temperature,
+          keypad: .signedWhole
         )
-        .multilineTextAlignment(.trailing)
         .accessibilityIdentifier("tempField")
         .onSubmit { updateWeatherIfChanged() }
       }
@@ -62,8 +65,9 @@ struct WeatherForm: View {
         MeasurementField(
           "Altimeter",
           value: $altimeter,
-          unit: pressureUnit,
-          format: .airPressure
+          in: pressureUnit,
+          format: .airPressure,
+          keypad: .decimal
         )
         .accessibilityIdentifier("altimeterField")
         .onSubmit { updateWeatherIfChanged() }

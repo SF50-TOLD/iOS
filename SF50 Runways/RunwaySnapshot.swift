@@ -1,4 +1,5 @@
 import Foundation
+import MeasurementKit
 import SF50_Shared
 
 /// A lightweight, Sendable snapshot of runway data for widget timeline entries.

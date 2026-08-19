@@ -1,6 +1,7 @@
 import Defaults
 import Foundation
 import Logging
+import MeasurementKit
 import Observation
 import Sentry
 import SwiftData

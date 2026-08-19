@@ -61,7 +61,10 @@ final class WelcomePage: BasePage {
       "Continue button should be tappable"
     )
     ensureHittable(continueButton)
-    tapAndEnsureNavigation(element: continueButton, expectedElement: app.textFields["Payload"])
+    tapAndEnsureNavigation(
+      element: continueButton,
+      expectedElement: app.textFields["payloadField"].firstMatch
+    )
 
     // If the data loader appears after setup, defer it
     let deferButton = app.buttons["deferDataButton"]
@@ -70,7 +73,7 @@ final class WelcomePage: BasePage {
     }
 
     XCTAssertTrue(
-      app.textFields["Payload"].waitForExistence(timeout: 10),
+      app.textFields["payloadField"].firstMatch.waitForExistence(timeout: 10),
       "Payload field should appear after setup"
     )
     return TabBarPage(app: app)
