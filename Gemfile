@@ -2,11 +2,4 @@
 
 source "https://rubygems.org"
 
-# gem "rails"
-
-gem "fastlane", "~> 2.228"
-
-gem "abbrev", "~> 0.1.2"
-
-gem "nkf", "~> 0.2.0"
-gem "ostruct", "~> 0.6.3"
+gem "fastlane", "~> 2.238"

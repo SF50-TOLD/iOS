@@ -29,25 +29,25 @@ final class WeatherPickerPage: BasePage {
   func setWindDirection(_ value: String) {
     let field = scrollToElement(windDirectionField)
     XCTAssertNotNil(field, "Wind direction field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   func setWindSpeed(_ value: String) {
     let field = scrollToElement(windSpeedField)
     XCTAssertNotNil(field, "Wind speed field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   func setTemperature(_ value: String) {
     let field = scrollToElement(tempField)
     XCTAssertNotNil(field, "Temperature field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   func setAltimeter(_ value: String) {
     let field = scrollToElement(altimeterField)
     XCTAssertNotNil(field, "Altimeter field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   func setWeather(

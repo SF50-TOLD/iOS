@@ -58,13 +58,13 @@ final class LandingPage: BasePage {
   func setPayload(_ value: String) {
     let field = scrollToElement(payloadField)
     XCTAssertNotNil(field, "Payload field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   func setFuel(_ value: String) {
     let field = scrollToElement(fuelField)
     XCTAssertNotNil(field, "Fuel field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   func selectFlaps(_ flapSetting: String) {
@@ -94,7 +94,7 @@ final class LandingPage: BasePage {
     app.scrollToTop()
     let field = scrollToElement(VREFAdditiveField)
     XCTAssertNotNil(field, "VREF additive field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
     dismissKeyboard()
   }
 

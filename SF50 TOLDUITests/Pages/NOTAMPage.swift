@@ -15,7 +15,7 @@ final class NOTAMPage: BasePage {
 
   func setRunwayShortening(_ value: String) {
     XCTAssertTrue(distanceField.waitForExistence(timeout: 2), "Distance field should exist")
-    distanceField.clearAndType(value, app: app)
+    distanceField.clearAndType(value, app: app, replacingSelection: true, verifying: true)
     dismissKeyboard()
   }
 
@@ -26,7 +26,7 @@ final class NOTAMPage: BasePage {
       obstacleHeightField.waitForExistence(timeout: 2),
       "Obstacle height field should exist"
     )
-    obstacleHeightField.clearAndType(value, app: app)
+    obstacleHeightField.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   func setObstacleDistance(_ value: String) {
@@ -34,7 +34,7 @@ final class NOTAMPage: BasePage {
       obstacleDistanceField.waitForExistence(timeout: 2),
       "Obstacle distance field should exist"
     )
-    obstacleDistanceField.clearAndType(value, app: app)
+    obstacleDistanceField.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   // MARK: - Contamination (Landing)

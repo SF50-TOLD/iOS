@@ -54,13 +54,13 @@ final class TakeoffPage: BasePage {
   func setPayload(_ value: String) {
     let field = scrollToElement(payloadField)
     XCTAssertNotNil(field, "Payload field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   func setFuel(_ value: String) {
     let field = scrollToElement(fuelField)
     XCTAssertNotNil(field, "Fuel field should be accessible")
-    field!.clearAndType(value, app: app)
+    field!.clearAndType(value, app: app, replacingSelection: true, verifying: true)
   }
 
   // MARK: - Navigation

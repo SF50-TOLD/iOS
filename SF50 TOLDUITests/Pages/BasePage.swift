@@ -142,7 +142,7 @@ class BasePage {
   }
 
   func clearAndType(_ element: XCUIElement, _ text: String) {
-    element.clearAndType(text, app: app)
+    element.clearAndType(text, app: app, replacingSelection: true, verifying: true)
   }
 
   func dismissKeyboard() {

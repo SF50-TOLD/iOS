@@ -39,7 +39,7 @@ final class WelcomePage: BasePage {
       emptyWeightField.waitForExistence(timeout: 2),
       "Empty weight field should be accessible"
     )
-    emptyWeightField.clearAndType(weight, app: app)
+    emptyWeightField.clearAndType(weight, app: app, replacingSelection: true, verifying: true)
   }
 
   func toggleThrustSchedule() {

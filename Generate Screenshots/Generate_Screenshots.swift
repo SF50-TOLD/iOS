@@ -60,7 +60,7 @@ final class Generate_Screenshots: XCTestCase {
         emptyWeightField.waitForExistence(timeout: 2),
         "Empty weight field should be accessible"
       )
-      emptyWeightField.clearAndType("3606", app: app)
+      emptyWeightField.clearAndType("3606", app: app, replacingSelection: true, verifying: true)
 
       // Dismiss keyboard popover on iPad
       if app.otherElements["PopoverDismissRegion"].exists {
@@ -118,11 +118,11 @@ final class Generate_Screenshots: XCTestCase {
     // Configure takeoff parameters
     let payloadField = app.textFields["payloadField"].firstMatch
     XCTAssertTrue(payloadField.waitForExistence(timeout: 5), "Payload field should be accessible")
-    payloadField.clearAndType("530", app: app)
+    payloadField.clearAndType("530", app: app, replacingSelection: true, verifying: true)
 
     let fuelField = app.textFields["fuelField"].firstMatch
     XCTAssertTrue(fuelField.waitForExistence(timeout: 5), "Fuel field should be accessible")
-    fuelField.clearAndType("212", app: app)
+    fuelField.clearAndType("212", app: app, replacingSelection: true, verifying: true)
 
     // Select airport first (needed before weather selector is available)
     let airportSelector = app.collectionViews.firstMatch.makeVisible(
@@ -279,11 +279,11 @@ final class Generate_Screenshots: XCTestCase {
       landingPayloadField.waitForExistence(timeout: 5),
       "Payload field should be accessible"
     )
-    landingPayloadField.clearAndType("530", app: app)
+    landingPayloadField.clearAndType("530", app: app, replacingSelection: true, verifying: true)
 
     let landingFuelField = app.textFields["fuelField"].firstMatch
     XCTAssertTrue(landingFuelField.waitForExistence(timeout: 5), "Fuel field should be accessible")
-    landingFuelField.clearAndType("75", app: app)
+    landingFuelField.clearAndType("75", app: app, replacingSelection: true, verifying: true)
 
     // Select airport for landing
     let landingAirportSelector = app.collectionViews.firstMatch.makeVisible(

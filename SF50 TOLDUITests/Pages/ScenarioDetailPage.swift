@@ -14,7 +14,7 @@ final class ScenarioDetailPage: BasePage {
   func setName(_ name: String) {
     XCTAssertTrue(nameField.wait(), "Name field should exist")
     emptyNameField()
-    nameField.clearAndType(name, app: app)
+    nameField.clearAndType(name, app: app, replacingSelection: true, verifying: true)
     // Ends editing so the name binding commits before any subsequent action
     // (other field tap, back-nav, etc.). On iPad iOS 18.4 the first-responder
     // transfer from a plain TextField can drop the latest keystroke if we
@@ -40,7 +40,7 @@ final class ScenarioDetailPage: BasePage {
   private func clearTypeAndVerify(_ field: XCUIElement, _ value: String, retries: Int = 3) {
     let digits = value.filter(\.isNumber)
     for attempt in 1...retries {
-      field.clearAndType(value, app: app)
+      field.clearAndType(value, app: app, replacingSelection: true, verifying: true)
       dismissKeyboard()
       let shown = (field.value as? String ?? "").filter(\.isNumber)
       if shown.contains(digits) { return }

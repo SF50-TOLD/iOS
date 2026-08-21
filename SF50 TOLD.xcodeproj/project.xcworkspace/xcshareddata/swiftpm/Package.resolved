@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/getsentry/sentry-cocoa/",
       "state" : {
-        "revision" : "d3562ee73e56a7b0b8319ec613db3c529924f07a",
-        "version" : "9.19.1"
+        "revision" : "cd213f98af160e6497eeff0707bc3f6a205b159c",
+        "version" : "9.26.0"
       }
     },
     {
@@ -98,6 +98,24 @@
       "state" : {
         "revision" : "6a52f3251125d74daf04fcbd5e6f08a75d074382",
         "version" : "1.8.2"
+      }
+    },
+    {
+      "identity" : "swift-asn1",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-asn1.git",
+      "state" : {
+        "revision" : "a9a5efd40eaf558a2bcd48d64b1d1646be686008",
+        "version" : "1.7.1"
+      }
+    },
+    {
+      "identity" : "swift-crypto",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-crypto.git",
+      "state" : {
+        "revision" : "47d3869a7291f085c1fb9fb1e6d3b97a793f45c6",
+        "version" : "4.5.1"
       }
     },
     {
@@ -178,7 +196,7 @@
       "location" : "https://github.com/RISCfuture/SwiftMETAR",
       "state" : {
         "branch" : "main",
-        "revision" : "381cf6a4509dfb747964e6d049a5ad6c7a48b627"
+        "revision" : "b94e1abc6adfeea39e424eba10297813cb428b0f"
       }
     },
     {
@@ -195,8 +213,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/riscfuture/swiftr2",
       "state" : {
-        "revision" : "5e8e5a5d164a1a6c3e0fed64d91d6a35bfd2ecfc",
-        "version" : "1.1.0"
+        "revision" : "415072967cbc60a5f02b6d6cbd191cfe62c9f8fb",
+        "version" : "1.2.0"
       }
     },
     {
@@ -223,7 +241,7 @@
       "location" : "https://github.com/RISCfuture/XCUITestKit",
       "state" : {
         "branch" : "main",
-        "revision" : "91efb401e02f1070b6da58014c542f57cc8db098"
+        "revision" : "797d5d183a67b0bb3034250d34d27f838f6cbab5"
       }
     },
     {
