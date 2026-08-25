@@ -22,14 +22,15 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   /// Estimated size per tile in bytes (uncompressed SRTM3: 1201×1201×Int16).
   private static let estimatedTileSize = 2_884_802
 
+  /// Distinguishes this app's Background Assets downloads from any other client's.
+  private static let downloadIdentifierPrefix = "terrain-"
+
   // MARK: - Progress Weight Constants
 
   /// Each processing phase's share of region processing time, scaled to 10 000.
-  /// Values derived from measured per-tile processing times: download 29.3%, parse 46.3%,
-  /// compress 24.5%.
-  public static let downloadPhaseRatio: Int64 = 2928
-  public static let parsePhaseRatio: Int64 = 4627
-  public static let compressPhaseRatio: Int64 = 2445
+  /// Values derived from measured per-tile processing times: download 38.8%, parse 61.2%.
+  public static let downloadPhaseRatio: Int64 = 3876,
+    parsePhaseRatio: Int64 = 6124
 
   /// Returns the terrain region to prefetch based on the device's locale.
   ///
@@ -104,7 +105,7 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
     }
   }
 
-  /// Compressed file size in bytes from the bundled manifest.
+  /// Payload size in bytes from the bundled manifest.
   public var sizeBytes: Int {
     guard let region = TerrainManifest.bundled.region(forID: rawValue) else {
       fatalError("Region \(rawValue) not found in bundled terrain manifest")
@@ -226,14 +227,18 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
     }
   }
 
-  /// Filename for the terrain data file.
-  public var filename: String { "terrain-\(rawValue).srtm.lzma" }
+  /// Name this region's payload is published under, and the name the manifest refers to it by.
+  public var remoteFilename: String { "terrain-\(rawValue).srtm" }
 
-  /// Output filename for the processed terrain file (uncompressed).
-  public var outputFilename: String { "terrain-\(rawValue).srtm" }
+  /// Name this region's payload is stored under in the shared container.
+  public var localFilename: String { "\(rawValue).srtm" }
 
-  /// Compressed output filename.
-  public var compressedFilename: String { "\(outputFilename).lzma" }
+  /// Name of the LZMA-compressed payload some installed devices hold, which expands to
+  /// ``localFilename``.
+  public var legacyCompressedFilename: String { "terrain-\(rawValue).srtm.lzma" }
+
+  /// Identifies this region's download to Background Assets, in the app and its extension alike.
+  public var downloadIdentifier: String { Self.downloadIdentifierPrefix + rawValue }
 
   /// Returns all HGT tile names that fall within this region's bounding boxes.
   ///
@@ -276,6 +281,12 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   /// Sum of numTiles for a collection of regions.
   public static func totalTiles(for regions: [Self]) -> Int {
     regions.reduce(0) { $0 + $1.numTiles }
+  }
+
+  /// The region a Background Assets download identifier refers to, if it is one of this app's.
+  public static func region(forDownloadIdentifier identifier: String) -> Self? {
+    guard identifier.hasPrefix(downloadIdentifierPrefix) else { return nil }
+    return .init(rawValue: String(identifier.dropFirst(downloadIdentifierPrefix.count)))
   }
 
   // MARK: - Instance Methods

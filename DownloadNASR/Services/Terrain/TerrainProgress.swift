@@ -14,9 +14,6 @@ enum TerrainProgress: Sendable {
   /// Parsing/combining downloaded tiles.
   case parsing(region: TerrainRegion, completed: Int, total: Int)
 
-  /// Compressing region data (0.0-1.0).
-  case compressing(region: TerrainRegion, fraction: Double)
-
   /// Writing manifest file.
   case generatingManifest
 

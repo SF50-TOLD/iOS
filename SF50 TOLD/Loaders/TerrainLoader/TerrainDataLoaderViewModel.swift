@@ -91,7 +91,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
       }
       .store(in: &cancellables)
 
-    loader.$decompressingRegions
+    loader.$expandingRegions
       .sink { [weak self] _ in
         self?.objectWillChange.send()
       }
@@ -103,7 +103,20 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
       }
       .store(in: &cancellables)
 
-    // Surface corruption errors when new corrupted regions appear
+    loader.$unfinishedRegions
+      .sink { [weak self] _ in
+        self?.objectWillChange.send()
+      }
+      .store(in: &cancellables)
+
+    loader.$backgroundDownloadProgress
+      .sink { [weak self] _ in
+        self?.objectWillChange.send()
+      }
+      .store(in: &cancellables)
+
+    // A region reaches this set only after a full-length payload fails to load, so every arrival
+    // here is a payload the user has to re-download.
     loader.$corruptedRegions
       .removeDuplicates()
       .dropFirst()
@@ -124,30 +137,42 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     loader.isRegionAvailable(region)
   }
 
-  /// Checks if a region is currently being downloaded (directly or via Background Assets).
+  /// Checks if a region is currently being downloaded (directly, or by the system on the app's
+  /// behalf), or holds a payload that a download left unfinished.
   func isDownloading(_ region: TerrainRegion) -> Bool {
     loader.downloadingRegions.contains(region)
       || loader.backgroundDownloadingRegions.contains(region)
+      || loader.unfinishedRegions.contains(region)
   }
 
   /// Returns the status of a region.
+  ///
+  /// Work in progress outranks corruption, so a region the system is still fetching reads as
+  /// downloading even when a previous attempt left it marked corrupt.
   func status(for region: TerrainRegion) -> RegionDownloadStatus {
     if isAvailable(region) {
       return .available
     }
+    if isDownloading(region) {
+      return .downloading(progress: downloadProgress(for: region))
+    }
+    if loader.expandingRegions.contains(region) {
+      return .downloading(progress: nil)
+    }
     if loader.corruptedRegions.contains(region) {
       return .corrupted
     }
-    if isDownloading(region) {
-      if case .downloading(let r, let progress) = downloadState, r == region {
-        return .downloading(progress: progress)
-      }
-      return .downloading(progress: nil)
-    }
-    if loader.decompressingRegions.contains(region) {
-      return .downloading(progress: nil)
-    }
     return .notDownloaded
+  }
+
+  /// How far along `region`'s download is, from whichever mechanism is fetching it.
+  func downloadProgress(for region: TerrainRegion) -> Float? {
+    if case .downloading(let downloadingRegion, let progress) = downloadState,
+      downloadingRegion == region
+    {
+      return progress
+    }
+    return loader.backgroundDownloadProgress[region].map(Float.init)
   }
 
   /// Downloads terrain data for a region.
@@ -171,6 +196,12 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
         downloadState = .idle
       }
     }
+  }
+
+  /// Removes a region's terrain data, reclaiming the space it occupies.
+  func deleteRegion(_ region: TerrainRegion) {
+    error = nil
+    Task { await loader.deleteRegion(region) }
   }
 
   /// Re-downloads a corrupted terrain region, deleting the bad file first.
@@ -203,8 +234,8 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
         downloadState = .idle
       case .downloading(let region, let progress):
         downloadState = .downloading(region: region, progress: progress)
-      case .decompressing(let region):
-        downloadState = .decompressing(region: region)
+      case .expanding(let region):
+        downloadState = .expanding(region: region)
       case .completed:
         downloadState = .idle
       case .failed(_, let message):
@@ -219,15 +250,28 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
   enum DownloadState: Equatable {
     case idle
     case downloading(region: TerrainRegion, progress: Float?)
-    case decompressing(region: TerrainRegion)
+    case expanding(region: TerrainRegion)
   }
 
   /// Status of a single region.
   enum RegionDownloadStatus: Equatable {
+
+    // MARK: - Cases
+
     case available
     case corrupted
     case notDownloaded
     case downloading(progress: Float?)
+
+    // MARK: - Instance Properties
+
+    /// Whether this region holds a payload the user can remove to reclaim its space.
+    var hasDeletablePayload: Bool {
+      switch self {
+        case .available, .corrupted: true
+        case .notDownloaded, .downloading: false
+      }
+    }
   }
 }
 

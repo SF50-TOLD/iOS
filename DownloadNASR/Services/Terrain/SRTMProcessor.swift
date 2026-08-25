@@ -2,7 +2,6 @@ import Compression
 import Foundation
 import Logging
 import SF50_Shared
-import StreamingLZMA
 
 /// Errors that can occur during SRTM processing.
 enum SRTMProcessorError: LocalizedError {
@@ -27,7 +26,7 @@ enum SRTMProcessorError: LocalizedError {
         let names = regions.map(\.displayName)
         return String(
           localized:
-            "Cannot generate manifest: Missing compressed files for regions: \(names, format: .list(type: .and)). Copy existing .lzma files to the output directory or select these regions for processing."
+            "Cannot generate manifest: Missing payloads for regions: \(names, format: .list(type: .and)). Copy existing .srtm files to the output directory or select these regions for processing."
         )
     }
   }
@@ -40,9 +39,8 @@ enum SRTMProcessorError: LocalizedError {
 /// 1. Download HGT tiles for selected regions
 /// 2. Parse elevation data from HGT files
 /// 3. Combine into optimized binary format per continent
-/// 4. Compress using LZMA
-/// 5. Generate terrain manifest
-/// 6. Upload to CloudFlare R2 (if configured)
+/// 4. Generate terrain manifest
+/// 5. Upload to CloudFlare R2 (if configured)
 ///
 /// ## Data Source
 ///
@@ -76,6 +74,9 @@ actor SRTMProcessor {
 
   /// File format version (3 = per-tile LZFSE compression).
   private static let formatVersion: UInt16 = 3
+
+  /// Name the manifest is written and published under.
+  private static let manifestFilename = TerrainManifest.defaultManifestURL.lastPathComponent
 
   // MARK: - Instance Properties
 
@@ -631,67 +632,24 @@ actor SRTMProcessor {
     try fileHandle.synchronize()
     try fileHandle.close()
 
-    // Get uncompressed file size
-    let uncompressedAttrs = try FileManager.default.attributesOfItem(atPath: tempOutputFile.path)
-    let uncompressedSize = uncompressedAttrs[.size] as? Int ?? 0
-
-    // Compress with LZMA using streaming to avoid loading entire file into memory
-    await reportProgress(.compressing(region: region, fraction: 0.0))
-    await reportLog(level: .notice, message: "Compressing \(region.displayName)…")
-
-    let compressedFile = outputLocation.appendingPathComponent(region.compressedFilename)
-
-    // Open input file for reading
-    let inputHandle = try FileHandle(forReadingFrom: tempOutputFile)
-    defer { try? inputHandle.close() }
-
-    // Create output file and open for writing
-    FileManager.default.createFile(atPath: compressedFile.path, contents: nil)
-    let outputHandle = try FileHandle(forWritingTo: compressedFile)
-    defer { try? outputHandle.close() }
-
-    // Stream compress with progress reporting (uses ~2 MB with highThroughput config)
-    let fileSize = Int64(uncompressedSize)
-    let progressCallback = onProgress
-    do {
-      try inputHandle.lzmaFileCompress(
-        to: outputHandle,
-        configuration: .highThroughput
-      ) { bytesRead in
-        let fraction = Double(bytesRead) / Double(fileSize)
-        Task { @MainActor in
-          progressCallback?(.compressing(region: region, fraction: fraction))
-        }
-      }
-    } catch {
-      throw SRTMProcessorError.compressionFailed(error)
+    // Every tile in the payload is already LZFSE-compressed, so the file is published as it stands.
+    let payloadFile = outputLocation.appendingPathComponent(region.remoteFilename)
+    if FileManager.default.fileExists(atPath: payloadFile.path) {
+      try FileManager.default.removeItem(at: payloadFile)
     }
+    try FileManager.default.moveItem(at: tempOutputFile, to: payloadFile)
 
-    await reportProgress(.compressing(region: region, fraction: 1.0))
-    try Task.checkCancellation()
-
-    try inputHandle.close()
-    try outputHandle.close()
-
-    // Delete temp file to save disk space (only keep compressed version)
-    try FileManager.default.removeItem(at: tempOutputFile)
-
-    // Get compressed file size for logging
-    let compressedAttrs = try FileManager.default.attributesOfItem(atPath: compressedFile.path)
-    let compressedSize = compressedAttrs[.size] as? Int ?? 0
-
-    let ratio = Double(compressedSize) / Double(uncompressedSize) * 100
+    let payloadSize =
+      try FileManager.default.attributesOfItem(atPath: payloadFile.path)[.size]
+      as? Int ?? 0
     await reportLog(
       level: .notice,
       message: """
-        Compressed \(region.displayName): \
-        \(byteCountFormatter.string(fromByteCount: Int64(uncompressedSize))) → \
-        \(byteCountFormatter.string(fromByteCount: Int64(compressedSize))) \
-        (\(String(format: "%.1f", ratio))%)
+        Wrote \(region.displayName): \(byteCountFormatter.string(fromByteCount: Int64(payloadSize)))
         """
     )
 
-    return compressedFile
+    return payloadFile
   }
 
   /// Parses and LZFSE-compresses tiles in parallel, writes sequentially in order.
@@ -841,21 +799,21 @@ actor SRTMProcessor {
 
   /// Generates the terrain manifest JSON file.
   ///
-  /// Validates that ALL regions have compressed files in the output directory (not just
-  /// the regions processed in this run). This allows partial processing when pre-existing
-  /// `.lzma` files are copied to the output directory before running.
+  /// Validates that ALL regions have payloads in the output directory (not just the regions
+  /// processed in this run). This allows partial processing when pre-existing `.srtm` files are
+  /// copied to the output directory before running.
   private func generateManifest(for _: [ProcessedRegion]) async throws {
-    // Validate that all regions have .lzma files in the output directory
+    // Validate that all regions have payloads in the output directory
     var missingRegions: [TerrainRegion] = []
     var allRegionData: [(region: TerrainRegion, fileURL: URL, sizeBytes: Int)] = []
 
     for region in TerrainRegion.allCases {
-      let compressedFile = outputLocation.appendingPathComponent(region.compressedFilename)
+      let payloadFile = outputLocation.appendingPathComponent(region.remoteFilename)
 
-      if let attrs = try? FileManager.default.attributesOfItem(atPath: compressedFile.path),
+      if let attrs = try? FileManager.default.attributesOfItem(atPath: payloadFile.path),
         let size = attrs[.size] as? Int
       {
-        allRegionData.append((region: region, fileURL: compressedFile, sizeBytes: size))
+        allRegionData.append((region: region, fileURL: payloadFile, sizeBytes: size))
       } else {
         missingRegions.append(region)
       }
@@ -894,7 +852,7 @@ actor SRTMProcessor {
     }
 
     var manifest: [String: Any] = [
-      "version": 2,
+      "version": TerrainManifest.currentVersion,
       "generatedAt": iso8601Formatter.string(from: Date())
     ]
 
@@ -906,7 +864,7 @@ actor SRTMProcessor {
     manifest["regions"] = allRegionData.map { data -> [String: Any] in
       [
         "id": data.region.rawValue,
-        "filename": data.region.compressedFilename,
+        "filename": data.region.remoteFilename,
         "sizeBytes": data.sizeBytes
       ]
     }
@@ -916,12 +874,12 @@ actor SRTMProcessor {
       options: [.prettyPrinted, .sortedKeys]
     )
 
-    let manifestFile = outputLocation.appendingPathComponent("terrain-manifest.json")
+    let manifestFile = outputLocation.appendingPathComponent(Self.manifestFilename)
     try jsonData.write(to: manifestFile)
 
     await reportLog(
       level: .notice,
-      message: "Generated terrain-manifest.json with \(allRegionData.count) regions"
+      message: "Generated \(Self.manifestFilename) with \(allRegionData.count) regions"
     )
   }
 
@@ -951,7 +909,7 @@ actor SRTMProcessor {
         let region = processed.region
         try await uploader.uploadFile(
           at: processed.outputFile,
-          key: "terrain/\(region.compressedFilename)",
+          key: "terrain/\(region.remoteFilename)",
           onProgress: { fraction in
             await self.reportProgress(.uploading(region: region, fraction: fraction))
           }
@@ -966,9 +924,9 @@ actor SRTMProcessor {
 
     // Upload manifest
     await reportProgress(.uploadingManifest)
-    let manifestFile = outputLocation.appendingPathComponent("terrain-manifest.json")
+    let manifestFile = outputLocation.appendingPathComponent(Self.manifestFilename)
     do {
-      try await uploader.uploadFile(at: manifestFile, key: "terrain/terrain-manifest.json")
+      try await uploader.uploadFile(at: manifestFile, key: "terrain/" + Self.manifestFilename)
       await reportLog(level: .notice, message: "Successfully uploaded terrain data to R2")
     } catch {
       await reportLog(

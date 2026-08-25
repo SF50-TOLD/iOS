@@ -12,9 +12,10 @@ struct TerrainSettingsView: View {
     List {
       Section {
         ForEach(viewModel.allRegions) { region in
+          let status = viewModel.status(for: region)
           TerrainRegionRow(
             region: region,
-            status: viewModel.status(for: region),
+            status: status,
             onDownload: {
               viewModel.downloadRegion(region)
             },
@@ -22,6 +23,13 @@ struct TerrainSettingsView: View {
               viewModel.redownloadRegion(region)
             }
           )
+          .swipeActions(edge: .trailing) {
+            if status.hasDeletablePayload {
+              Button("Delete", role: .destructive) {
+                viewModel.deleteRegion(region)
+              }
+            }
+          }
         }
       }
 

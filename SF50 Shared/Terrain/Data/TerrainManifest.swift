@@ -29,6 +29,17 @@ public struct TerrainManifest: Decodable, Sendable {
     string: "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/"
   )!
 
+  /// Manifest layout this build understands, in which each region is a raw `.srtm` payload.
+  public static let currentVersion = 3
+
+  /// Where the manifest for ``currentVersion`` is published.
+  ///
+  /// Each layout is published at its own URL, so a build reads the manifest it was compiled against
+  /// and finds payloads in the form it expects.
+  public static let defaultManifestURL = URL(
+    string: defaultBaseURL.absoluteString + "terrain-manifest-v3.json"
+  )!
+
   // MARK: - Instance Properties
 
   public let baseURL: String

@@ -36,10 +36,8 @@ final class TerrainDataLoader: ObservableObject {
 
   static let shared = TerrainDataLoader()
 
-  /// Manifest URL for terrain data.
-  private static let manifestURL = URL(
-    string: TerrainManifest.defaultBaseURL.absoluteString + "terrain-manifest.json"
-  )!
+  /// Extension given to a payload still being built, so a scan can't mistake it for a finished one.
+  nonisolated private static let scratchFileExtension = "partial"
 
   // MARK: - Instance Properties
 
@@ -55,8 +53,14 @@ final class TerrainDataLoader: ObservableObject {
   /// Regions with active Background Assets downloads managed by the system.
   @Published private(set) var backgroundDownloadingRegions: Set<TerrainRegion> = []
 
-  /// Regions currently being decompressed.
-  @Published private(set) var decompressingRegions: Set<TerrainRegion> = []
+  /// Regions currently being expanded from a compressed payload.
+  @Published private(set) var expandingRegions: Set<TerrainRegion> = []
+
+  /// Regions whose payload is on disk but shorter than the manifest says it should be.
+  @Published private(set) var unfinishedRegions: Set<TerrainRegion> = []
+
+  /// Fraction complete for each region the system is currently downloading.
+  @Published private(set) var backgroundDownloadProgress: [TerrainRegion: Double] = [:]
 
   /// Regions whose files exist on disk but failed to load (corrupt or unreadable).
   @Published private(set) var corruptedRegions: Set<TerrainRegion> = []
@@ -72,6 +76,9 @@ final class TerrainDataLoader: ObservableObject {
 
   /// Base URL for terrain data downloads.
   private var baseURL = TerrainManifest.defaultBaseURL.absoluteString
+
+  /// Receives the system's download events; `BADownloadManager` holds its delegate weakly.
+  private var backgroundDownloadObserver: TerrainBackgroundDownloadObserver?
 
   /// URL session for downloads.
   private lazy var urlSession: URLSession = {
@@ -93,52 +100,56 @@ final class TerrainDataLoader: ObservableObject {
     return containerURL.appendingPathComponent("Terrain", isDirectory: true)
   }
 
+  /// Reads the shared container and reports what each region's files amount to.
+  nonisolated private var inventory: TerrainRegionInventory? {
+    terrainDirectory.map { .init(directory: $0, manifest: .bundled) }
+  }
+
   // MARK: - Initializers
 
   init() {
-    // Scan for available regions and check for active BA downloads
+    let observer = TerrainBackgroundDownloadObserver(inventory: inventory, loader: self)
+    backgroundDownloadObserver = observer
+    BADownloadManager.shared.delegate = observer
+
     refreshAvailableRegions()
     refreshBackgroundDownloads()
-
-    // Listen for download completion notifications from Background Assets extension
     setupNotificationObserver()
   }
 
   // MARK: - Type Methods
 
-  /// Streaming LZMA decompression using StreamingLZMA.
+  /// Expands an LZMA-compressed payload into the form the terrain service reads.
   ///
-  /// Reads the compressed `.lzma` file and writes the decompressed output incrementally,
-  /// keeping memory usage bounded regardless of file size. Removes the compressed
-  /// file after successful decompression.
-  nonisolated private static func streamingDecompress(
+  /// The output is built under a scratch name and renamed into place only once it is whole, so a
+  /// concurrent scan sees either no payload or a complete one — never a half-written file that
+  /// would load as corrupt. The compressed original is removed on success.
+  nonisolated private static func expandLegacyPayload(
     from sourceURL: URL,
     to destinationURL: URL
   ) throws {
+    let scratchURL = destinationURL.appendingPathExtension(Self.scratchFileExtension)
+    try? FileManager.default.removeItem(at: scratchURL)
+
     let inputHandle = try FileHandle(forReadingFrom: sourceURL)
     defer { try? inputHandle.close() }
 
-    FileManager.default.createFile(atPath: destinationURL.path, contents: nil)
-    let outputHandle = try FileHandle(forWritingTo: destinationURL)
+    FileManager.default.createFile(atPath: scratchURL.path, contents: nil)
+    let outputHandle = try FileHandle(forWritingTo: scratchURL)
     defer { try? outputHandle.close() }
 
     do {
-      try inputHandle.lzmaFileDecompress(
-        to: outputHandle,
-        configuration: .highThroughput
-      )
-      // Flush to disk before closing so the file is ready for pread
+      try inputHandle.lzmaFileDecompress(to: outputHandle, configuration: .highThroughput)
       try outputHandle.synchronize()
+      try outputHandle.close()
     } catch {
       try? outputHandle.close()
-      try? FileManager.default.removeItem(at: destinationURL)
-      if error.isOutOfDiskSpace {
-        throw TerrainDataLoaderError.outOfDiskSpace
-      }
+      try? FileManager.default.removeItem(at: scratchURL)
+      if error.isOutOfDiskSpace { throw TerrainDataLoaderError.outOfDiskSpace }
       throw TerrainDataLoaderError.decompressionFailed(error)
     }
 
-    // Remove compressed file after successful decompression
+    try FileManager.default.moveItem(at: scratchURL, to: destinationURL)
     try? FileManager.default.removeItem(at: sourceURL)
   }
 
@@ -152,7 +163,7 @@ final class TerrainDataLoader: ObservableObject {
   /// Returns the URL to the terrain data file for a region, if available.
   func terrainFileURL(for region: TerrainRegion) -> URL? {
     guard isRegionAvailable(region) else { return nil }
-    return decompressedFileURL(for: region)
+    return payloadURL(for: region)
   }
 
   /// Queries `BADownloadManager` for active Background Assets downloads.
@@ -163,11 +174,7 @@ final class TerrainDataLoader: ObservableObject {
       }
 
       let regions = Set(
-        downloads.compactMap { download -> TerrainRegion? in
-          guard download.identifier.hasPrefix("terrain-") else { return nil }
-          let regionID = String(download.identifier.dropFirst("terrain-".count))
-          return TerrainRegion(rawValue: regionID)
-        }
+        downloads.compactMap { TerrainRegion.region(forDownloadIdentifier: $0.identifier) }
       )
 
       Task { @MainActor [weak self] in
@@ -177,64 +184,85 @@ final class TerrainDataLoader: ObservableObject {
     }
   }
 
-  /// Refreshes the list of available regions by scanning the terrain directory.
+  /// Records how far along the system's download of `region` is.
+  func backgroundDownloadDidProgress(region: TerrainRegion, fraction: Double) {
+    backgroundDownloadingRegions.insert(region)
+    backgroundDownloadProgress[region] = fraction
+  }
+
+  /// Takes up a payload the system finished downloading.
+  func backgroundDownloadDidFinish(region: TerrainRegion) {
+    backgroundDownloadingRegions.remove(region)
+    backgroundDownloadProgress[region] = nil
+    corruptedRegions.remove(region)
+    refreshAvailableRegions()
+  }
+
+  /// Clears the download's state so the region stops reading as in progress.
+  func backgroundDownloadDidFail(region: TerrainRegion, error: any Error) {
+    backgroundDownloadingRegions.remove(region)
+    backgroundDownloadProgress[region] = nil
+    report(error, for: region, operation: "backgroundDownload")
+    refreshAvailableRegions()
+  }
+
+  /// Refreshes region state by scanning the terrain directory.
   ///
-  /// Also detects compressed `.srtm.lzma` files left by the Background Assets
-  /// extension and triggers async decompression for them. The filesystem scan
-  /// runs on a background task so the main actor is never blocked.
+  /// A region whose payload is short is recorded as unfinished rather than available, so a download
+  /// still in flight never reaches the terrain service and never reads as corrupt. The filesystem
+  /// scan runs on a background task so the main actor is never blocked.
   func refreshAvailableRegions() {
     let corrupted = corruptedRegions
     Task { [weak self] in
       guard let self else { return }
-      let scan = await scanAvailableRegions(excluding: corrupted)
+      let scan = await scanRegions(excluding: corrupted)
 
       availableRegions = scan.available
+      unfinishedRegions = scan.unfinished
       logger.info("Available terrain regions: \(scan.available.map(\.rawValue))")
 
       loadAvailableRegionsIntoService()
 
-      // Decompress any files left by the Background Assets extension
-      for region in scan.pendingDecompression {
-        Task { await self.decompressPendingDownload(for: region) }
+      for region in scan.pendingExpansion {
+        Task { await self.expandPendingPayload(for: region) }
       }
     }
   }
 
-  /// Scans the terrain directory for decompressed regions and compressed files
-  /// left by the Background Assets extension.
+  /// Reads what the shared container holds for every region not already known to be corrupt.
   @concurrent
-  private func scanAvailableRegions(
-    excluding corrupted: Set<TerrainRegion>
-  ) async -> (available: Set<TerrainRegion>, pendingDecompression: [TerrainRegion]) {
-    var available = Set<TerrainRegion>()
-    var pendingDecompression = [TerrainRegion]()
+  private func scanRegions(excluding corrupted: Set<TerrainRegion>) async -> RegionScan {
+    guard let inventory else { return .init() }
 
+    var scan = RegionScan()
     for region in TerrainRegion.allCases where !corrupted.contains(region) {
-      if let url = decompressedFileURL(for: region),
-        FileManager.default.fileExists(atPath: url.path)
-      {
-        available.insert(region)
-      } else if let compressed = compressedFileURL(for: region),
-        FileManager.default.fileExists(atPath: compressed.path)
-      {
-        logger.info(
-          "Found BA-downloaded compressed file for \(region.rawValue), queuing decompression"
-        )
-        pendingDecompression.append(region)
+      switch inventory.state(of: region) {
+        case .complete:
+          scan.available.insert(region)
+        case .legacyCompressed:
+          logger.info("Found a compressed payload for \(region.rawValue), queuing expansion")
+          scan.pendingExpansion.append(region)
+        case .incomplete(let bytesOnDisk, let expectedBytes):
+          logger.info(
+            "Payload for \(region.rawValue) is \(bytesOnDisk) of \(expectedBytes) bytes"
+          )
+          scan.unfinished.insert(region)
+        case .absent:
+          break
       }
     }
-
-    return (available, pendingDecompression)
+    return scan
   }
 
   /// Deletes terrain data files for a region from disk and clears all tracking state.
   func deleteRegion(_ region: TerrainRegion) async {
-    if let decompressedURL = decompressedFileURL(for: region) {
-      try? FileManager.default.removeItem(at: decompressedURL)
+    if let payloadURL = payloadURL(for: region) {
+      try? FileManager.default.removeItem(at: payloadURL)
     }
-    if let compressedURL = compressedFileURL(for: region) {
-      try? FileManager.default.removeItem(at: compressedURL)
+    if let legacyPayloadURL = legacyPayloadURL(for: region) {
+      try? FileManager.default.removeItem(at: legacyPayloadURL)
     }
+    unfinishedRegions.remove(region)
 
     availableRegions.remove(region)
     corruptedRegions.remove(region)
@@ -287,7 +315,7 @@ final class TerrainDataLoader: ObservableObject {
       // Load the freshly downloaded file into TerrainService. If the file
       // downloaded OK but can't be loaded, mark it as corrupted so the UI
       // shows "Corrupted" rather than a misleading "Download" button.
-      if let fileURL = decompressedFileURL(for: region) {
+      if let fileURL = payloadURL(for: region) {
         let loadSpan = transaction.startChild(
           operation: "terrain.load",
           description: "Load \(region.rawValue) into TerrainService"
@@ -326,14 +354,14 @@ final class TerrainDataLoader: ObservableObject {
 
   // MARK: - Private Methods
 
-  /// Returns the URL to the decompressed terrain file for a region.
-  nonisolated private func decompressedFileURL(for region: TerrainRegion) -> URL? {
-    terrainDirectory?.appendingPathComponent("\(region.rawValue).srtm")
+  /// Returns the URL this region's payload is stored under in the shared container.
+  nonisolated private func payloadURL(for region: TerrainRegion) -> URL? {
+    inventory?.localURL(for: region)
   }
 
-  /// Returns the URL to the compressed terrain file for a region.
-  nonisolated private func compressedFileURL(for region: TerrainRegion) -> URL? {
-    terrainDirectory?.appendingPathComponent(region.filename)
+  /// Returns the URL of this region's LZMA-compressed payload, which expands to ``payloadURL(for:)``.
+  nonisolated private func legacyPayloadURL(for region: TerrainRegion) -> URL? {
+    inventory?.legacyCompressedURL(for: region)
   }
 
   /// Schedules a download via Background Assets.
@@ -381,7 +409,7 @@ final class TerrainDataLoader: ObservableObject {
     let bundled = TerrainManifest.bundled
 
     do {
-      let (data, _) = try await urlSession.data(from: Self.manifestURL)
+      let (data, _) = try await urlSession.data(from: TerrainManifest.defaultManifestURL)
       let decoder = JSONDecoder()
       decoder.dateDecodingStrategy = .iso8601
       let remote = try decoder.decode(TerrainManifest.self, from: data)
@@ -401,87 +429,82 @@ final class TerrainDataLoader: ObservableObject {
     }
   }
 
-  /// Decompresses a compressed terrain file left by the Background Assets extension.
-  ///
-  /// Called when `refreshAvailableRegions()` finds a `.srtm.lzma` file without
-  /// a corresponding decompressed `.srtm` file.
-  private func decompressPendingDownload(for region: TerrainRegion) async {
-    guard let compressedURL = compressedFileURL(for: region),
-      let decompressedURL = decompressedFileURL(for: region)
+  /// Expands a compressed payload found in the shared container into a usable one.
+  private func expandPendingPayload(for region: TerrainRegion) async {
+    guard let legacyPayloadURL = legacyPayloadURL(for: region),
+      let payloadURL = payloadURL(for: region)
     else {
       return
     }
 
-    logger.info("Decompressing BA-downloaded terrain for \(region.rawValue)…")
-    decompressingRegions.insert(region)
+    logger.info("Expanding compressed terrain for \(region.rawValue)…")
+    expandingRegions.insert(region)
+    state = .expanding(region: region)
+    defer { expandingRegions.remove(region) }
 
     do {
       try await Task.detached(priority: .userInitiated) {
-        try Self.streamingDecompress(from: compressedURL, to: decompressedURL)
+        try Self.expandLegacyPayload(from: legacyPayloadURL, to: payloadURL)
       }.value
-      decompressingRegions.remove(region)
       availableRegions.insert(region)
       loadAvailableRegionsIntoService()
-      logger.info("BA terrain for \(region.rawValue) is now available")
+      logger.info("Terrain for \(region.rawValue) is available")
     } catch {
-      if (error as? TerrainDataLoaderError)?.isReportable ?? true {
-        SentrySDK.capture(error: error) { scope in
-          scope.setTag(value: region.rawValue, key: "terrain.region")
-          scope.setTag(value: "decompress", key: "terrain.operation")
-          scope.setFingerprint(["terrain", "decompress"])
-        }
-      }
-      decompressingRegions.remove(region)
+      report(error, for: region, operation: "expand")
       logger.error(
-        "Failed to decompress BA terrain for \(region.rawValue): \(error.localizedDescription)"
+        "Failed to expand terrain for \(region.rawValue): \(error.localizedDescription)"
       )
       state = .failed(region: region, message: error.localizedDescription)
     }
   }
 
-  /// Performs a direct download of terrain data.
+  /// Downloads a region's payload directly, bypassing Background Assets.
+  ///
+  /// The payload lands under a scratch name and is renamed into place once whole, so an interrupted
+  /// download leaves nothing a scan could mistake for a usable region.
   private func performDirectDownload(for region: TerrainRegion) async throws {
-    guard let compressedURL = compressedFileURL(for: region),
-      let decompressedURL = decompressedFileURL(for: region)
-    else {
+    guard let payloadURL = payloadURL(for: region) else {
       throw TerrainDataLoaderError.noStorageAccess
     }
 
-    // Update base URL from manifest
     await fetchManifestBaseURL()
 
-    let remoteURL = URL(string: baseURL + region.compressedFilename)!
-
+    let remoteURL = URL(string: baseURL + region.remoteFilename)!
     logger.info("Starting direct download for \(region.rawValue) from \(remoteURL)")
 
-    // Download with retry and resume data support
+    // A region runs to several gigabytes, so an indeterminate spinner would leave a healthy
+    // download and a stalled one looking exactly alike for minutes at a time.
+    let (progressUpdates, continuation) = AsyncStream.makeStream(of: Float.self)
+    defer { continuation.finish() }
+
+    let reportingProgress = Task { [weak self] in
+      for await fraction in progressUpdates {
+        self?.state = .downloading(region: region, progress: fraction)
+      }
+    }
+    defer { reportingProgress.cancel() }
+
     let (tempURL, _) = try await urlSession.downloadWithRetry(
       from: remoteURL,
       logger: logger,
-      label: region.rawValue
+      label: region.rawValue,
+      delegate: DownloadProgressObserver(reportingTo: continuation)
     )
 
-    // Move to final location
-    if FileManager.default.fileExists(atPath: compressedURL.path) {
-      try FileManager.default.removeItem(at: compressedURL)
+    if FileManager.default.fileExists(atPath: payloadURL.path) {
+      try FileManager.default.removeItem(at: payloadURL)
     }
-    try FileManager.default.moveItem(at: tempURL, to: compressedURL)
+    try FileManager.default.moveItem(at: tempURL, to: payloadURL)
+    logger.info("Downloaded \(region.rawValue)")
+  }
 
-    logger.info("Downloaded \(region.rawValue), decompressing…")
-    state = .decompressing(region: region)
-
-    let decompressSpan = SentrySDK.span?.startChild(
-      operation: "terrain.decompress",
-      description: "Decompress \(region.rawValue)"
-    )
-    do {
-      try await Task.detached(priority: .userInitiated) {
-        try Self.streamingDecompress(from: compressedURL, to: decompressedURL)
-      }.value
-      decompressSpan?.finish()
-    } catch {
-      decompressSpan?.finish(status: .internalError)
-      throw error
+  /// Reports a terrain failure to Sentry unless it is one the user caused and can fix.
+  private func report(_ error: any Error, for region: TerrainRegion, operation: String) {
+    guard (error as? TerrainDataLoaderError)?.isReportable ?? true else { return }
+    SentrySDK.capture(error: error) { scope in
+      scope.setTag(value: region.rawValue, key: "terrain.region")
+      scope.setTag(value: operation, key: "terrain.operation")
+      scope.setFingerprint(["terrain", operation])
     }
   }
 
@@ -519,11 +542,8 @@ final class TerrainDataLoader: ObservableObject {
     }
   }
 
-  /// Sets up notification observer for download completion.
+  /// Listens for the Darwin notification the Background Assets extension posts on completion.
   private func setupNotificationObserver() {
-    // Listen for Darwin notification from Background Assets extension
-    let notificationName = "codes.tim.SF50-TOLD.terrainDownloadCompleted"
-
     CFNotificationCenterAddObserver(
       CFNotificationCenterGetDarwinNotifyCenter(),
       Unmanaged.passUnretained(self).toOpaque(),
@@ -535,7 +555,7 @@ final class TerrainDataLoader: ObservableObject {
           loader.refreshBackgroundDownloads()
         }
       },
-      notificationName as CFString,
+      TerrainDownloadNotification.completed as CFString,
       nil,
       .deliverImmediately
     )
@@ -543,11 +563,18 @@ final class TerrainDataLoader: ObservableObject {
 
   // MARK: - Nested Types
 
+  /// What one pass over the terrain directory found.
+  private struct RegionScan {
+    var available: Set<TerrainRegion> = []
+    var unfinished: Set<TerrainRegion> = []
+    var pendingExpansion: [TerrainRegion] = []
+  }
+
   /// Current download state.
   enum State: Equatable {
     case idle
     case downloading(region: TerrainRegion, progress: Float?)
-    case decompressing(region: TerrainRegion)
+    case expanding(region: TerrainRegion)
     case completed(region: TerrainRegion)
     case failed(region: TerrainRegion, message: String)
 
@@ -557,7 +584,7 @@ final class TerrainDataLoader: ObservableObject {
           return true
         case (.downloading(let r1, let p1), .downloading(let r2, let p2)):
           return r1 == r2 && p1 == p2
-        case (.decompressing(let r1), .decompressing(let r2)):
+        case (.expanding(let r1), .expanding(let r2)):
           return r1 == r2
         case (.completed(let r1), .completed(let r2)):
           return r1 == r2

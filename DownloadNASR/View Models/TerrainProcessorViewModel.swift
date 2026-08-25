@@ -313,17 +313,6 @@ final class TerrainProcessorViewModel {
           comment: "Status message showing parsing progress for a terrain region"
         )
 
-      case .compressing(let region, let fraction):
-        let completedUnits =
-          TerrainRegion.downloadPhaseRatio
-          + TerrainRegion.parsePhaseRatio
-          + Int64(fraction * Double(TerrainRegion.compressPhaseRatio))
-        regionProgress[region]?.completedUnitCount = completedUnits
-        statusMessage = String(
-          localized: "Compressing \(region.displayName)…",
-          comment: "Status message when compressing terrain data"
-        )
-
       case .generatingManifest:
         manifestProgress?.completedUnitCount = 1
         statusMessage = String(

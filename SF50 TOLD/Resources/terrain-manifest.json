@@ -1,62 +1,62 @@
 {
-  "baseURL" : "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/",
-  "generatedAt" : "2026-02-18T11:31:38Z",
-  "regions" : [
+  "baseURL": "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/",
+  "generatedAt": "2026-08-25T17:51:38Z",
+  "regions": [
     {
-      "filename" : "terrain-io.srtm.lzma",
-      "id" : "io",
-      "sizeBytes" : 90709545
+      "filename": "terrain-ma.srtm",
+      "id": "ma",
+      "sizeBytes": 51111431
     },
     {
-      "filename" : "terrain-ma.srtm.lzma",
-      "id" : "ma",
-      "sizeBytes" : 51090845
+      "filename": "terrain-io.srtm",
+      "id": "io",
+      "sizeBytes": 90750311
     },
     {
-      "filename" : "terrain-aq.srtm.lzma",
-      "id" : "aq",
-      "sizeBytes" : 3001423409
+      "filename": "terrain-oc.srtm",
+      "id": "oc",
+      "sizeBytes": 1104168652
     },
     {
-      "filename" : "terrain-oc.srtm.lzma",
-      "id" : "oc",
-      "sizeBytes" : 1103840505
+      "filename": "terrain-me.srtm",
+      "id": "me",
+      "sizeBytes": 1120186134
     },
     {
-      "filename" : "terrain-me.srtm.lzma",
-      "id" : "me",
-      "sizeBytes" : 1119452649
+      "filename": "terrain-au.srtm",
+      "id": "au",
+      "sizeBytes": 1525396320
     },
     {
-      "filename" : "terrain-au.srtm.lzma",
-      "id" : "au",
-      "sizeBytes" : 1523799081
+      "filename": "terrain-sa.srtm",
+      "id": "sa",
+      "sizeBytes": 2730994783
     },
     {
-      "filename" : "terrain-sa.srtm.lzma",
-      "id" : "sa",
-      "sizeBytes" : 2726074617
+      "filename": "terrain-eu.srtm",
+      "id": "eu",
+      "sizeBytes": 2784438694
     },
     {
-      "filename" : "terrain-eu.srtm.lzma",
-      "id" : "eu",
-      "sizeBytes" : 2781641469
+      "filename": "terrain-aq.srtm",
+      "id": "aq",
+      "sizeBytes": 3002745394
     },
     {
-      "filename" : "terrain-af.srtm.lzma",
-      "id" : "af",
-      "sizeBytes" : 4814839165
+      "filename": "terrain-af.srtm",
+      "id": "af",
+      "sizeBytes": 4817062028
     },
     {
-      "filename" : "terrain-as.srtm.lzma",
-      "id" : "as",
-      "sizeBytes" : 9158120265
+      "filename": "terrain-na.srtm",
+      "id": "na",
+      "sizeBytes": 5115763576
     },
     {
-      "filename" : "terrain-na.srtm.lzma",
-      "id" : "na",
-      "sizeBytes" : 5108571405
+      "filename": "terrain-as.srtm",
+      "id": "as",
+      "sizeBytes": 9168108095
     }
   ],
-  "version" : 2
+  "version": 3
 }
