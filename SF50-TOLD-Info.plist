@@ -20,6 +20,8 @@
 	<string>https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/terrain-manifest-v3.json</string>
 	<key>BAMaxInstallSize</key>
 	<integer>9300000000</integer>
+	<key>BAEssentialMaxInstallSize</key>
+	<integer>0</integer>
 	<key>BAInitialDownloadRestrictions</key>
 	<dict>
 		<key>BADownloadAllowance</key>
