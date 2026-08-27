@@ -19,7 +19,7 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   case asia = "as"
   case northAmerica = "na"
 
-  /// Estimated size per tile in bytes (uncompressed SRTM3: 1201×1201×Int16).
+  /// Width of one uncompressed SRTM3 tile (1201×1201×Int16), the ceiling a tile compresses under.
   private static let estimatedTileSize = 2_884_802
 
   /// Distinguishes this app's Background Assets downloads from any other client's.
@@ -107,15 +107,23 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
 
   /// Payload size in bytes from the bundled manifest.
   public var sizeBytes: Int {
-    guard let region = TerrainManifest.bundled.region(forID: rawValue) else {
+    guard let publishedSizeBytes else {
       fatalError("Region \(rawValue) not found in bundled terrain manifest")
     }
-    return region.sizeBytes
+    return publishedSizeBytes
   }
 
-  /// Estimated uncompressed file size in bytes based on tile count.
+  /// Size this region's published payload measures, or `nil` for a region no manifest carries.
+  public var publishedSizeBytes: Int? {
+    TerrainManifest.bundled.region(forID: rawValue)?.sizeBytes
+  }
+
+  /// Roughly what this region's payload occupies, for weighing regions before publishing one.
+  ///
+  /// A published region reports what it actually measures. Anything else can only be bounded by
+  /// the tiles it covers at full width, which overstates a payload whose tiles are compressed.
   public var estimatedFileSize: Int {
-    hgtTileNames.count * Self.estimatedTileSize
+    publishedSizeBytes ?? hgtTileNames.count * Self.estimatedTileSize
   }
 
   /// Bounding boxes for the region. Multiple boxes allow precise coverage of non-contiguous areas.
