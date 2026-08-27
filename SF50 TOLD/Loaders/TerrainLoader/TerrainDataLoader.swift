@@ -39,6 +39,17 @@ final class TerrainDataLoader: ObservableObject {
   /// Extension given to a payload still being built, so a scan can't mistake it for a finished one.
   nonisolated private static let scratchFileExtension = "partial"
 
+  /// Configuration shared by the manifest fetch and the region downloads.
+  ///
+  /// A region runs to several gigabytes, so the resource timeout has to cover a transfer
+  /// measured in tens of minutes rather than the minute a request is given to answer.
+  nonisolated private static var downloadConfiguration: URLSessionConfiguration {
+    let configuration = URLSessionConfiguration.default
+    configuration.timeoutIntervalForRequest = 60
+    configuration.timeoutIntervalForResource = 1800
+    return configuration
+  }
+
   // MARK: - Instance Properties
 
   /// Current download state.
@@ -80,13 +91,8 @@ final class TerrainDataLoader: ObservableObject {
   /// Receives the system's download events; `BADownloadManager` holds its delegate weakly.
   private var backgroundDownloadObserver: TerrainBackgroundDownloadObserver?
 
-  /// URL session for downloads.
-  private lazy var urlSession: URLSession = {
-    let config = URLSessionConfiguration.default
-    config.timeoutIntervalForRequest = 60
-    config.timeoutIntervalForResource = 1800  // 30 minutes for large files
-    return URLSession(configuration: config)
-  }()
+  /// URL session for manifest fetches.
+  private lazy var urlSession = URLSession(configuration: Self.downloadConfiguration)
 
   /// Returns the URL to the terrain directory in the app group container.
   nonisolated private var terrainDirectory: URL? {
@@ -484,11 +490,12 @@ final class TerrainDataLoader: ObservableObject {
     }
     defer { reportingProgress.cancel() }
 
-    let (tempURL, _) = try await urlSession.downloadWithRetry(
+    let (tempURL, _) = try await downloadWithRetry(
       from: remoteURL,
+      configuration: Self.downloadConfiguration,
       logger: logger,
       label: region.rawValue,
-      delegate: DownloadProgressObserver(reportingTo: continuation)
+      reportingTo: continuation
     )
 
     if FileManager.default.fileExists(atPath: payloadURL.path) {

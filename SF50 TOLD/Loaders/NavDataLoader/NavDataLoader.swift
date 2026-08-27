@@ -157,12 +157,12 @@ actor NavDataLoader {
   ) async throws -> URL {
     defer { continuation.finish() }
 
-    let session = URLSession(configuration: .ephemeral)
-    let (fileURL, response) = try await session.downloadWithRetry(
+    let (fileURL, response) = try await downloadWithRetry(
       from: url,
+      configuration: .ephemeral,
       logger: logger,
       label: "nav data",
-      delegate: DownloadProgressObserver(reportingTo: continuation)
+      reportingTo: continuation
     )
 
     guard let response = response as? HTTPURLResponse else {
