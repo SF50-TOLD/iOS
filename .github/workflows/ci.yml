@@ -69,6 +69,23 @@ jobs:
           device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro
       - name: Enable macros
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+      - name: Record toolchain version
+        id: toolchain
+        run: echo "xcode=$(xcodebuild -version | tr '\n' '-')" >> "$GITHUB_OUTPUT"
+      - name: Cache SwiftPM dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+      - name: Cache Xcode build products
+        uses: actions/cache@v6
+        with:
+          path: |
+            ${{ runner.temp }}/docs-dd
+            ${{ runner.temp }}/docs-dd-nasr
+          key: derived-docs-macos-26-${{ steps.toolchain.outputs.xcode }}-${{ hashFiles('**/Package.resolved') }}
       # The SF50 TOLD scheme reaches every first-party target the app ships — the app, the SF50
       # Runways extension, TerrainAssets, and the SF50 Shared framework — so one docbuild covers
       # all of the catalogs that ship with the app. DocC has no strictness build setting of its
