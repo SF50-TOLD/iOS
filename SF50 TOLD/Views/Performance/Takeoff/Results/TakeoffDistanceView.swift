@@ -22,6 +22,8 @@ struct TakeoffDistanceView: View {
         )
         .animation(.default, value: performance.takeoffDistance)
         .accessibilityIdentifier("takeoffDistanceValue")
+        .accessibilityCustomContent(.sufficiency, sufficiencyContent, importance: .high)
+        .accessibilityCustomContent(.availableDistance, availableDistanceContent)
       },
       label: {
         Text("Total Distance")
@@ -31,6 +33,35 @@ struct TakeoffDistanceView: View {
       }
     )
   }
+}
+
+// MARK: - Accessibility
+
+extension TakeoffDistanceView {
+  /// The runway-length comparison the value otherwise signals with red text alone.
+  fileprivate var sufficiencyContent: Text? {
+    guard let available = performance.availableTakeoffDistance else { return nil }
+
+    let required: Measurement<UnitLength>
+    switch performance.takeoffDistance {
+      case .value(let distance), .valueWithUncertainty(let distance, _): required = distance
+      case .invalid, .notAvailable, .notAuthorized, .offscaleHigh, .offscaleLow: return nil
+    }
+
+    return required > available
+      ? Text("Available takeoff distance insufficient")
+      : Text("Available takeoff distance sufficient")
+  }
+
+  fileprivate var availableDistanceContent: Text? {
+    guard let available = performance.availableTakeoffDistance else { return nil }
+    return Text(available.converted(to: runwayLengthUnit), format: .length)
+  }
+}
+
+extension AccessibilityCustomContentKey {
+  fileprivate static var sufficiency: Self { .init("Runway") }
+  fileprivate static var availableDistance: Self { .init("Takeoff distance available") }
 }
 
 #Preview("Possible") {
