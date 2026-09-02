@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SF50-TOLD/NavDataDistribution",
       "state" : {
-        "revision" : "2e29803dc94e238f5d135b04614e7fef3169f5fa",
-        "version" : "1.2.0"
+        "revision" : "2a645bbbb00a8d84cd71bdb7d6730f41f897a437",
+        "version" : "1.3.0"
       }
     },
     {
@@ -204,8 +204,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftNASR",
       "state" : {
-        "revision" : "fba98e390d7ff0f87ad6543f4de4f2041db1c722",
-        "version" : "4.1.0"
+        "revision" : "d1d1865d9b114cd60dd51b479536eff555d3b396",
+        "version" : "4.1.1"
       }
     },
     {
