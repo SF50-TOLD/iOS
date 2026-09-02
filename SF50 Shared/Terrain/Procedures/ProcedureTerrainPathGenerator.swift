@@ -1,6 +1,7 @@
 import CoreLocation
 import Foundation
 import NavData
+import os
 import SwiftData
 
 /// Generates a ``ProcedureTerrainPath`` by combining a ``ProcedurePath`` with
@@ -15,6 +16,12 @@ public struct ProcedureTerrainPathGenerator {
 
   /// Service for querying terrain elevation data.
   private let terrainService: TerrainService
+
+  /// Emits the intervals that put generation on an Instruments timeline.
+  private let signposter = OSSignposter(
+    subsystem: "codes.tim.SF50-TOLD",
+    category: "ProcedureTerrainPathGenerator"
+  )
 
   public init(
     modelContainer: ModelContainer,
@@ -82,6 +89,12 @@ public struct ProcedureTerrainPathGenerator {
   /// - Parameter path: The procedure path providing aircraft positions and altitudes.
   /// - Returns: A ``ProcedureTerrainPath`` with terrain and obstacle data per point.
   public func generate(from path: ProcedurePath) async -> ProcedureTerrainPath {
+    let interval = signposter.beginInterval(
+      "generate procedure terrain path",
+      id: signposter.makeSignpostID()
+    )
+    defer { signposter.endInterval("generate procedure terrain path", interval) }
+
     let pathPoints = path.points
     guard !pathPoints.isEmpty else {
       return ProcedureTerrainPath(corridorWidthNM: corridorWidthNM, points: [])
@@ -186,6 +199,9 @@ public struct ProcedureTerrainPathGenerator {
   private func fetchObstacles(
     pathPoints: [ProcedurePath.Point]
   ) -> [ObstacleRecord] {
+    let interval = signposter.beginInterval("fetch obstacles", id: signposter.makeSignpostID())
+    defer { signposter.endInterval("fetch obstacles", interval) }
+
     // Compute path extent
     var minLat = Double.greatestFiniteMagnitude,
       maxLat = -Double.greatestFiniteMagnitude,
@@ -243,6 +259,9 @@ public struct ProcedureTerrainPathGenerator {
     obstacles: [ObstacleRecord],
     pathPoints: [ProcedurePath.Point]
   ) -> [Int: Double] {
+    let interval = signposter.beginInterval("assign obstacles", id: signposter.makeSignpostID())
+    defer { signposter.endInterval("assign obstacles", interval) }
+
     guard pathPoints.count >= 2 else { return [:] }
 
     let halfCorridorNM = corridorWidthNM / 2

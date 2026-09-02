@@ -82,6 +82,12 @@ final class TerrainDataLoader: ObservableObject {
     category: "TerrainDataLoader"
   )
 
+  /// Emits the intervals that put decompression on an Instruments timeline.
+  nonisolated private let signposter = OSSignposter(
+    subsystem: "codes.tim.SF50-TOLD",
+    category: "TerrainDataLoader"
+  )
+
   /// App group identifier for shared storage.
   nonisolated private let appGroupID = "group.codes.tim.TOLD"
 
@@ -435,6 +441,27 @@ final class TerrainDataLoader: ObservableObject {
     }
   }
 
+  /// Decompresses a payload off the main actor, bracketed by a signpost interval.
+  ///
+  /// Expansion runs outside the “Terrain Download” transaction, so the interval is the only
+  /// record of what the LZMA pass costs for a given region.
+  private func expandPayload(
+    from legacyPayloadURL: URL,
+    to payloadURL: URL,
+    for region: TerrainRegion
+  ) async throws {
+    let interval = signposter.beginInterval(
+      "terrain expand",
+      id: signposter.makeSignpostID(),
+      "\(region.rawValue, privacy: .public)"
+    )
+    defer { signposter.endInterval("terrain expand", interval) }
+
+    try await Task.detached(priority: .userInitiated) {
+      try Self.expandLegacyPayload(from: legacyPayloadURL, to: payloadURL)
+    }.value
+  }
+
   /// Expands a compressed payload found in the shared container into a usable one.
   private func expandPendingPayload(for region: TerrainRegion) async {
     guard let legacyPayloadURL = legacyPayloadURL(for: region),
@@ -449,9 +476,7 @@ final class TerrainDataLoader: ObservableObject {
     defer { expandingRegions.remove(region) }
 
     do {
-      try await Task.detached(priority: .userInitiated) {
-        try Self.expandLegacyPayload(from: legacyPayloadURL, to: payloadURL)
-      }.value
+      try await expandPayload(from: legacyPayloadURL, to: payloadURL, for: region)
       availableRegions.insert(region)
       loadAvailableRegionsIntoService()
       logger.info("Terrain for \(region.rawValue) is available")
