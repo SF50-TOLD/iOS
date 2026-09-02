@@ -222,9 +222,8 @@ struct TabularModelEdgeCaseTests {
 
       if testCase.shouldSucceed {
         guard case .value = result else {
-          Issue.record(
-            "Expected value at boundary (\(testCase.weight), \(testCase.altitude), \(testCase.temp)) but got \(result)"
-          )
+          PerformanceCase(for: model, aircraftType: .g1)
+            .fail("Expected a value at the boundary, got \(result)", computing: "takeoff run")
           continue
         }
       } else {
@@ -362,10 +361,10 @@ struct TabularModelEdgeCaseTests {
       let g1HasValue = if case .value = g1TakeoffRun { true } else { false }
       let g2HasValue = if case .value = g2TakeoffRun { true } else { false }
 
-      #expect(
-        g1HasValue || g2HasValue,
-        "\(issue.description): Both models returned offscale at (\(issue.weight), \(issue.altitude), \(issue.temp))"
-      )
+      if !g1HasValue && !g2HasValue {
+        PerformanceCase(for: modelG1, aircraftType: .g1)
+          .fail("\(issue.description): both models returned offscale", computing: "takeoff run")
+      }
     }
   }
 
@@ -393,10 +392,12 @@ struct TabularModelEdgeCaseTests {
 
       if case .value(let value) = model.takeoffRunFt {
         if altitude > 0 {
-          #expect(
-            value >= previousValue,
-            "Takeoff run should increase with altitude: \(value) < \(previousValue) at \(altitude) ft"
-          )
+          PerformanceCase(for: model, aircraftType: .g1)
+            .expect(
+              value >= previousValue,
+              "Takeoff run should increase with altitude",
+              results: ["takeoff run": value, "takeoff run one step lower": previousValue]
+            )
         }
         previousValue = value
       }

@@ -63,9 +63,10 @@ struct ContaminationTests {
       return
     }
 
-    // Water contamination should have specific values
-    #expect(cleanRun.isApproximatelyEqual(to: 1961.19, relativeTolerance: 0.01))
-    #expect(contaminatedRun.isApproximatelyEqual(to: 2946.79, relativeTolerance: 0.01))
+    PerformanceCase(for: cleanModel, aircraftType: .g1)
+      .expect(cleanRun, of: 1961.19, computing: "clean landing run")
+    PerformanceCase(for: contaminatedModel, aircraftType: .g1)
+      .expect(contaminatedRun, of: 2946.79, computing: "contaminated landing run")
   }
 
   @Test("Slush contamination increases landing run - Tabular G2+")
@@ -118,9 +119,10 @@ struct ContaminationTests {
       return
     }
 
-    // Slush contamination should have specific values
-    #expect(cleanRun.isApproximatelyEqual(to: 1961.19, relativeTolerance: 0.01))
-    #expect(contaminatedRun.isApproximatelyEqual(to: 2725.67, relativeTolerance: 0.01))
+    PerformanceCase(for: cleanModel, aircraftType: .g2Plus)
+      .expect(cleanRun, of: 1961.19, computing: "clean landing run")
+    PerformanceCase(for: contaminatedModel, aircraftType: .g2Plus)
+      .expect(contaminatedRun, of: 2725.67, computing: "contaminated landing run")
   }
 
   @Test("Dry snow contamination increases landing run - Regression G1")
@@ -167,9 +169,10 @@ struct ContaminationTests {
       return
     }
 
-    // Dry snow contamination should have specific values
-    #expect(cleanRun.isApproximatelyEqual(to: 1983.17, relativeTolerance: 0.01))
-    #expect(contaminatedRun.isApproximatelyEqual(to: 2640.79, relativeTolerance: 0.01))
+    PerformanceCase(for: cleanModel, aircraftType: .g1)
+      .expect(cleanRun, of: 1983.17, computing: "clean landing run")
+    PerformanceCase(for: contaminatedModel, aircraftType: .g1)
+      .expect(contaminatedRun, of: 2640.79, computing: "contaminated landing run")
   }
 
   @Test("Compact snow contamination increases landing run - Regression G2+")
@@ -216,10 +219,15 @@ struct ContaminationTests {
       return
     }
 
-    // Compact snow contamination should increase landing run
-    #expect(contaminatedRun > cleanRun)
-    // Compact snow should significantly increase landing run
-    #expect(contaminatedRun > cleanRun * 1.5)
+    PerformanceCase(for: contaminatedModel, aircraftType: .g2Plus)
+      .expect(
+        contaminatedRun > cleanRun * 1.5,
+        "Compact snow should increase landing run by more than half",
+        results: [
+          "clean landing run": cleanRun,
+          "contaminated landing run": contaminatedRun
+        ]
+      )
   }
 
   // MARK: - Contamination Increases Total Landing Distance
@@ -273,9 +281,10 @@ struct ContaminationTests {
       return
     }
 
-    // Water contamination total landing distance should have specific values
-    #expect(cleanDistance.isApproximatelyEqual(to: 2789.19, relativeTolerance: 0.01))
-    #expect(contaminatedDistance.isApproximatelyEqual(to: 3347.55, relativeTolerance: 0.01))
+    PerformanceCase(for: cleanModel, aircraftType: .g1)
+      .expect(cleanDistance, of: 2789.19, computing: "clean landing distance")
+    PerformanceCase(for: contaminatedModel, aircraftType: .g1)
+      .expect(contaminatedDistance, of: 3347.55, computing: "contaminated landing distance")
   }
 
   @Test("Slush contamination increases total landing distance - Tabular G2+")
@@ -327,9 +336,10 @@ struct ContaminationTests {
       return
     }
 
-    // Slush contamination total landing distance should have specific values
-    #expect(cleanDistance.isApproximatelyEqual(to: 2431.57, relativeTolerance: 0.01))
-    #expect(contaminatedDistance.isApproximatelyEqual(to: 3034.39, relativeTolerance: 0.01))
+    PerformanceCase(for: cleanModel, aircraftType: .g2Plus)
+      .expect(cleanDistance, of: 2431.57, computing: "clean landing distance")
+    PerformanceCase(for: contaminatedModel, aircraftType: .g2Plus)
+      .expect(contaminatedDistance, of: 3034.39, computing: "contaminated landing distance")
   }
 
   @Test("Dry snow contamination increases total landing distance - Regression G1")
@@ -378,10 +388,15 @@ struct ContaminationTests {
       return
     }
 
-    // Dry snow contamination should increase total landing distance
-    #expect(contaminatedDistance > cleanDistance)
-    // Contamination should add a meaningful increase
-    #expect(contaminatedDistance > cleanDistance * 1.15)
+    PerformanceCase(for: contaminatedModel, aircraftType: .g1)
+      .expect(
+        contaminatedDistance > cleanDistance * 1.15,
+        "Dry snow should increase landing distance by more than 15%",
+        results: [
+          "clean landing distance": cleanDistance,
+          "contaminated landing distance": contaminatedDistance
+        ]
+      )
   }
 
   @Test("Compact snow contamination increases total landing distance - Regression G2+")
@@ -430,9 +445,10 @@ struct ContaminationTests {
       return
     }
 
-    // Compact snow contamination total landing distance should have specific values
-    #expect(cleanDistance.isApproximatelyEqual(to: 2933.23, relativeTolerance: 0.01))
-    #expect(contaminatedDistance.isApproximatelyEqual(to: 4064.51, relativeTolerance: 0.01))
+    PerformanceCase(for: cleanModel, aircraftType: .g2Plus)
+      .expect(cleanDistance, of: 2933.23, computing: "clean landing distance")
+    PerformanceCase(for: contaminatedModel, aircraftType: .g2Plus)
+      .expect(contaminatedDistance, of: 4064.51, computing: "contaminated landing distance")
   }
 
   // MARK: - Contamination Depth Effects
@@ -505,9 +521,10 @@ struct ContaminationTests {
         return
     }
 
-    // Water depth should have specific values
-    #expect(shallowRun.isApproximatelyEqual(to: 2946.79, relativeTolerance: 0.01))
-    #expect(deepRun.isApproximatelyEqual(to: 2519.55, relativeTolerance: 0.01))
+    PerformanceCase(for: shallowModel, aircraftType: .g1)
+      .expect(shallowRun, of: 2946.79, computing: "landing run")
+    PerformanceCase(for: deepModel, aircraftType: .g1)
+      .expect(deepRun, of: 2519.55, computing: "landing run")
   }
 
   // MARK: - Contamination with Other Factors
@@ -568,9 +585,10 @@ struct ContaminationTests {
         return
     }
 
-    // Contamination with headwind should have specific values
-    #expect(cleanDistance.isApproximatelyEqual(to: 2607.23, relativeTolerance: 0.01))
-    #expect(contaminatedDistance.isApproximatelyEqual(to: 3129.16, relativeTolerance: 0.01))
+    PerformanceCase(for: cleanModel, aircraftType: .g1)
+      .expect(cleanDistance, of: 2607.23, computing: "clean landing distance")
+    PerformanceCase(for: contaminatedModel, aircraftType: .g1)
+      .expect(contaminatedDistance, of: 3129.16, computing: "contaminated landing distance")
   }
 
   @Test("Contamination combined with uphill slope")
@@ -625,9 +643,10 @@ struct ContaminationTests {
         return
     }
 
-    // Contamination with uphill slope should have specific values
-    #expect(cleanDistance.isApproximatelyEqual(to: 2789.19, relativeTolerance: 0.01))
-    #expect(contaminatedDistance.isApproximatelyEqual(to: 3927.85, relativeTolerance: 0.01))
+    PerformanceCase(for: cleanModel, aircraftType: .g1)
+      .expect(cleanDistance, of: 2789.19, computing: "clean landing distance")
+    PerformanceCase(for: contaminatedModel, aircraftType: .g1)
+      .expect(contaminatedDistance, of: 3927.85, computing: "contaminated landing distance")
   }
 
   // MARK: - Wet Runway Tests (G2/G2+ AFM Reissue A)
@@ -689,9 +708,8 @@ struct ContaminationTests {
         return
     }
 
-    // Wet runway should increase landing run by 15%
-    let expectedRun = cleanRun * 1.15
-    #expect(contaminatedRun.isApproximatelyEqual(to: expectedRun, relativeTolerance: 0.01))
+    PerformanceCase(for: contaminatedModel, aircraftType: .g2Plus)
+      .expect(contaminatedRun, of: cleanRun * 1.15, computing: "wet landing run")
   }
 
   @Test("Wet runway contamination increases landing run by 15% - Regression G2+")
@@ -739,9 +757,8 @@ struct ContaminationTests {
       return
     }
 
-    // Wet runway should increase landing run by 15%
-    let expectedRun = cleanRun * 1.15
-    #expect(contaminatedRun.isApproximatelyEqual(to: expectedRun, relativeTolerance: 0.01))
+    PerformanceCase(for: contaminatedModel, aircraftType: .g2Plus)
+      .expect(contaminatedRun, of: cleanRun * 1.15, computing: "wet landing run")
   }
 
   @Test("Wet runway contamination has no effect on G1 - Tabular")
@@ -801,8 +818,8 @@ struct ContaminationTests {
         return
     }
 
-    // Wet runway should have no effect on G1
-    #expect(contaminatedRun.isApproximatelyEqual(to: cleanRun, relativeTolerance: 0.001))
+    PerformanceCase(for: contaminatedModel, aircraftType: .g1)
+      .expect(contaminatedRun, isWithin: 0.001, of: cleanRun, computing: "wet landing run")
   }
 
   @Test("Wet runway contamination increases landing run by 15% - Regression G1")
@@ -850,9 +867,8 @@ struct ContaminationTests {
       return
     }
 
-    // Regression model: Wet runway should increase landing run by 15% for all aircraft
-    let expectedRun = cleanRun * 1.15
-    #expect(contaminatedRun.isApproximatelyEqual(to: expectedRun, relativeTolerance: 0.01))
+    PerformanceCase(for: contaminatedModel, aircraftType: .g1)
+      .expect(contaminatedRun, of: cleanRun * 1.15, computing: "wet landing run")
   }
 
   @Test("Wet runway contamination increases total landing distance - G2+")
@@ -910,8 +926,15 @@ struct ContaminationTests {
         return
     }
 
-    // Total landing distance should also increase (run increase propagates)
-    #expect(contaminatedDistance > cleanDistance)
+    PerformanceCase(for: contaminatedModel, aircraftType: .g2Plus)
+      .expect(
+        contaminatedDistance > cleanDistance,
+        "A wet runway's longer landing run should lengthen the total landing distance",
+        results: [
+          "clean landing distance": cleanDistance,
+          "contaminated landing distance": contaminatedDistance
+        ]
+      )
   }
 
   // MARK: - Logical Consistency Tests
@@ -957,11 +980,12 @@ struct ContaminationTests {
       if case .value(let run) = model.landingRunFt,
         case .value(let distance) = model.landingDistanceFt
       {
-        // Landing run should never exceed total landing distance
-        #expect(
-          run <= distance,
-          "Landing run (\(run) ft) should not exceed total distance (\(distance) ft) with \(testCase.contamination?.type ?? "clean runway")"
-        )
+        PerformanceCase(for: model, aircraftType: .g1)
+          .expect(
+            run <= distance,
+            "Landing run should not exceed total landing distance",
+            results: ["landing run": run, "landing distance": distance]
+          )
       }
     }
   }

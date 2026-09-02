@@ -18,6 +18,13 @@
         "identifier" : "012B1E442DE2F272000D9ADC",
         "name" : "SF50 SharedTests"
       }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:SF50 TOLD.xcodeproj",
+        "identifier" : "0163BC782DDEE9D4008FEE8F",
+        "name" : "SF50 TOLDTests"
+      }
     }
   ],
   "version" : 1
