@@ -374,20 +374,25 @@ struct TabularModelEdgeCaseTests {
         configuration: config,
         runway: RunwayInput(from: runway, airport: runway.airport),
         notam: nil,
-        aircraftType: .g1
+        aircraftType: .g2Plus
       )
 
       // Check takeoff performance
       let g1TakeoffRun = modelG1.takeoffRunFt
       let g2TakeoffRun = modelG2Plus.takeoffRunFt
 
-      // At least one model should provide a value (G2+ has wider range)
+      // Both models must interpolate the conditions a pilot reported as offscale
       let g1HasValue = if case .value = g1TakeoffRun { true } else { false }
       let g2HasValue = if case .value = g2TakeoffRun { true } else { false }
 
-      if !g1HasValue && !g2HasValue {
+      if !g1HasValue {
         PerformanceCase(for: modelG1, aircraftType: .g1)
-          .fail("\(issue.description): both models returned offscale", computing: "takeoff run")
+          .fail("\(issue.description): G1 returned \(g1TakeoffRun)", computing: "takeoff run")
+      }
+
+      if !g2HasValue {
+        PerformanceCase(for: modelG2Plus, aircraftType: .g2Plus)
+          .fail("\(issue.description): G2+ returned \(g2TakeoffRun)", computing: "takeoff run")
       }
     }
   }
