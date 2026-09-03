@@ -123,6 +123,10 @@ actor NavDataLoader {
     subsystem: "codes.tim.SF50-TOLD",
     category: "NavDataLoader"
   )
+  private let signposter = OSSignposter(
+    subsystem: "codes.tim.SF50-TOLD",
+    category: "NavDataLoader"
+  )
 
   private var navaidLookup: [String: SF50_Shared.Navaid] = [:]
   private var stateContinuation: AsyncStream<State>.Continuation?
@@ -238,16 +242,27 @@ actor NavDataLoader {
     )
   }
 
-  /// Runs an import phase, logging how long it took.
+  /// Runs an import phase, logging how long it took and bracketing it with a
+  /// signpost interval.
   ///
   /// The import's cost is spread across downloading, decoding, and several
   /// persistence phases whose relative weights shift with the dataset's size
   /// and with how the writes are batched, so a slowdown is only diagnosable if
-  /// each phase reports its own duration.
+  /// each phase reports its own duration. The log line answers “how long” after
+  /// the fact; the signpost puts the same phase on an Instruments timeline,
+  /// where it can be lined up against the allocations, disk writes, and thread
+  /// states that explain why.
   private func timing<T>(
     _ label: String,
     _ phase: () async throws -> T
   ) async rethrows -> T {
+    let interval = signposter.beginInterval(
+      "nav data phase",
+      id: signposter.makeSignpostID(),
+      "\(label, privacy: .public)"
+    )
+    defer { signposter.endInterval("nav data phase", interval) }
+
     let start = ContinuousClock.now
     let result = try await phase()
     logger.info("nav data \(label) took \(start.duration(to: .now), privacy: .public)")
