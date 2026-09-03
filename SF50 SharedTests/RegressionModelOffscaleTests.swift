@@ -28,7 +28,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break  // Expected
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     // But the flag should be set
@@ -56,7 +60,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break  // Expected
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     // But the flag should be set
@@ -84,7 +92,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     #expect(model.landingInputsOffscaleLow == true)
@@ -111,7 +123,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     #expect(model.landingInputsOffscaleLow == false)
@@ -139,7 +155,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.takeoffRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffRunFt)",
+            computing: "takeoff run"
+          )
     }
 
     #expect(model.takeoffInputsOffscaleLow == true)
@@ -165,7 +185,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.takeoffRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffRunFt)",
+            computing: "takeoff run"
+          )
     }
 
     #expect(model.takeoffInputsOffscaleLow == false)
@@ -191,7 +215,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.takeoffRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffRunFt)",
+            computing: "takeoff run"
+          )
     }
 
     #expect(model.takeoffInputsOffscaleLow == true)
@@ -217,7 +245,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.takeoffRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffRunFt)",
+            computing: "takeoff run"
+          )
     }
 
     #expect(model.takeoffInputsOffscaleLow == false)
@@ -246,7 +278,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     #expect(model.landingInputsOffscaleLow == true)
@@ -273,7 +309,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     #expect(model.landingInputsOffscaleLow == false)
@@ -299,7 +339,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.takeoffRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffRunFt)",
+            computing: "takeoff run"
+          )
     }
 
     #expect(model.takeoffInputsOffscaleLow == true)
@@ -325,7 +369,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.takeoffRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffRunFt)",
+            computing: "takeoff run"
+          )
     }
 
     #expect(model.takeoffInputsOffscaleLow == false)
@@ -353,7 +401,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     #expect(model.landingInputsOffscaleLow == false)
@@ -379,7 +431,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.takeoffRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffRunFt)",
+            computing: "takeoff run"
+          )
     }
 
     #expect(model.takeoffInputsOffscaleLow == false)
@@ -408,14 +464,22 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break  // Expected
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected valid value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     switch model.landingDistanceFt {
       case .value, .valueWithUncertainty:
         break  // Expected
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected valid value, got \(model.landingDistanceFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingDistanceFt)",
+            computing: "landing distance"
+          )
     }
 
     // Flags should not be set
@@ -443,14 +507,22 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break  // Expected
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected valid value, got \(model.takeoffRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffRunFt)",
+            computing: "takeoff run"
+          )
     }
 
     switch model.takeoffDistanceFt {
       case .value, .valueWithUncertainty:
         break  // Expected
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected valid value, got \(model.takeoffDistanceFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.takeoffDistanceFt)",
+            computing: "takeoff distance"
+          )
     }
 
     // Flags should not be set
@@ -481,7 +553,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected computed value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     #expect(model.landingInputsOffscaleLow == false)
@@ -507,7 +583,11 @@ struct RegressionModelOffscaleTests {
       case .value, .valueWithUncertainty:
         break  // Expected
       case .offscaleLow, .offscaleHigh, .notAvailable, .invalid, .notAuthorized:
-        Issue.record("Expected valid value, got \(model.landingRunFt)")
+        PerformanceCase(for: model, aircraftType: .g1)
+          .fail(
+            "Expected a computed value, got \(model.landingRunFt)",
+            computing: "landing run"
+          )
     }
 
     #expect(model.landingInputsOffscaleLow == false)
