@@ -28,16 +28,20 @@ struct TabularModelEdgeCaseTests {
 
     // Should interpolate successfully, not return offscale
     guard case .value = groundRun else {
-      Issue.record(
-        "Takeoff ground run should interpolate at 5992 lb, 2621 ft, 19°C but got \(groundRun)"
-      )
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail(
+          "Takeoff ground run should interpolate at 5992 lb, 2621 ft, 19°C but got \(groundRun)",
+          computing: "takeoff run"
+        )
       return
     }
 
     guard case .value = totalDistance else {
-      Issue.record(
-        "Takeoff distance should interpolate at 5992 lb, 2621 ft, 19°C but got \(totalDistance)"
-      )
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail(
+          "Takeoff distance should interpolate at 5992 lb, 2621 ft, 19°C but got \(totalDistance)",
+          computing: "takeoff distance"
+        )
       return
     }
 
@@ -75,14 +79,20 @@ struct TabularModelEdgeCaseTests {
 
     // Should interpolate successfully, not return offscale
     guard case .value = landingRun else {
-      Issue.record("Landing run should interpolate at 5214 lb, 8900 ft, 7°C but got \(landingRun)")
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail(
+          "Landing run should interpolate at 5214 lb, 8900 ft, 7°C but got \(landingRun)",
+          computing: "landing run"
+        )
       return
     }
 
     guard case .value = landingDistance else {
-      Issue.record(
-        "Landing distance should interpolate at 5214 lb, 8900 ft, 7°C but got \(landingDistance)"
-      )
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail(
+          "Landing distance should interpolate at 5214 lb, 8900 ft, 7°C but got \(landingDistance)",
+          computing: "landing distance"
+        )
       return
     }
   }
@@ -110,7 +120,11 @@ struct TabularModelEdgeCaseTests {
     let result = model.takeoffRunFt
 
     guard case .value = result else {
-      Issue.record("Should find valid interpolation bounds despite ISA temperatures, got \(result)")
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail(
+          "Should find valid interpolation bounds despite ISA temperatures, got \(result)",
+          computing: "takeoff run"
+        )
       return
     }
   }
@@ -136,7 +150,11 @@ struct TabularModelEdgeCaseTests {
 
     // Tabular models use clamping, so they should return a value (clamped to minimum weight)
     guard case .value(let value) = result else {
-      Issue.record("Tabular model with clamping should return a value, not \(result)")
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail(
+          "Tabular model with clamping should return a value, not \(result)",
+          computing: "takeoff run"
+        )
       return
     }
 
@@ -222,9 +240,8 @@ struct TabularModelEdgeCaseTests {
 
       if testCase.shouldSucceed {
         guard case .value = result else {
-          Issue.record(
-            "Expected value at boundary (\(testCase.weight), \(testCase.altitude), \(testCase.temp)) but got \(result)"
-          )
+          PerformanceCase(for: model, aircraftType: .g1)
+            .fail("Expected a value at the boundary, got \(result)", computing: "takeoff run")
           continue
         }
       } else {
@@ -259,7 +276,8 @@ struct TabularModelEdgeCaseTests {
     let result = model.takeoffRunFt
 
     guard case .value(let value) = result else {
-      Issue.record("Should interpolate successfully at exact match altitude")
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail("Should interpolate successfully at exact match altitude", computing: "takeoff run")
       return
     }
 
@@ -292,7 +310,11 @@ struct TabularModelEdgeCaseTests {
     let result = model.takeoffRunFt
 
     guard case .value = result else {
-      Issue.record("Should handle degenerate case with exact weight/altitude match")
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail(
+          "Should handle degenerate case with exact weight/altitude match",
+          computing: "takeoff run"
+        )
       return
     }
   }
@@ -315,7 +337,8 @@ struct TabularModelEdgeCaseTests {
     let result = model.takeoffRunFt
 
     guard case .value = result else {
-      Issue.record("Should handle 2D interpolation with exact weight match")
+      PerformanceCase(for: model, aircraftType: .g1)
+        .fail("Should handle 2D interpolation with exact weight match", computing: "takeoff run")
       return
     }
   }
@@ -362,10 +385,10 @@ struct TabularModelEdgeCaseTests {
       let g1HasValue = if case .value = g1TakeoffRun { true } else { false }
       let g2HasValue = if case .value = g2TakeoffRun { true } else { false }
 
-      #expect(
-        g1HasValue || g2HasValue,
-        "\(issue.description): Both models returned offscale at (\(issue.weight), \(issue.altitude), \(issue.temp))"
-      )
+      if !g1HasValue && !g2HasValue {
+        PerformanceCase(for: modelG1, aircraftType: .g1)
+          .fail("\(issue.description): both models returned offscale", computing: "takeoff run")
+      }
     }
   }
 
@@ -377,7 +400,7 @@ struct TabularModelEdgeCaseTests {
     let baseConditions = Helper.createTestConditions(temperature: 20)
     let baseConfig = Helper.createTestConfiguration(weight: 5500)
 
-    var previousValue: Double = 0
+    var previous: PerformanceCase.ComputedDistance?
 
     // As altitude increases, takeoff distance should increase
     for altitude in stride(from: 0, through: 8000, by: 1000) {
@@ -391,15 +414,20 @@ struct TabularModelEdgeCaseTests {
         aircraftType: .g1
       )
 
-      if case .value(let value) = model.takeoffRunFt {
-        if altitude > 0 {
-          #expect(
-            value >= previousValue,
-            "Takeoff run should increase with altitude: \(value) < \(previousValue) at \(altitude) ft"
-          )
-        }
-        previousValue = value
+      guard case .value(let takeoffRun) = model.takeoffRunFt else { continue }
+      let current = PerformanceCase(for: model, aircraftType: .g1).computed(takeoffRun)
+
+      if let previous {
+        PerformanceCase.expect(
+          takeoffRun >= previous.distanceFt,
+          "Takeoff run should increase with altitude",
+          results: [
+            "takeoff run": current,
+            "takeoff run at the lower altitude": previous
+          ]
+        )
       }
+      previous = current
     }
   }
 }
