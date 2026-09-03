@@ -18,6 +18,11 @@ extension FormatStyle where Self == FloatingPointFormatStyle<Double> {
   public static var heading: Self { .number.rounded(increment: 1) }
 }
 
+extension FormatStyle where Self == FloatingPointFormatStyle<Double>.Percent {
+  /// Runway slope, expressed as a percentage of the fraction it is stored as.
+  public static var slope: Self { .percent.precision(.fractionLength(1)) }
+}
+
 extension FormatStyle where Self == IntegerFormatStyle<Int> {
   public static var count: Self { .number.grouping(.automatic) }
 }
