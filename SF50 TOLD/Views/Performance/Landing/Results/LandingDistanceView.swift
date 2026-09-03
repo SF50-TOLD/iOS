@@ -21,6 +21,7 @@ struct LandingDistanceView: View {
         )
         .animation(.default, value: performance.landingDistance)
         .accessibilityIdentifier("landingDistanceValue")
+        .accessibilityCustomContent(.availableDistance, availableDistanceContent)
       },
       label: {
         Text("Total Distance")
@@ -30,6 +31,21 @@ struct LandingDistanceView: View {
       }
     )
   }
+}
+
+// MARK: - Accessibility
+
+extension LandingDistanceView {
+  /// The landing distance available. No sufficiency verdict accompanies it: this view sets no
+  /// maximum, so no exceedance is calculated for either audience.
+  fileprivate var availableDistanceContent: Text? {
+    guard let available = performance.availableLandingRun else { return nil }
+    return Text(available.converted(to: runwayLengthUnit), format: .length)
+  }
+}
+
+extension AccessibilityCustomContentKey {
+  fileprivate static var availableDistance: Self { .init("Landing distance available") }
 }
 
 #Preview("Possible") {
