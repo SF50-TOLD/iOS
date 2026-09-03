@@ -123,15 +123,3 @@ extension Airport {
     return locationID
   }
 }
-
-extension HourWeather {
-  var dateRange: DateInterval {
-    .init(start: date, duration: 3600)
-  }
-}
-
-extension Forecast<HourWeather> {
-  func `for`(date: Date) -> HourWeather? {
-    first(where: { $0.dateRange.contains(date) })
-  }
-}

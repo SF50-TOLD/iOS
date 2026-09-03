@@ -9,15 +9,27 @@ import SwiftUI
 /// the live picker keeps that element out of the automation tree so screenshot capture stays
 /// reliable, while the displayed date and time remain identical.
 struct DateField: View {
+  /// How far ahead WeatherKit publishes an hourly forecast.
+  private static let forecastHorizonDays: TimeInterval = 10,
+    secondsPerDay: TimeInterval = 86400
+
   let title: LocalizedStringKey
   @Binding var time: Date
   let timeZone: TimeZone
+
+  /// The furthest out a time can be planned and still have a forecast behind it.
+  ///
+  /// Past this the picker would keep accepting dates that no weather service answers for, leaving
+  /// the performance figures standing on ISA conditions with nothing on screen to say so.
+  private var latestPlannableTime: Date {
+    Date().addingTimeInterval(Self.forecastHorizonDays * Self.secondsPerDay)
+  }
 
   var body: some View {
     if UITestingHelper.isGeneratingScreenshots {
       StaticDateField(title: title, time: time, timeZone: timeZone)
     } else {
-      DatePicker(title, selection: $time, in: Date()...)
+      DatePicker(title, selection: $time, in: Date()...latestPlannableTime)
         .environment(\.timeZone, timeZone)
         .accessibilityIdentifier("dateSelector")
     }
