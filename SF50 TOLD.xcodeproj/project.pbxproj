@@ -15,6 +15,7 @@
 		012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E512DE2F272000D9ADC /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		0163BC742DDEE9D4008FEE8F /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6B2DE2F463000D9ADC /* Logging */; };
 		0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01441A6D2F35872E005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6C2F35872E005A8A76 /* StreamingLZMA */; };
@@ -44,6 +45,7 @@
 		01AC00242FE0000000000024 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00142FE0000000000014 /* MeasurementKit */; };
 		01AC00252FE0000000000025 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00152FE0000000000015 /* MeasurementKit */; };
 		01AC00262FE0000000000026 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00162FE0000000000016 /* MeasurementKit */; };
+		01AC00272FE0000000000027 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00172FE0000000000017 /* MeasurementKit */; };
 		01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01BABAE92F3B12E5000EA5E1 /* Charts.framework */; };
 		01BEBCB82E8A401100631DE6 /* SwiftHtml in Frameworks */ = {isa = PBXBuildFile; productRef = 01BEBCB72E8A401100631DE6 /* SwiftHtml */; };
 		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
@@ -92,6 +94,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 012B1E3A2DE2F272000D9ADC;
 			remoteInfo = "SF50 Shared";
+		};
+		0163BC7A2DDEE9D4008FEE8F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0163BC622DDEE9D3008FEE8F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0163BC692DDEE9D3008FEE8F;
+			remoteInfo = "SF50 TOLD";
 		};
 		0163BC842DDEE9D4008FEE8F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -162,6 +171,7 @@
 		012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SF50_Shared.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		012B1E452DE2F272000D9ADC /* SF50 SharedTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF50 SharedTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0163BC6A2DDEE9D3008FEE8F /* SF50 TOLD.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SF50 TOLD.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		0163BC792DDEE9D4008FEE8F /* SF50 TOLDTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF50 TOLDTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		0163BC832DDEE9D4008FEE8F /* SF50 TOLDUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SF50 TOLDUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		016945992EB30848001602E6 /* DownloadNASR.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DownloadNASR.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0169495B2EB314C9001602E6 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
@@ -250,6 +260,11 @@
 			path = "SF50 TOLD";
 			sourceTree = "<group>";
 		};
+		0163BC7C2DDEE9D4008FEE8F /* SF50 TOLDTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SF50 TOLDTests";
+			sourceTree = "<group>";
+		};
 		0163BC862DDEE9D4008FEE8F /* SF50 TOLDUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -328,6 +343,13 @@
 				01BEBCB82E8A401100631DE6 /* SwiftHtml in Frameworks */,
 			);
 		};
+		0163BC762DDEE9D4008FEE8F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				01AC00272FE0000000000027 /* MeasurementKit in Frameworks */,
+				0163BC742DDEE9D4008FEE8F /* SF50_Shared.framework in Frameworks */,
+			);
+		};
 		0163BC802DDEE9D4008FEE8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
@@ -382,6 +404,7 @@
 			isa = PBXGroup;
 			children = (
 				0163BC6C2DDEE9D3008FEE8F /* SF50 TOLD */,
+				0163BC7C2DDEE9D4008FEE8F /* SF50 TOLDTests */,
 				0163BC862DDEE9D4008FEE8F /* SF50 TOLDUITests */,
 				012B1E3C2DE2F272000D9ADC /* SF50 Shared */,
 				012B1E4B2DE2F272000D9ADC /* SF50 SharedTests */,
@@ -399,6 +422,7 @@
 			isa = PBXGroup;
 			children = (
 				0163BC6A2DDEE9D3008FEE8F /* SF50 TOLD.app */,
+				0163BC792DDEE9D4008FEE8F /* SF50 TOLDTests.xctest */,
 				0163BC832DDEE9D4008FEE8F /* SF50 TOLDUITests.xctest */,
 				012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */,
 				012B1E452DE2F272000D9ADC /* SF50 SharedTests.xctest */,
@@ -550,6 +574,30 @@
 			productReference = 0163BC6A2DDEE9D3008FEE8F /* SF50 TOLD.app */;
 			productType = "com.apple.product-type.application";
 		};
+		0163BC782DDEE9D4008FEE8F /* SF50 TOLDTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0163BC902DDEE9D4008FEE8F /* Build configuration list for PBXNativeTarget "SF50 TOLDTests" */;
+			buildPhases = (
+				0163BC752DDEE9D4008FEE8F /* Sources */,
+				0163BC762DDEE9D4008FEE8F /* Frameworks */,
+				0163BC772DDEE9D4008FEE8F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0163BC7B2DDEE9D4008FEE8F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0163BC7C2DDEE9D4008FEE8F /* SF50 TOLDTests */,
+			);
+			name = "SF50 TOLDTests";
+			packageProductDependencies = (
+				01AC00172FE0000000000017 /* MeasurementKit */,
+			);
+			productName = "SF50 TOLDTests";
+			productReference = 0163BC792DDEE9D4008FEE8F /* SF50 TOLDTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		0163BC822DDEE9D4008FEE8F /* SF50 TOLDUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0163BC932DDEE9D4008FEE8F /* Build configuration list for PBXNativeTarget "SF50 TOLDUITests" */;
@@ -675,6 +723,10 @@
 					0163BC692DDEE9D3008FEE8F = {
 						CreatedOnToolsVersion = 16.3;
 					};
+					0163BC782DDEE9D4008FEE8F = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = 0163BC692DDEE9D3008FEE8F;
+					};
 					0163BC822DDEE9D4008FEE8F = {
 						CreatedOnToolsVersion = 16.3;
 						TestTargetID = 0163BC692DDEE9D3008FEE8F;
@@ -732,6 +784,7 @@
 				01714CA42F2451D9003DADCF /* TerrainAssets */,
 				016945982EB30848001602E6 /* DownloadNASR */,
 				012B1E3A2DE2F272000D9ADC /* SF50 Shared */,
+				0163BC782DDEE9D4008FEE8F /* SF50 TOLDTests */,
 				012B1E442DE2F272000D9ADC /* SF50 SharedTests */,
 				0163BC822DDEE9D4008FEE8F /* SF50 TOLDUITests */,
 				0191DC0B2E9322C20099FB0E /* Generate Screenshots */,
@@ -756,6 +809,11 @@
 			);
 		};
 		0163BC682DDEE9D3008FEE8F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		0163BC772DDEE9D4008FEE8F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -852,6 +910,11 @@
 			files = (
 			);
 		};
+		0163BC752DDEE9D4008FEE8F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 		0163BC7F2DDEE9D4008FEE8F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
@@ -899,6 +962,11 @@
 			isa = PBXTargetDependency;
 			target = 012B1E3A2DE2F272000D9ADC /* SF50 Shared */;
 			targetProxy = 012B1E4E2DE2F272000D9ADC /* PBXContainerItemProxy */;
+		};
+		0163BC7B2DDEE9D4008FEE8F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0163BC692DDEE9D3008FEE8F /* SF50 TOLD */;
+			targetProxy = 0163BC7A2DDEE9D4008FEE8F /* PBXContainerItemProxy */;
 		};
 		0163BC852DDEE9D4008FEE8F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1301,6 +1369,42 @@
 			};
 			name = Release;
 		};
+		0163BC912DDEE9D4008FEE8F /* Debug configuration for PBXNativeTarget "SF50 TOLDTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLDTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SF50 TOLD.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SF50 TOLD";
+			};
+			name = Debug;
+		};
+		0163BC922DDEE9D4008FEE8F /* Release configuration for PBXNativeTarget "SF50 TOLDTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2NFSK2WB24;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "codes.tim.SF50-TOLDTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SF50 TOLD.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SF50 TOLD";
+			};
+			name = Release;
+		};
 		0163BC942DDEE9D4008FEE8F /* Debug configuration for PBXNativeTarget "SF50 TOLDUITests" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1581,6 +1685,14 @@
 			buildConfigurations = (
 				0163BC8E2DDEE9D4008FEE8F /* Debug configuration for PBXNativeTarget "SF50 TOLD" */,
 				0163BC8F2DDEE9D4008FEE8F /* Release configuration for PBXNativeTarget "SF50 TOLD" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		0163BC902DDEE9D4008FEE8F /* Build configuration list for PBXNativeTarget "SF50 TOLDTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0163BC912DDEE9D4008FEE8F /* Debug configuration for PBXNativeTarget "SF50 TOLDTests" */,
+				0163BC922DDEE9D4008FEE8F /* Release configuration for PBXNativeTarget "SF50 TOLDTests" */,
 			);
 			defaultConfigurationName = Release;
 		};
@@ -1915,6 +2027,11 @@
 			productName = MeasurementKit;
 		};
 		01AC00162FE0000000000016 /* MeasurementKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKit;
+		};
+		01AC00172FE0000000000017 /* MeasurementKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
 			productName = MeasurementKit;

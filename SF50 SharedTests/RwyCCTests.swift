@@ -87,10 +87,20 @@ struct RwyCCTests {
       aircraftType: .g1
     )
 
-    guard case .value(let cleanRun) = cleanModel.landingRunFt,
-      case .value(let rwyCCRun) = rwyCCModel.landingRunFt
-    else {
-      Issue.record("Expected landing run values")
+    guard case .value(let cleanRun) = cleanModel.landingRunFt else {
+      PerformanceCase(for: cleanModel, aircraftType: .g1)
+        .fail(
+          "Expected a clean landing run, got \(cleanModel.landingRunFt)",
+          computing: "clean landing run"
+        )
+      return
+    }
+    guard case .value(let rwyCCRun) = rwyCCModel.landingRunFt else {
+      PerformanceCase(for: rwyCCModel, aircraftType: .g1)
+        .fail(
+          "Expected a RwyCC landing run, got \(rwyCCModel.landingRunFt)",
+          computing: "RwyCC landing run"
+        )
       return
     }
 
@@ -120,7 +130,8 @@ struct RwyCCTests {
     )
 
     guard case .value(let cleanDistance) = cleanModel.landingDistanceFt else {
-      Issue.record("Expected clean landing distance")
+      PerformanceCase(for: cleanModel, aircraftType: .g1)
+        .fail("Expected clean landing distance", computing: "clean landing distance")
       return
     }
 
@@ -145,7 +156,8 @@ struct RwyCCTests {
     )
 
     guard case .value(let rwyCCDistance) = rwyCCModel.landingDistanceFt else {
-      Issue.record("Expected RwyCC landing distance")
+      PerformanceCase(for: rwyCCModel, aircraftType: .g1)
+        .fail("Expected RwyCC landing distance", computing: "RwyCC landing distance")
       return
     }
 
@@ -194,10 +206,20 @@ struct RwyCCTests {
       aircraftType: .g1
     )
 
-    guard case .value(let cleanDistance) = cleanModel.landingDistanceFt,
-      case .value(let rwyCC6Distance) = rwyCC6Model.landingDistanceFt
-    else {
-      Issue.record("Expected landing distance values")
+    guard case .value(let cleanDistance) = cleanModel.landingDistanceFt else {
+      PerformanceCase(for: cleanModel, aircraftType: .g1)
+        .fail(
+          "Expected a clean landing distance, got \(cleanModel.landingDistanceFt)",
+          computing: "clean landing distance"
+        )
+      return
+    }
+    guard case .value(let rwyCC6Distance) = rwyCC6Model.landingDistanceFt else {
+      PerformanceCase(for: rwyCC6Model, aircraftType: .g1)
+        .fail(
+          "Expected a RwyCC 6 landing distance, got \(rwyCC6Model.landingDistanceFt)",
+          computing: "RwyCC 6 landing distance"
+        )
       return
     }
 
@@ -251,10 +273,20 @@ struct RwyCCTests {
       aircraftType: .g1
     )
 
-    guard case .value(let noWindDistance) = noWindModel.landingDistanceFt,
-      case .value(let headwindDistance) = headwindModel.landingDistanceFt
-    else {
-      Issue.record("Expected landing distance values")
+    guard case .value(let noWindDistance) = noWindModel.landingDistanceFt else {
+      PerformanceCase(for: noWindModel, aircraftType: .g1)
+        .fail(
+          "Expected a no-wind landing distance, got \(noWindModel.landingDistanceFt)",
+          computing: "no-wind landing distance"
+        )
+      return
+    }
+    guard case .value(let headwindDistance) = headwindModel.landingDistanceFt else {
+      PerformanceCase(for: headwindModel, aircraftType: .g1)
+        .fail(
+          "Expected a headwind landing distance, got \(headwindModel.landingDistanceFt)",
+          computing: "headwind landing distance"
+        )
       return
     }
 
@@ -302,10 +334,20 @@ struct RwyCCTests {
       aircraftType: .g1
     )
 
-    guard case .value(let pavedDistance) = pavedModel.landingDistanceFt,
-      case .value(let turfDistance) = turfModel.landingDistanceFt
-    else {
-      Issue.record("Expected landing distance values")
+    guard case .value(let pavedDistance) = pavedModel.landingDistanceFt else {
+      PerformanceCase(for: pavedModel, aircraftType: .g1)
+        .fail(
+          "Expected a paved landing distance, got \(pavedModel.landingDistanceFt)",
+          computing: "paved landing distance"
+        )
+      return
+    }
+    guard case .value(let turfDistance) = turfModel.landingDistanceFt else {
+      PerformanceCase(for: turfModel, aircraftType: .g1)
+        .fail(
+          "Expected a turf landing distance, got \(turfModel.landingDistanceFt)",
+          computing: "turf landing distance"
+        )
       return
     }
 
@@ -351,11 +393,20 @@ struct RwyCCTests {
       aircraftType: .g1
     )
 
-    guard
-      case .valueWithUncertainty(let cleanDistance, _) = cleanModel.landingDistanceFt,
-      case .valueWithUncertainty(let rwyCCDistance, _) = rwyCCModel.landingDistanceFt
-    else {
-      Issue.record("Expected landing distance values")
+    guard case .valueWithUncertainty(let cleanDistance, _) = cleanModel.landingDistanceFt else {
+      PerformanceCase(for: cleanModel, aircraftType: .g1)
+        .fail(
+          "Expected a clean landing distance, got \(cleanModel.landingDistanceFt)",
+          computing: "clean landing distance"
+        )
+      return
+    }
+    guard case .valueWithUncertainty(let rwyCCDistance, _) = rwyCCModel.landingDistanceFt else {
+      PerformanceCase(for: rwyCCModel, aircraftType: .g1)
+        .fail(
+          "Expected a RwyCC landing distance, got \(rwyCCModel.landingDistanceFt)",
+          computing: "RwyCC landing distance"
+        )
       return
     }
 

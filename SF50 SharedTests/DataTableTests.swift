@@ -34,7 +34,7 @@ struct DataTableTests {
     // Test with non-exact interpolation
     let result2 = table.value(for: [1234.5])
     guard case .value(let value) = result2 else {
-      Issue.record("Expected interpolated value, got \(result2)")
+      table.fail("Expected interpolated value, got \(result2)")
       return
     }
     #expect(value.isApproximatelyEqual(to: 123.45, relativeTolerance: 0.0001))
@@ -123,11 +123,14 @@ struct DataTableTests {
     // Should interpolate between 20 and 30, ignoring ISA value
     let result = table.value(for: [6000.0, 7000.0, 25.0])
     guard case .value(let value) = result else {
-      Issue.record("Expected interpolated value, got \(result)")
+      table.fail("Expected an interpolated value, got \(result)")
       return
     }
     let expected = 3960.0 + 0.5 * (4905.0 - 3960.0)
-    #expect(value.isApproximatelyEqual(to: expected, relativeTolerance: 0.0001))
+    table.expect(
+      value.isApproximatelyEqual(to: expected, relativeTolerance: 0.0001),
+      "Interpolated \(value), expected \(expected)"
+    )
   }
 
   // MARK: - Edge Cases
@@ -161,17 +164,18 @@ struct DataTableTests {
 
     // Test exact match
     let result = table.value(for: [5000.0, 7000.0, 20.0])
-    #expect(result == .value(3300.0))
+    table.expect(result == .value(3300.0), "Exact match returned \(result)")
 
     // Test interpolation
     let interpResult = table.value(for: [5500.0, 7000.0, 25.0])
     guard case .value(let value) = interpResult else {
-      Issue.record("Expected interpolated value, got \(interpResult)")
+      table.fail("Expected an interpolated value, got \(interpResult)")
       return
     }
-    // Should be between the values
-    #expect(value > 3300.0)
-    #expect(value < 4905.0)
+    table.expect(
+      value > 3300.0 && value < 4905.0,
+      "Interpolated \(value), which is outside the bracketing values"
+    )
   }
 
   // MARK: - Min/Max Tests
@@ -185,10 +189,10 @@ struct DataTableTests {
     ]
     let table = DataTable(data: data)
 
-    #expect(table.min(dimension: 0) == 1000.0)
-    #expect(table.max(dimension: 0) == 3000.0)
+    table.expect(table.min(dimension: 0) == 1000.0, "Minimum of dimension 0")
+    table.expect(table.max(dimension: 0) == 3000.0, "Maximum of dimension 0")
 
-    #expect(table.min(dimension: 1) == 10.0)
-    #expect(table.max(dimension: 1) == 30.0)
+    table.expect(table.min(dimension: 1) == 10.0, "Minimum of dimension 1")
+    table.expect(table.max(dimension: 1) == 30.0, "Maximum of dimension 1")
   }
 }

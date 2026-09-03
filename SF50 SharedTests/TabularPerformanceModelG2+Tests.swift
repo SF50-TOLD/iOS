@@ -46,9 +46,11 @@ struct TabularPerformanceModelG2PlusTests {
 
       let result = model.takeoffRunFt
       guard case .value(let value) = result else {
-        Issue.record(
-          "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)"
-        )
+        PerformanceCase(for: model, aircraftType: .g2Plus)
+          .fail(
+            "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)",
+            computing: "takeoff run"
+          )
         continue
       }
 
@@ -73,7 +75,8 @@ struct TabularPerformanceModelG2PlusTests {
 
     let result = model.takeoffRunFt
     guard case .value(let value) = result else {
-      Issue.record("Expected interpolated value, got \(result)")
+      PerformanceCase(for: model, aircraftType: .g2Plus)
+        .fail("Expected interpolated value, got \(result)", computing: "takeoff run")
       return
     }
 
@@ -121,9 +124,11 @@ struct TabularPerformanceModelG2PlusTests {
 
       let result = model.takeoffDistanceFt
       guard case .value(let value) = result else {
-        Issue.record(
-          "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)"
-        )
+        PerformanceCase(for: model, aircraftType: .g2Plus)
+          .fail(
+            "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)",
+            computing: "takeoff distance"
+          )
         continue
       }
 
@@ -164,9 +169,11 @@ struct TabularPerformanceModelG2PlusTests {
 
       let result = model.takeoffClimbGradientFtNM
       guard case .value(let value) = result else {
-        Issue.record(
-          "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)"
-        )
+        PerformanceCase(for: model, aircraftType: .g2Plus)
+          .fail(
+            "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)",
+            computing: "takeoff climb gradient"
+          )
         continue
       }
 
@@ -205,9 +212,11 @@ struct TabularPerformanceModelG2PlusTests {
 
       let result = model.takeoffClimbRateFtMin
       guard case .value(let value) = result else {
-        Issue.record(
-          "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)"
-        )
+        PerformanceCase(for: model, aircraftType: .g2Plus)
+          .fail(
+            "Expected value for weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature), got \(result)",
+            computing: "takeoff climb rate"
+          )
         continue
       }
 
@@ -245,10 +254,20 @@ struct TabularPerformanceModelG2PlusTests {
       aircraftType: .g2Plus
     )
 
-    guard case .value(let noWindValue) = modelNoWind.takeoffRunFt,
-      case .value(let headwindValue) = modelHeadwind.takeoffRunFt
-    else {
-      Issue.record("Expected values for wind adjustment test")
+    guard case .value(let noWindValue) = modelNoWind.takeoffRunFt else {
+      PerformanceCase(for: modelNoWind, aircraftType: .g2Plus)
+        .fail(
+          "Expected a no-wind takeoff run, got \(modelNoWind.takeoffRunFt)",
+          computing: "no-wind takeoff run"
+        )
+      return
+    }
+    guard case .value(let headwindValue) = modelHeadwind.takeoffRunFt else {
+      PerformanceCase(for: modelHeadwind, aircraftType: .g2Plus)
+        .fail(
+          "Expected a headwind takeoff run, got \(modelHeadwind.takeoffRunFt)",
+          computing: "headwind takeoff run"
+        )
       return
     }
 
@@ -325,12 +344,20 @@ struct TabularPerformanceModelG2PlusTests {
       aircraftType: .g2Plus
     )
 
-    guard case .value(let flatValue) = modelFlat.landingRunFt,
-      case .value(let downhillValue) = modelDownhill.landingRunFt
-    else {
-      Issue.record(
-        "Expected values for slope adjustment test, got modelFlat = \(modelFlat.landingRunFt), modelDownhill = \(modelDownhill.landingRunFt)"
-      )
+    guard case .value(let flatValue) = modelFlat.landingRunFt else {
+      PerformanceCase(for: modelFlat, aircraftType: .g2Plus)
+        .fail(
+          "Expected a flat landing run, got \(modelFlat.landingRunFt)",
+          computing: "flat landing run"
+        )
+      return
+    }
+    guard case .value(let downhillValue) = modelDownhill.landingRunFt else {
+      PerformanceCase(for: modelDownhill, aircraftType: .g2Plus)
+        .fail(
+          "Expected a downhill landing run, got \(modelDownhill.landingRunFt)",
+          computing: "downhill landing run"
+        )
       return
     }
 
@@ -365,12 +392,20 @@ struct TabularPerformanceModelG2PlusTests {
       aircraftType: .g2Plus
     )
 
-    guard case .value(let pavedValue) = modelPaved.landingDistanceFt,
-      case .value(let unpavedValue) = modelUnpaved.landingDistanceFt
-    else {
-      Issue.record(
-        "Expected values for surface adjustment test, got modelPaved = \(modelPaved.landingDistanceFt), modelUnpaved = \(modelUnpaved.landingDistanceFt)"
-      )
+    guard case .value(let pavedValue) = modelPaved.landingDistanceFt else {
+      PerformanceCase(for: modelPaved, aircraftType: .g2Plus)
+        .fail(
+          "Expected a paved landing distance, got \(modelPaved.landingDistanceFt)",
+          computing: "paved landing distance"
+        )
+      return
+    }
+    guard case .value(let unpavedValue) = modelUnpaved.landingDistanceFt else {
+      PerformanceCase(for: modelUnpaved, aircraftType: .g2Plus)
+        .fail(
+          "Expected a unpaved landing distance, got \(modelUnpaved.landingDistanceFt)",
+          computing: "unpaved landing distance"
+        )
       return
     }
 

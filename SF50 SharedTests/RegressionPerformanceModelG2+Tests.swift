@@ -25,6 +25,7 @@ struct RegressionPerformanceModelG2PlusTests {
         )
       },
       valueExtractor: { $0.takeoffRunFt },
+      aircraftType: .g2Plus,
       testName: "takeoffGroundRun"
     )
   }
@@ -49,6 +50,7 @@ struct RegressionPerformanceModelG2PlusTests {
         )
       },
       valueExtractor: { $0.takeoffDistanceFt },
+      aircraftType: .g2Plus,
       testName: "takeoffDistance"
     )
   }
@@ -73,6 +75,7 @@ struct RegressionPerformanceModelG2PlusTests {
         )
       },
       valueExtractor: { $0.takeoffClimbGradientFtNM },
+      aircraftType: .g2Plus,
       testName: "takeoffClimbGradient"
     )
   }
@@ -95,6 +98,7 @@ struct RegressionPerformanceModelG2PlusTests {
         )
       },
       valueExtractor: { $0.takeoffClimbRateFtMin },
+      aircraftType: .g2Plus,
       testName: "takeoffClimbRate"
     )
   }
@@ -133,21 +137,27 @@ struct RegressionPerformanceModelG2PlusTests {
     let noWindValue: Double
     let tailwindValue: Double
 
-    switch (modelNoWind.takeoffDistanceFt, modelTailwind.takeoffDistanceFt) {
-      case (.value(let nw), .value(let tw)):
-        noWindValue = nw
-        tailwindValue = tw
-      case (.valueWithUncertainty(let nw, _), .valueWithUncertainty(let tw, _)):
-        noWindValue = nw
-        tailwindValue = tw
-      case (.value(let nw), .valueWithUncertainty(let tw, _)):
-        noWindValue = nw
-        tailwindValue = tw
-      case (.valueWithUncertainty(let nw, _), .value(let tw)):
-        noWindValue = nw
-        tailwindValue = tw
+    switch modelNoWind.takeoffDistanceFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        noWindValue = val
       default:
-        Issue.record("Unexpected value types for wind adjustment test")
+        PerformanceCase(for: modelNoWind, aircraftType: .g2Plus)
+          .fail(
+            "Expected a no-wind takeoff distance, got \(modelNoWind.takeoffDistanceFt)",
+            computing: "no-wind takeoff distance"
+          )
+        return
+    }
+
+    switch modelTailwind.takeoffDistanceFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        tailwindValue = val
+      default:
+        PerformanceCase(for: modelTailwind, aircraftType: .g2Plus)
+          .fail(
+            "Expected a tailwind takeoff distance, got \(modelTailwind.takeoffDistanceFt)",
+            computing: "tailwind takeoff distance"
+          )
         return
     }
 
@@ -189,21 +199,27 @@ struct RegressionPerformanceModelG2PlusTests {
     let noWindValue: Double
     let headwindValue: Double
 
-    switch (modelNoWind.landingRunFt, modelHeadwind.landingRunFt) {
-      case (.value(let nw), .value(let hw)):
-        noWindValue = nw
-        headwindValue = hw
-      case (.valueWithUncertainty(let nw, _), .valueWithUncertainty(let hw, _)):
-        noWindValue = nw
-        headwindValue = hw
-      case (.value(let nw), .valueWithUncertainty(let hw, _)):
-        noWindValue = nw
-        headwindValue = hw
-      case (.valueWithUncertainty(let nw, _), .value(let hw)):
-        noWindValue = nw
-        headwindValue = hw
+    switch modelNoWind.landingRunFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        noWindValue = val
       default:
-        Issue.record("Unexpected value types for wind adjustment test")
+        PerformanceCase(for: modelNoWind, aircraftType: .g2Plus)
+          .fail(
+            "Expected a no-wind landing run, got \(modelNoWind.landingRunFt)",
+            computing: "no-wind landing run"
+          )
+        return
+    }
+
+    switch modelHeadwind.landingRunFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        headwindValue = val
+      default:
+        PerformanceCase(for: modelHeadwind, aircraftType: .g2Plus)
+          .fail(
+            "Expected a headwind landing run, got \(modelHeadwind.landingRunFt)",
+            computing: "headwind landing run"
+          )
         return
     }
 
@@ -251,20 +267,39 @@ struct RegressionPerformanceModelG2PlusTests {
     let uphillValue: Double
     let downhillValue: Double
 
-    switch (modelFlat.takeoffRunFt, modelUphill.takeoffRunFt, modelDownhill.takeoffRunFt) {
-      case (.value(let f), .value(let u), .value(let d)):
-        flatValue = f
-        uphillValue = u
-        downhillValue = d
-      case (
-        .valueWithUncertainty(let f, _), .valueWithUncertainty(let u, _),
-        .valueWithUncertainty(let d, _)
-      ):
-        flatValue = f
-        uphillValue = u
-        downhillValue = d
+    switch modelFlat.takeoffRunFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        flatValue = val
       default:
-        Issue.record("Unexpected value types for slope adjustment test")
+        PerformanceCase(for: modelFlat, aircraftType: .g2Plus)
+          .fail(
+            "Expected a flat takeoff run, got \(modelFlat.takeoffRunFt)",
+            computing: "flat takeoff run"
+          )
+        return
+    }
+
+    switch modelUphill.takeoffRunFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        uphillValue = val
+      default:
+        PerformanceCase(for: modelUphill, aircraftType: .g2Plus)
+          .fail(
+            "Expected a uphill takeoff run, got \(modelUphill.takeoffRunFt)",
+            computing: "uphill takeoff run"
+          )
+        return
+    }
+
+    switch modelDownhill.takeoffRunFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        downhillValue = val
+      default:
+        PerformanceCase(for: modelDownhill, aircraftType: .g2Plus)
+          .fail(
+            "Expected a downhill takeoff run, got \(modelDownhill.takeoffRunFt)",
+            computing: "downhill takeoff run"
+          )
         return
     }
 
@@ -323,9 +358,11 @@ struct RegressionPerformanceModelG2PlusTests {
       let regressionResult = regressionModel.meetsGoAroundClimbGradient
 
       guard case .value(let meetsGradient) = regressionResult else {
-        Issue.record(
-          "Expected .value for regression model at weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature)"
-        )
+        PerformanceCase(for: regressionModel, aircraftType: .g2Plus)
+          .fail(
+            "Expected .value for regression model at weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature)",
+            computing: "regression go-around climb gradient"
+          )
         continue
       }
 
@@ -349,9 +386,11 @@ struct RegressionPerformanceModelG2PlusTests {
       // When tabular landing distance is offscale high, go-around should be false
       if case .offscaleHigh = tabularLandingDistance {
         guard case .value(false) = tabularGoAround else {
-          Issue.record(
-            "Tabular model should return false for go-around when landing distance is offscale high"
-          )
+          PerformanceCase(for: tabularModel, aircraftType: .g2Plus)
+            .fail(
+              "Tabular model should return false for go-around when landing distance is offscale high",
+              computing: "tabular go-around climb gradient"
+            )
           continue
         }
       }
@@ -384,7 +423,11 @@ struct RegressionPerformanceModelG2PlusTests {
     )
 
     guard case .value(let minWeightMeets) = minWeightModel.meetsGoAroundClimbGradient else {
-      Issue.record("Expected .value for minimum weight test")
+      PerformanceCase(for: minWeightModel, aircraftType: .g2Plus)
+        .fail(
+          "Expected .value for minimum weight test",
+          computing: "minimum weight go-around climb gradient"
+        )
       return
     }
     #expect(
@@ -406,7 +449,11 @@ struct RegressionPerformanceModelG2PlusTests {
     )
 
     guard case .value(let maxWeightMeets) = maxWeightModel.meetsGoAroundClimbGradient else {
-      Issue.record("Expected .value for maximum weight test")
+      PerformanceCase(for: maxWeightModel, aircraftType: .g2Plus)
+        .fail(
+          "Expected .value for maximum weight test",
+          computing: "maximum weight go-around climb gradient"
+        )
       return
     }
     #expect(
