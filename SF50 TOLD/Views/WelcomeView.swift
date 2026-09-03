@@ -29,7 +29,7 @@ struct WelcomeView: View {
       VStack {
         Image("Logo")
           .resizable()
-          .aspectRatio(contentMode: .fit)
+          .scaledToFit()
           .frame(maxWidth: 200, alignment: .center)
           .accessibilityHidden(true)
         Text("Welcome to SF50 TOLD")

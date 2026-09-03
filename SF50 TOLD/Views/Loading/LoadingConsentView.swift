@@ -16,7 +16,7 @@ struct LoadingConsentView: View {
     VStack(alignment: .center, spacing: 20) {
       Image("Logo")
         .resizable()
-        .aspectRatio(contentMode: .fit)
+        .scaledToFit()
         .frame(maxWidth: 200, alignment: .center)
         .accessibilityHidden(true)
 

@@ -40,7 +40,7 @@ struct LoadingProgressView: View {
     VStack {
       Image("Logo")
         .resizable()
-        .aspectRatio(contentMode: .fit)
+        .scaledToFit()
         .frame(maxWidth: 200, alignment: .center)
         .accessibilityHidden(true)
       Text("Loading latest airport information…")
