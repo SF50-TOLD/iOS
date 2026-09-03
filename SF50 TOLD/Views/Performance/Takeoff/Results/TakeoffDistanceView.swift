@@ -22,6 +22,8 @@ struct TakeoffDistanceView: View {
         )
         .animation(.default, value: performance.takeoffDistance)
         .accessibilityIdentifier("takeoffDistanceValue")
+        .accessibilityCustomContent(.sufficiency, sufficiencyContent, importance: .high)
+        .accessibilityCustomContent(.availableDistance, availableDistanceContent)
       },
       label: {
         Text("Total Distance")
@@ -31,6 +33,51 @@ struct TakeoffDistanceView: View {
       }
     )
   }
+}
+
+// MARK: - Accessibility
+
+extension TakeoffDistanceView {
+  /// The runway-length comparison the value otherwise signals with red text alone. InterpolationView
+  /// reddens the distance when it overruns the runway and the uncertainty when only the upper
+  /// estimate does, so the verdict has to name that middle case rather than call it sufficient.
+  fileprivate var sufficiencyContent: Text? {
+    guard let available = performance.availableTakeoffDistance else { return nil }
+
+    switch performance.takeoffDistance {
+      case .value(let distance):
+        return verdict(required: distance, upperEstimate: distance, available: available)
+      case .valueWithUncertainty(let distance, let uncertainty):
+        return verdict(
+          required: distance,
+          upperEstimate: distance + uncertainty,
+          available: available
+        )
+      case .invalid, .notAvailable, .notAuthorized, .offscaleHigh, .offscaleLow: return nil
+    }
+  }
+
+  fileprivate var availableDistanceContent: Text? {
+    guard let available = performance.availableTakeoffDistance else { return nil }
+    return Text(available.converted(to: runwayLengthUnit), format: .length)
+  }
+
+  private func verdict(
+    required: Measurement<UnitLength>,
+    upperEstimate: Measurement<UnitLength>,
+    available: Measurement<UnitLength>
+  ) -> Text {
+    if required > available { return Text("Available takeoff distance insufficient") }
+    if upperEstimate > available {
+      return Text("Available takeoff distance marginal, upper estimate insufficient")
+    }
+    return Text("Available takeoff distance sufficient")
+  }
+}
+
+extension AccessibilityCustomContentKey {
+  fileprivate static var sufficiency: Self { .init("Runway") }
+  fileprivate static var availableDistance: Self { .init("Takeoff distance available") }
 }
 
 #Preview("Possible") {
