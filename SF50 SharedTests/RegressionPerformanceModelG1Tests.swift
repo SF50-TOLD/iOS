@@ -25,6 +25,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.takeoffRunFt },
+      aircraftType: .g1,
       testName: "takeoffGroundRun"
     )
   }
@@ -49,6 +50,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.takeoffDistanceFt },
+      aircraftType: .g1,
       testName: "takeoffDistance"
     )
   }
@@ -73,6 +75,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.takeoffClimbGradientFtNM },
+      aircraftType: .g1,
       testName: "takeoffClimbGradient"
     )
   }
@@ -95,6 +98,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.takeoffClimbRateFtMin },
+      aircraftType: .g1,
       testName: "takeoffClimbRate"
     )
   }
@@ -144,7 +148,8 @@ struct RegressionPerformanceModelG1Tests {
 
         // Vref is a simple linear formula, not a regression model, so it must return a plain value
         guard case .value(let value) = result else {
-          Issue.record("Vref should return a plain value, got \(result)")
+          PerformanceCase(for: model, aircraftType: .g1)
+            .fail("Vref should return a plain value, got \(result)", computing: "Vref")
           continue
         }
 
@@ -177,6 +182,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.landingRunFt },
+      aircraftType: .g1,
       testName: "landingGroundRun_flaps50"
     )
   }
@@ -202,6 +208,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.landingRunFt },
+      aircraftType: .g1,
       testName: "landingGroundRun_flaps100"
     )
   }
@@ -229,6 +236,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.landingDistanceFt },
+      aircraftType: .g1,
       testName: "landingDistance_flaps50"
     )
   }
@@ -254,6 +262,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.landingDistanceFt },
+      aircraftType: .g1,
       testName: "landingDistance_flaps100"
     )
   }
@@ -283,6 +292,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.enrouteClimbGradientFtNM },
+      aircraftType: .g1,
       testName: "enrouteClimbGradient_normal"
     )
   }
@@ -310,6 +320,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.enrouteClimbRateFtMin },
+      aircraftType: .g1,
       testName: "enrouteClimbRate_normal"
     )
   }
@@ -337,6 +348,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.enrouteClimbSpeedKIAS },
+      aircraftType: .g1,
       testName: "enrouteClimbSpeed_normal"
     )
   }
@@ -365,6 +377,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.enrouteClimbGradientFtNM },
+      aircraftType: .g1,
       testName: "enrouteClimbGradient_iceContaminated"
     )
   }
@@ -391,6 +404,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.enrouteClimbRateFtMin },
+      aircraftType: .g1,
       testName: "enrouteClimbRate_iceContaminated"
     )
   }
@@ -417,6 +431,7 @@ struct RegressionPerformanceModelG1Tests {
         )
       },
       valueExtractor: { $0.enrouteClimbSpeedKIAS },
+      aircraftType: .g1,
       testName: "enrouteClimbSpeed_iceContaminated"
     )
   }
@@ -455,21 +470,27 @@ struct RegressionPerformanceModelG1Tests {
     let noWindValue: Double
     let headwindValue: Double
 
-    switch (modelNoWind.takeoffRunFt, modelHeadwind.takeoffRunFt) {
-      case (.value(let nw), .value(let hw)):
-        noWindValue = nw
-        headwindValue = hw
-      case (.valueWithUncertainty(let nw, _), .valueWithUncertainty(let hw, _)):
-        noWindValue = nw
-        headwindValue = hw
-      case (.value(let nw), .valueWithUncertainty(let hw, _)):
-        noWindValue = nw
-        headwindValue = hw
-      case (.valueWithUncertainty(let nw, _), .value(let hw)):
-        noWindValue = nw
-        headwindValue = hw
+    switch modelNoWind.takeoffRunFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        noWindValue = val
       default:
-        Issue.record("Unexpected value types for wind adjustment test")
+        PerformanceCase(for: modelNoWind, aircraftType: .g1)
+          .fail(
+            "Expected a no-wind takeoff run, got \(modelNoWind.takeoffRunFt)",
+            computing: "no-wind takeoff run"
+          )
+        return
+    }
+
+    switch modelHeadwind.takeoffRunFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        headwindValue = val
+      default:
+        PerformanceCase(for: modelHeadwind, aircraftType: .g1)
+          .fail(
+            "Expected a headwind takeoff run, got \(modelHeadwind.takeoffRunFt)",
+            computing: "headwind takeoff run"
+          )
         return
     }
 
@@ -505,21 +526,27 @@ struct RegressionPerformanceModelG1Tests {
     let pavedValue: Double
     let unpavedValue: Double
 
-    switch (modelPaved.landingDistanceFt, modelUnpaved.landingDistanceFt) {
-      case (.value(let pv), .value(let uv)):
-        pavedValue = pv
-        unpavedValue = uv
-      case (.valueWithUncertainty(let pv, _), .valueWithUncertainty(let uv, _)):
-        pavedValue = pv
-        unpavedValue = uv
-      case (.value(let pv), .valueWithUncertainty(let uv, _)):
-        pavedValue = pv
-        unpavedValue = uv
-      case (.valueWithUncertainty(let pv, _), .value(let uv)):
-        pavedValue = pv
-        unpavedValue = uv
+    switch modelPaved.landingDistanceFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        pavedValue = val
       default:
-        Issue.record("Unexpected value types for surface adjustment test")
+        PerformanceCase(for: modelPaved, aircraftType: .g1)
+          .fail(
+            "Expected a paved landing distance, got \(modelPaved.landingDistanceFt)",
+            computing: "paved landing distance"
+          )
+        return
+    }
+
+    switch modelUnpaved.landingDistanceFt {
+      case .value(let val), .valueWithUncertainty(let val, _):
+        unpavedValue = val
+      default:
+        PerformanceCase(for: modelUnpaved, aircraftType: .g1)
+          .fail(
+            "Expected a unpaved landing distance, got \(modelUnpaved.landingDistanceFt)",
+            computing: "unpaved landing distance"
+          )
         return
     }
 
@@ -575,9 +602,11 @@ struct RegressionPerformanceModelG1Tests {
       let regressionResult = regressionModel.meetsGoAroundClimbGradient
 
       guard case .value(let meetsGradient) = regressionResult else {
-        Issue.record(
-          "Expected .value for regression model at weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature)"
-        )
+        PerformanceCase(for: regressionModel, aircraftType: .g1)
+          .fail(
+            "Expected .value for regression model at weight: \(testCase.weight), altitude: \(testCase.altitude), temp: \(testCase.temperature)",
+            computing: "regression go-around climb gradient"
+          )
         continue
       }
 
@@ -601,9 +630,11 @@ struct RegressionPerformanceModelG1Tests {
       // When tabular landing distance is offscale high, go-around should be false
       if case .offscaleHigh = tabularLandingDistance {
         guard case .value(false) = tabularGoAround else {
-          Issue.record(
-            "Tabular model should return false for go-around when landing distance is offscale high"
-          )
+          PerformanceCase(for: tabularModel, aircraftType: .g1)
+            .fail(
+              "Tabular model should return false for go-around when landing distance is offscale high",
+              computing: "tabular go-around climb gradient"
+            )
           continue
         }
       }
@@ -636,7 +667,11 @@ struct RegressionPerformanceModelG1Tests {
     )
 
     guard case .value(let minWeightMeets) = minWeightModel.meetsGoAroundClimbGradient else {
-      Issue.record("Expected .value for minimum weight test")
+      PerformanceCase(for: minWeightModel, aircraftType: .g1)
+        .fail(
+          "Expected .value for minimum weight test",
+          computing: "minimum weight go-around climb gradient"
+        )
       return
     }
     #expect(
@@ -658,7 +693,11 @@ struct RegressionPerformanceModelG1Tests {
     )
 
     guard case .value(let maxWeightMeets) = maxWeightModel.meetsGoAroundClimbGradient else {
-      Issue.record("Expected .value for maximum weight test")
+      PerformanceCase(for: maxWeightModel, aircraftType: .g1)
+        .fail(
+          "Expected .value for maximum weight test",
+          computing: "maximum weight go-around climb gradient"
+        )
       return
     }
     #expect(
