@@ -8,7 +8,7 @@ struct LocationErrorView: View {
       HStack(alignment: .top) {
         Image(systemName: "xmark.octagon")
           .resizable()
-          .aspectRatio(contentMode: .fit)
+          .scaledToFit()
           .frame(maxHeight: 40)
           .accessibilityHidden(true)
         VStack(alignment: .leading, spacing: 20) {
