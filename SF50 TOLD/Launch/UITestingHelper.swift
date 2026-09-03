@@ -1,3 +1,4 @@
+import CoreLocation
 import Defaults
 import Foundation
 import SF50_Shared
@@ -31,6 +32,21 @@ enum UITestingHelper {
       return PathAtmosphereLoader.shared
     }
     return UITestingPathAtmosphereLoader()
+  }
+
+  /// The location source the nearest-airport picker should use.
+  ///
+  /// `nil` outside UI testing, and `nil` under UI testing unless a test scripts a fix or a
+  /// refusal. Nothing is injected in those cases, and the environment default builds its real
+  /// Core Location source only when something first reads it — so a test that never opens the
+  /// picker never starts location updates, and never raises a permission prompt.
+  @MainActor static var locationStreamer: (any LocationStreamer)? {
+    guard isUITesting else { return nil }
+    if ProcessInfo.processInfo.arguments.contains("LOCATION-DENIED") {
+      return MockLocationStreamer(availability: .authorizationDenied)
+    }
+    guard let location = seededLocation() else { return nil }
+    return MockLocationStreamer(location: location)
   }
 
   static func setupUITestingEnvironment(container: ModelContainer) {
@@ -69,6 +85,19 @@ enum UITestingHelper {
     guard let argument = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix(prefix) })
     else { return [] }
     return Set(argument.dropFirst(prefix.count).split(separator: ",").map(String.init))
+  }
+
+  /// The fix a test scripted with `LOCATION=<latitude>,<longitude>`, if any.
+  private static func seededLocation() -> CLLocation? {
+    let prefix = "LOCATION="
+    guard let argument = ProcessInfo.processInfo.arguments.first(where: { $0.hasPrefix(prefix) })
+    else { return nil }
+    let coordinates = argument.dropFirst(prefix.count).split(separator: ",")
+    guard coordinates.count == 2,
+      let latitude = Double(coordinates[0]),
+      let longitude = Double(coordinates[1])
+    else { return nil }
+    return .init(latitude: latitude, longitude: longitude)
   }
 
   @MainActor
