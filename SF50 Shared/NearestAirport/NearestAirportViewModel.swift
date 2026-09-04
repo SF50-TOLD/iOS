@@ -81,18 +81,27 @@ public class NearestAirportViewModel {
     self.container = container
 
     updateTask = Task {
-      await streamer.start()
-
-      // Get initial values
+      // Subscribing is itself a listener, so the streamer needs no separate start.
       location = streamer.location
       error = streamer.error
 
-      // Subscribe to location updates
-      for await newLocation in streamer.locationUpdates() where !Task.isCancelled {
+      for await newLocation in streamer.locationUpdates() {
+        if Task.isCancelled { break }
         location = newLocation
         error = nil
       }
     }
+  }
+
+  /// Ends the location subscription and any in-flight airport fetch.
+  ///
+  /// Releasing the view model is not enough: the update task holds the subscription
+  /// alive, which keeps the streamer — and the GPS — running.
+  public func cancel() {
+    updateTask?.cancel()
+    updateTask = nil
+    fetchTask?.cancel()
+    fetchTask = nil
   }
 
   private func updateAirports() {

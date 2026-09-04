@@ -8,7 +8,7 @@ Location services, geographic calculations, custom measurement units, state mana
 
 - ``LocationStreamer``
 - ``CoreLocationStreamer``
-- ``LocationError``
+- ``LocationAvailability``
 - ``NearestAirportViewModel``
 - ``NearbyFinder``
 - ``Locatable``

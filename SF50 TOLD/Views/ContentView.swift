@@ -25,8 +25,8 @@ struct ContentView: View {
         loader = .init(container: context.container)
       }
     }
-    .environment(\.locationStreamer, CoreLocationStreamer())
     .environment(\.pathAtmosphereLoader, UITestingHelper.pathAtmosphereLoader)
+    .modifier(UITestLocationStreamer())
   }
 
   @ViewBuilder private var content: some View {
@@ -68,6 +68,20 @@ struct ContentView: View {
       }
       .tapToDismissKeyboard()
       .accessibilityIdentifier("mainTabView")
+    }
+  }
+}
+
+/// Substitutes a scripted location source when a UI test supplies one.
+///
+/// Outside UI testing nothing is injected and the environment default stands, which builds a
+/// real streamer only when something first reads it.
+private struct UITestLocationStreamer: ViewModifier {
+  func body(content: Content) -> some View {
+    if let streamer = UITestingHelper.locationStreamer {
+      content.environment(\.locationStreamer, streamer)
+    } else {
+      content
     }
   }
 }

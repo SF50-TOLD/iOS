@@ -1,4 +1,3 @@
-import CoreLocation
 import Defaults
 import SF50_Shared
 import SwiftUI
@@ -14,7 +13,6 @@ struct AirportPicker: View {
   var onSelect: (Airport) -> Void
 
   @State private var tabIndex: AirportPickerTabs = .favorites
-  @State private var showNearestTab = false
 
   @Environment(\.presentationMode)
   private var mode
@@ -27,9 +25,7 @@ struct AirportPicker: View {
       Picker("Tab", selection: $tabIndex) {
         Text("Favorites").tag(AirportPickerTabs.favorites)
         Text("Recents").tag(AirportPickerTabs.recents)
-        if showNearestTab {
-          Text("Nearest").tag(AirportPickerTabs.nearest)
-        }
+        Text("Nearest").tag(AirportPickerTabs.nearest)
         Text("Search").tag(AirportPickerTabs.search)
       }
       .pickerStyle(SegmentedPickerStyle())
@@ -42,15 +38,6 @@ struct AirportPicker: View {
         case .nearest: NearestView(onSelect: selectAndDismiss)
         case .search: SearchView(onSelect: selectAndDismiss)
       }
-    }
-    .task {
-      // `CLLocationManager.locationServicesEnabled()` blocks the calling thread,
-      // so run the availability checks off the main actor to keep the UI
-      // responsive (a synchronous call here hangs the picker on slow devices).
-      showNearestTab = await Task.detached {
-        CLLocationManager.locationServicesEnabled()
-          && CLLocationManager.significantLocationChangeMonitoringAvailable()
-      }.value
     }
   }
 
