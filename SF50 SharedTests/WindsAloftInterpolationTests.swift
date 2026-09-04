@@ -9,7 +9,7 @@ import Testing
 struct NearbyFinderTests {
 
   @Test
-  func boundingBoxCalculation() {
+  func `bounding box calculation`() {
     let center = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let bounds = NearbyFinder.boundingBox(center: center, radiusNM: 60.0)
 
@@ -28,7 +28,7 @@ struct NearbyFinderTests {
   }
 
   @Test
-  func findNearbyItems() {
+  func `find nearby items`() {
     struct TestItem: Locatable {
       let id: String
       let coordinate: CLLocationCoordinate2D
@@ -56,7 +56,7 @@ struct NearbyFinderTests {
   }
 
   @Test
-  func findNearbyWithLimit() {
+  func `find nearby with limit`() {
     struct TestItem: Locatable {
       let id: String
       let coordinate: CLLocationCoordinate2D
@@ -83,7 +83,7 @@ struct NearbyFinderTests {
 struct WindsAloftAltitudeInterpolationTests {
 
   @Test
-  func interpolateBetweenLevels() {
+  func `interpolate between levels`() {
     let data = makeTestData(entries: [
       (altitude: 3000, direction: 270, speed: 10, temp: 10),
       (altitude: 6000, direction: 270, speed: 20, temp: 0),
@@ -109,7 +109,7 @@ struct WindsAloftAltitudeInterpolationTests {
   }
 
   @Test
-  func interpolateBelowLowest() {
+  func `interpolate below lowest`() {
     let data = makeTestData(entries: [
       (altitude: 3000, direction: 270, speed: 10, temp: 10),
       (altitude: 6000, direction: 270, speed: 20, temp: 0)
@@ -129,7 +129,7 @@ struct WindsAloftAltitudeInterpolationTests {
   }
 
   @Test
-  func interpolateAboveHighest() {
+  func `interpolate above highest`() {
     let data = makeTestData(entries: [
       (altitude: 3000, direction: 270, speed: 10, temp: 10),
       (altitude: 6000, direction: 270, speed: 20, temp: 0)
@@ -149,7 +149,7 @@ struct WindsAloftAltitudeInterpolationTests {
   }
 
   @Test
-  func interpolateExactAltitude() {
+  func `interpolate exact altitude`() {
     let data = makeTestData(entries: [
       (altitude: 3000, direction: 270, speed: 10, temp: 10),
       (altitude: 6000, direction: 270, speed: 20, temp: 0)
@@ -168,7 +168,7 @@ struct WindsAloftAltitudeInterpolationTests {
   }
 
   @Test
-  func interpolateDirectionAcross360Boundary() {
+  func `interpolate direction across the 360 boundary`() {
     let data = makeTestData(entries: [
       (altitude: 3000, direction: 350, speed: 10, temp: 10),
       (altitude: 6000, direction: 10, speed: 10, temp: 0)
@@ -187,7 +187,7 @@ struct WindsAloftAltitudeInterpolationTests {
   }
 
   @Test
-  func interpolateDirectionShortestPath() {
+  func `interpolate direction shortest path`() {
     let data = makeTestData(entries: [
       (altitude: 3000, direction: 90, speed: 10, temp: 10),
       (altitude: 6000, direction: 180, speed: 10, temp: 0)
@@ -206,7 +206,7 @@ struct WindsAloftAltitudeInterpolationTests {
   }
 
   @Test
-  func interpolateWithLightAndVariable() {
+  func `interpolate with light and variable`() {
     let data = makeTestDataWithLV(entries: [
       (altitude: 3000, direction: nil, speed: nil, temp: 10),  // L&V: nil direction, 0 speed
       (altitude: 6000, direction: 270, speed: 20, temp: 0)
@@ -233,7 +233,7 @@ struct WindsAloftAltitudeInterpolationTests {
   }
 
   @Test
-  func emptyDataReturnsNil() {
+  func `empty data returns nil`() {
     let data = makeTestData(entries: [])
     let entry = data.entry(at: .init(value: 5000, unit: .feet))
     #expect(entry == nil)
@@ -275,7 +275,7 @@ struct WindsAloftAltitudeInterpolationTests {
 struct WindsAloftSpatialInterpolationTests {
 
   @Test
-  func interpolateFromMultipleStations() {
+  func `interpolate from multiple stations`() {
     // WindsAloftInterpolator is a caseless enum used as a namespace
 
     // Create two stations equidistant from target
@@ -302,7 +302,7 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func useClosestStationWhenVeryClose() {
+  func `use closest station when very close`() {
     // WindsAloftInterpolator is a caseless enum used as a namespace
 
     // One station very close, one far
@@ -329,7 +329,7 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func returnNilWhenNoStationsInRange() {
+  func `return nil when no stations in range`() {
     // WindsAloftInterpolator is a caseless enum used as a namespace
 
     // All stations far away
@@ -352,7 +352,7 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func useSingleStationWhenOnlyOneAvailable() {
+  func `use single station when only one available`() {
     // WindsAloftInterpolator is a caseless enum used as a namespace
 
     let stations = [
@@ -376,7 +376,7 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func opposingWindsFallBackToTheNearestStation() throws {
+  func `opposing winds fall back to the nearest station`() throws {
     let stations = [
       makeStation(id: "A", lat: 37.1, lon: -122.0, direction: 0, speed: 10),
       makeStation(id: "B", lat: 36.9, lon: -122.0, direction: 180, speed: 10)
@@ -399,7 +399,7 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func lightAndVariableStationsInterpolateToCalm() {
+  func `light and variable stations interpolate to calm`() {
     let stations = [
       makeStation(id: "A", lat: 37.1, lon: -122.0, direction: nil, speed: 0),
       makeStation(id: "B", lat: 36.9, lon: -122.0, direction: nil, speed: 0)
@@ -419,7 +419,7 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func perpendicularWindsResolveToTheirVectorSum() throws {
+  func `perpendicular winds resolve to their vector sum`() throws {
     let stations = [
       makeStation(id: "A", lat: 37.1, lon: -122.0, direction: 0, speed: 10),
       makeStation(id: "B", lat: 36.9, lon: -122.0, direction: 270, speed: 10)
@@ -452,7 +452,7 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func stationsDoNotContributeAtAltitudesTheyDoNotReport() {
+  func `stations do not contribute at altitudes they do not report`() {
     // A station on high terrain publishes nothing below 9,000 ft, because the bulletin omits
     // levels within 1,500 ft of a station's elevation.
     let lowland = makeStation(id: "LOW", lat: 37.5, lon: -122.0, direction: 270, speed: 10)
@@ -488,7 +488,7 @@ struct WindsAloftSpatialInterpolationTests {
   }
 
   @Test
-  func idwWeightingFavorsCloserStations() {
+  func `IDW weighting favors closer stations`() {
     // WindsAloftInterpolator is a caseless enum used as a namespace
 
     // Station A is much closer than Station B
@@ -539,7 +539,7 @@ struct WindsAloftSpatialInterpolationTests {
 struct WindsAloftStationTableTests {
 
   @Test
-  func tableCoversEveryPublishedForecastLocation() {
+  func `table covers every published forecast location`() {
     #expect(WindsAloftStation.all.count == 233)
   }
 
@@ -552,7 +552,7 @@ struct WindsAloftStationTableTests {
       (id: "H51", latitude: 26.5, longitude: -95.0)
     ]
   )
-  func stationsSitWhereTheDirectiveSaysTheyDo(
+  func `stations sit where the directive says they do`(
     expected: (id: String, latitude: Double, longitude: Double)
   ) throws {
     let station = try #require(WindsAloftStation.all[expected.id])
@@ -565,7 +565,7 @@ struct WindsAloftStationTableTests {
   /// longitudes are printed without their minus signs, putting them in Mongolia and west of Attu,
   /// and San Antonio's latitude is 54 NM south of the field.
   @Test
-  func rowsWrongInTheDirectiveAreCorrected() throws {
+  func `rows wrong in the directive are corrected`() throws {
     let berlin = try #require(WindsAloftStation.all["BML"])
     #expect(berlin.longitude < 0)
     #expect(berlin.longitude.isApproximatelyEqual(to: -71.183333, absoluteTolerance: 1e-5))
@@ -586,7 +586,7 @@ struct WindsAloftStationTableTests {
 struct WindsAloftBulletinInterpolationTests {
 
   @Test
-  func airportBetweenStationsGetsAnInterpolatedColumn() throws {
+  func `airport between stations gets an interpolated column`() throws {
     // Oakland has no forecast location of its own, and sits between the San Francisco,
     // Sacramento and Fresno stations.
     let result = try #require(
@@ -606,7 +606,7 @@ struct WindsAloftBulletinInterpolationTests {
   }
 
   @Test
-  func airportBeyondEveryStationGetsNothing() {
+  func `airport beyond every station gets nothing`() {
     // Mid-Pacific, thousands of miles from any of these stations.
     let result = WindsAloftInterpolator.interpolate(
       at: .init(latitude: 30.0, longitude: -160.0),
@@ -619,7 +619,7 @@ struct WindsAloftBulletinInterpolationTests {
   /// A station identifier the bundled table doesn't know contributes nothing, rather than being
   /// placed at some default position.
   @Test
-  func unknownStationsAreIgnored() {
+  func `unknown stations are ignored`() {
     let result = WindsAloftInterpolator.interpolate(
       at: .init(latitude: 37.7213, longitude: -122.2207),
       in: bulletin(stations: ["ZZZ": 20, "QQQ": 30])

@@ -31,7 +31,7 @@ struct TerrainRegionInventoryTests {
   // MARK: - Other Methods
 
   @Test
-  func fileMatchingTheManifestSizeIsComplete() throws {
+  func `file matching the manifest size is complete`() throws {
     let directory = try makeDirectory()
     try write(byteCount: Self.expectedBytes, to: directory, named: "ma.srtm")
 
@@ -42,7 +42,7 @@ struct TerrainRegionInventoryTests {
   /// A download still in flight is short, not broken. Reporting it as anything but incomplete is
   /// what produces a spurious “corrupted” badge on a region that is merely unfinished.
   @Test
-  func fileShorterThanTheManifestSizeIsIncomplete() throws {
+  func `file shorter than the manifest size is incomplete`() throws {
     let directory = try makeDirectory()
     try write(byteCount: Self.expectedBytes / 2, to: directory, named: "ma.srtm")
 
@@ -54,7 +54,7 @@ struct TerrainRegionInventoryTests {
   }
 
   @Test
-  func missingFileIsAbsent() throws {
+  func `missing file is absent`() throws {
     let inventory = try makeInventory(in: try makeDirectory())
     #expect(inventory.state(of: .midAtlantic) == .absent)
   }
@@ -62,7 +62,7 @@ struct TerrainRegionInventoryTests {
   /// A compressed payload is usable, but only after an expansion step, so it can't read as either
   /// absent or complete.
   @Test
-  func legacyCompressedPayloadIsDistinctFromAbsent() throws {
+  func `legacy compressed payload is distinct from absent`() throws {
     let directory = try makeDirectory()
     try write(byteCount: Self.expectedBytes, to: directory, named: "terrain-ma.srtm.lzma")
 
@@ -72,7 +72,7 @@ struct TerrainRegionInventoryTests {
 
   /// A region the manifest says nothing about can't be size-checked, so it can never be complete.
   @Test
-  func regionMissingFromTheManifestIsAbsent() throws {
+  func `region missing from the manifest is absent`() throws {
     let directory = try makeDirectory()
     try write(byteCount: Self.expectedBytes, to: directory, named: "na.srtm")
 
@@ -84,7 +84,7 @@ struct TerrainRegionInventoryTests {
   /// the callback depends on whether the app happens to be running, so they have to agree on where
   /// a payload lands and both have to cope with one already being there.
   @Test
-  func storingAPayloadReplacesWhateverWasThere() throws {
+  func `storing a payload replaces whatever was there`() throws {
     let directory = try makeDirectory()
     try write(byteCount: 1, to: directory, named: "ma.srtm")
     let downloaded = try makeDirectory().appendingPathComponent("downloaded")
@@ -101,7 +101,7 @@ struct TerrainRegionInventoryTests {
   /// Assets extension has to answer it from a bundle holding no manifest at all. Requiring one to
   /// store would make the extension crash on the very callback that saves the download.
   @Test
-  func storingAPayloadNeedsNoManifest() throws {
+  func `storing a payload needs no manifest`() throws {
     let directory = try makeDirectory()
     let downloaded = try makeDirectory().appendingPathComponent("downloaded")
     try Data(repeating: 0, count: Self.expectedBytes).write(to: downloaded)
@@ -114,7 +114,7 @@ struct TerrainRegionInventoryTests {
 
   /// Nothing guarantees the terrain directory exists the first time a download finishes.
   @Test
-  func storingAPayloadCreatesTheTerrainDirectory() throws {
+  func `storing a payload creates the terrain directory`() throws {
     let directory = try makeDirectory().appendingPathComponent("Terrain", isDirectory: true)
     let downloaded = try makeDirectory().appendingPathComponent("downloaded")
     try Data(repeating: 0, count: Self.expectedBytes).write(to: downloaded)
@@ -129,7 +129,7 @@ struct TerrainRegionInventoryTests {
   /// fetched again, the region is stuck: too short to use, and never retried because something is
   /// already there.
   @Test
-  func anUnfinishedPayloadAsksToBeFetchedAgain() {
+  func `an unfinished payload asks to be fetched again`() {
     #expect(TerrainRegionFileState.incomplete(bytesOnDisk: 512, expectedBytes: 1024).needsDownload)
     #expect(TerrainRegionFileState.absent.needsDownload)
     #expect(!TerrainRegionFileState.complete.needsDownload)

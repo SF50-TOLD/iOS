@@ -24,7 +24,7 @@ struct ClimbProfileGeneratorTests {
   // MARK: - Basic generation
 
   @Test
-  func generateProducesCorrectNumberOfDataPoints() {
+  func `generate produces correct number of data points`() {
     let winds = makeWindsAloft()
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -37,7 +37,7 @@ struct ClimbProfileGeneratorTests {
   }
 
   @Test
-  func generateSortsDataPointsByAltitude() {
+  func `generate sorts data points by altitude`() {
     // Pass unsorted altitudes
     let winds = makeWindsAloft(altitudes: [10000, 0, 5000])
     let profile = ClimbProfileGenerator.generate(
@@ -55,7 +55,7 @@ struct ClimbProfileGeneratorTests {
   // MARK: - Gradient values
 
   @Test
-  func regressionGradientsArePositive() throws {
+  func `regression gradients are positive`() throws {
     let winds = makeWindsAloft()
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -79,7 +79,7 @@ struct ClimbProfileGeneratorTests {
   }
 
   @Test
-  func gradientsDecreaseWithAltitude() throws {
+  func `gradients decrease with altitude`() throws {
     let winds = makeWindsAloft()
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -99,7 +99,7 @@ struct ClimbProfileGeneratorTests {
   // MARK: - Anti-ice effect
 
   @Test
-  func antiIceReducesGradient() throws {
+  func `anti-ice reduces gradient`() throws {
     let winds = makeWindsAloft()
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -120,7 +120,7 @@ struct ClimbProfileGeneratorTests {
   }
 
   @Test
-  func obstacleGradientDiffersBetweenNormalAndAntiIce() throws {
+  func `obstacle gradient differs between normal and anti-ice`() throws {
     let winds = makeWindsAloft()
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -145,7 +145,7 @@ struct ClimbProfileGeneratorTests {
   // MARK: - Constant speeds
 
   @Test
-  func takeoffSpeedIsConstant() throws {
+  func `takeoff speed is constant`() throws {
     let winds = makeWindsAloft()
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -169,7 +169,7 @@ struct ClimbProfileGeneratorTests {
   }
 
   @Test
-  func obstacleSpeedIsConstant() throws {
+  func `obstacle speed is constant`() throws {
     let winds = makeWindsAloft()
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -200,7 +200,7 @@ struct ClimbProfileGeneratorTests {
   // MARK: - Wind data
 
   @Test
-  func windDataIsPreserved() throws {
+  func `wind data is preserved`() throws {
     let winds = [
       ClimbProfileGenerator.WindsAloftObservation(
         altitudeFt: 5000,
@@ -227,7 +227,7 @@ struct ClimbProfileGeneratorTests {
   // MARK: - Tabular mode
 
   @Test
-  func tabularModeProducesValidProfile() throws {
+  func `tabular mode produces valid profile`() throws {
     let winds = makeWindsAloft()
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -245,7 +245,7 @@ struct ClimbProfileGeneratorTests {
   // MARK: - Reasonable values
 
   @Test
-  func gradientValuesAreReasonable() throws {
+  func `gradient values are reasonable`() throws {
     let winds = makeWindsAloft(altitudes: [0, 5000, 10000])
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
@@ -286,8 +286,8 @@ struct SynthesizedColumnTests {
     )
   }
 
-  @Test("Carries an entered temperature up the column as a deviation from standard")
-  func entersDeviationAloft() throws {
+  @Test
+  func `carries an entered temperature up the column as a deviation from standard`() throws {
     let column = column(conditions: Self.hotEntered)
 
     for observation in column {
@@ -301,8 +301,8 @@ struct SynthesizedColumnTests {
 
   /// The wall the whole design rests on: a wind the pilot typed in describes the surface and
   /// nothing above it, however much the temperature beside it is allowed to travel.
-  @Test("Never carries an entered wind aloft, however hot the entered day")
-  func neverCarriesEnteredWindAloft() {
+  @Test
+  func `never carries an entered wind aloft, however hot the entered day`() {
     let windy = Conditions(
       windDirection: .init(value: 270, unit: .degrees),
       windSpeed: .init(value: 35, unit: .knots),
@@ -312,8 +312,8 @@ struct SynthesizedColumnTests {
     #expect(column(conditions: windy).allSatisfy { $0.windSpeedKts == 0 })
   }
 
-  @Test("Leaves a downloaded surface temperature at the surface")
-  func downloadedTemperatureStaysAtTheSurface() throws {
+  @Test
+  func `leaves a downloaded surface temperature at the surface`() throws {
     let column = column(conditions: .fakeNWS(temperature: .init(value: 30, unit: .celsius)))
     let surface = try #require(column.first)
 
@@ -327,8 +327,8 @@ struct SynthesizedColumnTests {
     }
   }
 
-  @Test("Takes the forecast over an entered temperature wherever one covers the flight")
-  func forecastWinsOverEnteredWeather() throws {
+  @Test
+  func `takes the forecast over an entered temperature wherever one covers the flight`() throws {
     let column = column(forecast: .preview, conditions: Self.hotEntered)
     let forecastTemperatures = WindsAloftForecast.preview.data.entries
       .map { $0.temperature?.converted(to: .celsius).value }
@@ -348,8 +348,10 @@ extension SynthesizedColumnTests {
   /// A field high enough that sea level's standard temperature is visibly wrong for it.
   private static var mountainField: Measurement<UnitLength> { .init(value: 7800, unit: .feet) }
 
-  @Test("Starts a standard column from the standard temperature at the field, not at sea level")
-  func standardColumnStartsAtFieldElevation() throws {
+  @Test
+  func `starts a standard column from the standard temperature at the field, not at sea level`()
+    throws
+  {
     let column = ClimbProfileGenerator.windsAloftObservations(
       for: nil,
       conditions: .init(),
@@ -365,8 +367,8 @@ extension SynthesizedColumnTests {
     )
   }
 
-  @Test("Carries nothing aloft when entered weather names no temperature")
-  func enteredWeatherWithoutATemperature() {
+  @Test
+  func `carries nothing aloft when entered weather names no temperature`() {
     let noTemperature = Conditions(windSpeed: .init(value: 10, unit: .knots))
     let column = ClimbProfileGenerator.windsAloftObservations(
       for: nil,

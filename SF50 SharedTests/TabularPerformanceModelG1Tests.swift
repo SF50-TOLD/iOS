@@ -9,7 +9,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - Takeoff Ground Run Tests
 
   @Test
-  func takeoffGroundRun_exactMatch() {
+  func `takeoff ground run exact match`() {
     // Test exact values from ground run.csv (after removing ISA values)
     let testCases: [(weight: Double, altitude: Double, temperature: Double, expected: Double)] = [
       (6000, 0, -20, 1780),
@@ -74,7 +74,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func takeoffGroundRun_interpolation() {
+  func `takeoff ground run interpolation`() {
     // Test interpolation between known values
     let conditions = Helper.createTestConditions(temperature: 25)  // Between 20 and 30
     let config = Helper.createTestConfiguration(weight: 5750)  // Between 5500 and 6000
@@ -101,7 +101,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func takeoffGroundRun_interpolation_nearISA() {
+  func `takeoff ground run interpolation near ISA`() {
     // Test case from user bug report: 5684 lb at sea level, 14°C
     // Expected: ~1982 ft (interpolated between 5500/6000 lb and 10/20°C)
     // After removing ISA values, interpolation now happens on regular 10°C grid
@@ -141,7 +141,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func takeoffDistance_interpolation_nearISA() {
+  func `takeoff distance interpolation near ISA`() {
     // Test case from user bug report: 5684 lb at sea level, 14°C
     // After removing ISA values, interpolation now happens on regular 10°C grid
     // 5500 lb at 0 ft, 10°C: 2761 ft
@@ -180,7 +180,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func takeoffGroundRun_3D_interpolation() {
+  func `takeoff ground run 3D interpolation`() {
     // Tests 3D trilinear interpolation with regular temperature grid
     // After removing ISA values, the temperature grid is perfectly regular (10°C intervals)
     // This allows guaranteed 8-corner cuboids and true trilinear interpolation
@@ -219,7 +219,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - Takeoff Distance Tests
 
   @Test
-  func takeoffDistance_exactMatch() {
+  func `takeoff distance exact match`() {
     // Test exact values from total distance.csv (after removing ISA values)
     let testCases: [(weight: Double, altitude: Double, temperature: Double, expected: Double)] = [
       (6000, 0, -20, 2789),
@@ -270,7 +270,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - Takeoff Climb Tests
 
   @Test
-  func takeoffClimbGradient_exactMatch() {
+  func `takeoff climb gradient exact match`() {
     // Test exact values from gradient.csv
     let testCases: [(weight: Double, altitude: Double, temperature: Double, expected: Double)] = [
       (6000, 0, -20, 1230),
@@ -327,7 +327,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func takeoffClimbRate_exactMatch() {
+  func `takeoff climb rate exact match`() {
     // Test exact values from rate.csv
     let testCases: [(weight: Double, altitude: Double, temperature: Double, expected: Double)] = [
       (6000, 0, -20, 2012),
@@ -386,7 +386,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - VREF Tests
 
   @Test
-  func vref_exactMatch() {
+  func `VREF exact match`() {
     // Test VREF values for different flap settings
     let testCases: [(weight: Double, flapSetting: FlapSetting, expected: Double)] = [
       // Flaps 50
@@ -449,7 +449,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - Landing Ground Run Tests
 
   @Test
-  func landingGroundRun_exactMatch_flaps50() {
+  func `landing ground run exact match flaps 50`() {
     // Test exact values from landing ground run.csv for flaps 50
     let testCases: [(weight: Double, altitude: Double, temperature: Double, expected: Double)] = [
       // Weight 4500 values
@@ -496,7 +496,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func landingGroundRun_exactMatch_flaps100() {
+  func `landing ground run exact match flaps 100`() {
     // Test exact values from landing ground run.csv for flaps 100
     let testCases: [(weight: Double, altitude: Double, temperature: Double, expected: Double)] = [
       // Weight 4500 values
@@ -544,7 +544,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - Landing Distance Tests
 
   @Test
-  func landingDistance_exactMatch_flaps50() {
+  func `landing distance exact match flaps 50`() {
     // Test exact values from landing total distance.csv for flaps 50
     let testCases: [(weight: Double, altitude: Double, temperature: Double, expected: Double)] = [
       // Weight 4500 values
@@ -591,7 +591,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func landingDistance_exactMatch_flaps100() {
+  func `landing distance exact match flaps 100`() {
     // Test exact values from landing total distance.csv for flaps 100
     let testCases: [(weight: Double, altitude: Double, temperature: Double, expected: Double)] = [
       // Weight 4500 values
@@ -639,7 +639,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - Wind Adjustment Tests
 
   @Test
-  func takeoffRun_headwindAdjustment() {
+  func `takeoff run headwind adjustment`() {
     // Test with 10 kt headwind
     let conditionsNoWind = Helper.createTestConditions(temperature: 20)
     let conditionsHeadwind = Helper.createTestConditions(
@@ -688,7 +688,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func takeoffRun_tailwindAdjustment() {
+  func `takeoff run tailwind adjustment`() {
     // Test with 10 kt tailwind
     let conditionsNoWind = Helper.createTestConditions(temperature: 20)
     let conditionsTailwind = Helper.createTestConditions(
@@ -740,7 +740,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - Slope Adjustment Tests
 
   @Test
-  func takeoffRun_uphillAdjustment() {
+  func `takeoff run uphill adjustment`() {
     // Test with 2% uphill slope
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration()
@@ -786,7 +786,7 @@ struct TabularPerformanceModelG1Tests {
   }
 
   @Test
-  func takeoffRun_downhillAdjustment() {
+  func `takeoff run downhill adjustment`() {
     // Test with 2% downhill slope
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration()
@@ -834,7 +834,7 @@ struct TabularPerformanceModelG1Tests {
   // MARK: - Surface Adjustment Tests
 
   @Test
-  func takeoffDistance_unpavedAdjustment() {
+  func `takeoff distance unpaved adjustment`() {
     // Test unpaved runway adjustment
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration()

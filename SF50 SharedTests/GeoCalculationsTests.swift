@@ -12,7 +12,7 @@ struct GeoCalculationsTests {
   /// The bearing is answered in degrees. The great-circle solver behind it works in radians, so an
   /// unconverted result would be plausible-looking and wrong by a factor of 57.3.
   @Test
-  func bearingIsAnsweredInDegrees() {
+  func `bearing is answered in degrees`() {
     let bearing = GeoCalculations.bearing(
       from: .init(latitude: 0, longitude: 0),
       to: .init(latitude: 0, longitude: 1)
@@ -23,7 +23,7 @@ struct GeoCalculationsTests {
   // MARK: - Wind Triangle
 
   @Test
-  func windTriangleNoWind() {
+  func `wind triangle no wind`() {
     let result = GeoCalculations.windTriangle(
       trueHeadingDeg: 90,
       TAS_Kts: 170,
@@ -35,7 +35,7 @@ struct GeoCalculationsTests {
   }
 
   @Test
-  func windTriangleDirectHeadwind() {
+  func `wind triangle direct headwind`() {
     // Heading north, wind from north = headwind
     let result = GeoCalculations.windTriangle(
       trueHeadingDeg: 0,
@@ -52,7 +52,7 @@ struct GeoCalculationsTests {
   }
 
   @Test
-  func windTriangleDirectTailwind() {
+  func `wind triangle direct tailwind`() {
     // Heading north, wind from south = tailwind
     let result = GeoCalculations.windTriangle(
       trueHeadingDeg: 0,
@@ -68,7 +68,7 @@ struct GeoCalculationsTests {
   }
 
   @Test
-  func windTrianglePureCrosswind() {
+  func `wind triangle pure crosswind`() {
     // Heading north, wind from west (270) = pushes east
     let result = GeoCalculations.windTriangle(
       trueHeadingDeg: 0,

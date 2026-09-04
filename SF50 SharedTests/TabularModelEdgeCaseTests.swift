@@ -8,7 +8,7 @@ struct TabularModelEdgeCaseTests {
   // MARK: - ISA Temperature Handling Tests
 
   @Test
-  func takeoffWithISATemperatures() {
+  func `takeoff with ISA temperatures`() {
     // Test the exact scenario that was failing in production
     // Weight: 5992 lb, Altitude: 2621 ft, Temperature: 19°C
     let conditions = Helper.createTestConditions(temperature: 19)
@@ -59,7 +59,7 @@ struct TabularModelEdgeCaseTests {
   }
 
   @Test
-  func landingWithISATemperatures() {
+  func `landing with ISA temperatures`() {
     // Test the landing scenario that was failing
     // Weight: 5214 lb, Altitude: 8900 ft, Temperature: 7°C
     let conditions = Helper.createTestConditions(temperature: 7)
@@ -100,7 +100,7 @@ struct TabularModelEdgeCaseTests {
   // MARK: - Incomplete Grid Tests
 
   @Test
-  func incompleteGridWithISA() {
+  func `incomplete grid with ISA`() {
     // Test interpolation when ISA temperatures create incomplete grids
     // This should use the tighter bounds algorithm to find valid corners
 
@@ -132,7 +132,7 @@ struct TabularModelEdgeCaseTests {
   // MARK: - Offscale Detection Tests
 
   @Test
-  func offscaleLowWeight() {
+  func `offscale low weight`() {
     // Test weight below minimum - tabular models clamp rather than return offscale
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 4000)  // Below minimum of 5000
@@ -174,7 +174,7 @@ struct TabularModelEdgeCaseTests {
   }
 
   @Test
-  func offscaleHighAltitude() {
+  func `offscale high altitude`() {
     // Test altitude above maximum should return offscale high
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5500)
@@ -193,7 +193,7 @@ struct TabularModelEdgeCaseTests {
   }
 
   @Test
-  func offscaleHighTemperature() {
+  func `offscale high temperature`() {
     // Test temperature above maximum should return offscale high
     let conditions = Helper.createTestConditions(temperature: 55)  // Above typical maximum
     let config = Helper.createTestConfiguration(weight: 5500)
@@ -214,7 +214,7 @@ struct TabularModelEdgeCaseTests {
   // MARK: - Boundary Condition Tests
 
   @Test
-  func exactBoundaryValues() {
+  func `exact boundary values`() {
     // Test exact boundary values (max weight, max altitude, etc.)
     let testCases: [(weight: Double, altitude: Double, temp: Double, shouldSucceed: Bool)] = [
       (6000, 10000, 20, true),  // Max weight and altitude in range
@@ -257,7 +257,7 @@ struct TabularModelEdgeCaseTests {
   // MARK: - Smart Bounds Selection Tests
 
   @Test
-  func prefersTighterBounds() {
+  func `prefers tighter bounds`() {
     // Test that the algorithm prefers tighter bounds when multiple valid options exist
     // This specifically tests the scenario from the failing test
 
@@ -293,7 +293,7 @@ struct TabularModelEdgeCaseTests {
   // MARK: - Degenerate Case Tests
 
   @Test
-  func exactWeightAndAltitudeMatch() {
+  func `exact weight and altitude match`() {
     // Test when we have exact matches on weight and altitude (degenerate to 1D)
     let conditions = Helper.createTestConditions(temperature: 15)  // Interpolate only temperature
     let config = Helper.createTestConfiguration(weight: 5500)  // Exact match
@@ -320,7 +320,7 @@ struct TabularModelEdgeCaseTests {
   }
 
   @Test
-  func exactWeightMatch() {
+  func `exact weight match`() {
     // Test when we have exact weight match (degenerate to 2D)
     let conditions = Helper.createTestConditions(temperature: 25)
     let config = Helper.createTestConfiguration(weight: 5500)  // Exact match
@@ -346,7 +346,7 @@ struct TabularModelEdgeCaseTests {
   // MARK: - Regression Tests
 
   @Test
-  func regressionTestForReportedIssues() {
+  func `regression test for reported issues`() {
     // Test specific conditions that users reported as failing
     let reportedIssues: [(weight: Double, altitude: Double, temp: Double, description: String)] = [
       (5992, 2621, 19, "User reported offscale high for takeoff"),
@@ -400,7 +400,7 @@ struct TabularModelEdgeCaseTests {
   // MARK: - Data Consistency Tests
 
   @Test
-  func consistentInterpolationDirection() {
+  func `consistent interpolation direction`() {
     // Test that interpolated values are monotonic in the expected direction
     let baseConditions = Helper.createTestConditions(temperature: 20)
     let baseConfig = Helper.createTestConfiguration(weight: 5500)

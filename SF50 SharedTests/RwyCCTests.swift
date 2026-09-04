@@ -10,7 +10,6 @@ struct RwyCCTests {
   // MARK: - RwyCC LDF Lookup
 
   @Test(
-    "RwyCC LDF values match CSV data for smooth surface",
     arguments: [
       (code: UInt8(6), expected: 1.67),
       (code: UInt8(5), expected: 2.60),
@@ -20,14 +19,13 @@ struct RwyCCTests {
       (code: UInt8(1), expected: 5.10)
     ] as [(code: UInt8, expected: Double)]
   )
-  func rwyCCLDF_smoothSurface(code: UInt8, expected: Double) {
+  func `RwyCC LDF values match CSV data for smooth surface`(code: UInt8, expected: Double) {
     let calculator = ContaminationCalculator(aircraftType: .g1)
     let ldf = calculator.rwyCCLandingDistanceFactor(code: code, isGroovedPFC: false)
     #expect(ldf == expected)
   }
 
   @Test(
-    "RwyCC LDF values match CSV data for grooved surface",
     arguments: [
       (code: UInt8(6), expected: 1.67),
       (code: UInt8(5), expected: 2.30),
@@ -37,14 +35,14 @@ struct RwyCCTests {
       (code: UInt8(1), expected: 5.10)
     ] as [(code: UInt8, expected: Double)]
   )
-  func rwyCCLDF_groovedSurface(code: UInt8, expected: Double) {
+  func `RwyCC LDF values match CSV data for grooved surface`(code: UInt8, expected: Double) {
     let calculator = ContaminationCalculator(aircraftType: .g1)
     let ldf = calculator.rwyCCLandingDistanceFactor(code: code, isGroovedPFC: true)
     #expect(ldf == expected)
   }
 
-  @Test("RwyCC 5 differs between grooved (2.30) and smooth (2.60)")
-  func rwyCCCode5_differsForGroovedVsSmooth() {
+  @Test
+  func `RwyCC 5 differs between grooved (2.30) and smooth (2.60)`() {
     let calculator = ContaminationCalculator(aircraftType: .g1)
     let groovedLDF = calculator.rwyCCLandingDistanceFactor(code: 5, isGroovedPFC: true)
     let smoothLDF = calculator.rwyCCLandingDistanceFactor(code: 5, isGroovedPFC: false)
@@ -54,8 +52,8 @@ struct RwyCCTests {
 
   // MARK: - RwyCC Applies LDF to Landing Run
 
-  @Test("RwyCC applies LDF to landing run - Tabular G1")
-  func rwyCCAppliesLDFToLandingRun_tabularG1() {
+  @Test
+  func `RwyCC applies LDF to landing run - Tabular G1`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -115,8 +113,8 @@ struct RwyCCTests {
 
   // MARK: - RwyCC Applies LDF to Total Landing Distance
 
-  @Test("RwyCC applies LDF to total landing distance - Tabular G1")
-  func rwyCCAppliesLDF_tabularG1() {
+  @Test
+  func `RwyCC applies LDF to total landing distance - Tabular G1`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -172,8 +170,8 @@ struct RwyCCTests {
     )
   }
 
-  @Test("RwyCC 6 applies LDF 1.67 to unfactored base distance")
-  func rwyCCCode6_appliesLDF() {
+  @Test
+  func `RwyCC 6 applies LDF 1.67 to unfactored base distance`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -235,8 +233,8 @@ struct RwyCCTests {
 
   // MARK: - RwyCC with Wind
 
-  @Test("RwyCC landing distance includes headwind adjustment")
-  func rwyCCLandingDistance_includesHeadwindAdjustment() {
+  @Test
+  func `RwyCC landing distance includes headwind adjustment`() {
     let noWindConditions = Helper.createTestConditions(temperature: 20)
     let headwindConditions = Helper.createTestConditions(
       temperature: 20,
@@ -299,8 +297,8 @@ struct RwyCCTests {
 
   // MARK: - RwyCC with Turf
 
-  @Test("RwyCC landing distance includes unpaved adjustment for turf runway")
-  func rwyCCLandingDistance_includesUnpavedAdjustment() {
+  @Test
+  func `RwyCC landing distance includes unpaved adjustment for turf runway`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let pavedRunway = Helper.createTestRunway(surfaceType: .paved)
@@ -360,8 +358,8 @@ struct RwyCCTests {
 
   // MARK: - RwyCC in Regression Model
 
-  @Test("RwyCC applies LDF in regression model - G1")
-  func rwyCCAppliesLDF_regressionG1() {
+  @Test
+  func `RwyCC applies LDF in regression model - G1`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()

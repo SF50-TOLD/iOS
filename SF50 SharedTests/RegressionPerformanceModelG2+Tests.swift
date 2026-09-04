@@ -8,7 +8,7 @@ struct RegressionPerformanceModelG2PlusTests {
   // MARK: - Takeoff Ground Run Tests
 
   @Test
-  func takeoffGroundRun_withinTolerance() throws {
+  func `takeoff ground run within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g2+/takeoff/ground run.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -33,7 +33,7 @@ struct RegressionPerformanceModelG2PlusTests {
   // MARK: - Takeoff Distance Tests
 
   @Test
-  func takeoffDistance_withinTolerance() throws {
+  func `takeoff distance within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g2+/takeoff/total distance.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -58,7 +58,7 @@ struct RegressionPerformanceModelG2PlusTests {
   // MARK: - Takeoff Climb Tests
 
   @Test
-  func takeoffClimbGradient_withinTolerance() throws {
+  func `takeoff climb gradient within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g2+/takeoff climb/gradient.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -81,7 +81,7 @@ struct RegressionPerformanceModelG2PlusTests {
   }
 
   @Test
-  func takeoffClimbRate_withinTolerance() throws {
+  func `takeoff climb rate within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g2+/takeoff climb/rate.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -106,7 +106,7 @@ struct RegressionPerformanceModelG2PlusTests {
   // MARK: - Wind Adjustment Tests
 
   @Test
-  func takeoffDistance_tailwindAdjustment_regression() {
+  func `takeoff distance tailwind adjustment regression`() {
     // Test with 10 kt tailwind for regression model
     let conditionsNoWind = Helper.createTestConditions(temperature: 20)
     let conditionsTailwind = Helper.createTestConditions(
@@ -168,7 +168,7 @@ struct RegressionPerformanceModelG2PlusTests {
   }
 
   @Test
-  func landingRun_headwindAdjustment_regression() {
+  func `landing run headwind adjustment regression`() {
     // Test with 10 kt headwind for landing in regression model
     let conditionsNoWind = Helper.createTestConditions(temperature: 20)
     let conditionsHeadwind = Helper.createTestConditions(
@@ -230,7 +230,7 @@ struct RegressionPerformanceModelG2PlusTests {
   // MARK: - Slope Adjustment Tests
 
   @Test
-  func takeoffRun_slopeAdjustments_regression() {
+  func `takeoff run slope adjustments regression`() {
     // Test slope adjustments for regression model
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration()
@@ -315,7 +315,7 @@ struct RegressionPerformanceModelG2PlusTests {
   // MARK: - Go-Around Climb Gradient Tests
 
   @Test
-  func meetsGoAroundClimbGradient_matchesTabularOffscale() {
+  func `meets go around climb gradient matches tabular offscale`() {
     // Test that regression model's meetsGoAroundClimbGradient aligns with
     // tabular model's offscale behavior for landing distance
 
@@ -406,7 +406,7 @@ struct RegressionPerformanceModelG2PlusTests {
   }
 
   @Test
-  func meetsGoAroundClimbGradient_boundaryConditions() {
+  func `meets go around climb gradient boundary conditions`() {
     // Test boundary conditions for the go-around climb gradient
 
     // Test at minimum weight with favorable conditions
@@ -463,7 +463,7 @@ struct RegressionPerformanceModelG2PlusTests {
   }
 
   @Test
-  func meetsGoAroundClimbGradient_g2PlusImprovement() {
+  func `meets the go-around climb gradient G2+ improvement`() {
     // Test that G2+ generally allows better performance than G1
     // at the same conditions (due to updated thrust schedule)
 

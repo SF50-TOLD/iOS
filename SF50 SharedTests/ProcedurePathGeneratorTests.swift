@@ -22,7 +22,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Departure Path Tests
 
   @Test
-  func departurePathEmptyFixes() {
+  func `departure path empty fixes`() {
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
       schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
@@ -36,7 +36,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func departurePathSingleInitialFix() throws {
+  func `departure path single initial fix`() throws {
     let fix = Helper.createTestLeg(
       identifier: "ORCKA",
       latitude: 37.4,
@@ -61,7 +61,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func departurePathPrependsOrigin() throws {
+  func `departure path prepends origin`() throws {
     let fix = Helper.createTestLeg(
       identifier: "ORCKA",
       latitude: 37.4,
@@ -98,7 +98,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func departurePathMonotonicallyIncreasingDistance() throws {
+  func `departure path monotonically increasing distance`() throws {
     let fixes = [
       Helper.createTestLeg(
         identifier: "FIX1",
@@ -139,7 +139,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func departurePathSortsFixesBySequenceIndex() throws {
+  func `departure path sorts fixes by sequence index`() throws {
     // Pass fixes out of order
     let fix0 = Helper.createTestLeg(
       identifier: "FIRST",
@@ -178,7 +178,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Fix-Terminated Legs (Straight Line)
 
   @Test
-  func straightLineTrackToFix() throws {
+  func `straight line track to fix`() throws {
     let fix = Helper.createTestLeg(
       identifier: "TF",
       latitude: 37.40,
@@ -209,7 +209,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func straightLineCourseToFix() throws {
+  func `straight line course to fix`() throws {
     let fix = Helper.createTestLeg(
       identifier: "CF",
       latitude: 37.40,
@@ -240,7 +240,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func straightLineDirectToFix() throws {
+  func `straight line direct to fix`() throws {
     let fix = Helper.createTestLeg(
       identifier: "DF",
       latitude: 37.40,
@@ -271,7 +271,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func straightLineDistanceAccuracy() throws {
+  func `straight line distance accuracy`() throws {
     let fixCoord = CLLocationCoordinate2D(latitude: 37.40, longitude: -122.00)
     let fix = Helper.createTestLeg(
       identifier: "TF",
@@ -300,7 +300,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - *ToAltitude Legs
 
   @Test
-  func fixToAltitudeProjection() throws {
+  func `fix to altitude projection`() throws {
     let fix = Helper.createTestLeg(
       identifier: "IF",
       latitude: 37.38,
@@ -337,7 +337,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToAltitudeProjection() throws {
+  func `course to altitude projection`() throws {
     let fix = Helper.createTestLeg(
       identifier: "IF",
       latitude: 37.38,
@@ -371,7 +371,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToAltitudeProjection() throws {
+  func `heading to altitude projection`() throws {
     let fix = Helper.createTestLeg(
       identifier: "IF",
       latitude: 37.38,
@@ -405,7 +405,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func toAltitudeAtOrAboveRestriction() throws {
+  func `to altitude at or above restriction`() throws {
     let fix = Helper.createTestLeg(
       identifier: "IF",
       latitude: 37.38,
@@ -439,7 +439,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func toAltitudeBetweenRestriction() throws {
+  func `to altitude between restriction`() throws {
     let fix = Helper.createTestLeg(
       identifier: "IF",
       latitude: 37.38,
@@ -477,7 +477,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func toAltitudeNoRestriction() {
+  func `to altitude no restriction`() {
     let fix = Helper.createTestLeg(
       identifier: "IF",
       latitude: 37.38,
@@ -507,7 +507,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func toAltitudeMagneticToTrueConversion() throws {
+  func `to altitude magnetic to true conversion`() throws {
     // Two fixes due north: magnetic 360° with variation -14° should give true 346°
     // The endpoint should be offset west (bearing < 360) from due north
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
@@ -547,7 +547,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Altitude Capping (atOrBelow)
 
   @Test
-  func atOrBelowCapsAltitude() throws {
+  func `at or below caps altitude`() throws {
     // Place fix1 far enough that uncapped climb would exceed 3000 ft
     // At 300 ft/NM from 62 ft, need ~10 NM to reach 3062 ft
     // Place fix1 ~15 NM away so uncapped altitude would be ~4562 ft
@@ -606,7 +606,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Hold Patterns
 
   @Test
-  func holdAsTerminalLeg() throws {
+  func `hold as a terminal leg`() throws {
     let fix = Helper.createTestLeg(
       identifier: "HOLD",
       latitude: 37.40,
@@ -640,7 +640,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func holdAsNonTerminalLeg() {
+  func `hold as a non-terminal leg`() {
     let holdFix = Helper.createTestLeg(
       identifier: "HOLD",
       latitude: 37.40,
@@ -671,7 +671,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func holdToAltitudeTerminal() throws {
+  func `hold to altitude terminal`() throws {
     let fix = Helper.createTestLeg(
       identifier: "HOLD",
       latitude: 37.40,
@@ -701,7 +701,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func holdManualTerminal() throws {
+  func `hold manual terminal`() throws {
     let fix = Helper.createTestLeg(
       identifier: "HOLD",
       latitude: 37.40,
@@ -733,7 +733,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Procedure Turn
 
   @Test
-  func procedureTurnTerminal() throws {
+  func `procedure turn terminal`() throws {
     let fix = Helper.createTestLeg(
       identifier: "PT",
       latitude: 37.40,
@@ -763,7 +763,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func procedureTurnNonTerminal() {
+  func `procedure turn non-terminal`() {
     let ptFix = Helper.createTestLeg(
       identifier: "PT",
       latitude: 37.40,
@@ -796,7 +796,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Non-Plottable Legs (Return Nil)
 
   @Test
-  func courseToDMEReturnsNil() {
+  func `course to DME returns nil`() {
     let fix = Helper.createTestLeg(
       legType: .courseToDME(course: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0
@@ -814,7 +814,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToInterceptWithNextLeg() throws {
+  func `course to intercept with next leg`() throws {
     // CI flying course 284° mag (true 270° west), intercept CF course 14° mag (true 0° north)
     // through fix at 37.5, -122.0. Aircraft starts east of the N-S course line and flies west.
     let fix = CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)
@@ -863,7 +863,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToInterceptNoNextLegReturnsNil() {
+  func `course to intercept no next leg returns nil`() {
     let fix = Helper.createTestLeg(
       legType: .courseToIntercept(course: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0
@@ -881,7 +881,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToRadialTerminatesAtRadial() throws {
+  func `course to radial terminates at radial`() throws {
     // CR flying course 284° mag (true 270° west) until intercepting the 014° magnetic
     // radial (true 000° north) from a VOR at 37.5, -122.0.
     // Aircraft starts east of the VOR and flies west to cross the north radial.
@@ -927,7 +927,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToRadialMissingNavaidReturnsNil() {
+  func `course to radial missing navaid returns nil`() {
     let crLeg = Helper.createTestLeg(
       identifier: nil,
       latitude: nil,
@@ -949,7 +949,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToRadialMissingThetaReturnsNil() {
+  func `course to radial missing theta returns nil`() {
     let vor = Helper.createTestNavaid()
     let crLeg = Helper.createTestLeg(
       identifier: nil,
@@ -972,7 +972,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToDMEReturnsNil() {
+  func `heading to DME returns nil`() {
     let fix = Helper.createTestLeg(
       legType: .headingToDME(heading: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0
@@ -990,7 +990,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToInterceptWithNextLeg() throws {
+  func `heading to intercept with next leg`() throws {
     // LINDZ1 pattern: VA 343° to 9100', VI 273° to intercept, CF 303° to LINDZ
     // After VA (true 329° NNW), aircraft is north of course line.
     // VI (true 259° WSW) crosses the 289° true course line through LINDZ.
@@ -1051,7 +1051,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToInterceptNoNextLegReturnsNil() {
+  func `heading to intercept no next leg returns nil`() {
     let fix = Helper.createTestLeg(
       legType: .headingToIntercept(heading: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0
@@ -1069,7 +1069,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToInterceptTerminatesOnCourseLine() throws {
+  func `heading to intercept terminates on course line`() throws {
     // VI heading 284° mag (true 270° west) intercepting CF course 14° mag (true 0° north)
     // through a fix due north. Aircraft starts east of the N-S course line and flies west.
     let interceptPoint = CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)
@@ -1124,7 +1124,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToRadialTerminatesAtRadial() throws {
+  func `heading to radial terminates at radial`() throws {
     // VR heading 284° mag (true 270° west) until intercepting the 014° magnetic
     // radial (true 000° north) from a VOR at 37.5, -122.0.
     let vorCoord = CLLocationCoordinate2D(latitude: 37.5, longitude: -122.0)
@@ -1169,7 +1169,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func trackFromFixDistanceReturnsNil() {
+  func `track from fix distance returns nil`() {
     let fix = Helper.createTestLeg(
       legType: .trackFromFixDistance(course: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0
@@ -1187,7 +1187,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func trackFromFixDMEReturnsNil() {
+  func `track from fix DME returns nil`() {
     let fix = Helper.createTestLeg(
       legType: .trackFromFixDME(course: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0
@@ -1207,7 +1207,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Arc Legs
 
   @Test
-  func radiusToFixGeneratesArcPoints() throws {
+  func `radius to fix generates arc points`() throws {
     let initialFix = Helper.createTestLeg(
       identifier: "START",
       latitude: 37.40,
@@ -1242,7 +1242,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func radiusToFixPointsNearArcRadius() throws {
+  func `radius to fix points near arc radius`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.40, longitude: -122.00)
     let initialFix = Helper.createTestLeg(
       identifier: "START",
@@ -1299,7 +1299,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func radiusToFixEndpointMatchesFix() throws {
+  func `radius to fix endpoint matches fix`() throws {
     let initialFix = Helper.createTestLeg(
       identifier: "START",
       latitude: 37.40,
@@ -1344,7 +1344,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Missed Approach Path
 
   @Test
-  func missedApproachPathBasic() throws {
+  func `missed approach path basic`() throws {
     let fix = Helper.createTestLeg(
       identifier: "MAHF",
       latitude: 37.40,
@@ -1371,7 +1371,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func missedApproachPathEmptyFixes() {
+  func `missed approach path empty fixes`() {
     let result = ProcedurePathGenerator(
       climbProfile: climbProfile,
       schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
@@ -1387,7 +1387,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Missed Approach Extended Tests
 
   @Test
-  func missedApproachMultiLegPath() throws {
+  func `missed approach multi leg path`() throws {
     let legs = [
       Helper.createTestLeg(
         identifier: "RW28R",
@@ -1439,7 +1439,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func missedApproachAltitudeRestriction() throws {
+  func `missed approach altitude restriction`() throws {
     let legs = [
       Helper.createTestLeg(
         identifier: "RW28R",
@@ -1483,7 +1483,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func missedApproachAltitudeCeiling() throws {
+  func `missed approach altitude ceiling`() throws {
     let legs = [
       Helper.createTestLeg(
         identifier: "RW28R",
@@ -1526,7 +1526,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func missedApproachWithHeadwind() throws {
+  func `missed approach with headwind`() throws {
     let headwindProfile = Helper.createTestClimbProfile(
       windDirectionDeg: 278,
       windSpeedKts: 20
@@ -1580,7 +1580,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func missedApproachGoAroundSchedule() throws {
+  func `missed approach go around schedule`() throws {
     let schedule = ProcedurePathGenerator.ClimbSchedule(segments: [
       .init(profile: .takeoff, upperBound: .time(.init(value: 2, unit: .minutes))),
       .init(profile: .enrouteObstacle(antiIce: false))
@@ -1628,7 +1628,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Heading-To-Altitude Wind Correction
 
   @Test
-  func headingToAltitudeNoWindSameAsBefore() throws {
+  func `heading to altitude no wind same as before`() throws {
     // Zero wind should produce identical result to the old toAltitudeSegment behavior
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let profile = Helper.createTestClimbProfile(gradientFtPerNM: 300)
@@ -1693,7 +1693,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToAltitudeWithHeadwind() throws {
+  func `heading to altitude with headwind`() throws {
     // Direct headwind: ground distance should be shorter than air distance
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     // Heading 360 (north), wind from 360 (headwind)
@@ -1750,7 +1750,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToAltitudeWithTailwind() throws {
+  func `heading to altitude with tailwind`() throws {
     // Direct tailwind: ground distance should be longer than air distance
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     // Heading 360 true (mag 14 with -14 variation), wind from 180 (tailwind)
@@ -1807,7 +1807,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToAltitudeWithCrosswind() throws {
+  func `heading to altitude with crosswind`() throws {
     // Pure crosswind: endpoint should be offset laterally from zero-wind path
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     // Heading 360 true (mag 14), wind from 270 (left crosswind, pushes east)
@@ -1867,7 +1867,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Course-To-Altitude Wind Correction
 
   @Test
-  func courseToAltitudeWithHeadwind() throws {
+  func `course to altitude with headwind`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     // Course 360 true (mag 14 with -14 variation), wind from 360 (headwind)
     let windProfile = Helper.createTestClimbProfile(
@@ -1922,7 +1922,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToAltitudeWithTailwind() throws {
+  func `course to altitude with tailwind`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let windProfile = Helper.createTestClimbProfile(
       gradientFtPerNM: 300,
@@ -1976,7 +1976,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToAltitudeTrackUnchangedWithCrosswind() throws {
+  func `course to altitude track unchanged with crosswind`() throws {
     // Course-based legs crab to maintain course, so crosswind should NOT drift laterally
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     // Wind from 270 (west, pushes east)
@@ -2038,7 +2038,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - DME Termination Tests
 
   @Test
-  func courseToDMEBasic() throws {
+  func `course to DME basic`() throws {
     // Fly north from start, navaid to the south; DME 10 NM
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let navaidCoord = CLLocationCoordinate2D(latitude: 36.9, longitude: -122.0)
@@ -2082,7 +2082,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToDMESlantRangeCorrection() throws {
+  func `course to DME slant range correction`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let navaidCoord = CLLocationCoordinate2D(latitude: 36.9, longitude: -122.0)
     // Navaid at 1000 ft elevation — slant range > ground distance
@@ -2159,7 +2159,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToDMENoNavaidReturnsNil() {
+  func `course to DME no navaid returns nil`() {
     let fix = Helper.createTestLeg(
       legType: .courseToDME(course: .init(value: 360, unit: .degrees)),
       sequenceIndex: 0,
@@ -2178,7 +2178,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func courseToDMENoDmeDistanceReturnsNil() {
+  func `course to DME no dme distance returns nil`() {
     let navaid = Helper.createTestNavaid()
     let fix = Helper.createTestLeg(
       legType: .courseToDME(course: .init(value: 360, unit: .degrees)),
@@ -2198,7 +2198,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToDMEBasic() throws {
+  func `heading to DME basic`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let navaidCoord = CLLocationCoordinate2D(latitude: 36.9, longitude: -122.0)
     let navaid = Helper.createTestNavaid(
@@ -2241,7 +2241,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headingToDMECrosswindDrift() throws {
+  func `heading to DME crosswind drift`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let navaidCoord = CLLocationCoordinate2D(latitude: 36.9, longitude: -122.0)
 
@@ -2305,7 +2305,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func trackFromFixDMEBasic() throws {
+  func `track from fix DME basic`() throws {
     // Fix at 37.0, -122.0; navaid at 36.9, -122.0 (south); fly north from fix
     let fixCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let navaidCoord = CLLocationCoordinate2D(latitude: 36.9, longitude: -122.0)
@@ -2349,7 +2349,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func trackFromFixDistanceBasic() throws {
+  func `track from fix distance basic`() throws {
     let fixCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
 
     let initialFix = Helper.createTestLeg(
@@ -2386,7 +2386,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func trackFromFixDistanceAltitude() throws {
+  func `track from fix distance altitude`() throws {
     // With headwind, aircraft covers more air distance per ground distance,
     // so altitude at endpoint should be higher
     let fixCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
@@ -2452,7 +2452,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Multi-Leg Integration
 
   @Test
-  func multiLegDeparture() throws {
+  func `multi leg departure`() throws {
     let fixes = [
       Helper.createTestLeg(
         identifier: "IF",
@@ -2505,7 +2505,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Altitude Tests (new for stepped model)
 
   @Test
-  func altitudeIncreasesMonotonically() throws {
+  func `altitude increases monotonically`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let fix = Helper.createTestLeg(
       identifier: "IF",
@@ -2539,7 +2539,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func intermediatePointDensity() throws {
+  func `intermediate point density`() throws {
     // A 5 NM leg should produce roughly 50 intermediate points (one per 0.1 NM)
     // plus start and final
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
@@ -2571,7 +2571,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func headwindProducesHigherAltitudeAtSameGroundDistance() throws {
+  func `headwind produces higher altitude at same ground distance`() throws {
     // For a fixed ground distance leg, headwind means more air distance → more climb
     let fixCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let endCoord = CLLocationCoordinate2D(latitude: 37.083, longitude: -122.0)  // ~5 NM north
@@ -2622,7 +2622,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Elapsed Time Tests
 
   @Test
-  func elapsedTimeIncreasesMonotonically() throws {
+  func `elapsed time increases monotonically`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let fix = Helper.createTestLeg(
       identifier: "IF",
@@ -2666,7 +2666,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func elapsedTimeMatchesExpectedValue() throws {
+  func `elapsed time matches expected value`() throws {
     // With constant 300 ft/NM gradient, 170 kt IAS at sea level, no wind:
     // TAS ≈ 170 kt, climbing 5000 ft takes 5000/300 ≈ 16.67 NM air distance
     // At ~170 kt TAS/GS, 16.67 NM takes 16.67/170 * 3600 ≈ 353 seconds
@@ -2705,7 +2705,7 @@ struct ProcedurePathGeneratorTests {
   // MARK: - Two-Segment Climb Tests
 
   @Test
-  func twoSegmentClimbAltitudeTransition() throws {
+  func `two segment climb altitude transition`() throws {
     // First segment: takeoff (steep gradient), second: enroute (shallower)
     // With a constant gradient profile this means both segments have same gradient,
     // but we can verify the API works by using different profile types
@@ -2765,7 +2765,7 @@ struct ProcedurePathGeneratorTests {
   }
 
   @Test
-  func twoSegmentClimbTimeTransition() throws {
+  func `two segment climb time transition`() throws {
     let startCoord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)
     let fix = Helper.createTestLeg(
       identifier: "IF",

@@ -7,23 +7,23 @@ struct ValueArithmeticTests {
 
   // MARK: - Addition
 
-  @Test("Adding two definite values")
-  func addValues() {
+  @Test
+  func `adding two definite values`() {
     let a: Value<Double> = .value(100)
     let b: Value<Double> = .value(50)
     let result = a + b
     #expect(result == .value(150))
   }
 
-  @Test("Adding value and scalar")
-  func addScalar() {
+  @Test
+  func `adding value and scalar`() {
     let a: Value<Double> = .value(100)
     let result = a + 25.0
     #expect(result == .value(125))
   }
 
-  @Test("Adding definite value to value with uncertainty")
-  func addValueToUncertain() {
+  @Test
+  func `adding definite value to value with uncertainty`() {
     let a: Value<Double> = .value(100)
     let b: Value<Double> = .valueWithUncertainty(50, uncertainty: 5)
     let result = a + b
@@ -35,8 +35,8 @@ struct ValueArithmeticTests {
     }
   }
 
-  @Test("Adding uncertain value to definite value")
-  func addUncertainToValue() {
+  @Test
+  func `adding uncertain value to definite value`() {
     let a: Value<Double> = .valueWithUncertainty(100, uncertainty: 3)
     let b: Value<Double> = .value(50)
     let result = a + b
@@ -48,8 +48,8 @@ struct ValueArithmeticTests {
     }
   }
 
-  @Test("Adding two uncertain values propagates RSS uncertainty")
-  func addTwoUncertain() {
+  @Test
+  func `adding two uncertain values propagates RSS uncertainty`() {
     let a: Value<Double> = .valueWithUncertainty(100, uncertainty: 3)
     let b: Value<Double> = .valueWithUncertainty(50, uncertainty: 4)
     let result = a + b
@@ -61,8 +61,8 @@ struct ValueArithmeticTests {
     }
   }
 
-  @Test("Adding scalar to uncertain value preserves uncertainty")
-  func addScalarToUncertain() {
+  @Test
+  func `adding scalar to uncertain value preserves uncertainty`() {
     var a: Value<Double> = .valueWithUncertainty(100, uncertainty: 3)
     a += 10.0
     if case .valueWithUncertainty(let v, let u) = a {
@@ -73,15 +73,15 @@ struct ValueArithmeticTests {
     }
   }
 
-  @Test("Adding invalid propagates invalid")
-  func addInvalid() {
+  @Test
+  func `adding invalid propagates invalid`() {
     let a: Value<Double> = .value(100)
     let b: Value<Double> = .invalid
     #expect(a + b == .invalid)
   }
 
-  @Test("Adding offscaleHigh propagates offscaleHigh")
-  func addOffscaleHigh() {
+  @Test
+  func `adding offscaleHigh propagates offscaleHigh`() {
     let a: Value<Double> = .value(100)
     let b: Value<Double> = .offscaleHigh
     #expect(a + b == .offscaleHigh)
@@ -89,23 +89,23 @@ struct ValueArithmeticTests {
 
   // MARK: - Subtraction
 
-  @Test("Subtracting two definite values")
-  func subtractValues() {
+  @Test
+  func `subtracting two definite values`() {
     let a: Value<Double> = .value(100)
     let b: Value<Double> = .value(30)
     let result = a - b
     #expect(result == .value(70))
   }
 
-  @Test("Subtracting scalar from value")
-  func subtractScalar() {
+  @Test
+  func `subtracting scalar from value`() {
     let a: Value<Double> = .value(100)
     let result = a - 25.0
     #expect(result == .value(75))
   }
 
-  @Test("Subtracting two uncertain values propagates RSS uncertainty")
-  func subtractTwoUncertain() {
+  @Test
+  func `subtracting two uncertain values propagates RSS uncertainty`() {
     let a: Value<Double> = .valueWithUncertainty(100, uncertainty: 3)
     let b: Value<Double> = .valueWithUncertainty(30, uncertainty: 4)
     let result = a - b
@@ -117,8 +117,8 @@ struct ValueArithmeticTests {
     }
   }
 
-  @Test("Subtracting definite from uncertain preserves uncertainty")
-  func subtractValueFromUncertain() {
+  @Test
+  func `subtracting definite from uncertain preserves uncertainty`() {
     let a: Value<Double> = .valueWithUncertainty(100, uncertainty: 3)
     let b: Value<Double> = .value(30)
     let result = a - b
@@ -130,8 +130,8 @@ struct ValueArithmeticTests {
     }
   }
 
-  @Test("Subtracting uncertain from definite gets RHS uncertainty")
-  func subtractUncertainFromValue() {
+  @Test
+  func `subtracting uncertain from definite gets RHS uncertainty`() {
     let a: Value<Double> = .value(100)
     let b: Value<Double> = .valueWithUncertainty(30, uncertainty: 4)
     let result = a - b
@@ -143,8 +143,8 @@ struct ValueArithmeticTests {
     }
   }
 
-  @Test("Subtracting scalar from uncertain value preserves uncertainty")
-  func subtractScalarFromUncertain() {
+  @Test
+  func `subtracting scalar from uncertain value preserves uncertainty`() {
     var a: Value<Double> = .valueWithUncertainty(100, uncertainty: 3)
     a -= 10.0
     if case .valueWithUncertainty(let v, let u) = a {
@@ -155,8 +155,8 @@ struct ValueArithmeticTests {
     }
   }
 
-  @Test("Subtracting invalid propagates invalid")
-  func subtractInvalid() {
+  @Test
+  func `subtracting invalid propagates invalid`() {
     let a: Value<Double> = .value(100)
     let b: Value<Double> = .invalid
     #expect(a - b == .invalid)
@@ -164,8 +164,8 @@ struct ValueArithmeticTests {
 
   // MARK: - Subtraction then addition (contamination pattern)
 
-  @Test("Contamination pattern: distance + (contaminatedRun - baseRun)")
-  func contaminationPattern() {
+  @Test
+  func `contamination pattern: distance + (contaminatedRun - baseRun)`() {
     let baseDistance: Value<Double> = .value(2000)
     let baseRun: Value<Double> = .value(1000)
     let contaminatedRun: Value<Double> = .valueWithUncertainty(1300, uncertainty: 20)
@@ -183,15 +183,15 @@ struct ValueArithmeticTests {
 
   // MARK: - Compound Assignment
 
-  @Test("+= with two values")
-  func addAssign() {
+  @Test
+  func `+= with two values`() {
     var a: Value<Double> = .value(100)
     a += Value.value(50)
     #expect(a == .value(150))
   }
 
-  @Test("-= with two values")
-  func subtractAssign() {
+  @Test
+  func `-= with two values`() {
     var a: Value<Double> = .value(100)
     a -= Value.value(30)
     #expect(a == .value(70))

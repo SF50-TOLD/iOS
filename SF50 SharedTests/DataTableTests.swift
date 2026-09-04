@@ -8,7 +8,7 @@ struct DataTableTests {
   // MARK: - 1D Interpolation Tests
 
   @Test
-  func exactMatch1D() {
+  func `exact match 1D`() {
     let data = [
       [1000.0, 100.0],
       [2000.0, 200.0],
@@ -21,7 +21,7 @@ struct DataTableTests {
   }
 
   @Test
-  func linearInterpolation1D() {
+  func `linear interpolation 1D`() {
     let data = [
       [1000.0, 100.0],
       [2000.0, 200.0]
@@ -41,7 +41,7 @@ struct DataTableTests {
   }
 
   @Test
-  func offscale1D() {
+  func `offscale 1D`() {
     let data = [
       [1000.0, 100.0],
       [2000.0, 200.0]
@@ -53,7 +53,7 @@ struct DataTableTests {
   }
 
   @Test
-  func clamping1D() {
+  func `clamping 1D`() {
     let data = [
       [1000.0, 100.0],
       [2000.0, 200.0]
@@ -79,7 +79,7 @@ struct DataTableTests {
   // MARK: - 2D Interpolation Tests
 
   @Test
-  func exactMatch2D() {
+  func `exact match 2D`() {
     let data = [
       [1000.0, 10.0, 100.0],
       [1000.0, 20.0, 110.0],
@@ -93,7 +93,7 @@ struct DataTableTests {
   }
 
   @Test
-  func bilinearInterpolation2D() {
+  func `bilinear interpolation 2D`() {
     let data = [
       [1000.0, 10.0, 100.0],
       [1000.0, 20.0, 200.0],
@@ -108,7 +108,7 @@ struct DataTableTests {
   }
 
   @Test
-  func sparseDataInterpolation3D() {
+  func `sparse data interpolation 3D`() {
     // Test with sparse data similar to actual CSV structure
     let data = [
       // Include ISA temperatures
@@ -136,7 +136,7 @@ struct DataTableTests {
   // MARK: - Edge Cases
 
   @Test
-  func singleDataPoint() {
+  func `single data point`() {
     let data = [[1000.0, 100.0]]
     let table = DataTable(data: data)
 
@@ -151,7 +151,7 @@ struct DataTableTests {
   // MARK: - CSV Parsing Tests
 
   @Test
-  func csvParsing() {
+  func `CSV parsing`() {
     let csv = """
       weight,altitude,temperature,value
       5000,7000,20,3300
@@ -181,7 +181,7 @@ struct DataTableTests {
   // MARK: - Min/Max Tests
 
   @Test
-  func minMaxValues() {
+  func `min and max values`() {
     let data = [
       [1000.0, 10.0, 100.0],
       [2000.0, 20.0, 200.0],

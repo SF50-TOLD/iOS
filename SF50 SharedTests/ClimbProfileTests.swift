@@ -65,7 +65,7 @@ struct ClimbProfileTests {
   // MARK: - gradient(at:profile:)
 
   @Test
-  func gradientAtExactDataPoint() throws {
+  func `gradient at exact data point`() throws {
     let profile = makeVaryingProfile([
       (altitudeFt: 0, gradientFtPerNM: 400),
       (altitudeFt: 5000, gradientFtPerNM: 300),
@@ -76,7 +76,7 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func gradientInterpolatesBetweenPoints() throws {
+  func `gradient interpolates between points`() throws {
     let profile = makeVaryingProfile([
       (altitudeFt: 0, gradientFtPerNM: 400),
       (altitudeFt: 10000, gradientFtPerNM: 200)
@@ -87,7 +87,7 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func gradientClampsBelowRange() throws {
+  func `gradient clamps below range`() throws {
     let profile = makeVaryingProfile([
       (altitudeFt: 1000, gradientFtPerNM: 350),
       (altitudeFt: 10000, gradientFtPerNM: 200)
@@ -97,7 +97,7 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func gradientClampsAboveRange() throws {
+  func `gradient clamps above range`() throws {
     let profile = makeVaryingProfile([
       (altitudeFt: 0, gradientFtPerNM: 400),
       (altitudeFt: 10000, gradientFtPerNM: 200)
@@ -107,13 +107,13 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func gradientEmptyDataPoints() {
+  func `gradient empty data points`() {
     let profile = ClimbProfile(dataPoints: [], seaLevelPressureInHg: 29.92)
     #expect(profile.gradient(at: 5000, profile: defaultProfile) == nil)
   }
 
   @Test
-  func gradientSingleDataPoint() throws {
+  func `gradient single data point`() throws {
     let profile = makeVaryingProfile([
       (altitudeFt: 5000, gradientFtPerNM: 300)
     ])
@@ -126,7 +126,7 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func initSortsDataPoints() {
+  func `init sorts data points`() {
     let profile = makeVaryingProfile([
       (altitudeFt: 10000, gradientFtPerNM: 200),
       (altitudeFt: 0, gradientFtPerNM: 400),
@@ -140,7 +140,7 @@ struct ClimbProfileTests {
   // MARK: - altitude(after:from:profile:)
 
   @Test
-  func altitudeConstantGradient() throws {
+  func `altitude constant gradient`() throws {
     // 300 ft/NM constant; after 10 NM from 1000 ft => 1000 + 3000 = 4000
     let profile = Helper.createTestClimbProfile(gradientFtPerNM: 300)
     let alt = try #require(profile.altitude(after: 10, from: 1000, profile: defaultProfile))
@@ -148,7 +148,7 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func altitudeVaryingGradient() throws {
+  func `altitude varying gradient`() throws {
     // Gradient decreases with altitude: should gain less than linear extrapolation
     let profile = makeVaryingProfile([
       (altitudeFt: 0, gradientFtPerNM: 400),
@@ -161,20 +161,20 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func altitudeZeroDistance() throws {
+  func `altitude zero distance`() throws {
     let profile = Helper.createTestClimbProfile()
     let alt = try #require(profile.altitude(after: 0, from: 5000, profile: defaultProfile))
     #expect(alt.isApproximatelyEqual(to: 5000, absoluteTolerance: 0.001))
   }
 
   @Test
-  func altitudeNegativeDistance() {
+  func `altitude negative distance`() {
     let profile = Helper.createTestClimbProfile()
     #expect(profile.altitude(after: -1, from: 5000, profile: defaultProfile) == nil)
   }
 
   @Test
-  func altitudeEmptyProfile() {
+  func `altitude empty profile`() {
     let profile = ClimbProfile(dataPoints: [], seaLevelPressureInHg: 29.92)
     #expect(profile.altitude(after: 10, from: 5000, profile: defaultProfile) == nil)
   }
@@ -182,7 +182,7 @@ struct ClimbProfileTests {
   // MARK: - distance(from:to:profile:)
 
   @Test
-  func distanceConstantGradient() throws {
+  func `distance constant gradient`() throws {
     // 300 ft/NM; climbing 3000 ft requires 10 NM
     let profile = Helper.createTestClimbProfile(gradientFtPerNM: 300)
     let dist = try #require(profile.distance(from: 1000, to: 4000, profile: defaultProfile))
@@ -190,19 +190,19 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func distanceStartEqualsEnd() {
+  func `distance start equals end`() {
     let profile = Helper.createTestClimbProfile()
     #expect(profile.distance(from: 5000, to: 5000, profile: defaultProfile) == nil)
   }
 
   @Test
-  func distanceStartAboveEnd() {
+  func `distance start above end`() {
     let profile = Helper.createTestClimbProfile()
     #expect(profile.distance(from: 5000, to: 3000, profile: defaultProfile) == nil)
   }
 
   @Test
-  func distanceRoundTripsWithAltitude() throws {
+  func `distance round trips with altitude`() throws {
     let profile = Helper.createTestClimbProfile(gradientFtPerNM: 300)
     let startAlt = 2000.0
     let endAlt = 5000.0
@@ -216,7 +216,7 @@ struct ClimbProfileTests {
   // MARK: - TAS computation
 
   @Test
-  func trueAirspeedAtSeaLevelISA() throws {
+  func `true airspeed at sea level ISA`() throws {
     // At sea level ISA (15C, 29.92 inHg), TAS ~= IAS
     let profile = makeProfile(gradientFtPerNM: 300, altitudes: [0])
     let tas = try #require(profile.trueAirspeed(at: 0, profile: defaultProfile))
@@ -225,7 +225,7 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func trueAirspeedIncreasesWithAltitude() throws {
+  func `true airspeed increases with altitude`() throws {
     // TAS should be greater than IAS at altitude (lower density)
     let profile = makeProfile(gradientFtPerNM: 300, altitudes: [0, 10000])
     let tasLow = try #require(profile.trueAirspeed(at: 0, profile: defaultProfile))
@@ -237,7 +237,7 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func trueAirspeedInterpolation() throws {
+  func `true airspeed interpolation`() throws {
     // TAS at midpoint should be between endpoints
     let profile = makeProfile(gradientFtPerNM: 300, altitudes: [0, 10000])
     let tasLow = try #require(profile.trueAirspeed(at: 0, profile: defaultProfile))
@@ -250,7 +250,7 @@ struct ClimbProfileTests {
   // MARK: - Wind interpolation
 
   @Test
-  func windDirectionInterpolation() throws {
+  func `wind direction interpolation`() throws {
     let cd = uniformClimbData(gradientFtPerNM: 300)
     let dp1 = ClimbProfile.DataPoint(
       altitudeFt: 0,
@@ -284,7 +284,7 @@ struct ClimbProfileTests {
   }
 
   @Test
-  func windSpeedClampsOutsideRange() throws {
+  func `wind speed clamps outside range`() throws {
     let cd = uniformClimbData(gradientFtPerNM: 300)
     let dp = ClimbProfile.DataPoint(
       altitudeFt: 5000,
@@ -309,7 +309,7 @@ struct ClimbProfileTests {
   // MARK: - Profile type selection
 
   @Test
-  func differentProfileTypesReturnDifferentGradients() throws {
+  func `different profile types return different gradients`() throws {
     // Create a profile where takeoff and enroute have different gradients
     let altitudes: [Double] = [0, 5000, 10000]
     let dataPoints = altitudes.map { alt in
