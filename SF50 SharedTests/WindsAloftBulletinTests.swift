@@ -112,7 +112,7 @@ struct WindsAloftBulletinTests {
   /// The `FOR USE` period is given only as times of day and brackets the valid time, so the
   /// 12-hour bulletin's period starts the day before the day it is valid.
   @Test
-  func usePeriodBracketsValidTime() async throws {
+  func `use period brackets valid time`() async throws {
     let bulletin = try await Issuance.bulletin(Issuance.twelveHour)
 
     #expect(bulletin.validAt == Issuance.zulu(day: 13, hour: 0))
@@ -126,7 +126,7 @@ struct WindsAloftBulletinTests {
 struct WindsAloftRegionParsingTests {
 
   @Test(arguments: [Regions.CONUS, Regions.alaska, Regions.hawaii, Regions.pacific])
-  func everyRegionParses(text: String) async throws {
+  func `every region parses`(text: String) async throws {
     let bulletin = try await Regions.bulletin(text)
 
     #expect(bulletin.validAt == Issuance.zulu(day: 12, hour: 18))
@@ -134,7 +134,7 @@ struct WindsAloftRegionParsingTests {
   }
 
   @Test
-  func hawaiiAndPacificReportTheirExtraLowLevels() async throws {
+  func `hawaii and the Pacific report their extra low levels`() async throws {
     for text in [Regions.hawaii, Regions.pacific] {
       let bulletin = try await Regions.bulletin(text)
       let data = try #require(bulletin.stations.values.first)
@@ -146,7 +146,7 @@ struct WindsAloftRegionParsingTests {
   }
 
   @Test
-  func CONUSAndAlaskaReachTheHighLevels() async throws {
+  func `CONUS and Alaska reach the high levels`() async throws {
     for text in [Regions.CONUS, Regions.alaska] {
       let bulletin = try await Regions.bulletin(text)
       let data = try #require(bulletin.stations.values.first)
@@ -167,7 +167,7 @@ struct WindsAloftReportingStationTests {
   }
 
   @Test
-  func airportAtItsOwnStationIsAReport() throws {
+  func `airport at its own station is a report`() throws {
     // San Francisco International, 0.2 NM from the forecast location of the same identifier.
     let reported = try #require(
       WeatherLoader.reportedData(
@@ -183,7 +183,7 @@ struct WindsAloftReportingStationTests {
   /// The NWS often forecasts for the VOR rather than the field, so a station a few miles off is
   /// still that airport's own report.
   @Test
-  func stationOffsetToTheVORIsStillAReport() throws {
+  func `station offset to the VOR is still a report`() throws {
     // Roughly the separation between Denver International and the DEN forecast location.
     let reported = WeatherLoader.reportedData(
       stationID: "SFO",
@@ -197,7 +197,7 @@ struct WindsAloftReportingStationTests {
   /// Location identifiers and forecast-location identifiers are separate namespaces, and an
   /// airport sharing an identifier with a distant forecast location must not inherit its winds.
   @Test
-  func distantStationSharingTheIdentifierIsRejected() {
+  func `distant station sharing the identifier is rejected`() {
     let reported = WeatherLoader.reportedData(
       stationID: "SFO",
       at: .init(latitude: 40.0, longitude: -105.0),
@@ -208,7 +208,7 @@ struct WindsAloftReportingStationTests {
   }
 
   @Test
-  func airportWithNoStationOfItsOwnHasNoReport() {
+  func `airport with no station of its own has no report`() {
     #expect(
       WeatherLoader.reportedData(
         stationID: "OAK",
@@ -224,7 +224,7 @@ struct WindsAloftReportingStationTests {
 struct WindsAloftBulletinMergingTests {
 
   @Test
-  func regionsCoveringTheSamePeriodBecomeOneBulletin() async throws {
+  func `regions covering the same period become one bulletin`() async throws {
     let merged = WindsAloftBulletin.merged([
       try await Regions.bulletin(Regions.CONUS),
       try await Regions.bulletin(Regions.alaska),
@@ -240,7 +240,7 @@ struct WindsAloftBulletinMergingTests {
   /// Periods are grouped rather than assumed to agree, so a product covering a different period
   /// stays its own bulletin instead of being folded into one it doesn't belong to.
   @Test
-  func bulletinsForDifferentPeriodsStaySeparate() async throws {
+  func `bulletins for different periods stay separate`() async throws {
     let merged = WindsAloftBulletin.merged([
       try await Regions.bulletin(Regions.CONUS),
       try await Issuance.bulletin(Issuance.twelveHour)
@@ -263,7 +263,7 @@ struct WindsAloftBulletinSelectionTests {
   }
 
   @Test
-  func selectsTheBulletinPublishedForTheTime() throws {
+  func `selects the bulletin published for the time`() throws {
     let sixHour = try #require(
       WeatherLoader.bulletins(for: Issuance.zulu(day: 12, hour: 16), in: bulletins).first
     )
@@ -282,7 +282,7 @@ struct WindsAloftBulletinSelectionTests {
 
   /// Consecutive use periods share an endpoint; the earlier bulletin wins it.
   @Test
-  func selectsTheEarlierBulletinAtASharedBoundary() throws {
+  func `selects the earlier bulletin at a shared boundary`() throws {
     let bulletin = try #require(
       WeatherLoader.bulletins(for: Issuance.zulu(day: 12, hour: 21), in: bulletins).first
     )
@@ -291,7 +291,7 @@ struct WindsAloftBulletinSelectionTests {
   }
 
   @Test
-  func hasNoBulletinOutsideEveryUsePeriod() {
+  func `has no bulletin outside every use period`() {
     #expect(WeatherLoader.bulletins(for: Issuance.zulu(day: 15, hour: 12), in: bulletins).isEmpty)
     #expect(WeatherLoader.bulletins(for: Issuance.zulu(day: 12, hour: 10), in: bulletins).isEmpty)
   }

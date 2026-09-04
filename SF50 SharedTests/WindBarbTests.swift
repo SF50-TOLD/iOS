@@ -6,7 +6,6 @@ import Testing
 struct WindBarbFeatherTests {
 
   @Test(
-    "Draws the feathers a station model would, rounding to the nearest five knots",
     arguments: [
       // speed, pennants, full barbs, half barb
       (0.0, 0, 0, false),
@@ -23,7 +22,12 @@ struct WindBarbFeatherTests {
       (105.0, 2, 0, true)
     ] as [(Double, Int, Int, Bool)]
   )
-  func feathers(speedKts: Double, pennants: Int, full: Int, half: Bool) {
+  func `draws the feathers a station model would, rounding to the nearest five knots`(
+    speedKts: Double,
+    pennants: Int,
+    full: Int,
+    half: Bool
+  ) {
     let feathers = WindBarb.Feathers(componentKts: speedKts)
 
     #expect(feathers.pennants == pennants)
@@ -31,13 +35,13 @@ struct WindBarbFeatherTests {
     #expect(feathers.half == half)
   }
 
-  @Test("Reads a headwind the same as the tailwind of the same strength")
-  func signIgnored() {
+  @Test
+  func `reads a headwind the same as the tailwind of the same strength`() {
     #expect(WindBarb.Feathers(componentKts: -37) == WindBarb.Feathers(componentKts: 37))
   }
 
-  @Test("Calls anything rounding to nothing calm")
-  func calmBelowFiveKnots() {
+  @Test
+  func `calls anything rounding to nothing calm`() {
     #expect(WindBarb.Feathers(componentKts: 0).isCalm)
     #expect(WindBarb.Feathers(componentKts: 2.4).isCalm)
     #expect(!WindBarb.Feathers(componentKts: 2.5).isCalm)

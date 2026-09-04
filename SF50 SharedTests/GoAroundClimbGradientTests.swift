@@ -39,7 +39,7 @@ struct GoAroundClimbGradientTests {
   // MARK: - Standard Conditions
 
   @Test
-  func standardConditionsPass() {
+  func `standard conditions pass`() {
     let meets = meetsGradient(weight: 5000, elevation: 0, temperature: 15)
     #expect(meets == true)
   }
@@ -47,7 +47,7 @@ struct GoAroundClimbGradientTests {
   // MARK: - Extreme Conditions
 
   @Test
-  func extremeHotHighHeavyFails() {
+  func `extreme hot high heavy fails`() {
     let meets = meetsGradient(weight: 6000, elevation: 8000, temperature: 40)
     #expect(meets == false)
   }
@@ -55,7 +55,7 @@ struct GoAroundClimbGradientTests {
   // MARK: - Boundary Behavior
 
   @Test
-  func boundaryBehavior() {
+  func `boundary behavior`() {
     // Near the decision boundary: barely passes (probability ~0.56)
     let barelyPasses = meetsGradient(weight: 5800, elevation: 7000, temperature: 35)
     #expect(barelyPasses == true)
@@ -68,13 +68,13 @@ struct GoAroundClimbGradientTests {
   // MARK: - Weight Sensitivity
 
   @Test
-  func lightWeightPassesAtHighAltitude() {
+  func `light weight passes at high altitude`() {
     let meets = meetsGradient(weight: 4500, elevation: 6000, temperature: 30)
     #expect(meets == true)
   }
 
   @Test
-  func heavyWeightFailsAtHighAltitude() {
+  func `heavy weight fails at high altitude`() {
     let meets = meetsGradient(weight: 6000, elevation: 6000, temperature: 40)
     #expect(meets == false)
   }
@@ -82,13 +82,13 @@ struct GoAroundClimbGradientTests {
   // MARK: - Temperature Sensitivity
 
   @Test
-  func coolTemperaturePasses() {
+  func `cool temperature passes`() {
     let meets = meetsGradient(weight: 5500, elevation: 5000, temperature: 0)
     #expect(meets == true)
   }
 
   @Test
-  func veryHotTemperatureFails() {
+  func `very hot temperature fails`() {
     let meets = meetsGradient(weight: 5500, elevation: 7000, temperature: 45)
     #expect(meets == false)
   }
@@ -96,13 +96,13 @@ struct GoAroundClimbGradientTests {
   // MARK: - Altitude Sensitivity
 
   @Test
-  func lowAltitudePasses() {
+  func `low altitude passes`() {
     let meets = meetsGradient(weight: 5500, elevation: 0, temperature: 30)
     #expect(meets == true)
   }
 
   @Test
-  func highAltitudeFails() {
+  func `high altitude fails`() {
     let meets = meetsGradient(weight: 5500, elevation: 9000, temperature: 30)
     #expect(meets == false)
   }

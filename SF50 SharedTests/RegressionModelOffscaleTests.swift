@@ -3,13 +3,13 @@ import Testing
 
 @testable import SF50_Shared
 
-@Suite("Regression Model Offscale Detection")
-struct RegressionModelOffscaleTests {
+@Suite
+struct `Regression Model Offscale Detection` {
 
   // MARK: - Landing Weight Tests
 
-  @Test("G1 landing weight below minimum sets landingInputsOffscaleLow flag")
-  func g1LandingWeightTooLow() throws {
+  @Test
+  func `G1 landing weight below minimum sets landingInputsOffscaleLow flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 3550)  // Below 4500 lbs minimum
     let runway = Helper.createTestRunway()
@@ -40,8 +40,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.landingInputsOffscaleHigh == false)
   }
 
-  @Test("G1 landing weight above maximum sets landingInputsOffscaleHigh flag")
-  func g1LandingWeightTooHigh() throws {
+  @Test
+  func `G1 landing weight above maximum sets landingInputsOffscaleHigh flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5650)  // Above 5550 lbs maximum
     let runway = Helper.createTestRunway()
@@ -72,8 +72,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.landingInputsOffscaleHigh == true)
   }
 
-  @Test("G2+ landing weight below minimum sets landingInputsOffscaleLow flag")
-  func g2PlusLandingWeightTooLow() throws {
+  @Test
+  func `G2+ landing weight below minimum sets landingInputsOffscaleLow flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 4000)  // Below 4500 lbs minimum
     let runway = Helper.createTestRunway()
@@ -103,8 +103,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.landingInputsOffscaleHigh == false)
   }
 
-  @Test("G2+ landing weight above maximum sets landingInputsOffscaleHigh flag")
-  func g2PlusLandingWeightTooHigh() throws {
+  @Test
+  func `G2+ landing weight above maximum sets landingInputsOffscaleHigh flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5700)  // Above 5550 lbs maximum
     let runway = Helper.createTestRunway()
@@ -136,8 +136,8 @@ struct RegressionModelOffscaleTests {
 
   // MARK: - Takeoff Weight Tests
 
-  @Test("G1 takeoff weight below minimum sets takeoffInputsOffscaleLow flag")
-  func g1TakeoffWeightTooLow() throws {
+  @Test
+  func `G1 takeoff weight below minimum sets takeoffInputsOffscaleLow flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 4800)  // Below 5000 lbs minimum
     let runway = Helper.createTestRunway()
@@ -166,8 +166,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.takeoffInputsOffscaleHigh == false)
   }
 
-  @Test("G1 takeoff weight above maximum sets takeoffInputsOffscaleHigh flag")
-  func g1TakeoffWeightTooHigh() throws {
+  @Test
+  func `G1 takeoff weight above maximum sets takeoffInputsOffscaleHigh flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 6100)  // Above 6000 lbs maximum
     let runway = Helper.createTestRunway()
@@ -196,8 +196,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.takeoffInputsOffscaleHigh == true)
   }
 
-  @Test("G2+ takeoff weight below minimum sets takeoffInputsOffscaleLow flag")
-  func g2PlusTakeoffWeightTooLow() throws {
+  @Test
+  func `G2+ takeoff weight below minimum sets takeoffInputsOffscaleLow flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 4900)  // Below 5000 lbs minimum
     let runway = Helper.createTestRunway()
@@ -226,8 +226,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.takeoffInputsOffscaleHigh == false)
   }
 
-  @Test("G2+ takeoff weight above maximum sets takeoffInputsOffscaleHigh flag")
-  func g2PlusTakeoffWeightTooHigh() throws {
+  @Test
+  func `G2+ takeoff weight above maximum sets takeoffInputsOffscaleHigh flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 6050)  // Above 6000 lbs maximum
     let runway = Helper.createTestRunway()
@@ -258,8 +258,8 @@ struct RegressionModelOffscaleTests {
 
   // MARK: - Temperature Tests
 
-  @Test("G1 landing temperature below minimum sets landingInputsOffscaleLow flag")
-  func g1LandingTemperatureTooLow() throws {
+  @Test
+  func `G1 landing temperature below minimum sets landingInputsOffscaleLow flag`() throws {
     // Below 0°C minimum for flaps 100
     let conditions = Helper.createTestConditions(temperature: -5)
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps100)
@@ -289,8 +289,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.landingInputsOffscaleHigh == false)
   }
 
-  @Test("G1 landing temperature above maximum sets landingInputsOffscaleHigh flag")
-  func g1LandingTemperatureTooHigh() throws {
+  @Test
+  func `G1 landing temperature above maximum sets landingInputsOffscaleHigh flag`() throws {
     // Above 50°C maximum for flaps 100
     let conditions = Helper.createTestConditions(temperature: 55)
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps100)
@@ -320,8 +320,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.landingInputsOffscaleHigh == true)
   }
 
-  @Test("G1 takeoff temperature below minimum sets takeoffInputsOffscaleLow flag")
-  func g1TakeoffTemperatureTooLow() throws {
+  @Test
+  func `G1 takeoff temperature below minimum sets takeoffInputsOffscaleLow flag`() throws {
     let conditions = Helper.createTestConditions(temperature: -25)  // Below -20°C minimum
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway()
@@ -350,8 +350,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.takeoffInputsOffscaleHigh == false)
   }
 
-  @Test("G1 takeoff temperature above maximum sets takeoffInputsOffscaleHigh flag")
-  func g1TakeoffTemperatureTooHigh() throws {
+  @Test
+  func `G1 takeoff temperature above maximum sets takeoffInputsOffscaleHigh flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 55)  // Above 50°C maximum
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway()
@@ -382,8 +382,8 @@ struct RegressionModelOffscaleTests {
 
   // MARK: - Altitude Tests
 
-  @Test("G1 landing altitude above maximum sets landingInputsOffscaleHigh flag")
-  func g1LandingAltitudeTooHigh() throws {
+  @Test
+  func `G1 landing altitude above maximum sets landingInputsOffscaleHigh flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5200)
     let runway = Helper.createTestRunway(elevation: 11000)  // Above 10000 ft maximum
@@ -412,8 +412,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.landingInputsOffscaleHigh == true)
   }
 
-  @Test("G1 takeoff altitude above maximum sets takeoffInputsOffscaleHigh flag")
-  func g1TakeoffAltitudeTooHigh() throws {
+  @Test
+  func `G1 takeoff altitude above maximum sets takeoffInputsOffscaleHigh flag`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway(elevation: 10500)  // Above 10000 ft maximum
@@ -444,8 +444,8 @@ struct RegressionModelOffscaleTests {
 
   // MARK: - Within Bounds Tests
 
-  @Test("G1 landing within bounds returns valid values and no offscale flags")
-  func g1LandingWithinBounds() throws {
+  @Test
+  func `G1 landing within bounds returns valid values and no offscale flags`() throws {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5200)  // Within 4500-5550 lbs
     let runway = Helper.createTestRunway(elevation: 5000)  // Within 0-10000 ft
@@ -487,8 +487,8 @@ struct RegressionModelOffscaleTests {
     #expect(model.landingInputsOffscaleHigh == false)
   }
 
-  @Test("G1 takeoff within bounds returns valid values and no offscale flags")
-  func g1TakeoffWithinBounds() throws {
+  @Test
+  func `G1 takeoff within bounds returns valid values and no offscale flags`() throws {
     let conditions = Helper.createTestConditions(temperature: 25)
     let config = Helper.createTestConfiguration(weight: 5500)  // Within 5000-6000 lbs
     let runway = Helper.createTestRunway(elevation: 3000)  // Within 0-10000 ft
@@ -532,8 +532,8 @@ struct RegressionModelOffscaleTests {
 
   // MARK: - Flap Setting Specific Tests
 
-  @Test("G1 landing flaps 50 ice temperature bounds are different")
-  func g1LandingFlaps50IceTemperatureBounds() throws {
+  @Test
+  func `G1 landing flaps 50 ice temperature bounds are different`() throws {
     // Flaps 50 ice has temperature range -20°C to 10°C (different from flaps 100)
     // Above 10°C max for flaps 50 ice
     let conditions = Helper.createTestConditions(temperature: 15)
@@ -564,8 +564,10 @@ struct RegressionModelOffscaleTests {
     #expect(model.landingInputsOffscaleHigh == true)
   }
 
-  @Test("G1 landing flaps 50 ice within temperature bounds returns valid values and no flags")
-  func g1LandingFlaps50IceWithinTemperatureBounds() throws {
+  @Test
+  func `G1 landing flaps 50 ice within temperature bounds returns valid values and no flags`()
+    throws
+  {
     let conditions = Helper.createTestConditions(temperature: 5)  // Within -20°C to 10°C
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps50Ice)
     let runway = Helper.createTestRunway()
