@@ -1,12 +1,12 @@
-import CoreLocation
-import Foundation
+public import CoreLocation
+public import Foundation
 
 /// Errors that can occur during terrain queries.
 public enum TerrainServiceError: LocalizedError {
   case regionNotLoaded(TerrainRegion)
   case noDataAtLocation(CLLocationCoordinate2D)
   case invalidFile(URL)
-  case fileReadError(Error)
+  case fileReadError(any Error)
 
   public var errorDescription: String? {
     String(localized: "Terrain data couldn’t be loaded.")

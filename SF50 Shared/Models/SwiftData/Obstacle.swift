@@ -1,6 +1,6 @@
-import CoreLocation
-import Foundation
-import SwiftData
+public import CoreLocation
+public import Foundation
+public import SwiftData
 
 /// An obstacle from the FAA Digital Obstacle File (DOF).
 ///

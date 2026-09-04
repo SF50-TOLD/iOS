@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 import Logging
 import Sentry
 
@@ -281,9 +281,9 @@ public actor NOTAMLoader: NOTAMLoaderProtocol {
     case apiError(statusCode: Int, code: String, message: String)
 
     /// Failed to decode API response
-    case decodingFailed(Error)
+    case decodingFailed(any Error)
 
     /// Network request failed
-    case networkError(Error)
+    case networkError(any Error)
   }
 }

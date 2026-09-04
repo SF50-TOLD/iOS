@@ -27,7 +27,7 @@ final class TerrainProcessorViewModel {
   var logEntries: [LogEntry] = []
 
   /// Error that occurred during R2 upload, if any.
-  var uploadError: Error?
+  var uploadError: (any Error)?
 
   /// Whether cancellation has been requested but not yet completed.
   var isCancelling = false
@@ -159,7 +159,7 @@ final class TerrainProcessorViewModel {
     }
 
     // Create upload error callback
-    let onUploadError: @MainActor @Sendable (Error) -> Void = { [weak self] error in
+    let onUploadError: @MainActor @Sendable (any Error) -> Void = { [weak self] error in
       self?.uploadError = error
     }
 

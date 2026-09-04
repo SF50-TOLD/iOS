@@ -1,5 +1,6 @@
 import Foundation
 import Gzip
+import Logging
 import Sentry
 import SwiftMETAR
 

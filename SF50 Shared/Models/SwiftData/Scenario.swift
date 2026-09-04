@@ -1,5 +1,5 @@
-import Foundation
-import SwiftData
+public import Foundation
+public import SwiftData
 
 /// A user-customizable performance scenario for takeoff or landing calculations.
 ///

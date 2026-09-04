@@ -7,8 +7,8 @@ import ZIPFoundation
 enum HGTParserError: LocalizedError {
   case invalidFileSize(expected: Int64, actual: Int64)
   case invalidFilename(String)
-  case readError(Error)
-  case decompressionError(Error)
+  case readError(any Error)
+  case decompressionError(any Error)
   case hgtFileNotFoundInArchive
 
   var errorDescription: String? {

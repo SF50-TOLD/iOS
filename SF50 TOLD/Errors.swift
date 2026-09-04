@@ -1,5 +1,5 @@
-import Foundation
-import SF50_Shared
+public import Foundation
+public import SF50_Shared
 
 extension NavDataLoader.Errors: LocalizedError {
   var errorDescription: String? {

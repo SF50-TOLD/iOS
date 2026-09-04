@@ -1,10 +1,10 @@
-import Defaults
-import Foundation
+public import Defaults
+public import Foundation
 import Logging
 import MeasurementKit
-import Observation
+public import Observation
 import Sentry
-import SwiftData
+public import SwiftData
 
 /// Abstract base class for performance view models.
 ///
@@ -45,10 +45,10 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   private let container: ModelContainer
   private let notamLoader: any NOTAMLoaderProtocol
-  internal var model: PerformanceModel?
+  internal var model: (any PerformanceModel)?
   private var cancellables: Set<Task<Void, Never>> = []
   private var notamObservationTask: Task<Void, Never>?
-  internal let calculationService: PerformanceCalculationService
+  internal let calculationService: any PerformanceCalculationService
 
   // MARK: - Inputs (to be overridden or used by subclasses)
 
@@ -85,7 +85,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     }
   }
 
-  public var error: Error?
+  public var error: (any Error)?
 
   // MARK: - Downloaded NOTAMs
 
@@ -127,7 +127,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   public init(
     container: ModelContainer,
-    calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared,
+    calculationService: any PerformanceCalculationService = DefaultPerformanceCalculationService
+      .shared,
     notamLoader: (any NOTAMLoaderProtocol)? = nil,
     defaultFlapSetting: FlapSetting
   ) {
@@ -245,7 +246,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     self.runway = runway
   }
 
-  private func recordObservationError(_ error: Error) {
+  private func recordObservationError(_ error: any Error) {
     SentrySDK.capture(error: error) { scope in
       scope.setFingerprint(["swiftData", "fetch"])
     }

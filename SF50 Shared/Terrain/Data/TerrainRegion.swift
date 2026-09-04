@@ -1,4 +1,4 @@
-import CoreLocation
+public import CoreLocation
 import Foundation
 
 /// Represents a terrain region/continent for SRTM data.

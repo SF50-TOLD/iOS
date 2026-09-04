@@ -2,7 +2,7 @@ import SF50_Shared
 import SwiftUI
 
 struct WithErrorSheet: ViewModifier {
-  let state: WithIdentifiableError?
+  let state: (any WithIdentifiableError)?
   @State private var presentedError: IdentifiableError?
 
   func body(content: Content) -> some View {

@@ -1,7 +1,7 @@
 import CoreLocation
-import Foundation
-import SwiftMETAR
-import WeatherKit
+public import Foundation
+public import SwiftMETAR
+public import WeatherKit
 
 /// Atmospheric conditions used for performance calculations.
 ///

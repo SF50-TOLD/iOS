@@ -1,4 +1,4 @@
-import CoreLocation
+public import CoreLocation
 import Foundation
 
 /// A location the NWS publishes a winds aloft forecast for.

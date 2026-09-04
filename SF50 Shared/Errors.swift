@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 extension PathAtmosphereLoader.Failure: LocalizedError {
   public var errorDescription: String? {

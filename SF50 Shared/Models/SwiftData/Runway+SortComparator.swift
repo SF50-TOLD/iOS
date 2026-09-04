@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 extension Runway {
   public struct NameComparator: SortComparator {

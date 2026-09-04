@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 final class WelcomePage: BasePage {
 

@@ -82,7 +82,7 @@ struct HTMLReportViewer: View {
 
     UIGraphicsEndPDFContext()
 
-    let result: Result<Data, Error> =
+    let result: Result<Data, any Error> =
       if pdfData.length > 0 {
         .success(pdfData as Data)
       } else {

@@ -15,7 +15,7 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
   private var mockWindsAloft: Loadable<WindsAloftForecast?> = .notLoaded {
     didSet { notifyWindsAloftSubscribers() }
   }
-  private var mockError: Error?
+  private var mockError: (any Error)?
 
   private var conditionsSubscribers = [UUID: AsyncStream<Loadable<Conditions>>.Continuation]()
   private var metarSubscribers = [UUID: AsyncStream<Loadable<String?>>.Continuation]()
@@ -29,7 +29,7 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
     mockMETAR: Loadable<String?> = .notLoaded,
     mockTAF: Loadable<String?> = .notLoaded,
     mockWindsAloft: Loadable<WindsAloftForecast?> = .notLoaded,
-    mockError: Error? = nil
+    mockError: (any Error)? = nil
   ) {
     self.mockConditions = mockConditions
     self.mockMETAR = mockMETAR
@@ -54,7 +54,7 @@ public actor MockWeatherLoader: WeatherLoaderProtocol {
     mockWindsAloft = windsAloft
   }
 
-  public func setMockError(_ error: Error?) {
+  public func setMockError(_ error: (any Error)?) {
     mockError = error
   }
 

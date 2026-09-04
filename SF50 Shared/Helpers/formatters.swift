@@ -1,5 +1,5 @@
-import Foundation
-import MeasurementKit
+public import Foundation
+public import MeasurementKit
 
 extension FormatStyle where Self == FloatingPointFormatStyle<Double> {
   public static var weight: Self { .number.rounded(increment: 1) }

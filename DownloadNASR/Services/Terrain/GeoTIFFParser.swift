@@ -5,7 +5,7 @@ import TIFF
 /// Errors that can occur during GeoTIFF parsing.
 enum GeoTIFFParserError: LocalizedError {
   case invalidData
-  case readFailed(Error)
+  case readFailed(any Error)
   case noRasterData
   case invalidDimensions(width: Int, height: Int)
   case coordinateParsingFailed(String)

@@ -1,4 +1,5 @@
 import BackgroundAssets
+import Combine
 import Foundation
 import os
 import Sentry
@@ -632,8 +633,8 @@ final class TerrainDataLoader: ObservableObject {
 /// Errors that can occur during terrain data loading.
 enum TerrainDataLoaderError: LocalizedError {
   case noStorageAccess
-  case downloadFailed(Error)
-  case decompressionFailed(Error)
+  case downloadFailed(any Error)
+  case decompressionFailed(any Error)
   case outOfDiskSpace
   case regionNotAvailable(TerrainRegion)
 

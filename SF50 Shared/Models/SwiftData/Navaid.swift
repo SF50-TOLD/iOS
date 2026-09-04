@@ -1,6 +1,6 @@
-import CoreLocation
-import Foundation
-import SwiftData
+public import CoreLocation
+public import Foundation
+public import SwiftData
 
 /// A DME-capable navigation aid station.
 ///

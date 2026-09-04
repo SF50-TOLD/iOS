@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// What a terrain region's files on disk amount to.
 public enum TerrainRegionFileState: Equatable, Sendable {

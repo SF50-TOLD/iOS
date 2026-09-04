@@ -1,6 +1,6 @@
 import Defaults
-import Foundation
-import MeasurementKit
+public import Foundation
+public import MeasurementKit
 
 // MARK: - Unit Conversion Extensions
 

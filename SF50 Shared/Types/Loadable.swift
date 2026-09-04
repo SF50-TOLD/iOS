@@ -39,7 +39,7 @@ public enum Loadable<Loaded>: Sendable where Loaded: Sendable {
   /// Successfully loaded with the given value.
   case value(_ value: Loaded)
   /// Load failed with the given error.
-  case error(_ error: Error)
+  case error(_ error: any Error)
 
   /// Transforms the loaded value using the given closure.
   /// - Parameter transform: A closure that transforms the loaded value.

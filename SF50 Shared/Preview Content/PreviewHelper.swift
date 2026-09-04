@@ -1,7 +1,8 @@
+import CoreLocation
 import Defaults
-import Foundation
-import SwiftData
-import WeatherKit
+public import Foundation
+public import SwiftData
+public import WeatherKit
 
 public final class PreviewHelper: Sendable {
   public let container: ModelContainer

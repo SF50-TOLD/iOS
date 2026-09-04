@@ -1,5 +1,5 @@
-import CoreLocation
-import Foundation
+public import CoreLocation
+public import Foundation
 import MeasurementKit
 
 /// The atmosphere in a vertical column above one point, as a forecast model reports it.

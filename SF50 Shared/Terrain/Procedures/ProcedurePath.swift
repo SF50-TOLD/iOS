@@ -1,4 +1,4 @@
-import CoreLocation
+public import CoreLocation
 import Foundation
 
 /// A geographic flight path generated from a procedure's fix sequence.

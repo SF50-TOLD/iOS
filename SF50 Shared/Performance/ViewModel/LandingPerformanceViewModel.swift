@@ -1,8 +1,8 @@
-import Defaults
-import Foundation
-import Observation
+public import Defaults
+public import Foundation
+public import Observation
 import Sentry
-import SwiftData
+public import SwiftData
 
 /// View model for landing performance calculations.
 ///
@@ -78,7 +78,8 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
 
   public init(
     container: ModelContainer,
-    calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared,
+    calculationService: any PerformanceCalculationService = DefaultPerformanceCalculationService
+      .shared,
     notamLoader: (any NOTAMLoaderProtocol)? = nil
   ) {
     Vref = .notAvailable

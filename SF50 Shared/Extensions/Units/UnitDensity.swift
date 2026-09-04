@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A unit of density (mass per unit volume).
 ///

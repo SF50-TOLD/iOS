@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// The services a set of weather values was drawn from.
 ///

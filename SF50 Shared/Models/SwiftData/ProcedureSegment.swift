@@ -1,5 +1,5 @@
 import Foundation
-import SwiftData
+public import SwiftData
 
 /// A segment within an instrument procedure.
 ///

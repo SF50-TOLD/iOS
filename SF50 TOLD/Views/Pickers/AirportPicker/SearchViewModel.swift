@@ -13,7 +13,7 @@ final class SearchViewModel: WithIdentifiableError {
   // Outputs
   private(set) var sortedAirports: [Airport] = []
   private(set) var isLoading = false
-  var error: Error?
+  var error: (any Error)?
 
   private let container: ModelContainer
   private var searchTask: Task<Void, Never>?

@@ -1,4 +1,5 @@
 import Defaults
+import Foundation
 import SF50_Shared
 
 /// Generates a complete takeoff TLR report as HTML.

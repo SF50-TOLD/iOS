@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// Response from the NOTAM API containing NOTAM data and pagination info.
 ///

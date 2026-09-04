@@ -6,8 +6,8 @@ import SF50_Shared
 /// Errors that can occur during SRTM processing.
 enum SRTMProcessorError: LocalizedError {
   case noTilesFound(region: String)
-  case downloadFailed(tile: String, error: Error)
-  case compressionFailed(Error)
+  case downloadFailed(tile: String, error: any Error)
+  case compressionFailed(any Error)
   case missingRegions([TerrainRegion])
 
   var errorDescription: String? {
@@ -98,7 +98,7 @@ actor SRTMProcessor {
   var onProgress: (@MainActor @Sendable (TerrainProgress) -> Void)?
 
   /// Callback invoked if R2 upload fails.
-  var onUploadError: (@MainActor @Sendable (Error) -> Void)?
+  var onUploadError: (@MainActor @Sendable (any Error) -> Void)?
 
   /// Callback invoked for each log entry.
   var onLog: (@MainActor @Sendable (LogEntry) -> Void)?
@@ -253,7 +253,7 @@ actor SRTMProcessor {
   /// Sets all callback handlers at once.
   func setCallbacks(
     onProgress: (@MainActor @Sendable (TerrainProgress) -> Void)?,
-    onUploadError: (@MainActor @Sendable (Error) -> Void)?,
+    onUploadError: (@MainActor @Sendable (any Error) -> Void)?,
     onLog: (@MainActor @Sendable (LogEntry) -> Void)?
   ) {
     self.onProgress = onProgress
@@ -958,7 +958,7 @@ actor SRTMProcessor {
     /// Uncompressed size in bytes (0 for void tiles).
     let uncompressedLength: UInt32
     let isVoid: Bool
-    let error: Error?
+    let error: (any Error)?
   }
 
   /// Tile index information for a single compressed tile.

@@ -1,5 +1,5 @@
-import Foundation
-import SwiftData
+public import Foundation
+public import SwiftData
 
 /// Location of runway shortening relative to the operation direction.
 ///

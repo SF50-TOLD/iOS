@@ -1,6 +1,6 @@
 import Defaults
 import MeasurementKit
-import SwiftUI
+public import SwiftUI
 
 /// A view displaying headwind and crosswind components with visual indicators.
 ///

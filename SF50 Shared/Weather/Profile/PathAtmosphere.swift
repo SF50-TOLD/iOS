@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// The atmosphere along a flight path, sampled in vertical columns.
 ///

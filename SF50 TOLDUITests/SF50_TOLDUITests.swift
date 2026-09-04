@@ -1,11 +1,15 @@
 import XCTest
 import XCUITestKit
 
-final class SF50_TOLDUITests: XCTestCase {
+nonisolated final class SF50_TOLDUITests: XCTestCase {
 
   override func setUpWithError() throws {
     continueAfterFailure = false
   }
+}
+
+@MainActor
+extension SF50_TOLDUITests {
 
   // MARK: - Additional Conditions Tests
 

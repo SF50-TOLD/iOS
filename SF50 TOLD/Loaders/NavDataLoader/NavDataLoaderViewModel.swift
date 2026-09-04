@@ -28,7 +28,7 @@ import SwiftData
 @MainActor
 final class NavDataLoaderViewModel: WithIdentifiableError {
   private(set) var state: NavDataLoader.State = .idle
-  var error: Swift.Error?
+  var error: (any Swift.Error)?
 
   private(set) var noData = false
   private(set) var needsLoad = true
@@ -228,7 +228,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     if canSkip != state.canSkip { self.canSkip = state.canSkip }
   }
 
-  private func recordError(_ error: Swift.Error, fingerprint: String) {
+  private func recordError(_ error: any Swift.Error, fingerprint: String) {
     SentrySDK.capture(error: error) { scope in
       scope.setFingerprint(["navData", fingerprint])
     }

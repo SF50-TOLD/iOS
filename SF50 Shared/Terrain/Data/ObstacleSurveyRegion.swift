@@ -1,4 +1,4 @@
-import CoreLocation
+public import CoreLocation
 import Foundation
 
 /// Approximate bounding boxes for the FAA Digital Obstacle File (DOF) survey area.

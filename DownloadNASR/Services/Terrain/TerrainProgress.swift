@@ -25,5 +25,5 @@ enum TerrainProgress: Sendable {
 
   case completed
   case cancelled
-  case failed(Error)
+  case failed(any Error)
 }

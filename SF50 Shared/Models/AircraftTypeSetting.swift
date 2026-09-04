@@ -1,4 +1,4 @@
-import Defaults
+public import Defaults
 import Foundation
 
 /// Aircraft type setting for UserDefaults storage.

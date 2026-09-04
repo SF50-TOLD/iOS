@@ -1,5 +1,5 @@
-import CoreLocation
-import Foundation
+public import CoreLocation
+public import Foundation
 
 /// A flight path enriched with terrain elevation and obstacle data per point.
 ///

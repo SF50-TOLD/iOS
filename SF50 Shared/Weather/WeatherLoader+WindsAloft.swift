@@ -1,5 +1,6 @@
 import CoreLocation
 import Foundation
+import Logging
 
 extension WeatherLoader {
   /// How far a station may sit from an airport and still be taken as that airport’s own report.

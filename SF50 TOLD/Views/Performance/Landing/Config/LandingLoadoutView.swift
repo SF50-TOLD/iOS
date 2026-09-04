@@ -22,7 +22,7 @@ struct LandingLoadoutView: View {
   @Default(.fuelVolumeUnit)
   private var fuelVolumeUnit
 
-  private var limitations: Limitations.Type {
+  private var limitations: any Limitations.Type {
     aircraftType.limitations
   }
 

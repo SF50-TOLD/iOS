@@ -1,3 +1,5 @@
+import Foundation
+
 extension AirportBuilder {
   public static let K1C9: Self = .init(
     airport: .init(

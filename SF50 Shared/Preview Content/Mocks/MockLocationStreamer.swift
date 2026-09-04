@@ -1,11 +1,11 @@
-import CoreLocation
+public import CoreLocation
 import SwiftUI
 
 @MainActor
 @Observable
 public final class MockLocationStreamer: LocationStreamer {
   public var location: CLLocation?
-  public var error: Error?
+  public var error: (any Error)?
   public var availability: LocationAvailability?
 
   public init(availability: LocationAvailability? = .available, location: CLLocation? = nil) {
