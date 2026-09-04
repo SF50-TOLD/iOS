@@ -316,7 +316,7 @@ final class RegressionEquation {
     /// The file data could not be decoded.
     case badEncoding
     /// The JSON data could not be decoded.
-    case decodingFailed(Error)
+    case decodingFailed(any Error)
     /// The equation definition for the given type is missing from the schema.
     case missingEquationDefinition(EquationType)
     /// The schema version is not supported.
@@ -489,7 +489,7 @@ private enum BreakpointResult: Decodable {
   case linear(slope: Double, intercept: Double, minValue: Double?, maxValue: Double?)
   case polynomial(PolynomialEquation)
 
-  init(from decoder: Decoder) throws {
+  init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let type = try container.decode(String.self, forKey: .type)
 

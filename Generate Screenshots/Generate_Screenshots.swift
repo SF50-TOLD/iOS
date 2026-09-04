@@ -9,15 +9,13 @@ import UIKit
 import XCTest
 import XCUITestKit
 
-final class Generate_Screenshots: XCTestCase {
+nonisolated final class Generate_Screenshots: XCTestCase {
 
   /// KASE's NASR record ID (its FAA site number). Seeding it as a favorite lets
   /// the flow select Aspen from the Favorites tab instead of the airport search
   /// field, whose keyboard and search bar orphan themselves over the popped-to
   /// form on iOS 26 under a fresh run's load and block the runway picker.
   private static let aspenRecordID = "02517.*A"
-
-  private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
   override func setUpWithError() throws {
     // In UI tests it is usually best to stop immediately when a failure occurs.
@@ -26,6 +24,12 @@ final class Generate_Screenshots: XCTestCase {
 
   override func tearDownWithError() throws {
   }
+}
+
+@MainActor
+extension Generate_Screenshots {
+
+  private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
   func testGenerateScreenshots() throws {
     let app = XCUIApplication()
@@ -385,7 +389,11 @@ final class Generate_Screenshots: XCTestCase {
   ///   - identifier: The pill's accessibility identifier.
   ///   - option: The menu item to choose.
   ///   - app: The application under test.
-  private func selectFromPill(_ identifier: String, option: String, in app: XCUIApplication) {
+  private func selectFromPill(
+    _ identifier: String,
+    option: String,
+    in app: XCUIApplication
+  ) {
     let pill = app.descendants(matching: .any)[identifier].firstMatch
     guard pill.waitForExistence(timeout: 10) else { return }
 

@@ -1,4 +1,4 @@
-import SwiftUI
+public import SwiftUI
 
 /// A reusable view for displaying ``Value`` types with range validation and uncertainty.
 ///

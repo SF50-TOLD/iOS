@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LocationErrorView: View {
-  let error: Error
+  let error: any Error
 
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
@@ -12,7 +12,7 @@ struct LocationErrorView: View {
           .frame(maxHeight: 40)
           .accessibilityHidden(true)
         VStack(alignment: .leading, spacing: 20) {
-          if let error = error as? LocalizedError {
+          if let error = error as? any LocalizedError {
             if let errorDescription = error.errorDescription {
               VStack(alignment: .leading) {
                 Text("Unable to determine location.")

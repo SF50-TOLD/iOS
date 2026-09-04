@@ -27,7 +27,7 @@ public enum ClimbProfileGenerator {
     seaLevelPressureInHg: Double,
     useRegressionModel: Bool
   ) -> ClimbProfile {
-    let source: EquationSource
+    let source: any EquationSource
     if useRegressionModel {
       source = RegressionSource(aircraftType: aircraftType)
     } else {
@@ -46,7 +46,7 @@ public enum ClimbProfileGenerator {
   private static func makeDataPoint(
     obs: WindsAloftObservation,
     weightLb: Double,
-    source: EquationSource
+    source: any EquationSource
   ) -> ClimbProfile.DataPoint {
     let altitude = obs.altitudeFt,
       temperature = obs.temperatureC

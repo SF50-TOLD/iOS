@@ -13,7 +13,7 @@ struct WeatherRow: View {
   @Environment(WeatherViewModel.self)
   private var weather
 
-  private var limitations: Limitations.Type {
+  private var limitations: any Limitations.Type {
     aircraftType.limitations
   }
 

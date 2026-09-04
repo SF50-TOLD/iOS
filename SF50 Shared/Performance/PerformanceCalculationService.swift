@@ -16,7 +16,8 @@ public protocol PerformanceCalculationService: Sendable {
    *   - safetyFactor: A multiplier applied to distance results (e.g., 1.15 for 15% safety margin).
    * - Returns: A takeoff report including results and distance breakdowns.
    */
-  func calculateTakeoff(for model: PerformanceModel, safetyFactor: Double) throws -> TakeoffReport
+  func calculateTakeoff(for model: any PerformanceModel, safetyFactor: Double) throws
+    -> TakeoffReport
 
   /**
    * Calculates landing performance for the given model.
@@ -28,7 +29,11 @@ public protocol PerformanceCalculationService: Sendable {
    *     each 10% increase in VREF adds 20% to landing distance.
    * - Returns: A landing report including results and distance breakdowns.
    */
-  func calculateLanding(for model: PerformanceModel, safetyFactor: Double, VREFAdditiveKts: Double)
+  func calculateLanding(
+    for model: any PerformanceModel,
+    safetyFactor: Double,
+    VREFAdditiveKts: Double
+  )
     throws -> LandingReport
 }
 
@@ -63,7 +68,7 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
     notam: NOTAMInput?,
     useRegressionModel: Bool,
     aircraftType: AircraftType
-  ) -> PerformanceModel {
+  ) -> any PerformanceModel {
     if useRegressionModel {
       return RegressionPerformanceModel(
         conditions: conditions,
@@ -82,7 +87,7 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
     )
   }
 
-  public func calculateTakeoff(for model: PerformanceModel, safetyFactor: Double) throws
+  public func calculateTakeoff(for model: any PerformanceModel, safetyFactor: Double) throws
     -> TakeoffReport
   {
     let (runValue, runBreakdown) = model.computeDistance(for: .takeoffRun)
@@ -114,7 +119,7 @@ public final class DefaultPerformanceCalculationService: PerformanceCalculationS
   }
 
   public func calculateLanding(
-    for model: PerformanceModel,
+    for model: any PerformanceModel,
     safetyFactor: Double,
     VREFAdditiveKts: Double = 0
   ) throws -> LandingReport {

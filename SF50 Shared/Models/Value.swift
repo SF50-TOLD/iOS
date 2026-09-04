@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A value that may be definite, uncertain, or in an error state.
 ///

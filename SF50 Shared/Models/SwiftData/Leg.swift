@@ -1,7 +1,7 @@
-import CoreLocation
-import Foundation
+public import CoreLocation
+public import Foundation
 import NavData
-import SwiftData
+public import SwiftData
 
 /// A leg in an instrument procedure.
 ///
