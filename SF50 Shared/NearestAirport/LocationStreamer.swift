@@ -2,47 +2,111 @@ import CoreLocation
 import Sentry
 import SwiftUI
 
-/// Errors that can occur during location streaming.
-public enum LocationError: Error {
-  /// User denied location permission.
-  case permissionDenied
+/// Whether Core Location is delivering the device’s location, and if not, why.
+///
+/// Core Location reports these conditions as diagnostic flags on every
+/// `CLLocationUpdate`, so a refusal arrives on the same stream as a fix rather
+/// than through a separate authorization callback.
+public enum LocationAvailability: Sendable {
+  /// The system is asking for authorization and has not yet received an answer.
+  case requestingAuthorization
+
+  /// A location is available.
+  case available
+
+  /// This app was denied access to location.
+  case authorizationDenied
+
+  /// Location Services is turned off for the whole device.
+  case authorizationDeniedGlobally
+
+  /// Authorization is prevented by parental restrictions or device management.
+  case authorizationRestricted
+
+  /// The device’s location can’t be determined right now.
+  ///
+  /// Covers both a location Core Location cannot fix and updates it is
+  /// withholding because the app is not sufficiently in use. Neither is
+  /// actionable, and the distinction is not one a person can act on.
+  case locationUnavailable
+
+  /// Whether this is a refusal a person could lift, in Settings or otherwise.
+  ///
+  /// Drives the retry that runs when someone grants access and returns to the app.
+  public var deniesAuthorization: Bool {
+    switch self {
+      case .authorizationDenied, .authorizationDeniedGlobally, .authorizationRestricted: true
+      case .requestingAuthorization, .available, .locationUnavailable: false
+    }
+  }
+
+  /// Reads the refusal an update reports, or `nil` if Core Location is not refusing.
+  ///
+  /// - Parameter update: The update whose diagnostic flags to interpret.
+  init?(refusing update: CLLocationUpdate) {
+    if update.authorizationRequestInProgress {
+      self = .requestingAuthorization
+    } else if update.authorizationDeniedGlobally {
+      self = .authorizationDeniedGlobally
+    } else if update.authorizationDenied {
+      self = .authorizationDenied
+    } else if update.authorizationRestricted {
+      self = .authorizationRestricted
+    } else if update.locationUnavailable || update.insufficientlyInUse {
+      self = .locationUnavailable
+    } else {
+      return nil
+    }
+  }
 }
 
 /// Protocol for streaming device location updates.
 ///
 /// ``LocationStreamer`` provides an abstraction for accessing device location,
 /// allowing dependency injection of mock locations for testing.
+///
+/// Conformers are reference types so that SwiftUI observes their state in place;
+/// a value type would be copied into the existential and its changes never seen.
 @MainActor
-public protocol LocationStreamer: Sendable {
+public protocol LocationStreamer: AnyObject, Observable, Sendable {
   /// The most recent location, or nil if unavailable.
   var location: CLLocation? { get }
   /// Any error that occurred during location updates.
   var error: Error? { get }
+  /// Whether a location is available, and if not, why — or nil before the first update arrives.
+  var availability: LocationAvailability? { get }
 
   /// Start receiving location updates.
   func start() async
   /// Stop receiving location updates.
   func stop() async
+  /// Ask Core Location again after a refusal, without disturbing existing subscribers.
+  func retry() async
   /// Returns an async stream of location updates.
   func locationUpdates() -> AsyncStream<CLLocation>
 }
 
 /// Core Location-based implementation of ``LocationStreamer``.
 ///
-/// ``CoreLocationStreamer`` wraps `CLLocationManager` to provide:
+/// ``CoreLocationStreamer`` wraps `CLLocationUpdate.liveUpdates()` to provide:
 /// - Reference-counted start/stop
 /// - Async stream of location updates
-/// - Permission handling
+/// - Authorization state read from the update stream’s own diagnostics
 ///
-/// ## Permission Handling
+/// ## Authorization
 ///
-/// The streamer automatically requests "when in use" authorization. If denied,
-/// it sets ``error`` to ``LocationError/permissionDenied``.
+/// Core Location requests authorization when iteration over the update stream
+/// begins, and reports the outcome — including a request still in flight, a
+/// denial, or a device-wide switch-off — as flags on the updates themselves. So
+/// this type asks for nothing up front and polls nothing; it reads
+/// ``availability`` off the stream.
 ///
 /// ## Reference Counting
 ///
-/// Multiple callers can call ``start()`` independently. Location updates only
-/// stop when all callers have called ``stop()``.
+/// Multiple callers can call ``start()`` independently, and each subscriber to
+/// ``locationUpdates()`` counts as one. Location updates only stop once every
+/// caller has balanced its ``start()`` with a ``stop()`` and every subscription
+/// has ended.
 ///
 /// ## SwiftUI Integration
 ///
@@ -53,73 +117,98 @@ public protocol LocationStreamer: Sendable {
 /// ```
 @MainActor
 @Observable
-public final class CoreLocationStreamer: NSObject, LocationStreamer {
+public final class CoreLocationStreamer: LocationStreamer {
   public private(set) var location: CLLocation?
   public private(set) var error: Error?
+  public private(set) var availability: LocationAvailability?
 
   private var updateTask: Task<Void, Never>?
   private var listenerCount = 0
-  private let manager = CLLocationManager()
-  private var locationContinuations = Set<UUID>()
   private var continuationMap = [UUID: AsyncStream<CLLocation>.Continuation]()
 
-  override public init() {
-    super.init()
-    manager.delegate = self
-    manager.desiredAccuracy = kCLLocationAccuracyBest
-    manager.requestWhenInUseAuthorization()
-  }
+  /// Identifies the current stream, so a finishing one cannot disown its replacement.
+  private var streamGeneration = 0
+
+  public init() {}
 
   public func start() {
     listenerCount += 1
-    if listenerCount == 1 {
-      _start()
-    }
+    if listenerCount == 1 { _start() }
   }
 
   public func stop() {
+    // A release can arrive before its acquire: a view that appears and disappears
+    // within one runloop turn has its `task` cancelled before it ever starts. Counting
+    // that release would leave the tally below zero, where `start()` can never bring it
+    // back to one — and the stream would never run again.
+    guard listenerCount > 0 else { return }
     listenerCount -= 1
     if listenerCount == 0 { _stop() }
+  }
+
+  /// Restarts the update stream after a refusal.
+  ///
+  /// Someone who grants access in Settings and comes back gets their list without
+  /// leaving the screen. Subscribers are left connected, so this is not a ``stop()``
+  /// followed by a ``start()``.
+  public func retry() {
+    guard listenerCount > 0 else { return }
+    updateTask?.cancel()
+    updateTask = nil
+    clearStreamDiagnostics()
+    _start()
+  }
+
+  public func locationUpdates() -> AsyncStream<CLLocation> {
+    let id = UUID()
+
+    return AsyncStream { continuation in
+      // The handler has to be in place before the stream reaches its consumer. A consumer
+      // whose task is already cancelled terminates the stream on its first `await`, and a
+      // handler installed after that point is never called — leaving the listener this
+      // subscription adds with nothing to ever take it away.
+      continuation.onTermination = { _ in
+        Task { @MainActor in self.endSubscription(id) }
+      }
+
+      continuationMap[id] = continuation
+      if let location { continuation.yield(location) }
+      start()
+    }
+  }
+
+  /// Releases the listener a subscription holds, once and only once.
+  private func endSubscription(_ id: UUID) {
+    // `_stop()` clears the map before finishing continuations, so a termination it
+    // caused must not decrement the count a second time.
+    guard continuationMap.removeValue(forKey: id) != nil else { return }
+    stop()
   }
 
   private func _start() {
     guard updateTask == nil else { return }
 
-    // Check authorization first
-    let authStatus = manager.authorizationStatus
-    switch authStatus {
-      case .denied, .restricted:
-        error = LocationError.permissionDenied
-        return
-      case .notDetermined:
-        // Already requested in init, wait for response
-        return
-      case .authorizedWhenInUse, .authorizedAlways:
-        break
-      @unknown default:
-        break
-    }
+    streamGeneration += 1
+    let generation = streamGeneration
 
     updateTask = Task {
+      // Only clear the handle if this is still the live stream: ``retry()`` may
+      // already have replaced it, and nilling it then would strand a running task.
+      defer { if generation == streamGeneration { updateTask = nil } }
       do {
-        for try await locationUpdate in CLLocationUpdate.liveUpdates() where !Task.isCancelled {
-          await MainActor.run {
-            guard let newLocation = locationUpdate.location else { return }
-            location = newLocation
-            error = nil
-
-            for continuation in continuationMap.values {
-              continuation.yield(newLocation)
-            }
-          }
+        for try await update in CLLocationUpdate.liveUpdates(.airborne) {
+          if Task.isCancelled { break }
+          apply(update)
         }
       } catch {
+        // ``_stop()`` and ``retry()`` both cancel this task, and the stream may report that
+        // by throwing rather than by ending. That is this app taking the stream down, not a
+        // failure to show anyone or to log.
+        guard !Task.isCancelled, !(error is CancellationError) else { return }
         SentrySDK.capture(error: error) { scope in
           scope.setFingerprint(["location", "streaming"])
         }
-        await MainActor.run {
-          self.error = error
-        }
+        self.error = error
       }
     }
   }
@@ -127,67 +216,36 @@ public final class CoreLocationStreamer: NSObject, LocationStreamer {
   private func _stop() {
     updateTask?.cancel()
     updateTask = nil
+    clearStreamDiagnostics()
 
-    // Finish all continuations
-    for (_, continuation) in continuationMap {
-      continuation.finish()
-    }
+    let continuations = continuationMap.values
     continuationMap.removeAll()
-    locationContinuations.removeAll()
+    for continuation in continuations { continuation.finish() }
   }
 
-  public func locationUpdates() -> AsyncStream<CLLocation> {
-    AsyncStream { continuation in
-      let id = UUID()
-
-      Task { @MainActor in
-        self.locationContinuations.insert(id)
-        self.continuationMap[id] = continuation
-
-        if let location = self.location { continuation.yield(location) }
-
-        if self.listenerCount == 0 { self.start() }
-
-        continuation.onTermination = { _ in
-          Task { @MainActor in
-            self.locationContinuations.remove(id)
-            self.continuationMap.removeValue(forKey: id)
-
-            if self.locationContinuations.isEmpty && self.listenerCount == 0 {
-              self.stop()
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-extension CoreLocationStreamer: CLLocationManagerDelegate {
-  nonisolated public func locationManager(
-    _: CLLocationManager,
-    didChangeAuthorization status: CLAuthorizationStatus
-  ) {
-    Task { @MainActor in
-      handleAuthorizationChange(status)
-    }
+  /// Forgets what the update stream reported, so a refusal or a failure cannot outlive it.
+  ///
+  /// Nothing else clears ``error``. A fix arriving is the only other thing that does, and a
+  /// stream that has stopped, or that is being retried, delivers none until it runs again —
+  /// so a single failure would otherwise stand for as long as this object does.
+  private func clearStreamDiagnostics() {
+    availability = nil
+    error = nil
   }
 
-  private func handleAuthorizationChange(_ status: CLAuthorizationStatus) {
-    switch status {
-      case .authorizedWhenInUse, .authorizedAlways:
-        // Permission granted, start location updates if we have listeners
-        if listenerCount > 0 && updateTask == nil {
-          _start()
-        }
-      case .denied, .restricted:
-        error = LocationError.permissionDenied
-        _stop()
-      case .notDetermined:
-        break
-      @unknown default:
-        break
+  private func apply(_ update: CLLocationUpdate) {
+    if let refusal = LocationAvailability(refusing: update) {
+      availability = refusal
+      return
     }
+
+    // No refusal and no fix yet: Core Location is still acquiring one.
+    guard let newLocation = update.location else { return }
+
+    availability = .available
+    location = newLocation
+    error = nil
+    for continuation in continuationMap.values { continuation.yield(newLocation) }
   }
 }
 
@@ -200,7 +258,7 @@ private struct LocationStreamerKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
-  public var locationStreamer: LocationStreamer {
+  public var locationStreamer: any LocationStreamer {
     get { self[LocationStreamerKey.self] }
     set { self[LocationStreamerKey.self] = newValue }
   }
