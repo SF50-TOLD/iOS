@@ -1,5 +1,5 @@
-import Foundation
-import MeasurementKit
+public import Foundation
+public import MeasurementKit
 
 /// Results of a takeoff performance calculation.
 public struct TakeoffResults: Sendable {

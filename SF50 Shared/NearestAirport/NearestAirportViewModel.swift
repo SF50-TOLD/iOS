@@ -1,6 +1,6 @@
-import CoreLocation
+public import CoreLocation
 import Sentry
-import SwiftData
+public import SwiftData
 
 /// View model for finding airports near the user's current location.
 ///
@@ -50,7 +50,7 @@ public class NearestAirportViewModel {
   public private(set) var airports: [Airport] = []
 
   /// Error from location services or database query
-  public private(set) var error: Error?
+  public private(set) var error: (any Error)?
 
   /// Current user location
   private var location: CLLocation? {
@@ -196,7 +196,7 @@ public class NearestAirportViewModel {
       .map(\.0)
   }
 
-  private func recordError(_ error: Error) {
+  private func recordError(_ error: any Error) {
     SentrySDK.capture(error: error) { scope in
       scope.setFingerprint(["swiftData", "fetch"])
     }

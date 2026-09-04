@@ -1,5 +1,5 @@
 import CoreLocation
-import Foundation
+public import Foundation
 @preconcurrency import WeatherKit
 
 // MARK: - Public Types

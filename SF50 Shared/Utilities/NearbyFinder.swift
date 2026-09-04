@@ -1,4 +1,4 @@
-import CoreLocation
+public import CoreLocation
 import NavData
 
 /// Protocol for items with a geographic location.

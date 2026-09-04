@@ -1,9 +1,9 @@
-import CoreLocation
-import Foundation
+public import CoreLocation
+public import Foundation
 import MeasurementKit
 import MeasurementKitLocation
 import NavData
-import SwiftData
+public import SwiftData
 
 /// A runway at an airport with performance-critical dimensions and properties.
 ///

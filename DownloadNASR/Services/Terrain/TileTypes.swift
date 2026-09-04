@@ -18,7 +18,7 @@ struct TileReference: Sendable {
 struct ParsedTile: Sendable {
   let index: Int
   let elevations: Elevations?  // nil if parsing failed
-  let error: Error?
+  let error: (any Error)?
   let latitude: Int
   let longitude: Int
 }

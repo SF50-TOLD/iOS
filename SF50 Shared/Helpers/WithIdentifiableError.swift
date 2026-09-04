@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// A wrapper that makes any error conform to `Identifiable`.
 ///
@@ -19,9 +19,9 @@ public struct IdentifiableError: Identifiable, Equatable {
   /// Unique identifier for this error instance.
   public let id = UUID()
   /// The underlying error.
-  public let error: Error
+  public let error: any Error
 
-  public init(error: Error) {
+  public init(error: any Error) {
     self.error = error
   }
 
@@ -50,7 +50,7 @@ public struct IdentifiableError: Identifiable, Equatable {
 @MainActor
 public protocol WithIdentifiableError {
   /// The current error, if any.
-  var error: Error? { get set }
+  var error: (any Error)? { get set }
   /// The error wrapped as an identifiable value.
   var identifiableError: IdentifiableError? { get }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import RealModule
 import Testing
 
 @testable import SF50_Shared

@@ -1,8 +1,8 @@
 import SwiftData
-import SwiftUI
+public import SwiftUI
 
 public struct PreviewView<Content: View>: View {
-  private let result: Result<Content, Error>
+  private let result: Result<Content, any Error>
   private let container: ModelContainer?
 
   public var body: some View {
@@ -22,7 +22,7 @@ public struct PreviewView<Content: View>: View {
             .font(.body)
             .multilineTextAlignment(.center)
 
-          if let error = error as? LocalizedError {
+          if let error = error as? any LocalizedError {
             if let failureReason = error.failureReason {
               Text(failureReason)
                 .font(.body)

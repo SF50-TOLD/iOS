@@ -1,5 +1,6 @@
 import SF50_Shared
 import Sentry
+import SwiftData
 import SwiftUI
 
 // periphery:ignore - consumed only by the #Preview macros below
@@ -13,7 +14,7 @@ struct NOTAMView: View {
   let plannedTime: Date
   let isLoadingNOTAMs: Bool
 
-  @State private var error: Error?
+  @State private var error: (any Error)?
   @State private var errorSheetPresented = false
   @State private var currentNOTAMIndex: Int = 0
 

@@ -114,7 +114,7 @@ private struct NewScenarioView: View {
 @MainActor
 @Observable
 private final class ErrorState: WithIdentifiableError {
-  var error: Error?
+  var error: (any Error)?
 }
 
 #Preview("With Scenarios") {

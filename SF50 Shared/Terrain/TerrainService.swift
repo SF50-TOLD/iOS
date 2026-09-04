@@ -1,5 +1,5 @@
-import CoreLocation
-import Foundation
+public import CoreLocation
+public import Foundation
 import os
 
 /// Service for querying terrain elevation data.

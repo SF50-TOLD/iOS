@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// Aircraft flap configuration settings.
 ///
@@ -67,7 +67,7 @@ public enum AircraftType: Sendable, Equatable {
   case g2Plus
 
   /// The operational limitations for this aircraft type.
-  public var limitations: Limitations.Type {
+  public var limitations: any Limitations.Type {
     switch self {
       case .g1: LimitationsG1.self
       case .g2, .g2Plus: LimitationsG2.self

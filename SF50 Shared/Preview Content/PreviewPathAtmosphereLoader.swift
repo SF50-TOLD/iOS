@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// An atmosphere loader that answers with a fixed outcome instead of the network.
 ///

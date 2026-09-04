@@ -42,7 +42,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
   @Published private(set) var downloadState: DownloadState = .idle
 
   /// Current error, if any.
-  var error: Error?
+  var error: (any Error)?
 
   /// The underlying terrain data loader.
   private let loader = TerrainDataLoader.shared

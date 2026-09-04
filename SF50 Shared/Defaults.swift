@@ -1,6 +1,6 @@
-import Defaults
-import Foundation
-import SwiftData
+public import Defaults
+public import Foundation
+public import SwiftData
 
 // MARK: - Defaults
 

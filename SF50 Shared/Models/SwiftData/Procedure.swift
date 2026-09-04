@@ -1,5 +1,5 @@
 import Foundation
-import SwiftData
+public import SwiftData
 
 /// A unified instrument procedure (departure SID or approach).
 ///

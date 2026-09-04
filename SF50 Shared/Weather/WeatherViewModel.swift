@@ -1,8 +1,8 @@
 import Defaults
-import Foundation
-import Observation
+public import Foundation
+public import Observation
 import Sentry
-import SwiftData
+public import SwiftData
 
 /// View model managing weather data for a specific operation (takeoff or landing).
 ///
@@ -80,7 +80,7 @@ public final class WeatherViewModel: WithIdentifiableError {
   // MARK: Outputs
 
   public private(set) var isLoading = false
-  public var error: Error?
+  public var error: (any Error)?
   public private(set) var METAR: Loadable<String?> = .notLoaded
   public private(set) var TAF: Loadable<String?> = .notLoaded
   public private(set) var windsAloft: Loadable<WindsAloftForecast?> = .notLoaded
@@ -151,7 +151,7 @@ public final class WeatherViewModel: WithIdentifiableError {
     return try findAirport(for: airportID, in: context)
   }
 
-  private func recordError(_ error: Error) {
+  private func recordError(_ error: any Error) {
     SentrySDK.capture(error: error) { scope in
       scope.setFingerprint(["swiftData", "fetch"])
     }

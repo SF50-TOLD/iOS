@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 /// Winds aloft for one station, together with the forecast period it was taken from.
 ///

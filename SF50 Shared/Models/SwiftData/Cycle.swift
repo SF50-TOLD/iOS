@@ -1,6 +1,6 @@
-import Foundation
+public import Foundation
 import NavData
-import SwiftData
+public import SwiftData
 
 /// Identifies the data source for cycle information.
 ///

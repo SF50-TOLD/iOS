@@ -1,4 +1,4 @@
-import SwiftUI
+public import SwiftUI
 
 /// The type of performance operation being calculated.
 ///

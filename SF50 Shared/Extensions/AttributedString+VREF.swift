@@ -1,4 +1,4 @@
-import SwiftUI
+public import SwiftUI
 
 extension AttributedString {
   public static var VREF: AttributedString {

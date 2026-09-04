@@ -1,6 +1,7 @@
 import Defaults
 import Foundation
 import SF50_Shared
+import SwiftData
 import SwiftUI
 
 struct ContentView: View {

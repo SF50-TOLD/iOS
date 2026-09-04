@@ -1,9 +1,9 @@
-import Defaults
-import Foundation
-import MeasurementKit
-import Observation
+public import Defaults
+public import Foundation
+public import MeasurementKit
+public import Observation
 import Sentry
-import SwiftData
+public import SwiftData
 
 /// View model for takeoff performance calculations.
 ///
@@ -100,7 +100,8 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
 
   public init(
     container: ModelContainer,
-    calculationService: PerformanceCalculationService = DefaultPerformanceCalculationService.shared,
+    calculationService: any PerformanceCalculationService = DefaultPerformanceCalculationService
+      .shared,
     notamLoader: (any NOTAMLoaderProtocol)? = nil
   ) {
     takeoffRun = .notAvailable

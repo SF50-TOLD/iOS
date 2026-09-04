@@ -1,5 +1,5 @@
-import CoreLocation
-import Foundation
+public import CoreLocation
+public import Foundation
 
 /// Generates geographic flight paths from instrument procedure leg sequences.
 public struct ProcedurePathGenerator {
