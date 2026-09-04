@@ -11,7 +11,7 @@ struct ProcedureTerrainPathTests {
   // MARK: - ProcedureTerrainPath
 
   @Test
-  func emptyPoints() {
+  func `empty points`() {
     let path = ProcedureTerrainPath(corridorWidthNM: 0.25, points: [])
     #expect(path.points.isEmpty)
     #expect(path.totalDistanceNM.isApproximatelyEqual(to: 0, absoluteTolerance: 0.001))
@@ -19,7 +19,7 @@ struct ProcedureTerrainPathTests {
   }
 
   @Test
-  func totalDistanceFromLastPoint() {
+  func `total distance from last point`() {
     let points = [
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
@@ -50,7 +50,7 @@ struct ProcedureTerrainPathTests {
   // MARK: - terrainDataAvailable
 
   @Test
-  func terrainDataAvailableWhenAllPointsHaveTerrain() {
+  func `terrain data available when all points have terrain`() {
     let points = [
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
@@ -78,7 +78,7 @@ struct ProcedureTerrainPathTests {
   }
 
   @Test
-  func terrainDataUnavailableWhenAnyPointMissingTerrain() {
+  func `terrain data unavailable when any point missing terrain`() {
     let points = [
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
@@ -108,7 +108,7 @@ struct ProcedureTerrainPathTests {
   // MARK: - obstacleDataAvailable
 
   @Test
-  func obstacleDataAvailableWhenAllPointsInUS() {
+  func `obstacle data available when all points in US`() {
     let points = [
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
@@ -136,7 +136,7 @@ struct ProcedureTerrainPathTests {
   }
 
   @Test
-  func obstacleDataUnavailableWhenPointOutsideUS() {
+  func `obstacle data unavailable when point outside US`() {
     let points = [
       ProcedureTerrainPath.Point(
         coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
@@ -223,7 +223,7 @@ struct ProcedureTerrainPathGeneratorTests {
   // MARK: - Empty Path
 
   @Test
-  func emptyPathReturnsEmptyTerrainPath() async throws {
+  func `empty path returns empty terrain path`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let emptyPath = ProcedurePath(points: [])
@@ -241,7 +241,7 @@ struct ProcedureTerrainPathGeneratorTests {
   // MARK: - Point Count Preservation
 
   @Test
-  func outputPointCountMatchesInput() async throws {
+  func `output point count matches input`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -258,7 +258,7 @@ struct ProcedureTerrainPathGeneratorTests {
   // MARK: - Flight Profile Preservation
 
   @Test
-  func aircraftAltitudeAndDistancePreserved() async throws {
+  func `aircraft altitude and distance preserved`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -299,7 +299,7 @@ struct ProcedureTerrainPathGeneratorTests {
   }
 
   @Test
-  func fixNamesAndAltitudeRestrictionsPreserved() async throws {
+  func `fix names and altitude restrictions preserved`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -320,7 +320,7 @@ struct ProcedureTerrainPathGeneratorTests {
   // MARK: - Terrain (No Data Loaded)
 
   @Test
-  func noTerrainDataInUnloadedRegionReturnsNilElevations() async throws {
+  func `no terrain data in unloaded region returns nil elevations`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()  // no regions loaded
     let path = try #require(makeTestProcedurePath())
@@ -340,7 +340,7 @@ struct ProcedureTerrainPathGeneratorTests {
   // MARK: - Ocean Fill
 
   @Test
-  func oceanPointsGetZeroTerrainElevation() async throws {
+  func `ocean points get zero terrain elevation`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()  // no regions loaded
 
@@ -367,7 +367,7 @@ struct ProcedureTerrainPathGeneratorTests {
   // MARK: - Obstacles
 
   @Test
-  func noObstaclesReturnsNilHeights() async throws {
+  func `no obstacles returns nil heights`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -384,7 +384,7 @@ struct ProcedureTerrainPathGeneratorTests {
   }
 
   @Test
-  func obstacleWithinCorridorIsDetected() async throws {
+  func `obstacle within corridor is detected`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -422,7 +422,7 @@ struct ProcedureTerrainPathGeneratorTests {
   }
 
   @Test
-  func obstacleOutsideCorridorIsNotDetected() async throws {
+  func `obstacle outside corridor is not detected`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -449,7 +449,7 @@ struct ProcedureTerrainPathGeneratorTests {
   }
 
   @Test
-  func tallestObstacleWinsAtSamePointIndex() async throws {
+  func `tallest obstacle wins at same point index`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -492,7 +492,7 @@ struct ProcedureTerrainPathGeneratorTests {
   // MARK: - Corridor Width
 
   @Test
-  func corridorWidthIsStored() async throws {
+  func `corridor width is stored`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -508,7 +508,7 @@ struct ProcedureTerrainPathGeneratorTests {
   }
 
   @Test
-  func defaultCorridorWidth() async throws {
+  func `default corridor width`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
     let path = try #require(makeTestProcedurePath())
@@ -545,7 +545,7 @@ struct ObstacleFetchDescriptorTests {
   }
 
   @Test
-  func fetchesObstaclesWithinBounds() throws {
+  func `fetches obstacles within bounds`() throws {
     let container = try makeModelContainer()
     let context = ModelContext(container)
 
@@ -580,7 +580,7 @@ struct ObstacleFetchDescriptorTests {
   }
 
   @Test
-  func fetchReturnsEmptyWhenNoneInBounds() throws {
+  func `fetch returns empty when none in bounds`() throws {
     let container = try makeModelContainer()
     let context = ModelContext(container)
 
@@ -608,31 +608,31 @@ struct ObstacleFetchDescriptorTests {
 struct ObstacleSurveyRegionTests {
 
   @Test
-  func containsCONUSCoordinate() {
+  func `contains a CONUS coordinate`() {
     let coord = CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0)  // San Jose, CA
     #expect(ObstacleSurveyRegion.contains(coordinate: coord))
   }
 
   @Test
-  func containsAlaskaCoordinate() {
+  func `contains an Alaska coordinate`() {
     let coord = CLLocationCoordinate2D(latitude: 61.2, longitude: -149.9)  // Anchorage
     #expect(ObstacleSurveyRegion.contains(coordinate: coord))
   }
 
   @Test
-  func containsHawaiiCoordinate() {
+  func `contains a Hawaii coordinate`() {
     let coord = CLLocationCoordinate2D(latitude: 21.3, longitude: -157.8)  // Honolulu
     #expect(ObstacleSurveyRegion.contains(coordinate: coord))
   }
 
   @Test
-  func doesNotContainEuropeCoordinate() {
+  func `does not contain a Europe coordinate`() {
     let coord = CLLocationCoordinate2D(latitude: 51.5, longitude: -0.1)  // London
     #expect(!ObstacleSurveyRegion.contains(coordinate: coord))
   }
 
   @Test
-  func doesNotContainOpenOceanCoordinate() {
+  func `does not contain an open-ocean coordinate`() {
     let coord = CLLocationCoordinate2D(latitude: 30.0, longitude: -45.0)  // mid-Atlantic
     #expect(!ObstacleSurveyRegion.contains(coordinate: coord))
   }

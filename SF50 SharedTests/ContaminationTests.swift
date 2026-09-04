@@ -12,8 +12,8 @@ struct ContaminationTests {
 
   // MARK: - Contamination Increases Landing Run
 
-  @Test("Water contamination increases landing run - Tabular G1")
-  func waterContamination_increasesLandingRun_tabularG1() {
+  @Test
+  func `water contamination increases landing run - Tabular G1`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -71,8 +71,8 @@ struct ContaminationTests {
       .expect(contaminatedRun, of: 2946.79, computing: "contaminated landing run")
   }
 
-  @Test("Slush contamination increases landing run - Tabular G2+")
-  func slushContamination_increasesLandingRun_tabularG2Plus() {
+  @Test
+  func `slush contamination increases landing run - Tabular G2+`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -129,8 +129,8 @@ struct ContaminationTests {
       .expect(contaminatedRun, of: 2725.67, computing: "contaminated landing run")
   }
 
-  @Test("Dry snow contamination increases landing run - Regression G1")
-  func drySnowContamination_increasesLandingRun_regressionG1() {
+  @Test
+  func `dry snow contamination increases landing run - Regression G1`() {
     let conditions = Helper.createTestConditions(temperature: -5)  // Cold for snow
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway()
@@ -181,8 +181,8 @@ struct ContaminationTests {
       .expect(contaminatedRun, of: 2640.79, computing: "contaminated landing run")
   }
 
-  @Test("Compact snow contamination increases landing run - Regression G2+")
-  func compactSnowContamination_increasesLandingRun_regressionG2Plus() {
+  @Test
+  func `compact snow contamination increases landing run - Regression G2+`() {
     let conditions = Helper.createTestConditions(temperature: -10)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -240,8 +240,8 @@ struct ContaminationTests {
 
   // MARK: - Contamination Increases Total Landing Distance
 
-  @Test("Water contamination increases total landing distance - Tabular G1")
-  func waterContamination_increasesTotalLandingDistance_tabularG1() {
+  @Test
+  func `water contamination increases total landing distance - Tabular G1`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -300,8 +300,8 @@ struct ContaminationTests {
       .expect(contaminatedDistance, of: 3347.55, computing: "contaminated landing distance")
   }
 
-  @Test("Slush contamination increases total landing distance - Tabular G2+")
-  func slushContamination_increasesTotalLandingDistance_tabularG2Plus() {
+  @Test
+  func `slush contamination increases total landing distance - Tabular G2+`() {
     let conditions = Helper.createTestConditions(temperature: 5)
     let config = Helper.createTestConfiguration(weight: 5500, flapSetting: .flaps100)
     let runway = Helper.createTestRunway()
@@ -360,8 +360,8 @@ struct ContaminationTests {
       .expect(contaminatedDistance, of: 3034.39, computing: "contaminated landing distance")
   }
 
-  @Test("Dry snow contamination increases total landing distance - Regression G1")
-  func drySnowContamination_increasesTotalLandingDistance_regressionG1() {
+  @Test
+  func `dry snow contamination increases total landing distance - Regression G1`() {
     let conditions = Helper.createTestConditions(temperature: -5)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -422,8 +422,8 @@ struct ContaminationTests {
       )
   }
 
-  @Test("Compact snow contamination increases total landing distance - Regression G2+")
-  func compactSnowContamination_increasesTotalLandingDistance_regressionG2Plus() {
+  @Test
+  func `compact snow contamination increases total landing distance - Regression G2+`() {
     let conditions = Helper.createTestConditions(temperature: -10)
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway()
@@ -481,8 +481,8 @@ struct ContaminationTests {
 
   // MARK: - Contamination Depth Effects
 
-  @Test("Shallower water depth causes greater distance increase per AFM")
-  func shallowerWaterDepth_causesGreaterDistanceIncrease() {
+  @Test
+  func `shallower water depth causes greater distance increase per AFM`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
@@ -559,8 +559,8 @@ struct ContaminationTests {
 
   // MARK: - Contamination with Other Factors
 
-  @Test("Contamination combined with headwind")
-  func contamination_combinedWithHeadwind() {
+  @Test
+  func `contamination combined with headwind`() {
     let headwindConditions = Helper.createTestConditions(
       temperature: 20,
       windDirection: 360,
@@ -623,8 +623,8 @@ struct ContaminationTests {
       .expect(contaminatedDistance, of: 3129.16, computing: "contaminated landing distance")
   }
 
-  @Test("Contamination combined with uphill slope")
-  func contamination_combinedWithUphillSlope() {
+  @Test
+  func `contamination combined with uphill slope`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway(slope: 1.0)  // 1% uphill
@@ -685,8 +685,8 @@ struct ContaminationTests {
 
   // MARK: - Wet Runway Tests (G2/G2+ AFM Reissue A)
 
-  @Test("Wet runway contamination increases landing run by 15% - Tabular G2+")
-  func wetRunwayContamination_increasesLandingRun_tabularG2Plus() {
+  @Test
+  func `wet runway contamination increases landing run by 15% - Tabular G2+`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
@@ -748,8 +748,8 @@ struct ContaminationTests {
       .expect(contaminatedRun, of: cleanRun * 1.15, computing: "wet landing run")
   }
 
-  @Test("Wet runway contamination increases landing run by 15% - Regression G2+")
-  func wetRunwayContamination_increasesLandingRun_regressionG2Plus() {
+  @Test
+  func `wet runway contamination increases landing run by 15% - Regression G2+`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
@@ -799,8 +799,8 @@ struct ContaminationTests {
       .expect(contaminatedRun, of: cleanRun * 1.15, computing: "wet landing run")
   }
 
-  @Test("Wet runway contamination has no effect on G1 - Tabular")
-  func wetRunwayContamination_noEffectOnG1_tabular() {
+  @Test
+  func `wet runway contamination has no effect on G1 - Tabular`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
@@ -862,8 +862,8 @@ struct ContaminationTests {
       .expect(contaminatedRun, isWithin: 0.001, of: cleanRun, computing: "wet landing run")
   }
 
-  @Test("Wet runway contamination increases landing run by 15% - Regression G1")
-  func wetRunwayContamination_increasesLandingRun_regressionG1() {
+  @Test
+  func `wet runway contamination increases landing run by 15% - Regression G1`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
@@ -913,8 +913,8 @@ struct ContaminationTests {
       .expect(contaminatedRun, of: cleanRun * 1.15, computing: "wet landing run")
   }
 
-  @Test("Wet runway contamination increases total landing distance - G2+")
-  func wetRunwayContamination_increasesTotalLandingDistance_G2Plus() {
+  @Test
+  func `wet runway contamination increases total landing distance - G2+`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
@@ -986,8 +986,8 @@ struct ContaminationTests {
 
   // MARK: - Logical Consistency Tests
 
-  @Test("Landing run never exceeds total landing distance")
-  func landingRun_neverExceedsTotalDistance() {
+  @Test
+  func `landing run never exceeds total landing distance`() {
     let testCases: [(contamination: Contamination?, weight: Double, temp: Double)] = [
       (.waterOrSlush(depth: .init(value: 0.5, unit: .inches)), 6000, 20),
       (.slushOrWetSnow(depth: .init(value: 0.75, unit: .inches)), 5500, 10),

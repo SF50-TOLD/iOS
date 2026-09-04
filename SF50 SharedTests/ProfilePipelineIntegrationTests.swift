@@ -99,7 +99,7 @@ struct ProfilePipelineIntegrationTests {
   // MARK: - Tests
 
   @Test
-  func departurePipelineEndToEnd() async throws {
+  func `departure pipeline end to end`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
 
@@ -141,7 +141,7 @@ struct ProfilePipelineIntegrationTests {
   }
 
   @Test
-  func goAroundPipelineEndToEnd() async throws {
+  func `go around pipeline end to end`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
 
@@ -183,7 +183,7 @@ struct ProfilePipelineIntegrationTests {
   }
 
   @Test
-  func vectorsModePipeline() async throws {
+  func `vectors mode pipeline`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
 
@@ -212,7 +212,7 @@ struct ProfilePipelineIntegrationTests {
   }
 
   @Test
-  func obstacleDetection() async throws {
+  func `obstacle detection`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
 
@@ -243,7 +243,7 @@ struct ProfilePipelineIntegrationTests {
   }
 
   @Test
-  func pipelineWithNoTerrainData() async throws {
+  func `pipeline with no terrain data`() async throws {
     let container = try makeModelContainer()
     let terrainService = TerrainService()
 
