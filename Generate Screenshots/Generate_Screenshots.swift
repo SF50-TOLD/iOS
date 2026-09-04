@@ -35,12 +35,6 @@ final class Generate_Screenshots: XCTestCase {
     setupSnapshot(app)
     app.launch()
 
-    // Handle location permission directly via springboard
-    let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-    if springboard.alerts.buttons["Allow While Using App"].waitForExistence(timeout: 5) {
-      springboard.alerts.buttons["Allow While Using App"].tap()
-    }
-
     // wait for Apple Intelligence banner to self-dismiss
     Thread.sleep(forTimeInterval: 30)
 
