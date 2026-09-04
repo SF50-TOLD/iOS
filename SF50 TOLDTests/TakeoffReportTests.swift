@@ -5,8 +5,8 @@ import Testing
 @testable import SF50_TOLD
 
 /// Exercises TLR report generation end to end.
-@Suite("Takeoff Report")
-struct TakeoffReportTests {
+@Suite
+struct `Takeoff Report` {
 
   /// A sea-level airport with one 5,000 ft paved runway, flown at mid weight on a standard day.
   private static func performanceInput() -> PerformanceInput {
@@ -56,8 +56,8 @@ struct TakeoffReportTests {
     )
   }
 
-  @Test("Renders a takeoff report naming its airport and scenario")
-  func rendersTakeoffReport() throws {
+  @Test
+  func `renders a takeoff report naming its airport and scenario`() throws {
     let input = Self.performanceInput()
     let report = try generateTakeoffReport(
       input: input,

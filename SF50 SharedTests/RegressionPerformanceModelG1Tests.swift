@@ -9,7 +9,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Takeoff Ground Run Tests
 
   @Test
-  func takeoffGroundRun_withinTolerance() throws {
+  func `takeoff ground run within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/takeoff/ground run.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -34,7 +34,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Takeoff Distance Tests
 
   @Test
-  func takeoffDistance_withinTolerance() throws {
+  func `takeoff distance within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/takeoff/total distance.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -59,7 +59,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Takeoff Climb Tests
 
   @Test
-  func takeoffClimbGradient_withinTolerance() throws {
+  func `takeoff climb gradient within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/takeoff climb/gradient.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -82,7 +82,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func takeoffClimbRate_withinTolerance() throws {
+  func `takeoff climb rate within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/takeoff climb/rate.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -107,7 +107,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - VREF Tests
 
   @Test
-  func vref_withinTolerance() throws {
+  func `VREF within tolerance`() throws {
     // Test VREF values for different flap settings against DataTable values
     let baseURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/vref")
@@ -163,7 +163,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Landing Ground Run Tests
 
   @Test
-  func landingGroundRun_withinTolerance_flaps50() throws {
+  func `landing ground run within tolerance flaps 50`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/landing/50/ground run.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -189,7 +189,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func landingGroundRun_withinTolerance_flaps100() throws {
+  func `landing ground run within tolerance flaps 100`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/landing/100/ground run.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -217,7 +217,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Landing Distance Tests
 
   @Test
-  func landingDistance_withinTolerance_flaps50() throws {
+  func `landing distance within tolerance flaps 50`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/landing/50/total distance.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -243,7 +243,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func landingDistance_withinTolerance_flaps100() throws {
+  func `landing distance within tolerance flaps 100`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/landing/100/total distance.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -271,7 +271,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Enroute Climb Tests - Normal
 
   @Test
-  func enrouteClimbGradient_normal_withinTolerance() throws {
+  func `enroute climb gradient normal within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/enroute climb/normal/gradient.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -299,7 +299,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func enrouteClimbRate_normal_withinTolerance() throws {
+  func `enroute climb rate normal within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/enroute climb/normal/rate.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -327,7 +327,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func enrouteClimbSpeed_normal_withinTolerance() throws {
+  func `enroute climb speed normal within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/enroute climb/normal/speed.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -357,7 +357,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Enroute Climb Tests - Ice Contaminated
 
   @Test
-  func enrouteClimbGradient_iceContaminated_withinTolerance() throws {
+  func `enroute climb gradient ice-contaminated within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/enroute climb/ice contaminated/gradient.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -384,7 +384,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func enrouteClimbRate_iceContaminated_withinTolerance() throws {
+  func `enroute climb rate ice-contaminated within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/enroute climb/ice contaminated/rate.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -411,7 +411,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func enrouteClimbSpeed_iceContaminated_withinTolerance() throws {
+  func `enroute climb speed ice-contaminated within tolerance`() throws {
     let csvURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/enroute climb/ice contaminated/speed.csv")
     let dataTable = try DataTable(fileURL: csvURL)
@@ -440,7 +440,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Wind Adjustment Tests
 
   @Test
-  func takeoffRun_headwindAdjustment_regression() {
+  func `takeoff run headwind adjustment regression`() {
     // Test with 10 kt headwind for regression model
     let conditionsNoWind = Helper.createTestConditions(temperature: 20)
     let conditionsHeadwind = Helper.createTestConditions(
@@ -500,7 +500,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func landingDistance_unpavedAdjustment_regression() {
+  func `landing distance unpaved adjustment regression`() {
     // Test unpaved runway adjustment for regression model
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration()
@@ -560,7 +560,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - Go-Around Climb Gradient Tests
 
   @Test
-  func meetsGoAroundClimbGradient_matchesTabularOffscale() {
+  func `meets go around climb gradient matches tabular offscale`() {
     // Test that regression model's meetsGoAroundClimbGradient aligns with
     // tabular model's offscale behavior for landing distance
 
@@ -651,7 +651,7 @@ struct RegressionPerformanceModelG1Tests {
   }
 
   @Test
-  func meetsGoAroundClimbGradient_boundaryConditions() {
+  func `meets go around climb gradient boundary conditions`() {
     // Test boundary conditions for the go-around climb gradient
 
     // Test at minimum weight

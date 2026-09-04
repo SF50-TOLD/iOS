@@ -64,8 +64,8 @@ private enum Fixture {
 
 struct PathAtmosphereColumnSelectionTests {
 
-  @Test("Samples once for a path that never leaves the first column’s reach")
-  func singleColumnForShortPath() {
+  @Test
+  func `samples once for a path that never leaves the first column’s reach`() {
     let (indices, truncated) = PathAtmosphereLoader.columnIndices(
       along: Fixture.path(lengthNM: 4.5)
     )
@@ -74,8 +74,8 @@ struct PathAtmosphereColumnSelectionTests {
     #expect(!truncated)
   }
 
-  @Test("Samples again only once the path has left every column behind")
-  func addsColumnsAsThePathRunsOn() {
+  @Test
+  func `samples again only once the path has left every column behind`() {
     let (indices, truncated) = PathAtmosphereLoader.columnIndices(
       along: Fixture.path(lengthNM: 22)
     )
@@ -86,8 +86,8 @@ struct PathAtmosphereColumnSelectionTests {
     #expect(indices.first == 0)
   }
 
-  @Test("Spaces the columns by about the radius they describe")
-  func columnSpacing() {
+  @Test
+  func `spaces the columns by about the radius they describe`() {
     let points = Fixture.path(lengthNM: 30)
     let (indices, _) = PathAtmosphereLoader.columnIndices(along: points)
     let distances = indices.map { points[$0].distanceNM }
@@ -101,8 +101,8 @@ struct PathAtmosphereColumnSelectionTests {
     }
   }
 
-  @Test("Stops at the column limit and says the path outran it")
-  func truncatesBeyondTheColumnLimit() {
+  @Test
+  func `stops at the column limit and says the path outran it`() {
     let lengthNM =
       Double(PathAtmosphereLoader.maxColumns + 5) * PathAtmosphereLoader.columnRadiusNM
     let (indices, truncated) = PathAtmosphereLoader.columnIndices(
@@ -113,8 +113,8 @@ struct PathAtmosphereColumnSelectionTests {
     #expect(truncated)
   }
 
-  @Test("Has nothing to sample on an empty path")
-  func emptyPath() {
+  @Test
+  func `has nothing to sample on an empty path`() {
     let (indices, truncated) = PathAtmosphereLoader.columnIndices(along: [])
 
     #expect(indices.isEmpty)
@@ -124,23 +124,21 @@ struct PathAtmosphereColumnSelectionTests {
 
 struct PathAtmosphereFailureTests {
 
-  @Test(
-    "Reads anything that means the service was unreachable as being offline",
-    arguments: [
-      URLError.Code.notConnectedToInternet,
-      .networkConnectionLost,
-      .timedOut,
-      .dnsLookupFailed,
-      .cannotConnectToHost,
-      .dataNotAllowed
-    ]
-  )
-  func offlineFromTransientNetworkErrors(code: URLError.Code) {
+  @Test(arguments: [
+    URLError.Code.notConnectedToInternet,
+    .networkConnectionLost,
+    .timedOut,
+    .dnsLookupFailed,
+    .cannotConnectToHost,
+    .dataNotAllowed
+  ])
+  func `reads anything that means the service was unreachable as being offline`(code: URLError.Code)
+  {
     #expect(PathAtmosphereLoader.Failure(URLError(code)) == .offline)
   }
 
-  @Test("Reads a service that answered badly as unavailable rather than offline")
-  func unavailableFromServiceErrors() {
+  @Test
+  func `reads a service that answered badly as unavailable rather than offline`() {
     let url = URL(string: "https://example.com")!
 
     #expect(
@@ -150,8 +148,8 @@ struct PathAtmosphereFailureTests {
     #expect(PathAtmosphereLoader.Failure(URLError(.badServerResponse)) == .unavailable)
   }
 
-  @Test("Keeps a verdict it has already reached")
-  func preservesAnExistingVerdict() {
+  @Test
+  func `keeps a verdict it has already reached`() {
     #expect(PathAtmosphereLoader.Failure(PathAtmosphereLoader.Failure.offline) == .offline)
   }
 }
@@ -166,8 +164,8 @@ struct PathAtmosphereSamplingTests {
     providers: .openMeteo
   )
 
-  @Test("Reads between the columns bracketing a distance")
-  func interpolatesBetweenColumns() throws {
+  @Test
+  func `reads between the columns bracketing a distance`() throws {
     let level = try #require(
       atmosphere.level(atDistanceNM: 5, altitude: .init(value: 0, unit: .feet))
     )
@@ -178,8 +176,8 @@ struct PathAtmosphereSamplingTests {
     )
   }
 
-  @Test("Reads across distance and altitude together")
-  func interpolatesInBothAxes() throws {
+  @Test
+  func `reads across distance and altitude together`() throws {
     // Halfway along, 3,000 ft up: 15 °C at the surface less two degrees a thousand feet.
     let level = try #require(
       atmosphere.level(atDistanceNM: 5, altitude: .init(value: 3000, unit: .feet))
@@ -191,8 +189,8 @@ struct PathAtmosphereSamplingTests {
     )
   }
 
-  @Test("Carries the end columns beyond the distance they were sampled over")
-  func clampsOutsideSampledDistance() throws {
+  @Test
+  func `carries the end columns beyond the distance they were sampled over`() throws {
     let before = try #require(
       atmosphere.level(atDistanceNM: -3, altitude: .init(value: 0, unit: .feet))
     )
@@ -213,8 +211,8 @@ struct PathAtmosphereSamplingTests {
   /// A deck is drawn once per reported altitude, so a level arriving as one altitude per column
   /// would stack a bar per column at nearly the same height, and their offset dashes would fill in
   /// each other's gaps until a scattered deck read as a solid one.
-  @Test("Gathers one altitude per level however differently each column places it")
-  func bandsScatteredGeopotentialHeights() {
+  @Test
+  func `gathers one altitude per level however differently each column places it`() {
     let atmosphere = PathAtmosphere(
       columns: [
         Fixture.column(distanceNM: 0, surfaceC: 20, altitudeOffsetFt: -80),
@@ -232,8 +230,8 @@ struct PathAtmosphereSamplingTests {
     }
   }
 
-  @Test("Has nothing to read when no column reported anything")
-  func emptyAtmosphere() {
+  @Test
+  func `has nothing to read when no column reported anything`() {
     let empty = PathAtmosphere(columns: [], providers: [])
 
     #expect(empty.isEmpty)
@@ -244,8 +242,8 @@ struct PathAtmosphereSamplingTests {
 
 struct PathAtmosphereFreezingLevelTests {
 
-  @Test("Finds where the temperature crosses freezing")
-  func freezingLevelCrossing() throws {
+  @Test
+  func `finds where the temperature crosses freezing`() throws {
     // 20 °C at the surface falling two degrees a thousand feet reaches freezing at 10,000 ft.
     let atmosphere = PathAtmosphere(
       columns: [Fixture.column(distanceNM: 0, surfaceC: 20)],
@@ -258,8 +256,8 @@ struct PathAtmosphereFreezingLevelTests {
 
   /// A single column has to answer for the whole path, or the isotherm collapses to one point and
   /// draws nothing.
-  @Test("Reports the same freezing level all along a path covered by one column")
-  func freezingLevelAcrossSingleColumn() throws {
+  @Test
+  func `reports the same freezing level all along a path covered by one column`() throws {
     let atmosphere = PathAtmosphere(
       columns: [Fixture.column(distanceNM: 0, surfaceC: 20)],
       providers: .openMeteo
@@ -271,8 +269,8 @@ struct PathAtmosphereFreezingLevelTests {
     }
   }
 
-  @Test("Slopes the freezing level between columns of different temperature")
-  func freezingLevelSlopesBetweenColumns() throws {
+  @Test
+  func `slopes the freezing level between columns of different temperature`() throws {
     // 20 °C freezes at 10,000 ft; 10 °C at 5,000 ft. Halfway along should freeze at 7,500 ft.
     let atmosphere = PathAtmosphere(
       columns: [
@@ -286,8 +284,8 @@ struct PathAtmosphereFreezingLevelTests {
     #expect(crossing.isApproximatelyEqual(toFt: 7500))
   }
 
-  @Test("Reports no freezing level for a column that never warms above freezing")
-  func columnBelowFreezingThroughout() {
+  @Test
+  func `reports no freezing level for a column that never warms above freezing`() {
     let atmosphere = PathAtmosphere(
       columns: [Fixture.column(distanceNM: 0, surfaceC: -5)],
       providers: .openMeteo
@@ -296,8 +294,8 @@ struct PathAtmosphereFreezingLevelTests {
     #expect(atmosphere.freezingAltitude(atDistanceNM: 0) == nil)
   }
 
-  @Test("Reports no freezing level for a column that stays above it")
-  func columnAboveFreezingThroughout() {
+  @Test
+  func `reports no freezing level for a column that stays above it`() {
     let atmosphere = PathAtmosphere(
       columns: [Fixture.column(distanceNM: 0, surfaceC: 40, lapseRateCPer1000Ft: 1)],
       providers: .openMeteo
@@ -328,8 +326,8 @@ struct ClimbProfileWindClampingTests {
     useRegressionModel: true
   )
 
-  @Test("Carries the lowest reported wind down to the ground rather than fading to calm")
-  func carriesLowestWindDown() throws {
+  @Test
+  func `carries the lowest reported wind down to the ground rather than fading to calm`() throws {
     // The band a departure actually climbs through, below anything a bulletin reports.
     for altitudeFt in [0.0, 500, 1500, 2999] {
       #expect(try #require(profile.windSpeed(at: altitudeFt)) == 25)
@@ -337,8 +335,8 @@ struct ClimbProfileWindClampingTests {
     }
   }
 
-  @Test("Interpolates between reported levels")
-  func interpolatesBetweenReportedLevels() throws {
+  @Test
+  func `interpolates between reported levels`() throws {
     #expect(
       try #require(profile.windSpeed(at: 4500)).isApproximatelyEqual(
         to: 30,
