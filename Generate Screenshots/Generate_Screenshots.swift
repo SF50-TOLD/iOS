@@ -9,7 +9,7 @@ import UIKit
 import XCTest
 import XCUITestKit
 
-final class Generate_Screenshots: XCTestCase {
+nonisolated final class Generate_Screenshots: XCTestCase {
 
   /// KASE's NASR record ID (its FAA site number). Seeding it as a favorite lets
   /// the flow select Aspen from the Favorites tab instead of the airport search
@@ -17,7 +17,7 @@ final class Generate_Screenshots: XCTestCase {
   /// form on iOS 26 under a fresh run's load and block the runway picker.
   private static let aspenRecordID = "02517.*A"
 
-  private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+  @MainActor private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
   override func setUpWithError() throws {
     // In UI tests it is usually best to stop immediately when a failure occurs.
@@ -27,6 +27,7 @@ final class Generate_Screenshots: XCTestCase {
   override func tearDownWithError() throws {
   }
 
+  @MainActor
   func testGenerateScreenshots() throws {
     let app = XCUIApplication()
     app.launchArguments = [
@@ -374,6 +375,7 @@ final class Generate_Screenshots: XCTestCase {
   /// temperature field behind the terrain, and the along-track wind barbs over it.
   ///
   /// Best-effort throughout — a screenshot of a bare chart beats a failed run.
+  @MainActor
   private func showWeatherLayers(in app: XCUIApplication) {
     selectFromPill("weatherLayerPicker", option: "Temperature", in: app)
     selectFromPill("windBarbsPicker", option: "On", in: app)
@@ -385,7 +387,12 @@ final class Generate_Screenshots: XCTestCase {
   ///   - identifier: The pill's accessibility identifier.
   ///   - option: The menu item to choose.
   ///   - app: The application under test.
-  private func selectFromPill(_ identifier: String, option: String, in app: XCUIApplication) {
+  @MainActor
+  private func selectFromPill(
+    _ identifier: String,
+    option: String,
+    in app: XCUIApplication
+  ) {
     let pill = app.descendants(matching: .any)[identifier].firstMatch
     guard pill.waitForExistence(timeout: 10) else { return }
 
@@ -398,6 +405,7 @@ final class Generate_Screenshots: XCTestCase {
   /// KASE so the terrain chart shows real departure routing instead of a
   /// straight-out runway-heading climb. Best-effort: if LINDZ isn't published for
   /// the selected runway, the first plottable departure stays auto-selected.
+  @MainActor
   private func selectLINDZDeparture(in app: XCUIApplication) {
     let typePicker = app.descendants(matching: .any)["departureTypePicker"].firstMatch
     guard typePicker.waitForExistence(timeout: 5) else { return }

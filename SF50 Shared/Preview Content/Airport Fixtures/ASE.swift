@@ -1,4 +1,5 @@
 import CoreLocation
+import Foundation
 import SwiftData
 
 extension AirportBuilder {

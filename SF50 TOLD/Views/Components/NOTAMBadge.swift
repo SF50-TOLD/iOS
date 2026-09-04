@@ -1,3 +1,4 @@
+import SF50_Shared
 import SwiftUI
 
 /// Badge showing configured vs available NOTAM counts.

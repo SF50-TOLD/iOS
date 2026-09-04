@@ -1,4 +1,4 @@
-import CoreLocation
+public import CoreLocation
 import Foundation
 
 /// Interpolates winds aloft between reporting stations using Inverse Distance Weighting (IDW).

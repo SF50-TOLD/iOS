@@ -2,7 +2,7 @@ import CoreLocation
 import Foundation
 import NavData
 import os
-import SwiftData
+public import SwiftData
 
 /// Generates a ``ProcedureTerrainPath`` by combining a ``ProcedurePath`` with
 /// terrain elevation and obstacle data within a lateral corridor.

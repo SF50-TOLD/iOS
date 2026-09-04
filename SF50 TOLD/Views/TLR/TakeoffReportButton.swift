@@ -19,7 +19,7 @@ struct TakeoffReportButton: View {
 
   @State private var reportToShow: HTMLReport?
   @State private var isGenerating = false
-  @State private var error: Error?
+  @State private var error: (any Error)?
 
   private var container: ModelContainer {
     modelContext.container

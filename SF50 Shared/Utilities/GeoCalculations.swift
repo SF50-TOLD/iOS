@@ -1,4 +1,4 @@
-import CoreLocation
+public import CoreLocation
 import Foundation
 import MeasurementKit
 import MeasurementKitLocation

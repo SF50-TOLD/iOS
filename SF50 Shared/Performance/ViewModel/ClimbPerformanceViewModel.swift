@@ -1,8 +1,8 @@
 import Defaults
-import Foundation
-import MeasurementKit
-import Observation
-import SwiftData
+public import Foundation
+public import MeasurementKit
+public import Observation
+public import SwiftData
 
 /// View model for en route climb performance calculations.
 ///
@@ -91,7 +91,7 @@ public final class ClimbPerformanceViewModel {
 
   // MARK: Private
 
-  private var model: PerformanceModel?
+  private var model: (any PerformanceModel)?
   private var cancellables: Set<Task<Void, Never>> = []
 
   // MARK: Initialization
@@ -187,7 +187,7 @@ public final class ClimbPerformanceViewModel {
 
     // Initialize the appropriate model
     let aircraftType = Defaults.Keys.aircraftType
-    let m: PerformanceModel
+    let m: any PerformanceModel
     if Defaults[.useRegressionModel] {
       m = RegressionPerformanceModel(
         conditions: conditions,

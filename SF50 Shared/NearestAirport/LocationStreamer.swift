@@ -1,6 +1,6 @@
-import CoreLocation
+public import CoreLocation
 import Sentry
-import SwiftUI
+public import SwiftUI
 
 /// Whether Core Location is delivering the device’s location, and if not, why.
 ///
@@ -72,7 +72,7 @@ public protocol LocationStreamer: AnyObject, Observable, Sendable {
   /// The most recent location, or nil if unavailable.
   var location: CLLocation? { get }
   /// Any error that occurred during location updates.
-  var error: Error? { get }
+  var error: (any Error)? { get }
   /// Whether a location is available, and if not, why — or nil before the first update arrives.
   var availability: LocationAvailability? { get }
 
@@ -119,7 +119,7 @@ public protocol LocationStreamer: AnyObject, Observable, Sendable {
 @Observable
 public final class CoreLocationStreamer: LocationStreamer {
   public private(set) var location: CLLocation?
-  public private(set) var error: Error?
+  public private(set) var error: (any Error)?
   public private(set) var availability: LocationAvailability?
 
   private var updateTask: Task<Void, Never>?

@@ -20,7 +20,7 @@ struct RunwayRow: View {
   @Default(.speedUnit)
   private var speedUnit
 
-  private var limitations: Limitations.Type {
+  private var limitations: any Limitations.Type {
     aircraftType.limitations
   }
 

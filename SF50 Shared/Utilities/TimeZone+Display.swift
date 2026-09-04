@@ -1,5 +1,5 @@
 import Defaults
-import Foundation
+public import Foundation
 
 extension TimeZone {
   /// The time zone to display times at an airport in.

@@ -1,4 +1,4 @@
-import Foundation
+public import Foundation
 
 extension PreviewHelper {
   /// Generates sample NOTAMResponse objects for preview purposes
