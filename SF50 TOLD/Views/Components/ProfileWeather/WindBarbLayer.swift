@@ -41,8 +41,11 @@ struct WindBarbLayer: ChartContent {
   /// The top of the plotted altitude band.
   let maxAltitude: Measurement<UnitLength>
 
-  // The barbs are placed on the chart's own scales, so the band is read in feet once here and the
-  // grid is laid out in those.
+  /// The units the chart plots in, which the barbs are placed against.
+  let scale: TerrainProfileScale
+
+  // The grid is laid out in the feet the wind is reported at, and converted onto the chart's own
+  // scales only where a barb is placed.
   private var fieldElevationFt: Double { fieldElevation.converted(to: .feet).value }
 
   private var maxAltitudeFt: Double { maxAltitude.converted(to: .feet).value }
@@ -50,8 +53,8 @@ struct WindBarbLayer: ChartContent {
   var body: some ChartContent {
     ForEach(positions, id: \.self) { position in
       PointMark(
-        x: .value("Distance", position.distanceNM),
-        y: .value("Altitude", position.altitudeFt)
+        x: .value("Distance", scale.axisDistance(nm: position.distanceNM)),
+        y: .value("Altitude", scale.axisAltitude(ft: position.altitudeFt))
       )
       .symbolSize(0)
       .foregroundStyle(.primary)
@@ -120,16 +123,14 @@ struct WindBarbLayer: ChartContent {
   }
 
   private func track(atDistanceNM distanceNM: Double) -> Measurement<UnitAngle> {
-    nearestPoint(toDistanceNM: distanceNM)?.track ?? .init(value: 0, unit: .degrees)
+    terrainPath.point(nearestToDistanceNM: distanceNM)?.track ?? .init(value: 0, unit: .degrees)
   }
 
   private func terrainFt(atDistanceNM distanceNM: Double) -> Double {
-    guard let point = nearestPoint(toDistanceNM: distanceNM) else { return fieldElevationFt }
+    guard let point = terrainPath.point(nearestToDistanceNM: distanceNM) else {
+      return fieldElevationFt
+    }
     return max(point.terrainElevationFt ?? fieldElevationFt, fieldElevationFt)
-  }
-
-  private func nearestPoint(toDistanceNM distanceNM: Double) -> ProcedureTerrainPath.Point? {
-    terrainPath.points.min { abs($0.distanceNM - distanceNM) < abs($1.distanceNM - distanceNM) }
   }
 
   // MARK: - Subtypes

@@ -1,5 +1,6 @@
 import Accessibility
 import Charts
+import Defaults
 import MeasurementKit
 import SF50_Shared
 import SwiftUI
@@ -22,9 +23,15 @@ struct TerrainProfileChartView: View {
   /// How far from an "at" restriction the aircraft may stand before the mark reads as violated.
   private static let atRestrictionTolerance = Measurement(value: 100, unit: UnitLength.feet)
 
-  /// Screen height in the feet the chart plots in.
+  /// Screen height in the feet the chart reasons in.
   private static let screenHeightFt = ProcedurePathGenerator.screenHeight
     .converted(to: .feet).value
+
+  /// How solid the rule marking the scrubbed sample is drawn.
+  ///
+  /// Drawn in gray rather than a tint: blue is already the fix lines and their restriction marks,
+  /// red the violations, and purple the path.
+  private static let selectionRuleOpacity = 0.7
 
   // MARK: - Inputs
 
@@ -49,6 +56,20 @@ struct TerrainProfileChartView: View {
   /// Whether the along-track wind barbs are drawn.
   var showsWindBarbs = false
 
+  @Default(.heightUnit)
+  private var heightUnit
+
+  @Default(.distanceUnit)
+  private var distanceUnit
+
+  /// Where along the distance axis the pilot is scrubbing, in the axis's own unit.
+  ///
+  /// Held as the gesture reports it rather than snapped to a sample: writing a snapped value back
+  /// would fight the drag it came from. ``selectedPoint`` does the snapping on the way out.
+  ///
+  /// Being in the axis's unit, it means nothing once that unit changes, and is dropped when it does.
+  @State private var selectedDistance: Double?
+
   var body: some View {
     Chart {
       // The weather reads behind the ground it describes, so both layers drawn from it are
@@ -60,7 +81,8 @@ struct TerrainProfileChartView: View {
           climbProfile: climbProfile,
           fieldElevation: fieldElevation,
           maxDistanceNM: maxDistanceNM,
-          maxAltitude: maxAltitude
+          maxAltitude: maxAltitude,
+          scale: scale
         )
       }
       terrainLayer
@@ -68,23 +90,29 @@ struct TerrainProfileChartView: View {
       waypointLinesLayer
       climbPathLayer
       waypointLabelsLayer
+      selectionLayer
     }
     .chartBackground { proxy in
       if let atmosphere {
-        WeatherFieldLayer(proxy: proxy, atmosphere: atmosphere, layer: weatherLayer)
+        WeatherFieldLayer(
+          proxy: proxy,
+          atmosphere: atmosphere,
+          layer: weatherLayer,
+          scale: scale
+        )
       }
     }
-    .chartXAxisLabel("Distance (NM)")
-    .chartYAxisLabel("Altitude MSL (ft)")
-    .chartXScale(domain: 0...maxDistanceNM)
-    .chartYScale(domain: fieldElevationFt...maxAltitudeFt)
+    .chartXAxisLabel("Distance (\(distanceUnit.symbol))")
+    .chartYAxisLabel("Altitude MSL (\(heightUnit.symbol))")
+    .chartXScale(domain: 0...axisMaxDistance)
+    .chartYScale(domain: axisFieldElevation...axisMaxAltitude)
     .chartXAxis {
       AxisMarks(values: .automatic(desiredCount: 6)) { value in
         AxisGridLine()
         AxisTick()
         AxisValueLabel {
-          if let nm = value.as(Double.self) {
-            Text(nm, format: .number.precision(.fractionLength(0...1)))
+          if let distance = value.as(Double.self) {
+            Text(distance, format: .number.precision(.fractionLength(0...1)))
           }
         }
       }
@@ -94,21 +122,24 @@ struct TerrainProfileChartView: View {
         AxisGridLine()
         AxisTick()
         AxisValueLabel {
-          if let ft = value.as(Double.self) {
-            Text(ft, format: .number.precision(.fractionLength(0)))
+          if let altitude = value.as(Double.self) {
+            Text(altitude, format: .number.precision(.fractionLength(0)))
           }
         }
       }
     }
+    .chartXSelection(value: $selectedDistance)
+    .onChange(of: scale) { selectedDistance = nil }
     .accessibilityIdentifier("terrainProfileChart")
     .accessibilityChartDescriptor(
       TerrainProfileChartDescriptor(
-        distancesNM: chartPoints.map(\.distanceNM),
-        aircraftAltitudesFt: chartPoints.map(\.aircraftAltitudeFt),
-        terrainAltitudesFt: filledTerrainFt,
-        fieldElevationFt: fieldElevationFt,
-        maxDistanceNM: maxDistanceNM,
-        maxAltitudeFt: maxAltitudeFt
+        distances: chartPoints.map { scale.axisDistance(nm: $0.distanceNM) },
+        aircraftAltitudes: chartPoints.map { scale.axisAltitude(ft: $0.aircraftAltitudeFt) },
+        terrainAltitudes: filledTerrainFt.map { scale.axisAltitude(ft: $0) },
+        fieldElevation: axisFieldElevation,
+        maxDistance: axisMaxDistance,
+        maxAltitude: axisMaxAltitude,
+        scale: scale
       )
     )
   }
@@ -119,9 +150,9 @@ struct TerrainProfileChartView: View {
     let terrain = filledTerrainFt
     ForEach(Array(chartPoints.enumerated()), id: \.offset) { index, point in
       AreaMark(
-        x: .value("Distance", point.distanceNM),
-        yStart: .value("Base", fieldElevationFt),
-        yEnd: .value("Terrain", terrain[index])
+        x: .value("Distance", scale.axisDistance(nm: point.distanceNM)),
+        yStart: .value("Base", axisFieldElevation),
+        yEnd: .value("Terrain", scale.axisAltitude(ft: terrain[index]))
       )
       .foregroundStyle(Self.terrainTint)
     }
@@ -131,12 +162,14 @@ struct TerrainProfileChartView: View {
       let nextIndex = index + 1
       let isImpact = interceptsTerrain(at: index) || interceptsTerrain(at: nextIndex)
       RectangleMark(
-        xStart: .value("Start", chartPoints[index].distanceNM),
-        xEnd: .value("End", chartPoints[nextIndex].distanceNM),
-        yStart: .value("Base", fieldElevationFt),
+        xStart: .value("Start", scale.axisDistance(nm: chartPoints[index].distanceNM)),
+        xEnd: .value("End", scale.axisDistance(nm: chartPoints[nextIndex].distanceNM)),
+        yStart: .value("Base", axisFieldElevation),
         yEnd: .value(
           "ImpactTerrain",
-          isImpact ? max(terrain[index], terrain[nextIndex]) : fieldElevationFt
+          scale.axisAltitude(
+            ft: isImpact ? max(terrain[index], terrain[nextIndex]) : fieldElevationFt
+          )
         )
       )
       .foregroundStyle(Color.red.opacity(isImpact ? 0.6 : 0))
@@ -146,30 +179,33 @@ struct TerrainProfileChartView: View {
   @ChartContentBuilder private var obstacleLayer: some ChartContent {
     ForEach(Array(terrainPath.points.enumerated()), id: \.offset) { _, point in
       if let obstacleFt = point.maxObstacleHeightFt, obstacleFt > fieldElevationFt {
-        let terrainFt = max(point.terrainElevationFt ?? fieldElevationFt, fieldElevationFt)
+        let terrainFt = point.drawnTerrainElevationFt(fieldElevationFt: fieldElevationFt)
         let airborne =
           point.aircraftAltitudeFt > fieldElevationFt + Self.screenHeightFt
         let violated = airborne && point.aircraftAltitudeFt <= obstacleFt
+        let x = scale.axisDistance(nm: point.distanceNM),
+          terrainTop = scale.axisAltitude(ft: terrainFt),
+          obstacleTop = scale.axisAltitude(ft: obstacleFt)
         if violated {
           RuleMark(
-            x: .value("Distance", point.distanceNM),
-            yStart: .value("Terrain", terrainFt),
-            yEnd: .value("Obstacle", obstacleFt)
+            x: .value("Distance", x),
+            yStart: .value("Terrain", terrainTop),
+            yEnd: .value("Obstacle", obstacleTop)
           )
           .lineStyle(StrokeStyle(lineWidth: 2.5))
           .foregroundStyle(.red)
         } else {
           RuleMark(
-            x: .value("Distance", point.distanceNM),
-            yStart: .value("Terrain", terrainFt),
-            yEnd: .value("Obstacle", obstacleFt)
+            x: .value("Distance", x),
+            yStart: .value("Terrain", terrainTop),
+            yEnd: .value("Obstacle", obstacleTop)
           )
           .lineStyle(StrokeStyle(lineWidth: 1.5))
           .foregroundStyle(.gray.opacity(0.5))
           RuleMark(
-            x: .value("Distance", point.distanceNM),
-            yStart: .value("Terrain", terrainFt),
-            yEnd: .value("Obstacle", obstacleFt)
+            x: .value("Distance", x),
+            yStart: .value("Terrain", terrainTop),
+            yEnd: .value("Obstacle", obstacleTop)
           )
           .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 4]))
           .foregroundStyle(.red.opacity(0.3))
@@ -181,9 +217,9 @@ struct TerrainProfileChartView: View {
   @ChartContentBuilder private var waypointLinesLayer: some ChartContent {
     ForEach(waypointPoints, id: \.distanceNM) { point in
       RuleMark(
-        x: .value("Waypoint", point.distanceNM),
-        yStart: .value("Base", fieldElevationFt),
-        yEnd: .value("Top", maxAltitudeFt)
+        x: .value("Waypoint", scale.axisDistance(nm: point.distanceNM)),
+        yStart: .value("Base", axisFieldElevation),
+        yEnd: .value("Top", axisMaxAltitude)
       )
       .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
       .foregroundStyle(.blue)
@@ -194,8 +230,8 @@ struct TerrainProfileChartView: View {
     ForEach(waypointPoints, id: \.distanceNM) { point in
       if let name = point.fixName {
         PointMark(
-          x: .value("Waypoint", point.distanceNM),
-          y: .value("Top", maxAltitudeFt)
+          x: .value("Waypoint", scale.axisDistance(nm: point.distanceNM)),
+          y: .value("Top", axisMaxAltitude)
         )
         .symbolSize(0)
         .annotation(position: .bottom, alignment: .center) {
@@ -222,8 +258,8 @@ struct TerrainProfileChartView: View {
     if weatherLayer == .temperature || weatherLayer == .icing {
       ForEach(freezingLevelPoints) { point in
         LineMark(
-          x: .value("Distance", point.distanceNM),
-          y: .value("Freezing level", point.altitudeFt),
+          x: .value("Distance", scale.axisDistance(nm: point.distanceNM)),
+          y: .value("Freezing level", scale.axisAltitude(ft: point.altitudeFt)),
           series: .value("Series", "freezing")
         )
         .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [6, 3]))
@@ -232,8 +268,8 @@ struct TerrainProfileChartView: View {
 
       if let freezing = freezingLevelPoints.last {
         PointMark(
-          x: .value("Distance", freezing.distanceNM),
-          y: .value("Freezing level", freezing.altitudeFt)
+          x: .value("Distance", scale.axisDistance(nm: freezing.distanceNM)),
+          y: .value("Freezing level", scale.axisAltitude(ft: freezing.altitudeFt))
         )
         .symbolSize(0)
         .annotation(position: .topTrailing, alignment: .trailing, spacing: 2) {
@@ -250,11 +286,27 @@ struct TerrainProfileChartView: View {
   @ChartContentBuilder private var climbPathLayer: some ChartContent {
     ForEach(Array(chartPoints.enumerated()), id: \.offset) { _, point in
       LineMark(
-        x: .value("Distance", point.distanceNM),
-        y: .value("Aircraft", point.aircraftAltitudeFt)
+        x: .value("Distance", scale.axisDistance(nm: point.distanceNM)),
+        y: .value("Aircraft", scale.axisAltitude(ft: point.aircraftAltitudeFt))
       )
       .foregroundStyle(.purple)
       .lineStyle(StrokeStyle(lineWidth: 3))
+    }
+  }
+
+  /// The rule and readout for the sample being scrubbed over.
+  @ChartContentBuilder private var selectionLayer: some ChartContent {
+    if let selectedPoint {
+      RuleMark(x: .value("Selection", scale.axisDistance(nm: selectedPoint.distanceNM)))
+        .lineStyle(StrokeStyle(lineWidth: 1))
+        .foregroundStyle(.gray.opacity(Self.selectionRuleOpacity))
+        .annotation(
+          position: .top,
+          spacing: 0,
+          overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .plot))
+        ) {
+          TerrainProfileCallout(point: selectedPoint, scale: scale)
+        }
     }
   }
 
@@ -265,7 +317,7 @@ struct TerrainProfileChartView: View {
   }
 
   private var filledTerrainFt: [Double] {
-    chartPoints.map { max($0.terrainElevationFt ?? fieldElevationFt, fieldElevationFt) }
+    chartPoints.map { $0.drawnTerrainElevationFt(fieldElevationFt: fieldElevationFt) }
   }
 
   private var waypointPoints: [ProcedureTerrainPath.Point] {
@@ -280,11 +332,26 @@ struct TerrainProfileChartView: View {
     terrainPath.maxAltitude(fieldElevation: fieldElevation)
   }
 
-  // The chart's own scales are plain numbers, so both bounds are read in feet once here and the
-  // marks are plotted from these.
+  // Everything the chart reasons about — violations, terrain impacts — is decided in the path's own
+  // feet, so the field is read in feet once here and the checks below compare against it.
   private var fieldElevationFt: Double { fieldElevation.converted(to: .feet).value }
 
-  private var maxAltitudeFt: Double { maxAltitude.converted(to: .feet).value }
+  /// The units the chart plots in, which are the pilot's rather than the path's.
+  private var scale: TerrainProfileScale {
+    .init(heightUnit: heightUnit, distanceUnit: distanceUnit)
+  }
+
+  private var axisFieldElevation: Double { scale.axisAltitude(fieldElevation) }
+
+  private var axisMaxAltitude: Double { scale.axisAltitude(maxAltitude) }
+
+  private var axisMaxDistance: Double { scale.axisDistance(nm: maxDistanceNM) }
+
+  /// The sample the scrub has settled on, snapped from wherever the finger actually is.
+  private var selectedPoint: ProcedureTerrainPath.Point? {
+    guard let selectedDistance else { return nil }
+    return terrainPath.point(nearestToDistanceNM: scale.distanceNM(atAxisValue: selectedDistance))
+  }
 
   private var freezingLevelPoints: [FreezingLevelPoint] {
     guard let atmosphere else { return [] }
@@ -354,7 +421,6 @@ struct TerrainProfileChartView: View {
     triangle: TriangleDirection,
     violated: Bool
   ) -> some ChartContent {
-    let altitudeFt = altitude.converted(to: .feet).value
     let text = altitudeText(altitude)
     let triangleWidth: CGFloat = 10
     let triangleHeight: CGFloat = 8
@@ -362,8 +428,8 @@ struct TerrainProfileChartView: View {
     let color: Color = violated ? .red : .blue
 
     PointMark(
-      x: .value("Fix", distanceNM),
-      y: .value("Restriction", altitudeFt)
+      x: .value("Fix", scale.axisDistance(nm: distanceNM)),
+      y: .value("Restriction", scale.axisAltitude(altitude))
     )
     .symbolSize(0)
     .symbol {
@@ -399,8 +465,7 @@ struct TerrainProfileChartView: View {
   }
 
   private func altitudeText(_ altitude: Measurement<UnitLength>) -> String {
-    let ft = altitude.converted(to: .feet).value
-    return "\(Int(ft))'"
+    altitude.converted(to: heightUnit).formatted(.height)
   }
 
   // MARK: - Subtypes
@@ -447,33 +512,34 @@ struct TerrainProfileChartView: View {
     /// audio graph spans a non-zero interval rather than collapsing to a point.
     private static let minimumAxisSpan = 1.0
 
-    let distancesNM: [Double]
-    let aircraftAltitudesFt: [Double]
-    let terrainAltitudesFt: [Double]
-    let fieldElevationFt: Double
-    let maxDistanceNM: Double
-    let maxAltitudeFt: Double
+    // Plotted values, in the same units the visible axes carry.
+    let distances: [Double]
+    let aircraftAltitudes: [Double]
+    let terrainAltitudes: [Double]
+    let fieldElevation: Double
+    let maxDistance: Double
+    let maxAltitude: Double
+
+    /// The units the values above are in, which the axis titles and spoken values are read from.
+    let scale: TerrainProfileScale
 
     private var distanceAxis: AXNumericDataAxisDescriptor {
-      AXNumericDataAxisDescriptor(
-        title: String(localized: "Distance (NM)"),
-        range: nonDegenerateRange(lowerBound: 0, upperBound: maxDistanceNM),
+      let unit = scale.distanceUnit
+      return AXNumericDataAxisDescriptor(
+        title: String(localized: "Distance (\(unit.symbol))"),
+        range: nonDegenerateRange(lowerBound: 0, upperBound: maxDistance),
         gridlinePositions: [],
-        valueDescriptionProvider: { distanceNM in
-          distanceNM.formatted(.number.precision(.fractionLength(0...1)))
-        }
+        valueDescriptionProvider: { Measurement(value: $0, unit: unit).formatted(.distance) }
       )
     }
 
     private var altitudeAxis: AXNumericDataAxisDescriptor {
-      AXNumericDataAxisDescriptor(
-        title: String(localized: "Altitude MSL (ft)"),
-        range: nonDegenerateRange(lowerBound: fieldElevationFt, upperBound: maxAltitudeFt),
+      let unit = scale.heightUnit
+      return AXNumericDataAxisDescriptor(
+        title: String(localized: "Altitude MSL (\(unit.symbol))"),
+        range: nonDegenerateRange(lowerBound: fieldElevation, upperBound: maxAltitude),
         gridlinePositions: [],
-        valueDescriptionProvider: { altitudeFt in
-          Measurement(value: altitudeFt, unit: UnitLength.feet)
-            .formatted(.measurement(width: .abbreviated, usage: .asProvided))
-        }
+        valueDescriptionProvider: { Measurement(value: $0, unit: unit).formatted(.height) }
       )
     }
 
@@ -481,8 +547,8 @@ struct TerrainProfileChartView: View {
       AXDataSeriesDescriptor(
         name: String(localized: "Climb path"),
         isContinuous: true,
-        dataPoints: zip(distancesNM, aircraftAltitudesFt).map { distanceNM, altitudeFt in
-          AXDataPoint(x: distanceNM, y: altitudeFt)
+        dataPoints: zip(distances, aircraftAltitudes).map { distance, altitude in
+          AXDataPoint(x: distance, y: altitude)
         }
       )
     }
@@ -491,8 +557,8 @@ struct TerrainProfileChartView: View {
       AXDataSeriesDescriptor(
         name: String(localized: "Terrain"),
         isContinuous: true,
-        dataPoints: zip(distancesNM, terrainAltitudesFt).map { distanceNM, terrainFt in
-          AXDataPoint(x: distanceNM, y: terrainFt)
+        dataPoints: zip(distances, terrainAltitudes).map { distance, terrain in
+          AXDataPoint(x: distance, y: terrain)
         }
       )
     }
@@ -523,10 +589,11 @@ private struct ChartPreview: View {
   let layer: WeatherProfileLayer
   var showsWindBarbs = false
   var atmosphere: PathAtmosphere? = .previewMultiColumn
+  var terrainPath = ProcedureTerrainPath.preview
 
   var body: some View {
     TerrainProfileChartView(
-      terrainPath: .preview,
+      terrainPath: terrainPath,
       fieldElevation: .zero,
       atmosphere: atmosphere,
       climbProfile: .preview,
@@ -564,4 +631,10 @@ private struct ChartPreview: View {
 /// drawn muted to say so.
 #Preview("Wind barbs only") {
   ChartPreview(layer: .none, showsWindBarbs: true, atmosphere: nil)
+}
+
+/// A stretch with no terrain downloaded under it, which scrubbing reports as unknown rather than as
+/// ground at field elevation.
+#Preview("Missing terrain") {
+  ChartPreview(layer: .none, terrainPath: .previewMissingTerrain)
 }
