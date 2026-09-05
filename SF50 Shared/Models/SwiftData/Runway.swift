@@ -278,32 +278,6 @@ public final class Runway {
     reciprocalName = nil
     notam = nil
   }
-
-  /**
-   * Calculates the headwind component for the given conditions.
-   *
-   * - Parameter conditions: The atmospheric conditions including wind direction and speed.
-   * - Returns: The headwind component (positive = headwind, negative = tailwind).
-   */
-  public func headwind(conditions: Conditions) -> Measurement<UnitSpeed> {
-    guard let windDirection = conditions.windDirection,
-      let windSpeed = conditions.windSpeed
-    else { return .zero }
-    let angle = windDirection - trueHeading
-    return windSpeed * cos(angle)
-  }
-
-  /**
-   * Calculates the crosswind component for the given conditions.
-   *
-   * - Parameter conditions: The atmospheric conditions including wind direction and speed.
-   * - Returns: The crosswind component (positive = from right, negative = from left).
-   */
-  public func crosswind(conditions: Conditions) -> Measurement<UnitSpeed> {
-    guard let windDirection = conditions.windDirection,
-      let windSpeed = conditions.windSpeed
-    else { return .zero }
-    let angle = windDirection - trueHeading
-    return windSpeed * sin(angle)
-  }
 }
+
+extension Runway: RunwayOrientation {}

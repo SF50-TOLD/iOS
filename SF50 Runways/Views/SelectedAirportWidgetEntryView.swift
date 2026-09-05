@@ -1,3 +1,4 @@
+import SF50_Shared
 import SwiftUI
 import WidgetKit
 
@@ -10,7 +11,11 @@ struct SelectedAirportWidgetEntryView: View {
   @ViewBuilder var body: some View {
     if let airportName = entry.airportName {
       VStack(alignment: .leading, spacing: 10) {
-        WidgetAirportView(name: airportName)
+        WidgetAirportView(
+          name: airportName,
+          operation: entry.operation,
+          VREF: entry.VREF
+        )
         switch family {
           case .systemSmall:
             WidgetGridView(entry: entry)

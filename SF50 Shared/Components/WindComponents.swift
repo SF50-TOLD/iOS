@@ -26,16 +26,13 @@ public import SwiftUI
 /// )
 /// ```
 public struct WindComponents: View {
-  var runway: Runway
-  var conditions: Conditions
+  var headwind: Measurement<UnitSpeed>
+  var crosswind: Measurement<UnitSpeed>
   var crosswindLimit: Measurement<UnitSpeed>?
   var tailwindLimit: Measurement<UnitSpeed>?
 
   @Default(.speedUnit)
   private var speedUnit
-
-  var headwind: Measurement<UnitSpeed> { runway.headwind(conditions: conditions) }
-  var crosswind: Measurement<UnitSpeed> { runway.crosswind(conditions: conditions) }
 
   private var exceedsTailwindLimits: Bool {
     guard let tailwindLimit else { return false }
@@ -100,16 +97,44 @@ public struct WindComponents: View {
     .animation(.default, value: crosswind)
   }
 
+  /// Creates a view from already-resolved wind components.
+  ///
+  /// - Parameters:
+  ///   - headwind: Headwind component; negative values are a tailwind.
+  ///   - crosswind: Crosswind component.
+  ///   - crosswindLimit: Turns the crosswind red when exceeded.
+  ///   - tailwindLimit: Turns the tailwind red when exceeded.
   public init(
-    runway: Runway,
+    headwind: Measurement<UnitSpeed>,
+    crosswind: Measurement<UnitSpeed>,
+    crosswindLimit: Measurement<UnitSpeed>? = nil,
+    tailwindLimit: Measurement<UnitSpeed>? = nil
+  ) {
+    self.headwind = headwind
+    self.crosswind = crosswind
+    self.crosswindLimit = crosswindLimit
+    self.tailwindLimit = tailwindLimit
+  }
+
+  /// Creates a view by resolving the wind against a runway.
+  ///
+  /// - Parameters:
+  ///   - runway: The runway to resolve the wind against.
+  ///   - conditions: The weather conditions supplying the wind.
+  ///   - crosswindLimit: Turns the crosswind red when exceeded.
+  ///   - tailwindLimit: Turns the tailwind red when exceeded.
+  public init(
+    runway: some RunwayOrientation,
     conditions: Conditions,
     crosswindLimit: Measurement<UnitSpeed>? = nil,
     tailwindLimit: Measurement<UnitSpeed>? = nil
   ) {
-    self.runway = runway
-    self.conditions = conditions
-    self.crosswindLimit = crosswindLimit
-    self.tailwindLimit = tailwindLimit
+    self.init(
+      headwind: runway.headwind(conditions: conditions),
+      crosswind: runway.crosswind(conditions: conditions),
+      crosswindLimit: crosswindLimit,
+      tailwindLimit: tailwindLimit
+    )
   }
 }
 

@@ -5,7 +5,7 @@ public import Foundation
 /// The SF50 Vision Jet has three flap positions (Up, 50%, 100%) which affect
 /// takeoff and landing performance. Ice protection variants account for the
 /// performance penalty when the ice protection system is active.
-public enum FlapSetting: Sendable {
+public enum FlapSetting: String, CaseIterable, Sendable {
   /// Flaps up (clean configuration)
   case flapsUp
   /// Flaps up with ice protection

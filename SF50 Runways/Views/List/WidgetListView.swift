@@ -18,8 +18,9 @@ struct WidgetListView: View {
         ForEach(runways, id: \.name) { runway in
           RunwayListItem(
             runway: runway,
-            takeoffDistance: entry.takeoffDistances?[runway.name],
-            conditions: entry.conditions
+            performance: entry.results?[runway.name],
+            conditions: entry.conditions,
+            operation: entry.operation
           )
         }
       } else {

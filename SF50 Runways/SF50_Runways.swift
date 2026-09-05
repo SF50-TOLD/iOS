@@ -1,35 +1,33 @@
-import SwiftData
+import AppIntents
+import SF50_Shared
 import SwiftUI
 import WidgetKit
 
-/// Widget displaying takeoff performance for all runways at the selected airport.
-///
-/// ``SelectedAirportPerformanceWidget`` shows a quick overview of whether takeoff
-/// is possible from each runway at the user's selected airport. It uses current
-/// weather conditions and the user's configured aircraft weight.
+/// Widget displaying takeoff or landing performance for every runway at a chosen airport.
 ///
 /// ## Supported Sizes
 ///
-/// - **Small**: Shows airport name and runway count
-/// - **Medium**: Shows individual runway performance details
+/// - **Small**: A pass/fail mark per runway
+/// - **Medium**: Required against available distance, with wind components
 ///
-/// ## Updates
+/// ## Configuration
 ///
-/// The widget automatically refreshes every 15 minutes for weather updates.
-/// Settings changes in the main app trigger immediate refresh.
+/// The airport, the leg, and the landing flap setting are all editable on the widget itself, so two
+/// pinned widgets can show departure and destination at the same time.
 struct SelectedAirportPerformanceWidget: Widget {
   let kind: String = "SF50_SelectedAirport"
 
   var body: some WidgetConfiguration {
-    return StaticConfiguration(
+    AppIntentConfiguration(
       kind: kind,
+      intent: SelectedAirportConfigurationIntent.self,
       provider: TOLDProvider()
     ) { entry in
       SelectedAirportWidgetEntryView(entry: entry)
     }
-    .configurationDisplayName("SF50 Selected Airport Performance")
+    .configurationDisplayName("SF50 Airport Performance")
     .description(
-      "Displays all runways at the takeoff airport, and whether a takeoff is possible from each runway. Uses the last supplied runway, payload, and fuel data, with current weather."
+      "Shows every runway at an airport and whether the aircraft can make it, using current weather and the payload and fuel entered in the app."
     )
     .supportedFamilies([.systemSmall, .systemMedium])
   }
