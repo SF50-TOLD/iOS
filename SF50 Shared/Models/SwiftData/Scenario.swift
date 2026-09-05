@@ -188,14 +188,6 @@ public final class Scenario {
 
   /// Converts the flap setting override to the FlapSetting enum type
   public func getFlapSettingOverride() -> FlapSetting? {
-    guard let flapString = flapSettingOverride else { return nil }
-    switch flapString {
-      case "flapsUp": return .flapsUp
-      case "flapsUpIce": return .flapsUpIce
-      case "flaps50": return .flaps50
-      case "flaps50Ice": return .flaps50Ice
-      case "flaps100": return .flaps100
-      default: return nil
-    }
+    flapSettingOverride.flatMap(FlapSetting.init(rawValue:))
   }
 }

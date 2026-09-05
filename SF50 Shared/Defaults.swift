@@ -185,6 +185,26 @@ extension Defaults.Keys {
   )
 }
 
+// MARK: - Selection by leg
+
+extension Operation {
+  /// The `recordID` of the airport the app has selected for this leg, if any.
+  public var selectedAirportRecordID: String? {
+    switch self {
+      case .takeoff: Defaults[.takeoffAirport]
+      case .landing: Defaults[.landingAirport]
+    }
+  }
+
+  /// The name of the runway the app has selected for this leg, if any.
+  public var selectedRunwayName: String? {
+    switch self {
+      case .takeoff: Defaults[.takeoffRunway]
+      case .landing: Defaults[.landingRunway]
+    }
+  }
+}
+
 // MARK: - Measurement
 
 public protocol DefaultUnitProvider {

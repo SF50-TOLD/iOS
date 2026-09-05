@@ -22,3 +22,17 @@ report_exclude:
   # framework. Shared dead code is gated by the cross-platform intersection job
   # in .github/workflows/periphery.yml, not by this pass.
   - "**/SF50 Shared/**"
+
+# App Intents declarations are found by the system through the metadata
+# `appintentsmetadataprocessor` extracts from each binary; nothing in this codebase ever names them, so
+# Periphery has no caller to follow and would report the entities, their queries, every `@Parameter`,
+# and the shortcuts provider as dead — along with everything they transitively reach. Retaining the
+# declaration files roots that whole surface.
+#
+# The cross-platform intersection job in .github/workflows/periphery.yml passes --report-include for
+# `SF50 Shared`, which supersedes report_exclude, so the framework's intents need this too.
+#
+# These folders hold declarations only. Anything with logic — the performance service, the app-group
+# store, the snippet view — lives outside them so it stays gated.
+retain_files:
+  - "**/SF50 Shared/AppIntents/**"

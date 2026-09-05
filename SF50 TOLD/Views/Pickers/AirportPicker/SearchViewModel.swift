@@ -22,34 +22,6 @@ final class SearchViewModel: WithIdentifiableError {
     self.container = container
   }
 
-  nonisolated private static func relevanceScore(for airport: Airport, searchText: String) -> Int {
-    if airport.locationID == searchText.uppercased() { return 3 }
-    if let ICAO_ID = airport.ICAO_ID, ICAO_ID == searchText.uppercased() { return 3 }
-    if airport.name.localizedStandardContains(searchText) { return 2 }
-    if let city = airport.city, city.localizedStandardContains(searchText) { return 1 }
-    return 0
-  }
-
-  nonisolated private static func nameSimilarity(_ name: String, to searchText: String) -> Double {
-    if name.localizedStandardEquals(searchText) { return 1.0 }
-    if name.localizedStandardHasPrefix(searchText) { return 0.8 }
-    if name.localizedStandardContains(searchText) { return 0.6 }
-
-    // Calculate simple similarity based on common characters
-    let commonChars = Set(name.localizedLowercase).intersection(Set(searchText.localizedLowercase))
-      .count
-    let totalChars = max(name.count, searchText.count)
-    return Double(commonChars) / Double(totalChars) * 0.4
-  }
-
-  nonisolated private static func citySimilarity(_ city: String?, to searchText: String) -> Double {
-    guard let city else { return 0.0 }
-    if city.localizedStandardEquals(searchText) { return 0.5 }
-    if city.localizedStandardHasPrefix(searchText) { return 0.4 }
-    if city.localizedStandardContains(searchText) { return 0.3 }
-    return 0.0
-  }
-
   private func debouncedSearch() {
     searchTask?.cancel()
     searchTask = Task {
@@ -93,34 +65,7 @@ final class SearchViewModel: WithIdentifiableError {
     -> sending [Airport]
   {
     let context = ModelContext(container)
-    let uppercaseText = searchText.uppercased()
-
-    let predicate = #Predicate<Airport> { airport in
-      airport.locationID == uppercaseText
-        || airport.name.localizedStandardContains(searchText)
-        || airport.ICAO_ID == uppercaseText
-        || airport.city?.localizedStandardContains(searchText) == true
-    }
-
-    let descriptor = FetchDescriptor(predicate: predicate)
-    let results = try context.fetch(descriptor)
-
-    // Pre-compute scores off the main actor to avoid redundant computation in
-    // the sort comparator (O(n) vs O(n log n) calls)
-    let scored: [(airport: Airport, relevance: Int, similarity: Double)] = results.map {
-      airport in
-      let relevance = Self.relevanceScore(for: airport, searchText: searchText)
-      let nameSim = Self.nameSimilarity(airport.name, to: searchText)
-      let citySim = Self.citySimilarity(airport.city, to: searchText)
-      return (airport: airport, relevance: relevance, similarity: max(nameSim, citySim))
-    }
-
-    let sorted = scored.sorted { a, b in
-      if a.relevance != b.relevance { return a.relevance > b.relevance }
-      if a.similarity != b.similarity { return a.similarity > b.similarity }
-      return a.airport.name.localizedStandardCompare(b.airport.name) == .orderedAscending
-    }
-
-    return Array(sorted.prefix(10).map(\.airport))
+    let descriptor = FetchDescriptor(predicate: Airport.searchPredicate(matching: searchText))
+    return Airport.ranked(try context.fetch(descriptor), matching: searchText)
   }
 }

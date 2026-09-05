@@ -21,7 +21,11 @@ struct WidgetGridView: View {
     LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
       if let runways {
         ForEach(runways, id: \.name) { runway in
-          RunwayGridItem(runway: runway, takeoffDistance: entry.takeoffDistances?[runway.name])
+          RunwayGridItem(
+            runway: runway,
+            performance: entry.results?[runway.name],
+            operation: entry.operation
+          )
         }
       } else {
         // Show realistic-looking fake runway data
