@@ -73,6 +73,9 @@ struct WeatherFieldLayer: View {
   /// Which field to draw.
   let layer: WeatherProfileLayer
 
+  /// The units the chart plots in, which positions read out of the proxy are interpreted through.
+  let scale: TerrainProfileScale
+
   var body: some View {
     GeometryReader { geometry in
       if let plotFrame = proxy.plotFrame, layer.needsAtmosphere, !atmosphere.isEmpty {
@@ -231,8 +234,8 @@ struct WeatherFieldLayer: View {
     while x < rect.maxX {
       let width = min(Self.stripWidth, rect.maxX - x)
       let strip = CGRect(x: x, y: rect.minY, width: width, height: rect.height)
-      if let distanceNM: Double = proxy.value(atX: strip.midX - rect.minX) {
-        body(strip, distanceNM)
+      if let axisDistance: Double = proxy.value(atX: strip.midX - rect.minX) {
+        body(strip, scale.distanceNM(atAxisValue: axisDistance))
       }
       x += width
     }
@@ -243,16 +246,16 @@ struct WeatherFieldLayer: View {
     y: CGFloat,
     rect: CGRect
   ) -> AtmosphericProfile.Level? {
-    guard let altitudeFt: Double = proxy.value(atY: y - rect.minY) else { return nil }
+    guard let axisAltitude: Double = proxy.value(atY: y - rect.minY) else { return nil }
     return atmosphere.level(
       atDistanceNM: distanceNM,
-      altitude: .init(value: altitudeFt, unit: .feet)
+      altitude: scale.altitude(atAxisValue: axisAltitude)
     )
   }
 
   /// Where an altitude falls in the plot area, or `nil` if it falls outside it.
   private func position(forAltitude altitude: Measurement<UnitLength>, rect: CGRect) -> CGFloat? {
-    guard let offset = proxy.position(forY: altitude.converted(to: .feet).value) else { return nil }
+    guard let offset = proxy.position(forY: scale.axisAltitude(altitude)) else { return nil }
     let y = rect.minY + offset
     return (rect.minY...rect.maxY).contains(y) ? y : nil
   }
