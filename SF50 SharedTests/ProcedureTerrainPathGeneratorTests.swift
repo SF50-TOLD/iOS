@@ -162,6 +162,41 @@ struct ProcedureTerrainPathTests {
     let path = ProcedureTerrainPath(corridorWidthNM: 0.25, points: points)
     #expect(!path.obstacleDataAvailable)
   }
+
+  // MARK: - altitudeAGL
+
+  /// An undownloaded region is not ground at field elevation, and a height above it would be the
+  /// one number the chart must not invent.
+  @Test
+  func altitudeAGLIsUnknownWithoutTerrain() {
+    #expect(point(aircraftAltitudeFt: 3800, terrainElevationFt: nil).altitudeAGL == nil)
+  }
+
+  /// Signed rather than clamped, so a path drawn through a ridge reads as being inside it.
+  @Test
+  func altitudeAGLGoesNegativeBelowTheTerrain() throws {
+    let point = point(aircraftAltitudeFt: 2400, terrainElevationFt: 2600)
+    let altitudeAGL = try #require(point.altitudeAGL)
+    #expect(altitudeAGL.converted(to: .feet).value.isApproximatelyEqual(to: -200))
+  }
+
+  // MARK: - Helpers
+
+  private func point(
+    aircraftAltitudeFt: Double,
+    terrainElevationFt: Double?
+  ) -> ProcedureTerrainPath.Point {
+    .init(
+      coordinate: CLLocationCoordinate2D(latitude: 37.0, longitude: -122.0),
+      distanceNM: 5,
+      track: .init(value: 0, unit: .degrees),
+      aircraftAltitudeFt: aircraftAltitudeFt,
+      altitudeRestriction: nil,
+      fixName: nil,
+      terrainElevationFt: terrainElevationFt,
+      maxObstacleHeightFt: nil
+    )
+  }
 }
 
 struct ProcedureTerrainPathGeneratorTests {

@@ -23,13 +23,6 @@ public enum AltitudeRestriction: Sendable, Hashable {
   /// Must cross between minimum and maximum altitudes
   case between(min: Measurement<UnitLength>, max: Measurement<UnitLength>)
 
-  nonisolated(unsafe) private static let measurementFormatter: MeasurementFormatter = {
-    let formatter = MeasurementFormatter()
-    formatter.unitOptions = .providedUnit
-    formatter.numberFormatter.maximumFractionDigits = 0
-    return formatter
-  }()
-
   /// Raw type string for persistence.
   var type: String {
     switch self {
@@ -60,28 +53,6 @@ public enum AltitudeRestriction: Sendable, Hashable {
     }
   }
 
-  // periphery:ignore - intentional-completeness helper over the persisted restriction schema
-  /// Human-readable description of the altitude restriction.
-  public var description: String {
-    let formatter = Self.measurementFormatter
-
-    switch self {
-      case .at(let altitude):
-        let feet = altitude.converted(to: .feet)
-        return "At \(formatter.string(from: feet))"
-      case .atOrAbove(let altitude):
-        let feet = altitude.converted(to: .feet)
-        return "At or above \(formatter.string(from: feet))"
-      case .atOrBelow(let altitude):
-        let feet = altitude.converted(to: .feet)
-        return "At or below \(formatter.string(from: feet))"
-      case .between(let min, let max):
-        let minFeet = min.converted(to: .feet)
-        let maxFeet = max.converted(to: .feet)
-        return "Between \(formatter.string(from: minFeet)) and \(formatter.string(from: maxFeet))"
-    }
-  }
-
   /// Creates altitude restriction from persistence storage values.
   init?(type: String?, altitudeMin: Double?, altitudeMax: Double?) {
     guard let type, let typeEnum = RestrictionType(rawValue: type) else { return nil }
@@ -102,6 +73,24 @@ public enum AltitudeRestriction: Sendable, Hashable {
           min: .init(value: altitudeMin, unit: .meters),
           max: .init(value: altitudeMax, unit: .meters)
         )
+    }
+  }
+
+  /// How the restriction reads to a pilot, in the unit they chose to see altitudes in.
+  ///
+  /// - Parameter unit: The unit to state the altitudes in.
+  /// - Returns: A phrase naming the constraint and the altitudes it holds the aircraft to.
+  public func description(in unit: UnitLength) -> String {
+    switch self {
+      case .at(let altitude):
+        return String(localized: "At \(altitude.converted(to: unit), format: .height)")
+      case .atOrAbove(let altitude):
+        return String(localized: "At or above \(altitude.converted(to: unit), format: .height)")
+      case .atOrBelow(let altitude):
+        return String(localized: "At or below \(altitude.converted(to: unit), format: .height)")
+      case .between(let minimum, let maximum):
+        let low = minimum.converted(to: unit), high = maximum.converted(to: unit)
+        return String(localized: "Between \(low, format: .height) and \(high, format: .height)")
     }
   }
 

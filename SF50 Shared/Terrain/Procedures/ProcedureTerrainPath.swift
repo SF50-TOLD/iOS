@@ -46,6 +46,14 @@ public struct ProcedureTerrainPath: Sendable {
     return .init(value: max(maxAircraft, maxTerrain), unit: .feet)
   }
 
+  /// The sample nearest a distance along the path.
+  ///
+  /// - Parameter distanceNM: Distance from the path origin, in nautical miles.
+  /// - Returns: The closest point, or `nil` if the path has none.
+  public func point(nearestToDistanceNM distanceNM: Double) -> Point? {
+    points.min { abs($0.distanceNM - distanceNM) < abs($1.distanceNM - distanceNM) }
+  }
+
   /// A single point along the terrain-enriched path.
   public struct Point: Sendable {
     /// Geographic coordinate of this path point.
@@ -68,5 +76,22 @@ public struct ProcedureTerrainPath: Sendable {
     /// Height in feet MSL of the tallest obstacle within the corridor at this point,
     /// or nil if no obstacle was found.
     public let maxObstacleHeightFt: Double?
+
+    /// The aircraft's altitude here, above mean sea level.
+    public var altitudeMSL: Measurement<UnitLength> {
+      .init(value: aircraftAltitudeFt, unit: .feet)
+    }
+
+    /// The aircraft's height above the terrain here, or `nil` where the region covering this point
+    /// has not been downloaded.
+    ///
+    /// Nil rather than zero: nothing is known about the ground there, including whether the path
+    /// clears it. Signed rather than clamped, so a path drawn through a ridge reads as being below
+    /// it. Measured against the terrain alone — an obstacle standing on it is a separate mark on
+    /// the chart, and folding one into a height above ground would misname it.
+    public var altitudeAGL: Measurement<UnitLength>? {
+      guard let terrainElevationFt else { return nil }
+      return .init(value: aircraftAltitudeFt - terrainElevationFt, unit: .feet)
+    }
   }
 }
