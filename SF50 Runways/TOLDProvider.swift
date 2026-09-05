@@ -1,57 +1,61 @@
-import Combine
-import Defaults
-import SwiftData
+import AppIntents
+import SF50_Shared
 import SwiftUI
 import WidgetKit
 
-/// Timeline provider for the SF50 TOLD widget.
-///
-/// ``TOLDProvider`` supplies timeline entries containing runway performance data.
-/// The timeline refreshes every 15 minutes to capture weather changes, with
-/// immediate refresh available via `WidgetCenter.reloadTimelines` when settings change.
+/// Timeline provider for the SF50 Runways widget.
 ///
 /// ## Timeline Behavior
 ///
-/// - **Snapshot**: Returns current performance for quick preview
-/// - **Timeline**: Returns entries with 15-minute refresh policy
-/// - **Placeholder**: Shows empty state while loading
-struct TOLDProvider: TimelineProvider {
-  private let performanceCalculator: PerformanceCalculator
-
-  @MainActor
-  init() {
-    self.performanceCalculator = PerformanceCalculator()
-  }
-
+/// - **Placeholder**: An empty entry, drawn redacted while the widget loads
+/// - **Snapshot**: A fixed sample for the gallery, or one real entry for a live preview
+/// - **Timeline**: One entry with a 15-minute refresh policy, so a new METAR is picked up
+///
+/// Settings changes in the app trigger an immediate refresh through
+/// `WidgetCenter.reloadTimelines(ofKind:)`.
+struct TOLDProvider: AppIntentTimelineProvider {
   func placeholder(in _: Context) -> RunwayWidgetEntry { .empty() }
 
-  func getSnapshot(in context: Context, completion: @escaping @Sendable (RunwayWidgetEntry) -> Void)
-  {
-    let placeholderEntry = placeholder(in: context)
-    Task { @MainActor in
-      let entries = await performanceCalculator.generateEntries()
-      guard let entry = entries.first else {
-        completion(placeholderEntry)
-        return
-      }
-      completion(entry)
+  func snapshot(
+    for configuration: SelectedAirportConfigurationIntent,
+    in context: Context
+  ) async -> RunwayWidgetEntry {
+    guard !context.isPreview else {
+      return await .sample(operation: configuration.operation)
     }
+    return await entry(for: configuration)
   }
 
-  func getTimeline(
-    in _: Context,
-    completion: @escaping @Sendable (Timeline<RunwayWidgetEntry>) -> Void
-  ) {
-    Task { @MainActor in
-      let entries = await performanceCalculator.generateEntries()
-      // Refresh every 15 minutes for weather updates
-      // Settings changes will trigger immediate refresh via WidgetCenter.reloadTimelines
-      completion(
-        .init(
-          entries: entries,
-          policy: .after(Date().addingTimeInterval(900))
+  func timeline(
+    for configuration: SelectedAirportConfigurationIntent,
+    in _: Context
+  ) async -> Timeline<RunwayWidgetEntry> {
+    .init(
+      entries: [await entry(for: configuration)],
+      policy: .after(Date().addingTimeInterval(Self.refreshInterval))
+    )
+  }
+}
+
+extension TOLDProvider {
+  /// Weather is republished hourly, so a quarter-hour cadence picks up a new observation promptly
+  /// without asking the system for a budget it will not grant.
+  private static let refreshInterval: TimeInterval = 900
+
+  private func entry(for configuration: SelectedAirportConfigurationIntent) async
+    -> RunwayWidgetEntry
+  {
+    let operation = configuration.operation
+    do {
+      let performance = try await RunwayPerformanceService()
+        .performance(
+          airportRecordID: configuration.airport?.id,
+          operation: operation,
+          flapSetting: configuration.flapSetting
         )
-      )
+      return .init(date: Date(), performance: performance)
+    } catch {
+      return .empty(operation: operation)
     }
   }
 }
