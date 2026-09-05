@@ -127,6 +127,9 @@ struct TerrainProfileChartView: View {
       }
     }
     .chartXSelection(value: $selectedDistance)
+    // The selection is held in the axis's own unit, so a change of unit would silently reinterpret
+    // it — 10 NM becoming 10 km — and move the rule somewhere the pilot never scrubbed.
+    .onChange(of: distanceUnit) { selectedDistance = nil }
     .accessibilityIdentifier("terrainProfileChart")
     .accessibilityChartDescriptor(
       TerrainProfileChartDescriptor(
@@ -157,7 +160,9 @@ struct TerrainProfileChartView: View {
     // independent mark that won't get hidden by the gray AreaMark series.
     ForEach(Array(chartPoints.dropLast().enumerated()), id: \.offset) { index, _ in
       let nextIndex = index + 1
-      let isImpact = interceptsTerrain(at: index) || interceptsTerrain(at: nextIndex)
+      let isImpact =
+        interceptsTerrain(at: index, terrain: terrain)
+        || interceptsTerrain(at: nextIndex, terrain: terrain)
       RectangleMark(
         xStart: .value("Start", scale.axisDistance(nm: chartPoints[index].distanceNM)),
         xEnd: .value("End", scale.axisDistance(nm: chartPoints[nextIndex].distanceNM)),
@@ -360,9 +365,15 @@ struct TerrainProfileChartView: View {
     .map { .init(distanceNM: $0.distanceNM, altitudeFt: $0.altitude.converted(to: .feet).value) }
   }
 
-  private func interceptsTerrain(at index: Int) -> Bool {
+  /// Whether the aircraft is at or below the terrain at this sample.
+  ///
+  /// The filled terrain is passed in rather than derived here. Deriving it maps every point, and this
+  /// is called twice per segment across a path of up to a thousand of them, so deriving it inside
+  /// would rebuild the whole array a couple of thousand times to read one element from each — while
+  /// scrubbing re-evaluates the chart body on every frame of the drag.
+  private func interceptsTerrain(at index: Int, terrain: [Double]) -> Bool {
     let point = chartPoints[index]
-    let terrainFt = filledTerrainFt[index]
+    let terrainFt = terrain[index]
     let airborne = point.aircraftAltitudeFt > fieldElevationFt + Self.screenHeightFt
     return airborne && terrainFt > fieldElevationFt && point.aircraftAltitudeFt <= terrainFt
   }
