@@ -320,6 +320,12 @@ final class TerrainProcessorViewModel {
           comment: "Status message when generating terrain manifest"
         )
 
+      case .packaging(let region):
+        statusMessage = String(
+          localized: "Packaging \(region.displayName)…",
+          comment: "Status message when packaging a terrain region as an asset pack"
+        )
+
       case .uploading(let region, let fraction):
         uploadProgress[region]?.completedUnitCount = Int64(fraction * 100)
         statusMessage = String(
