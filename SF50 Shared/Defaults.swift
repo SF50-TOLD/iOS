@@ -7,7 +7,20 @@ public import SwiftData
 nonisolated(unsafe) private let groupDefaults = UserDefaults(suiteName: "group.codes.tim.TOLD")!
 public let latestSchemaVersion = 7
 
+extension TerrainRegion: Defaults.Serializable {}
+
 extension Defaults.Keys {
+  /// Terrain regions the pilot has asked for, whether or not a payload is on disk right now.
+  ///
+  /// Asset packs are purgeable: the system reclaims one under storage pressure without telling
+  /// the app, leaving a region that looks exactly like one nobody ever downloaded. This is the
+  /// record that tells those two apart, so a reclaimed region can say so rather than quietly
+  /// reverting to “not downloaded”.
+  public static let requestedTerrainRegions = Key<Set<TerrainRegion>>(
+    "SF50/3/requestedTerrainRegions",
+    default: [],
+    suite: groupDefaults
+  )
   public static let emptyWeight = Key<Measurement<UnitMass>>(
     "SF50/3/emptyWeight",
     default: .init(value: 3550, unit: .pounds),
