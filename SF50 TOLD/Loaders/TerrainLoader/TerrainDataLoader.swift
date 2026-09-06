@@ -1,5 +1,6 @@
 import BackgroundAssets
 import Combine
+import Defaults
 import Foundation
 import os
 import Sentry
@@ -105,6 +106,11 @@ final class TerrainDataLoader: ObservableObject {
     terrainDirectory.map { .init(directory: $0, manifest: .bundled) }
   }
 
+  /// Says where each region's payload is, across the shared container and the asset-pack store.
+  nonisolated private var locator: TerrainPayloadLocator {
+    .init(inventory: inventory, requestedRegions: Defaults[.requestedTerrainRegions])
+  }
+
   // MARK: - Initializers
 
   init() {
@@ -127,7 +133,7 @@ final class TerrainDataLoader: ObservableObject {
   /// Returns the URL to the terrain data file for a region, if available.
   func terrainFileURL(for region: TerrainRegion) -> URL? {
     guard isRegionAvailable(region) else { return nil }
-    return payloadURL(for: region)
+    return locator.state(of: region).url
   }
 
   /// Queries `BADownloadManager` for active Background Assets downloads.
@@ -192,21 +198,29 @@ final class TerrainDataLoader: ObservableObject {
   /// Reads what the shared container holds for every region not already known to be corrupt.
   @concurrent
   private func scanRegions(excluding corrupted: Set<TerrainRegion>) async -> RegionScan {
-    guard let inventory else { return .init() }
+    let inventory = inventory
+    let locator = locator
 
     var scan = RegionScan()
     for region in TerrainRegion.allCases where !corrupted.contains(region) {
-      if inventory.removeLegacyCompressedPayload(for: region) {
+      if inventory?.removeLegacyCompressedPayload(for: region) == true {
         logger.info("Reclaimed a v2-era compressed payload for \(region.rawValue)")
       }
-      switch inventory.state(of: region) {
-        case .complete:
-          scan.available.insert(region)
-        case .incomplete(let bytesOnDisk, let expectedBytes):
+
+      if case .incomplete(let bytesOnDisk, let expectedBytes) = inventory?.state(of: region) {
+        logger.info("Payload for \(region.rawValue) is \(bytesOnDisk) of \(expectedBytes) bytes")
+        scan.unfinished.insert(region)
+        continue
+      }
+
+      switch locator.state(of: region) {
+        case .installed(_, let source):
           logger.info(
-            "Payload for \(region.rawValue) is \(bytesOnDisk) of \(expectedBytes) bytes"
+            "Terrain for \(region.rawValue) is available from \(String(describing: source))"
           )
-          scan.unfinished.insert(region)
+          scan.available.insert(region)
+        case .purged:
+          logger.notice("Terrain for \(region.rawValue) was requested but is no longer on disk")
         case .absent:
           break
       }
@@ -220,6 +234,7 @@ final class TerrainDataLoader: ObservableObject {
       try? FileManager.default.removeItem(at: payloadURL)
     }
     inventory?.removeLegacyCompressedPayload(for: region)
+    Defaults[.requestedTerrainRegions].remove(region)
     unfinishedRegions.remove(region)
 
     availableRegions.remove(region)
@@ -253,6 +268,7 @@ final class TerrainDataLoader: ObservableObject {
       return
     }
 
+    Defaults[.requestedTerrainRegions].insert(region)
     downloadingRegions.insert(region)
     state = .downloading(region: region, progress: nil)
 

@@ -16,6 +16,8 @@
 	<string>$(NOTAM_API_TOKEN)</string>
 	<key>OPEN_METEO_API_KEY</key>
 	<string>$(OPEN_METEO_API_KEY)</string>
+	<key>BAAppGroupID</key>
+	<string>group.codes.tim.TOLD</string>
 	<key>BAManifestURL</key>
 	<string>https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/terrain-manifest-v3.json</string>
 	<key>BAMaxInstallSize</key>
