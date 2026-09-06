@@ -6,7 +6,7 @@ How terrain data is downloaded, processed, and distributed.
 
 The terrain processing pipeline downloads SRTM elevation data, combines it into optimized regional files, and uploads to CloudFlare R2 for distribution. This build-time tool generates the terrain files that `TerrainService` loads at runtime.
 
-The pipeline processes ~14,000 individual 1×1 degree tiles into 11 regional files. Each tile is individually compressed with LZFSE, then the regional files are LZMA-compressed for download, reducing total download size from ~40 GB (raw) to ~3 GB.
+The pipeline processes ~14,000 individual 1×1 degree tiles into 11 regional files. Each tile is individually compressed with LZFSE, reducing the total from ~40 GB raw to ~30 GB. Each regional file is then packaged as a Background Assets asset pack, which the system downloads, verifies, and decompresses on the device's behalf.
 
 ## Data Sources
 
@@ -101,32 +101,62 @@ All tiles for a region are combined into a single v3 binary file with:
 
 The file format uses little-endian byte order (native to Apple platforms) for efficient on-demand access via `pread`.
 
-### 6. LZMA Compression
-
-The combined v3 binary is further compressed using LZMA for download distribution. LZMA compression on top of LZFSE still achieves meaningful additional compression, since LZFSE is a lightweight algorithm that leaves room for LZMA to find further patterns.
-
-### 7. Generate Manifest
+### 6. Generate Manifest
 
 A JSON manifest is generated containing:
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "generatedAt": "2024-01-15T10:30:00Z",
   "baseURL": "https://example.r2.dev/terrain/",
   "regions": [
     {
       "id": "na",
-      "filename": "terrain-na.srtm.lzma",
-      "sizeBytes": 891234567
+      "filename": "terrain-na.srtm",
+      "sizeBytes": 5115763576
     }
   ]
 }
 ```
 
-### 8. Upload to R2
+This manifest ships inside the app, where it supplies the payload sizes the
+terrain settings screen displays. It is not what Background Assets reads.
 
-Compressed files and manifest are uploaded to CloudFlare R2 for CDN distribution. The app downloads terrain data from this URL at runtime.
+### 7. Package Asset Packs
+
+``AssetPackPublisher`` turns each regional payload into a self-hosted asset
+pack, using Xcode's `ba-package` tool. Every pack's ID is the region's
+`downloadIdentifier` — `terrain-na` and so on — and its `userInfo` carries the
+region ID.
+
+Packs are published with a `prefetch` download policy so the system offers all
+of them at install time; the app's Background Assets extension then narrows them
+to the one matching the device's locale.
+
+An archive that already postdates its payload is reused rather than rebuilt, so
+reprocessing one region does not repackage the other ten.
+
+### 8. Write the Download Manifest
+
+`ba-package download-manifest` writes the index Background Assets reads,
+published as `terrain-asset-packs-ios.json`. Each entry's download URL is the
+base URL with the pack ID appended, so a pack's R2 object key is
+`terrain-packs/<pack ID>` with no extension.
+
+Only rebuilt packs have their versions incremented, because a device
+re-downloads a pack when its version rises. The publisher therefore runs
+`download-manifest update` against the currently published manifest — fetching
+it first if this machine has no local copy — and falls back to
+`download-manifest create` only when there is no prior manifest to carry
+versions forward from.
+
+### 9. Upload to R2
+
+The regional payloads, the asset-pack archives, the bundled manifest, and the
+download manifest are uploaded to CloudFlare R2 for CDN distribution. Archives
+go up before the download manifest that indexes them, so a device never reads a
+manifest naming a pack the bucket cannot serve yet.
 
 ## Output Format
 
@@ -136,7 +166,8 @@ The output binary format is documented in detail in the SF50 Shared framework's 
 - **Resolution**: 1201 samples per tile side (SRTM3)
 - **Byte order**: Little-endian (native to Apple platforms)
 - **On-disk compression**: LZFSE per tile (decompressed on demand at runtime)
-- **Download compression**: LZMA on top of v3 (decompressed once after download)
+- **Download packaging**: one Background Assets asset pack per region (`.aar`),
+  which the system decompresses on installation
 
 ## Key Components
 
@@ -192,8 +223,8 @@ enum TerrainProgress {
     case pending
     case downloading(region: TerrainRegion, completed: Int, total: Int)
     case parsing(region: TerrainRegion, completed: Int, total: Int)
-    case compressing(region: TerrainRegion, fraction: Double)
     case generatingManifest
+    case packaging(region: TerrainRegion)
     case uploading(region: TerrainRegion, fraction: Double)
     case uploadingManifest
     case completed
@@ -205,6 +236,7 @@ enum TerrainProgress {
 ## See Also
 
 - ``SRTMProcessor``
+- ``AssetPackPublisher``
 - ``HGTParser``
 - ``GeoTIFFParser``
 - ``TileProcessing``
