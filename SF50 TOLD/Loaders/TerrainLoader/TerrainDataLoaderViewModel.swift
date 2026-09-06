@@ -91,12 +91,6 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
       }
       .store(in: &cancellables)
 
-    loader.$expandingRegions
-      .sink { [weak self] _ in
-        self?.objectWillChange.send()
-      }
-      .store(in: &cancellables)
-
     loader.$corruptedRegions
       .sink { [weak self] _ in
         self?.objectWillChange.send()
@@ -155,9 +149,6 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     }
     if isDownloading(region) {
       return .downloading(progress: downloadProgress(for: region))
-    }
-    if loader.expandingRegions.contains(region) {
-      return .downloading(progress: nil)
     }
     if loader.corruptedRegions.contains(region) {
       return .corrupted
@@ -234,8 +225,6 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
         downloadState = .idle
       case .downloading(let region, let progress):
         downloadState = .downloading(region: region, progress: progress)
-      case .expanding(let region):
-        downloadState = .expanding(region: region)
       case .completed:
         downloadState = .idle
       case .failed(_, let message):
@@ -250,7 +239,6 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
   enum DownloadState: Equatable {
     case idle
     case downloading(region: TerrainRegion, progress: Float?)
-    case expanding(region: TerrainRegion)
   }
 
   /// Status of a single region.

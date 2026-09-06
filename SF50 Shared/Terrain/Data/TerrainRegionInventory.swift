@@ -15,9 +15,6 @@ public enum TerrainRegionFileState: Equatable, Sendable {
   /// The payload is present at its full manifest size and ready to load.
   case complete
 
-  /// An LZMA-compressed payload is present and must be expanded before the region can be used.
-  case legacyCompressed
-
   // MARK: - Instance Properties
 
   /// Whether reaching a usable payload from here means fetching one.
@@ -26,7 +23,7 @@ public enum TerrainRegionFileState: Equatable, Sendable {
   public var needsDownload: Bool {
     switch self {
       case .absent, .incomplete: true
-      case .complete, .legacyCompressed: false
+      case .complete: false
     }
   }
 }
@@ -85,18 +82,25 @@ public struct TerrainRegionInventory: Sendable {
         ? .complete
         : .incomplete(bytesOnDisk: bytesOnDisk, expectedBytes: expectedBytes)
     }
-    if byteCount(of: legacyCompressedURL(for: region)) != nil { return .legacyCompressed }
     return .absent
+  }
+
+  /// Deletes any v2-era compressed payload left over for `region`, and says whether it found one.
+  ///
+  /// Nothing expands these any more, so one left in place is several gigabytes that the app can
+  /// neither use nor offer to delete. Reclaiming it on sight is the only way a device that
+  /// skipped the expansion window gets that space back.
+  @discardableResult
+  public func removeLegacyCompressedPayload(for region: TerrainRegion) -> Bool {
+    let url = directory.appendingPathComponent("terrain-\(region.rawValue).srtm.lzma")
+    guard FileManager.default.fileExists(atPath: url.path) else { return false }
+    try? FileManager.default.removeItem(at: url)
+    return true
   }
 
   /// Where `region`'s payload is stored once it is ready to load.
   public func localURL(for region: TerrainRegion) -> URL {
     directory.appendingPathComponent(region.localFilename)
-  }
-
-  /// Where `region`'s LZMA-compressed payload sits while it awaits expansion.
-  public func legacyCompressedURL(for region: TerrainRegion) -> URL {
-    directory.appendingPathComponent(region.legacyCompressedFilename)
   }
 
   /// Moves a finished download into place as `region`'s payload.
