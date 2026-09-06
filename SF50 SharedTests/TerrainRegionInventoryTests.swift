@@ -59,15 +59,43 @@ struct TerrainRegionInventoryTests {
     #expect(inventory.state(of: .midAtlantic) == .absent)
   }
 
-  /// A compressed payload is usable, but only after an expansion step, so it can't read as either
-  /// absent or complete.
+  /// Nothing expands v2-era payloads any more, so a leftover has to read as absent — otherwise the
+  /// region looks like it holds something usable and never offers to download.
   @Test
-  func `legacy compressed payload is distinct from absent`() throws {
+  func `a leftover compressed payload reads as absent`() throws {
     let directory = try makeDirectory()
     try write(byteCount: Self.expectedBytes, to: directory, named: "terrain-ma.srtm.lzma")
 
     let inventory = try makeInventory(in: directory)
-    #expect(inventory.state(of: .midAtlantic) == .legacyCompressed)
+    #expect(inventory.state(of: .midAtlantic) == .absent)
+  }
+
+  /// A leftover runs to gigabytes the app can neither use nor offer to delete, so finding one has
+  /// to reclaim it. Reporting whether it found one is what lets the caller say so.
+  @Test
+  func `a leftover compressed payload is reclaimed once`() throws {
+    let directory = try makeDirectory()
+    try write(byteCount: Self.expectedBytes, to: directory, named: "terrain-ma.srtm.lzma")
+    let inventory = try makeInventory(in: directory)
+
+    #expect(inventory.removeLegacyCompressedPayload(for: .midAtlantic))
+    #expect(
+      !FileManager.default.fileExists(
+        atPath: directory.appendingPathComponent("terrain-ma.srtm.lzma").path
+      )
+    )
+    #expect(!inventory.removeLegacyCompressedPayload(for: .midAtlantic))
+  }
+
+  /// Reclaiming must not touch the payload the region actually uses.
+  @Test
+  func `reclaiming a leftover leaves a ready payload alone`() throws {
+    let directory = try makeDirectory()
+    try write(byteCount: Self.expectedBytes, to: directory, named: "ma.srtm")
+    let inventory = try makeInventory(in: directory)
+
+    #expect(!inventory.removeLegacyCompressedPayload(for: .midAtlantic))
+    #expect(inventory.state(of: .midAtlantic) == .complete)
   }
 
   /// A region the manifest says nothing about can't be size-checked, so it can never be complete.
@@ -133,7 +161,6 @@ struct TerrainRegionInventoryTests {
     #expect(TerrainRegionFileState.incomplete(bytesOnDisk: 512, expectedBytes: 1024).needsDownload)
     #expect(TerrainRegionFileState.absent.needsDownload)
     #expect(!TerrainRegionFileState.complete.needsDownload)
-    #expect(!TerrainRegionFileState.legacyCompressed.needsDownload)
   }
 
   // MARK: - Fixtures

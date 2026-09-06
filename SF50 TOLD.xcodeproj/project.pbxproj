@@ -18,7 +18,6 @@
 		0163BC742DDEE9D4008FEE8F /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6B2DE2F463000D9ADC /* Logging */; };
 		0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
-		01441A6D2F35872E005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6C2F35872E005A8A76 /* StreamingLZMA */; };
 		01441A6F2F358738005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6E2F358738005A8A76 /* StreamingLZMA */; };
 		014457DA2F3125DB003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457D92F3125DB003ADBCD /* RealModule */; };
 		01591FF02FCA2ACC007FB6BB /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01591FEF2FCA2ACC007FB6BB /* XCUITestKit */; };
@@ -336,7 +335,6 @@
 				0198B44E2E986226003CB126 /* Sentry in Frameworks */,
 				01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */,
 				01714C802F234A7E003DADCF /* Algorithms in Frameworks */,
-				01441A6D2F35872E005A8A76 /* StreamingLZMA in Frameworks */,
 				0179DF402DE2F7A9002EC77C /* Logging in Frameworks */,
 				0179DF3E2DE2F7A9002EC77C /* SwiftNASR in Frameworks */,
 				012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */,
@@ -568,7 +566,6 @@
 				01BEBCB72E8A401100631DE6 /* SwiftHtml */,
 				602F51ECCC3348DE83D26B3E /* Sentry */,
 				01714C7F2F234A7E003DADCF /* Algorithms */,
-				01441A6C2F35872E005A8A76 /* StreamingLZMA */,
 			);
 			productName = "SF50 TOLD";
 			productReference = 0163BC6A2DDEE9D3008FEE8F /* SF50 TOLD.app */;
@@ -1913,11 +1910,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 01D1E3112DDF890100C1CAC8 /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
-		};
-		01441A6C2F35872E005A8A76 /* StreamingLZMA */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 0171E9752F2C57DD006457E2 /* XCRemoteSwiftPackageReference "StreamingLZMA" */;
-			productName = StreamingLZMA;
 		};
 		01441A6E2F358738005A8A76 /* StreamingLZMA */ = {
 			isa = XCSwiftPackageProductDependency;
