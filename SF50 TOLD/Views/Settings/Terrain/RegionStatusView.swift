@@ -25,6 +25,18 @@ struct RegionStatusView: View {
         .foregroundStyle(.red)
         .font(.subheadline)
 
+      case .purged:
+        HStack {
+          Text("Removed for space")
+          Button("Download") { onDownload() }
+            .buttonStyle(.bordered)
+            .foregroundStyle(.primary)
+            .controlSize(.small)
+            .accessibilityIdentifier("terrainDownload-\(regionCode)")
+        }
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+
       case .notDownloaded:
         Button("Download") { onDownload() }
           .buttonStyle(.bordered)
@@ -52,6 +64,10 @@ struct RegionStatusView: View {
 
     LabeledContent("Corrupted") {
       RegionStatusView(status: .corrupted, regionCode: "na", onDownload: {}, onRedownload: {})
+    }
+
+    LabeledContent("Removed for Space") {
+      RegionStatusView(status: .purged, regionCode: "na", onDownload: {}, onRedownload: {})
     }
 
     LabeledContent("Not Downloaded") {

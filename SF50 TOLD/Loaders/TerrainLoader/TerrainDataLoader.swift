@@ -60,6 +60,16 @@ final class TerrainDataLoader: ObservableObject {
   /// Regions whose files exist on disk but failed to load (corrupt or unreadable).
   @Published private(set) var corruptedRegions: Set<TerrainRegion> = []
 
+  /// Regions the pilot asked for whose payload is gone.
+  ///
+  /// Asset packs are purgeable, so the system reclaims one when storage runs short and does not
+  /// tell the app. Left unsaid, a region a pilot downloaded for a flight would quietly read as
+  /// never downloaded.
+  @Published private(set) var purgedRegions: Set<TerrainRegion> = []
+
+  /// Newly purged regions the pilot has not been told about yet.
+  @Published private(set) var unannouncedPurgedRegions: Set<TerrainRegion> = []
+
   /// Logger for debug output.
   nonisolated private let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",
@@ -155,6 +165,20 @@ final class TerrainDataLoader: ObservableObject {
     TerrainRegion.region(forDownloadIdentifier: pack.id)
   }
 
+  /// Takes up what a scan found missing, and works out what the pilot has yet to be told.
+  ///
+  /// Only regions that were not already known missing are announced, so repeated scans — every
+  /// return to the foreground runs one — do not re-raise the same alert.
+  private func notePurgedRegions(_ purged: Set<TerrainRegion>) {
+    unannouncedPurgedRegions.formUnion(purged.subtracting(purgedRegions))
+    purgedRegions = purged
+  }
+
+  /// Marks the purge as told, so it stops raising an alert.
+  func acknowledgePurgedRegions() {
+    unannouncedPurgedRegions.removeAll()
+  }
+
   /// Records how far along the system's download of `region` is.
   func backgroundDownloadDidProgress(region: TerrainRegion, fraction: Double) {
     backgroundDownloadingRegions.insert(region)
@@ -190,6 +214,7 @@ final class TerrainDataLoader: ObservableObject {
 
       availableRegions = scan.available
       unfinishedRegions = scan.unfinished
+      notePurgedRegions(scan.purged)
       logger.info("Available terrain regions: \(scan.available.map(\.rawValue))")
 
       loadAvailableRegionsIntoService()
@@ -222,6 +247,7 @@ final class TerrainDataLoader: ObservableObject {
           scan.available.insert(region)
         case .purged:
           logger.notice("Terrain for \(region.rawValue) was requested but is no longer on disk")
+          scan.purged.insert(region)
         case .absent:
           break
       }
@@ -431,6 +457,7 @@ final class TerrainDataLoader: ObservableObject {
   private struct RegionScan {
     var available: Set<TerrainRegion> = []
     var unfinished: Set<TerrainRegion> = []
+    var purged: Set<TerrainRegion> = []
   }
 
   /// Current download state.
