@@ -17,6 +17,9 @@ enum TerrainProgress: Sendable {
   /// Writing manifest file.
   case generatingManifest
 
+  /// Packaging a region's payload into an asset-pack archive.
+  case packaging(region: TerrainRegion)
+
   /// Uploading region to R2 (fraction 0.0-1.0).
   case uploading(region: TerrainRegion, fraction: Double)
 

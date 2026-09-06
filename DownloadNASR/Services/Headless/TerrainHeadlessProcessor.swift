@@ -110,6 +110,8 @@ enum TerrainHeadlessProcessor {
         logger.notice("Parsing \(region.displayName): \(completed) of \(total)")
       case .generatingManifest:
         logger.notice("Generating manifest…")
+      case .packaging(let region):
+        logger.notice("Packaging \(region.displayName) as an asset pack…")
       case .uploading(let region, let fraction):
         logger.notice("Uploading \(region.displayName): \(Int(fraction * 100))%")
       case .uploadingManifest:
