@@ -31,6 +31,10 @@ struct TerrainSettingsView: View {
             }
           }
         }
+      } footer: {
+        Text(
+          "iOS can remove downloaded terrain when your device runs low on storage. A region it removed shows as “Removed for space” and can be downloaded again."
+        )
       }
 
       Section {
