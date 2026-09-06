@@ -91,6 +91,12 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
       }
       .store(in: &cancellables)
 
+    loader.$purgedRegions
+      .sink { [weak self] _ in
+        self?.objectWillChange.send()
+      }
+      .store(in: &cancellables)
+
     loader.$corruptedRegions
       .sink { [weak self] _ in
         self?.objectWillChange.send()
@@ -152,6 +158,9 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     }
     if loader.corruptedRegions.contains(region) {
       return .corrupted
+    }
+    if loader.purgedRegions.contains(region) {
+      return .purged
     }
     return .notDownloaded
   }
@@ -248,6 +257,9 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
 
     case available
     case corrupted
+
+    /// Downloaded once, then reclaimed by the system for space.
+    case purged
     case notDownloaded
     case downloading(progress: Float?)
 
@@ -257,7 +269,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     var hasDeletablePayload: Bool {
       switch self {
         case .available, .corrupted: true
-        case .notDownloaded, .downloading: false
+        case .purged, .notDownloaded, .downloading: false
       }
     }
   }
