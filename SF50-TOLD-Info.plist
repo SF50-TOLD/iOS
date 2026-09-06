@@ -18,8 +18,12 @@
 	<string>$(OPEN_METEO_API_KEY)</string>
 	<key>BAAppGroupID</key>
 	<string>group.codes.tim.TOLD</string>
+	<key>BAHasManagedAssetPacks</key>
+	<true/>
+	<key>BAUsesAppleHosting</key>
+	<false/>
 	<key>BAManifestURL</key>
-	<string>https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/terrain-manifest-v3.json</string>
+	<string>https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain-asset-packs-ios.json</string>
 	<key>BAMaxInstallSize</key>
 	<integer>9300000000</integer>
 	<key>BAEssentialMaxInstallSize</key>
