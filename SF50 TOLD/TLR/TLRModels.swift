@@ -216,8 +216,8 @@ struct Report: Sendable {
   /// file is not one of many identically named ones.
   let documentTitle: String
 
-  /// A plain-text digest of the planned runway, for relaying the numbers without the document.
-  let summary: String
+  /// The same report as fixed-width text, in the shape of an ACARS performance uplink.
+  let textReport: String
 
   /// ``documentTitle`` with the characters a path cannot carry replaced.
   var fileName: String {

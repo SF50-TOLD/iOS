@@ -109,7 +109,7 @@ struct HTMLReportViewer: View {
     report: .init(
       html: "<html><body><h1>Takeoff Report</h1><p>KTST • Runway 36</p></body></html>",
       documentTitle: "Takeoff Report KTST Rwy 36 Sep 7 at 7:08 PM GMT",
-      summary: "Takeoff Report KTST Rwy 36\nGround run 1,803 ft (+3,197 ft)"
+      textReport: "TAKEOFF REPORT KTST/36\n072100Z SF50 G1\nDIST FT / SPD KT / WT LB"
     ),
     reportTitle: "Takeoff Report"
   )
