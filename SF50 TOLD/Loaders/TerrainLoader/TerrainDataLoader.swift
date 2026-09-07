@@ -37,17 +37,6 @@ final class TerrainDataLoader: ObservableObject {
 
   static let shared = TerrainDataLoader()
 
-  /// Configuration shared by the manifest fetch and the region downloads.
-  ///
-  /// A region runs to several gigabytes, so the resource timeout has to cover a transfer
-  /// measured in tens of minutes rather than the minute a request is given to answer.
-  nonisolated private static var downloadConfiguration: URLSessionConfiguration {
-    let configuration = URLSessionConfiguration.default
-    configuration.timeoutIntervalForRequest = 60
-    configuration.timeoutIntervalForResource = 1800
-    return configuration
-  }
-
   // MARK: - Instance Properties
 
   /// Current download state.
@@ -80,14 +69,8 @@ final class TerrainDataLoader: ObservableObject {
   /// App group identifier for shared storage.
   nonisolated private let appGroupID = "group.codes.tim.TOLD"
 
-  /// Base URL for terrain data downloads.
-  private var baseURL = TerrainManifest.defaultBaseURL.absoluteString
-
   /// Watches the system's asset-pack downloads for as long as the loader lives.
   private var packStatusTask: Task<Void, Never>?
-
-  /// URL session for manifest fetches.
-  private lazy var urlSession = URLSession(configuration: Self.downloadConfiguration)
 
   /// Returns the URL to the terrain directory in the app group container.
   nonisolated private var terrainDirectory: URL? {
@@ -116,7 +99,6 @@ final class TerrainDataLoader: ObservableObject {
   init() {
     refreshAvailableRegions()
     observePackDownloads()
-    setupNotificationObserver()
   }
 
   // MARK: - Public API
@@ -249,9 +231,7 @@ final class TerrainDataLoader: ObservableObject {
 
   /// Deletes terrain data files for a region from disk and clears all tracking state.
   func deleteRegion(_ region: TerrainRegion) async {
-    if let payloadURL = payloadURL(for: region) {
-      try? FileManager.default.removeItem(at: payloadURL)
-    }
+    await removePayload(for: region)
     inventory?.removeLegacyCompressedPayload(for: region)
     Defaults[.requestedTerrainRegions].remove(region)
     unfinishedRegions.remove(region)
@@ -266,8 +246,9 @@ final class TerrainDataLoader: ObservableObject {
 
   /// Downloads terrain data for a region.
   ///
-  /// This method first attempts to use Background Assets for the download.
-  /// If Background Assets is not available, it falls back to direct download.
+  /// The system owns the transfer, so it survives the app being backgrounded or suspended and
+  /// draws its own progress and cancel affordances. Tapping Download and walking away now leaves
+  /// a running download rather than a stalled one.
   ///
   /// - Parameter region: The region to download
   func downloadRegion(_ region: TerrainRegion) async throws {
@@ -298,17 +279,12 @@ final class TerrainDataLoader: ObservableObject {
     transaction.setTag(value: region.rawValue, key: "terrain.region")
 
     do {
-      // Request download via Background Assets
-      try scheduleBackgroundDownload(for: region)
+      try await ensureAssetPackIsLocal(for: region)
 
-      // If Background Assets isn't available or we want immediate download,
-      // fall back to direct download
-      try await performDirectDownload(for: region)
-
-      // Load the freshly downloaded file into TerrainService. If the file
-      // downloaded OK but can't be loaded, mark it as corrupted so the UI
-      // shows "Corrupted" rather than a misleading "Download" button.
-      if let fileURL = payloadURL(for: region) {
+      // Load the freshly downloaded payload into TerrainService. If it arrived intact but can't
+      // be loaded, mark it corrupted so the UI shows "Corrupted" rather than a misleading
+      // "Download" button.
+      if let fileURL = locator.state(of: region).url {
         let loadSpan = transaction.startChild(
           operation: "terrain.load",
           description: "Load \(region.rawValue) into TerrainService"
@@ -334,9 +310,8 @@ final class TerrainDataLoader: ObservableObject {
       NotificationCenter.default.post(name: .terrainRegionsDidChange, object: nil)
       logger.info("Region \(region.rawValue) downloaded and loaded")
     } catch {
-      // Writing the payload and moving it into place both fail with a bare
-      // filesystem error when the disk fills, which would otherwise reach the
-      // user as an opaque message and Sentry as a bug report.
+      // A pack that will not fit fails with a bare filesystem error, which would otherwise
+      // reach the user as an opaque message and Sentry as a bug report.
       let error = error.isOutOfDiskSpace ? TerrainDataLoaderError.outOfDiskSpace : error
       transaction.finish(status: .internalError)
       downloadingRegions.remove(region)
@@ -347,115 +322,63 @@ final class TerrainDataLoader: ObservableObject {
 
   // MARK: - Private Methods
 
-  /// Returns the URL this region's payload is stored under in the shared container.
-  nonisolated private func payloadURL(for region: TerrainRegion) -> URL? {
-    inventory?.localURL(for: region)
-  }
-
-  /// Schedules a download via Background Assets.
-  private func scheduleBackgroundDownload(for region: TerrainRegion) throws {
-    // Store the request for the Background Assets extension
-    guard let terrainDir = terrainDirectory else {
-      throw TerrainDataLoaderError.noStorageAccess
-    }
-
-    // Create terrain directory if needed
-    try FileManager.default.createDirectory(
-      at: terrainDir,
-      withIntermediateDirectories: true
-    )
-
-    // Add to requested regions file
-    let requestFile = terrainDir.appendingPathComponent("requested-regions.json")
-
-    var requestedRegions: [String] = []
-    if let data = try? Data(contentsOf: requestFile),
-      let existing = try? JSONDecoder().decode([String].self, from: data)
-    {
-      requestedRegions = existing
-    }
-
-    if !requestedRegions.contains(region.rawValue) {
-      requestedRegions.append(region.rawValue)
-      let data = try JSONEncoder().encode(requestedRegions)
-      try data.write(to: requestFile)
-    }
-
-    // Trigger Background Assets check
-    if #available(iOS 16.1, *) {
-      BADownloadManager.shared.fetchCurrentDownloads { downloads, error in
-        if let error {
-          self.logger.warning("Failed to fetch downloads: \(error.localizedDescription)")
-        }
-        self.logger.info("Current downloads: \(downloads.count)")
-      }
-    }
-  }
-
-  /// Fetches the manifest and updates the base URL if provided.
-  private func fetchManifestBaseURL() async {
-    let bundled = TerrainManifest.bundled
-
-    do {
-      let (data, _) = try await urlSession.data(from: TerrainManifest.defaultManifestURL)
-      let decoder = JSONDecoder()
-      decoder.dateDecodingStrategy = .iso8601
-      let remote = try decoder.decode(TerrainManifest.self, from: data)
-
-      // Validate version matches bundled
-      guard remote.version == bundled.version else {
-        logger.error("Remote manifest version \(remote.version) != bundled \(bundled.version)")
-        return
-      }
-
-      if !remote.baseURL.isEmpty {
-        self.baseURL = remote.baseURL.hasSuffix("/") ? remote.baseURL : remote.baseURL + "/"
-        logger.info("Using base URL from manifest: \(self.baseURL)")
-      }
-    } catch {
-      logger.warning("Failed to fetch manifest: \(error.localizedDescription)")
-    }
-  }
-
-  /// Downloads a region's payload directly, bypassing Background Assets.
+  /// Removes whichever copy of `region` the device holds.
   ///
-  /// The payload lands under a scratch name and is renamed into place once whole, so an interrupted
-  /// download leaves nothing a scan could mistake for a usable region.
-  private func performDirectDownload(for region: TerrainRegion) async throws {
-    guard let payloadURL = payloadURL(for: region) else {
-      throw TerrainDataLoaderError.noStorageAccess
+  /// A legacy payload is the app's own file to delete; a pack belongs to the system, which is the
+  /// only thing that can reclaim it.
+  private func removePayload(for region: TerrainRegion) async {
+    switch locator.state(of: region) {
+      case .installed(let url, .legacyContainer):
+        try? FileManager.default.removeItem(at: url)
+      case .installed(_, .assetPack):
+        do {
+          try await AssetPackManager.shared.remove(assetPackWithID: region.downloadIdentifier)
+        } catch {
+          logger.error(
+            "Failed to remove the asset pack for \(region.rawValue): \(error.localizedDescription)"
+          )
+        }
+      case .purged, .absent:
+        break
     }
+  }
 
-    await fetchManifestBaseURL()
-
-    let remoteURL = URL(string: baseURL + region.remoteFilename)!
-    logger.info("Starting direct download for \(region.rawValue) from \(remoteURL)")
-
-    // A region runs to several gigabytes, so an indeterminate spinner would leave a healthy
-    // download and a stalled one looking exactly alike for minutes at a time.
-    let (progressUpdates, continuation) = AsyncStream.makeStream(of: Float.self)
-    defer { continuation.finish() }
-
-    let reportingProgress = Task { [weak self] in
-      for await fraction in progressUpdates {
-        self?.state = .downloading(region: region, progress: fraction)
-      }
+  /// Brings the manager's copy of the published manifest up to date, best effort.
+  ///
+  /// The system reads the manifest on install and update events, so a pack published since the
+  /// last one — or a launch that never saw such an event — is a pack the manager cannot resolve.
+  /// A failure here is not fatal: whatever manifest it already holds may still name the pack.
+  private func refreshAssetPackManifest(using manager: AssetPackManager) async {
+    do {
+      let (updating, removed) = try await manager.checkForUpdates()
+      logger.info(
+        "Asset-pack manifest refreshed; \(updating.count) updating, \(removed.count) removed"
+      )
+    } catch {
+      logger.warning(
+        "Couldn’t refresh the asset-pack manifest: \(error.localizedDescription)"
+      )
     }
-    defer { reportingProgress.cancel() }
+  }
 
-    let (tempURL, _) = try await downloadWithRetry(
-      from: remoteURL,
-      configuration: Self.downloadConfiguration,
-      logger: logger,
-      label: region.rawValue,
-      reportingTo: continuation
-    )
+  /// Asks the system for `region`'s asset pack and waits until it is on disk.
+  ///
+  /// The system owns the transfer, so this survives the app being backgrounded and resumes on its
+  /// own. Progress does not come back through here — it arrives on the status stream, which
+  /// reports system-driven downloads whether or not anyone is awaiting one.
+  ///
+  /// `requireLatestVersion:` only exists from iOS 26.4; below that the single-argument form is the
+  /// whole API, and a device accepts whichever version it already holds.
+  private func ensureAssetPackIsLocal(for region: TerrainRegion) async throws {
+    let manager = AssetPackManager.shared
+    await refreshAssetPackManifest(using: manager)
+    let pack = try await manager.assetPack(withID: region.downloadIdentifier)
 
-    if FileManager.default.fileExists(atPath: payloadURL.path) {
-      try FileManager.default.removeItem(at: payloadURL)
+    if #available(iOS 26.4, *) {
+      try await manager.ensureLocalAvailability(of: pack, requireLatestVersion: true)
+    } else {
+      try await manager.ensureLocalAvailability(of: pack)
     }
-    try FileManager.default.moveItem(at: tempURL, to: payloadURL)
-    logger.info("Downloaded \(region.rawValue)")
   }
 
   /// Reports a terrain failure to Sentry unless it is one the user caused and can fix.
@@ -500,24 +423,6 @@ final class TerrainDataLoader: ObservableObject {
         NotificationCenter.default.post(name: .terrainRegionsDidChange, object: nil)
       }
     }
-  }
-
-  /// Listens for the Darwin notification the Background Assets extension posts on completion.
-  private func setupNotificationObserver() {
-    CFNotificationCenterAddObserver(
-      CFNotificationCenterGetDarwinNotifyCenter(),
-      Unmanaged.passUnretained(self).toOpaque(),
-      { _, observer, _, _, _ in
-        guard let observer else { return }
-        let loader = Unmanaged<TerrainDataLoader>.fromOpaque(observer).takeUnretainedValue()
-        Task { @MainActor in
-          loader.refreshAvailableRegions()
-        }
-      },
-      TerrainDownloadNotification.completed as CFString,
-      nil,
-      .deliverImmediately
-    )
   }
 
   // MARK: - Nested Types
