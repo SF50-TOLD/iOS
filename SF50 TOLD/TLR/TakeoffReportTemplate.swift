@@ -1,4 +1,5 @@
 import Foundation
+import MeasurementKit
 import SF50_Shared
 import SwiftHtml
 
@@ -40,10 +41,65 @@ class TakeoffReportTemplate: BaseReportTemplate<
     scenario.scenarioName
   }
 
-  override func summaryLines(for performance: TakeoffRunwayPerformance) -> [String] {
+  override func isValid(_ performance: TakeoffRunwayPerformance) -> Bool {
+    performance.isValid
+  }
+
+  /// Climb gradient is always feet per nautical mile, whatever distance unit is preferred, so
+  /// the header has to say so rather than let the reader assume the distance unit above.
+  override func textTitle() -> String {
+    "TAKEOFF REPORT"
+  }
+
+  override func textUnitNames() -> [String] {
+    super.textUnitNames()
+      + ["CLB \(textUnitSymbol(UnitSlope.feetPerNauticalMile))"]
+  }
+
+  override func textPlannedData() -> [String] {
     [
-      String(localized: "Ground run \(describe(distance: performance.groundRun))"),
-      String(localized: "Distance to 50 ft \(describe(distance: performance.totalDistance))")
+      "PTOW \(whole(input.weight.converted(to: weightUnit).value))"
+        + " BEW \(whole(input.emptyWeight.converted(to: weightUnit).value))"
+        + " FLAPS \(textFlapSetting(input.flapSetting))"
+        + " SF \(decimal(input.safetyFactor, places: 2))"
+    ]
+  }
+
+  override func runwayColumns() -> [TextColumn] {
+    [
+      .init(heading: "RWY", width: 4, alignment: .leading),
+      .init(heading: "LENGTH", width: 7),
+      .init(heading: "MTOW", width: 7),
+      .init(heading: "LIM", width: 5, alignment: .leading)
+    ]
+  }
+
+  override func runwayCells(for runway: RunwayInput, _ info: RunwayInfo) -> [String] {
+    [
+      whole(runway.length.converted(to: runwayLengthUnit).value),
+      whole(info.maxWeight.converted(to: weightUnit).value),
+      textLimitingFactor(info.limitingFactor)
+    ]
+  }
+
+  override func performanceColumns() -> [TextColumn] {
+    [
+      .init(heading: "RWY", width: 4, alignment: .leading),
+      .init(heading: "TOR", width: 7),
+      .init(heading: "MARGIN", width: 8),
+      .init(heading: "TODR", width: 8),
+      .init(heading: "MARGIN", width: 8),
+      .init(heading: "CLB", width: 7)
+    ]
+  }
+
+  override func performanceCells(for performance: TakeoffRunwayPerformance) -> [String] {
+    let groundRun = textDistance(performance.groundRun),
+      total = textDistance(performance.totalDistance)
+    return [
+      groundRun.distance, groundRun.margin,
+      total.distance, total.margin,
+      textValue(performance.climbRate) { whole($0.asGradient.value) }
     ]
   }
 

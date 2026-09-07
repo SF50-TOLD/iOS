@@ -33,9 +33,9 @@ Terrain data now downloads through iOS itself rather than through the app.
 - Ask Siri about a specific runway rather than only about an airport.
 - VoiceOver now speaks the runway facts previously carried by color alone.
 - When a position cannot be fixed, the app says why.
-- Sharing a takeoff or landing report now offers the numbers as text as well as
-  the PDF, so you can send the planned runway's distances, VREF, safety factor,
-  and weather to the other seat without sending a document or a screenshot.
+- Sharing a takeoff or landing report now offers it as text as well as a PDF:
+  the whole report in fixed-width columns, to read over a radio or type into a
+  scratchpad.
 - A shared report is named for the airport, runway, and time it describes, and
   carries that name inside the file.
 

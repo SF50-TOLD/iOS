@@ -26,8 +26,12 @@ import SwiftHtml
 /// - ``generatePerformanceTable(_:)``: Renders performance for a scenario
 /// - ``extractPerformances(from:)``: Extracts runway performances from a scenario
 /// - ``extractScenarioName(from:)``: Extracts the scenario name
-/// - ``summaryLines(for:)``: The distances and speeds the text summary states, which differ
-///   between a takeoff and a landing
+/// - ``isValid(_:)``: Whether a runway's performance meets its requirements
+/// - ``textTitle()``: The report's untranslated name, for the text report
+/// - ``textUnitNames()``: The units the text report declares, if the operation adds any
+/// - ``textPlannedData()``, ``runwayColumns()``, ``runwayCells(for:_:)``,
+///   ``performanceColumns()``, ``performanceCells(for:)``: The operation-specific parts of the
+///   fixed-width text report
 ///
 /// ## Rendering
 ///
@@ -103,34 +107,6 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     )
   }
 
-  /// A plain-text digest of the planned runway under the first scenario.
-  ///
-  /// The report answers for every runway and every what-if; this answers only for the one the
-  /// pilot planned, so the numbers can be read to the other seat or to dispatch without sending
-  /// the whole document. It states the configuration they came from, because a distance means
-  /// nothing without the safety factor and the weather behind it.
-  func summary(scenarios: [ScenarioType]) -> String {
-    var lines = [
-      String(localized: "\(reportTitle()) \(input.airport.locationID) Rwy \(input.runway.name)")
-    ]
-    if let performance = plannedPerformance(in: scenarios) {
-      lines += summaryLines(for: performance)
-    }
-    lines.append(
-      String(
-        localized:
-          "Safety factor \(input.safetyFactor, format: .number.precision(.fractionLength(2)))"
-      )
-    )
-    lines.append(formatWeatherSource())
-    return lines.joined(separator: "\n")
-  }
-
-  private func plannedPerformance(in scenarios: [ScenarioType]) -> PerformanceType? {
-    guard let planned = scenarios.first else { return nil }
-    return extractPerformances(from: planned)[input.runway]
-  }
-
   // MARK: - Template Methods (to be overridden)
 
   // swiftlint:disable:next unavailable_function
@@ -164,8 +140,50 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
   }
 
   // swiftlint:disable:next unavailable_function
-  func summaryLines(for _: PerformanceType) -> [String] {
-    fatalError("Subclasses must override summaryLines(for:)")
+  func textTitle() -> String {
+    fatalError("Subclasses must override textTitle()")
+  }
+
+  /// The units the text report names in its header, one per kind of number it prints.
+  ///
+  /// Subclasses add any unit their own columns use, so nothing is printed without a unit
+  /// declared somewhere.
+  func textUnitNames() -> [String] {
+    [
+      "DIST \(textUnitSymbol(runwayLengthUnit))",
+      "SPD \(textUnitSymbol(speedUnit))",
+      "WT \(textUnitSymbol(weightUnit))"
+    ]
+  }
+
+  // swiftlint:disable:next unavailable_function
+  func textPlannedData() -> [String] {
+    fatalError("Subclasses must override textPlannedData()")
+  }
+
+  // swiftlint:disable:next unavailable_function
+  func runwayColumns() -> [TextColumn] {
+    fatalError("Subclasses must override runwayColumns()")
+  }
+
+  // swiftlint:disable:next unavailable_function
+  func runwayCells(for _: RunwayInput, _: RunwayInfo) -> [String] {
+    fatalError("Subclasses must override runwayCells(for:_:)")
+  }
+
+  // swiftlint:disable:next unavailable_function
+  func performanceColumns() -> [TextColumn] {
+    fatalError("Subclasses must override performanceColumns()")
+  }
+
+  // swiftlint:disable:next unavailable_function
+  func performanceCells(for _: PerformanceType) -> [String] {
+    fatalError("Subclasses must override performanceCells(for:)")
+  }
+
+  // swiftlint:disable:next unavailable_function
+  func isValid(_: PerformanceType) -> Bool {
+    fatalError("Subclasses must override isValid(_:)")
   }
 
   // MARK: - Common Rendering
@@ -387,29 +405,6 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     return [Span(unavailable.text).class(unavailable.cssClass)]
   }
 
-  /// Renders a value as plain text for the summary, the way the table formatters render it as
-  /// HTML — falling back to the same wording when the value carries no number.
-  func describe<T>(value: Value<T>?, formatter: (T) -> String) -> String {
-    guard let value else { return String(localized: "-") }
-    guard let unavailable = unavailableDescription(of: value) else {
-      return value.nominal.map(formatter) ?? ""
-    }
-    return unavailable.text
-  }
-
-  func describe(distance value: Value<PerformanceDistance>?) -> String {
-    describe(value: value) { distance in
-      let run = distance.distance.converted(to: runwayLengthUnit).formatted(.length),
-        margin = distance.margin.converted(to: runwayLengthUnit)
-          .formatted(.length(plusSign: true))
-      return String(localized: "\(run) (\(margin))")
-    }
-  }
-
-  func describe(speed value: Value<Measurement<UnitSpeed>>?) -> String {
-    describe(value: value) { $0.converted(to: speedUnit).formatted(.speed) }
-  }
-
   func format<T>(value: Value<T>?, formatter: (T) -> [Tag]) -> [Tag] {
     guard let value else {
       return [Span(String(localized: "-")).class("not-available")]
@@ -479,19 +474,7 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
 
   func areAllPerformancesInvalid(_ performances: [RunwayInput: PerformanceType]) -> Bool {
     guard !performances.isEmpty else { return true }
-
-    // Check if all performances are invalid
-    // This will be overridden or we'll check a common property
-    for (_, performance) in performances {
-      // Use mirror to check if the performance has an isValid property
-      let mirror = Mirror(reflecting: performance)
-      if let isValid = mirror.children.first(where: { $0.label == "isValid" })?.value as? Bool {
-        if isValid {
-          return false  // Found at least one valid performance
-        }
-      }
-    }
-    return true  // All performances are invalid
+    return performances.values.allSatisfy { !isValid($0) }
   }
 }
 

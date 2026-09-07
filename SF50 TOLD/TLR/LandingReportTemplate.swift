@@ -40,11 +40,67 @@ class LandingReportTemplate: BaseReportTemplate<
     scenario.scenarioName
   }
 
-  override func summaryLines(for performance: LandingRunwayPerformance) -> [String] {
+  override func isValid(_ performance: LandingRunwayPerformance) -> Bool {
+    performance.isValid
+  }
+
+  override func textTitle() -> String {
+    "LANDING REPORT"
+  }
+
+  override func textPlannedData() -> [String] {
     [
-      String(localized: "VREF \(describe(speed: performance.Vref))"),
-      String(localized: "Ground run \(describe(distance: performance.landingRun))"),
-      String(localized: "Distance from 50 ft \(describe(distance: performance.landingDistance))")
+      "PLW \(whole(input.weight.converted(to: weightUnit).value))"
+        + " BEW \(whole(input.emptyWeight.converted(to: weightUnit).value))"
+        + " FLAPS \(textFlapSetting(input.flapSetting))"
+        + " SF \(decimal(input.safetyFactor, places: 2))",
+      "VREF ADD "
+        + whole(
+          Measurement(value: input.VREFAdditiveKts, unit: UnitSpeed.knots)
+            .converted(to: speedUnit).value
+        )
+    ]
+  }
+
+  override func runwayColumns() -> [TextColumn] {
+    [
+      .init(heading: "RWY", width: 4, alignment: .leading),
+      .init(heading: "LENGTH", width: 7),
+      .init(heading: "MLW", width: 7),
+      .init(heading: "LIM", width: 5, alignment: .leading),
+      .init(heading: "COND", width: 20, alignment: .leading)
+    ]
+  }
+
+  override func runwayCells(for runway: RunwayInput, _ info: RunwayInfo) -> [String] {
+    [
+      whole(runway.length.converted(to: runwayLengthUnit).value),
+      whole(info.maxWeight.converted(to: weightUnit).value),
+      textLimitingFactor(info.limitingFactor),
+      textContamination(info.contamination)
+    ]
+  }
+
+  override func performanceColumns() -> [TextColumn] {
+    [
+      .init(heading: "RWY", width: 4, alignment: .leading),
+      .init(heading: "VREF", width: 6),
+      .init(heading: "ROLL", width: 8),
+      .init(heading: "MARGIN", width: 8),
+      .init(heading: "LDR", width: 8),
+      .init(heading: "MARGIN", width: 8),
+      .init(heading: "APPR CLB", width: 9, alignment: .leading)
+    ]
+  }
+
+  override func performanceCells(for performance: LandingRunwayPerformance) -> [String] {
+    let run = textDistance(performance.landingRun),
+      total = textDistance(performance.landingDistance)
+    return [
+      textSpeed(performance.Vref),
+      run.distance, run.margin,
+      total.distance, total.margin,
+      textBool(performance.meetsGoAroundRequirement)
     ]
   }
 

@@ -29,10 +29,10 @@ public struct WeatherProviders: OptionSet, Sendable, Hashable {
     return credit
   }()
 
-  private static let namesInPrecedenceOrder: [(provider: Self, name: String)] = [
-    (.NWS, String(localized: "NWS")),
-    (.openMeteo, openMeteoName),
-    (.weatherKit, String(localized: "Apple Weather"))
+  private static let namesInPrecedenceOrder: [(provider: Self, name: String, plainName: String)] = [
+    (.NWS, String(localized: "NWS"), "NWS"),
+    (.openMeteo, openMeteoName, "OPEN-METEO"),
+    (.weatherKit, String(localized: "Apple Weather"), "APPLE WEATHER")
   ]
 
   public let rawValue: Int
@@ -45,6 +45,12 @@ public struct WeatherProviders: OptionSet, Sendable, Hashable {
   /// The contributing services as a phrase, e.g. “NWS and Open-Meteo”.
   public var localizedDescription: String {
     localizedNames.formatted(.list(type: .and))
+  }
+
+  /// The contributing services named without translation, for a report whose wording must be
+  /// the same wherever it is read.
+  public var names: [String] {
+    Self.namesInPrecedenceOrder.filter { contains($0.provider) }.map(\.plainName)
   }
 
   public init(rawValue: Int) {
