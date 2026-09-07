@@ -39,6 +39,14 @@ Terrain data now downloads through iOS itself rather than through the app.
   alone.
 - When a position cannot be fixed, the app says why rather than showing nothing.
 - Scrubbing a terrain profile is smoother on long paths.
+- Sharing a takeoff or landing report now offers the numbers as text as well as
+  the PDF, so you can send the planned runway's distances, VREF, safety factor,
+  and weather to the other seat without sending a document or a screenshot.
+- A shared report is named for the airport, runway, and time it describes
+  instead of arriving as "Takeoff Report.pdf", and carries that name inside the
+  file as well.
+- A printed report no longer shows a stray marker beside the what-if sections,
+  which print expands anyway.
 
 ## 3.7.1
 
