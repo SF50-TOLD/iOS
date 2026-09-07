@@ -107,6 +107,20 @@ struct `Takeoff Report` {
     #expect(namesScenario, "Report should name the scenario")
   }
 
+  /// The summary is what a pilot reads to the other seat, so it has to carry the configuration
+  /// the numbers came from as well as the numbers.
+  @Test
+  func `summarizes the planned runway in text`() throws {
+    let summary = try Self.multiRunwayReport().summary
+
+    #expect(summary.contains("TEST"), "The summary should name the airport")
+    #expect(summary.contains("Rwy 36"), "The summary should name the planned runway")
+    #expect(summary.contains("Ground run"), "The summary should state the ground run")
+    #expect(summary.contains("50 ft"), "The summary should state the distance to 50 ft")
+    #expect(summary.contains("Safety factor"), "The summary should state the safety factor")
+    #expect(summary.contains("Weather"), "The summary should state where the weather came from")
+  }
+
   /// A shared file should identify the operation it describes rather than be one of many
   /// identically named ones.
   @MainActor

@@ -23,7 +23,8 @@ func generateTakeoffReport(input: PerformanceInput, scenarios: [PerformanceScena
   let template = TakeoffReportTemplate(input: input, useAirportLocalTime: useAirportLocalTime)
   return .init(
     html: template.render(runways: output.runwayInfo, scenarios: output.scenarios),
-    documentTitle: template.documentTitle()
+    documentTitle: template.documentTitle(),
+    summary: template.summary(scenarios: output.scenarios)
   )
 }
 
@@ -48,7 +49,8 @@ func generateLandingReport(input: PerformanceInput, scenarios: [PerformanceScena
   let template = LandingReportTemplate(input: input, useAirportLocalTime: useAirportLocalTime)
   return .init(
     html: template.render(runways: output.runwayInfo, scenarios: output.scenarios),
-    documentTitle: template.documentTitle()
+    documentTitle: template.documentTitle(),
+    summary: template.summary(scenarios: output.scenarios)
   )
 }
 

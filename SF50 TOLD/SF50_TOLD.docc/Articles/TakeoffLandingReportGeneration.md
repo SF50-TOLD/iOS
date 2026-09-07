@@ -24,7 +24,7 @@ TLR generation follows a two-phase pipeline:
 
 The ``BaseReportData/generate()`` method returns a ``ReportOutput`` containing both.
 
-### Phase 2: HTML Rendering
+### Phase 2: Rendering
 
 ``BaseReportTemplate`` and its subclasses render the data to HTML:
 
@@ -32,6 +32,10 @@ The ``BaseReportData/generate()`` method returns a ``ReportOutput`` containing b
 2. **Data Table**: Planned conditions summary
 3. **Runways Table**: Max weights and limiting factors
 4. **Performance Tables**: One per scenario (accordion for non-forecast)
+
+The template also names the document and writes a plain-text digest of the
+planned runway, so a ``Report`` carries everything sharing it needs. ``ReportPDF``
+lays that HTML out as a paginated US Letter PDF.
 
 ## Template Method Pattern
 
@@ -97,7 +101,7 @@ let input = PerformanceInput(
     flapSetting: .flaps50,
     safetyFactor: 1.0,
     useRegressionModel: true,
-    updatedThrustSchedule: true,
+    aircraftType: .g2Plus,
     emptyWeight: emptyWeight,
     date: Date()
 )
@@ -107,12 +111,15 @@ let fetcher = ScenarioFetcher(modelContainer: container)
 let scenarios = try await fetcher.fetchTakeoffScenarios()
 
 // Generate report
-let html = try generateTakeoffReport(input: input, scenarios: scenarios)
+let report = try generateTakeoffReport(input: input, scenarios: scenarios)
+let pdf = try ReportPDF.render(html: report.html, documentTitle: report.documentTitle)
 ```
 
 ## See Also
 
 - ``PerformanceInput``
+- ``Report``
+- ``ReportPDF``
 - ``BaseReportData``
 - ``TakeoffReportData``
 - ``LandingReportData``

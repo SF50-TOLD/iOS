@@ -40,6 +40,14 @@ class LandingReportTemplate: BaseReportTemplate<
     scenario.scenarioName
   }
 
+  override func summaryLines(for performance: LandingRunwayPerformance) -> [String] {
+    [
+      String(localized: "VREF \(describe(speed: performance.Vref))"),
+      String(localized: "Ground run \(describe(distance: performance.landingRun))"),
+      String(localized: "Distance from 50 ft \(describe(distance: performance.landingDistance))")
+    ]
+  }
+
   override func generateDataTable() -> Table {
     Table {
       Thead {
