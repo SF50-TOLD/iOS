@@ -81,7 +81,9 @@ fi
 printf '%s\n' "$notes" | awk '
   function flush() { if (buffer != "") { print buffer; buffer = "" } }
   { gsub(/`/, "") }
-  /^#+ / { flush(); sub(/^#+ /, ""); print ""; print; next }
+  # A blank line on both sides of a heading. Without the trailing one the heading sits flush against
+  # the first bullet beneath it, which on a store listing reads as though it belongs to that bullet.
+  /^#+ / { flush(); sub(/^#+ /, ""); print ""; print; print ""; next }
   /^[-*] / { flush(); sub(/^[-*] /, "• "); buffer = $0; next }
   /^[[:space:]]*$/ { flush(); next }
   { sub(/^[[:space:]]+/, ""); buffer = (buffer == "" ? $0 : buffer " " $0) }
