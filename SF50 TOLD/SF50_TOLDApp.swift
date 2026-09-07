@@ -80,6 +80,7 @@ struct SF50_TOLDApp: App {
     WindowGroup {
       ContentView()
         .modelContainer(sharedModelContainer)
+        .terrainPurgeAlert()
         .task {
           await ScenarioSeeder(container: sharedModelContainer).seedDefaultScenariosIfNeeded()
           _ = TerrainDataLoader.shared
@@ -89,8 +90,10 @@ struct SF50_TOLDApp: App {
       await BackgroundRefreshScheduler.shared.handleAppRefresh()
     }
     .onChange(of: scenePhase) { _, newPhase in
-      if newPhase == .background {
-        BackgroundRefreshScheduler.shared.scheduleAppRefresh()
+      switch newPhase {
+        case .background: BackgroundRefreshScheduler.shared.scheduleAppRefresh()
+        case .active: TerrainDataLoader.shared.refreshAvailableRegions()
+        default: break
       }
     }
   }
