@@ -10,17 +10,23 @@ enum ReportPDF {
 
   /// Renders a report's HTML into a paginated US Letter PDF.
   ///
-  /// - Parameter html: The complete HTML document to lay out.
+  /// - Parameters:
+  ///   - html: The complete HTML document to lay out.
+  ///   - documentTitle: The title recorded in the PDF's metadata.
   /// - Returns: The PDF file's contents.
   /// - Throws: ``Errors/emptyReport`` if the report lays out as zero pages.
   @MainActor
-  static func render(html: String) throws -> Data {
+  static func render(html: String, documentTitle: String) throws -> Data {
     let renderer = pageRenderer(for: html)
     var pageCount = 0
 
     // The renderer lays the markup out against the graphics context it will draw into, so its
     // page count is only available from inside one. Asking beforehand never returns.
-    let data = UIGraphicsPDFRenderer(bounds: renderer.paperRect).pdfData { context in
+    let data = UIGraphicsPDFRenderer(
+      bounds: renderer.paperRect,
+      format: format(titled: documentTitle)
+    )
+    .pdfData { context in
       pageCount = renderer.numberOfPages
       renderer.prepare(forDrawingPages: .init(location: 0, length: pageCount))
       for page in 0..<pageCount {
@@ -31,6 +37,12 @@ enum ReportPDF {
 
     guard pageCount > 0 else { throw Errors.emptyReport }
     return data
+  }
+
+  private static func format(titled documentTitle: String) -> UIGraphicsPDFRendererFormat {
+    let format = UIGraphicsPDFRendererFormat()
+    format.documentInfo = [kCGPDFContextTitle as String: documentTitle]
+    return format
   }
 
   private static func pageRenderer(for html: String) -> UIPrintPageRenderer {
