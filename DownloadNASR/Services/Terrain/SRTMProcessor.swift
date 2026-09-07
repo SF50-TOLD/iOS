@@ -40,7 +40,8 @@ enum SRTMProcessorError: LocalizedError {
 /// 2. Parse elevation data from HGT files
 /// 3. Combine into optimized binary format per continent
 /// 4. Generate terrain manifest
-/// 5. Upload to CloudFlare R2 (if configured)
+/// 5. Package each region as a Background Assets asset pack
+/// 6. Upload to CloudFlare R2 (if configured)
 ///
 /// ## Data Source
 ///
@@ -312,8 +313,12 @@ actor SRTMProcessor {
 
     try Task.checkCancellation()
 
+    let assetPacks = try await packageAssetPacks()
+
+    try Task.checkCancellation()
+
     // Upload to R2
-    await uploadToR2Storage(processedRegions: processedRegions)
+    await uploadToR2Storage(processedRegions: processedRegions, assetPacks: assetPacks)
 
     await reportProgress(.completed)
     await reportLog(
@@ -883,10 +888,53 @@ actor SRTMProcessor {
     )
   }
 
+  // MARK: - Asset-Pack Packaging
+
+  /// Packages every region as an asset pack and writes the download manifest indexing them.
+  ///
+  /// Packaging covers all regions rather than just the ones processed in this run, for the same
+  /// reason ``generateManifest(for:)`` does: the download manifest names every pack a device may
+  /// ask for, so a partial run must still publish a complete index.
+  private func packageAssetPacks() async throws -> AssetPacks {
+    let publisher = AssetPackPublisher(outputLocation: outputLocation, logger: logger)
+
+    var packaged: [AssetPackPublisher.PackagedRegion] = []
+    for region in TerrainRegion.allCases {
+      try Task.checkCancellation()
+      await reportProgress(.packaging(region: region))
+      packaged.append(try await publisher.packageRegion(region))
+    }
+
+    let downloadBaseURL = assetPackDownloadBaseURL()
+    let manifestURL = try await publisher.writeDownloadManifest(
+      for: packaged,
+      downloadBaseURL: downloadBaseURL
+    )
+    let rebuiltCount = packaged.count(where: \.isRebuilt)
+    await reportLog(
+      level: .notice,
+      message:
+        "Packaged \(packaged.count) asset packs (\(rebuiltCount) rebuilt) against \(downloadBaseURL)"
+    )
+
+    return .init(publisher: publisher, packaged: packaged, downloadManifest: manifestURL)
+  }
+
+  /// Base URL `ba-package` builds each pack's download URL from.
+  private func assetPackDownloadBaseURL() -> String {
+    let root =
+      R2Uploader.Config.fromBundle()?.publicURL
+      ?? TerrainManifest.defaultBaseURL
+      .deletingLastPathComponent().absoluteString
+    let trimmed = root.hasSuffix("/") ? String(root.dropLast()) : root
+    return "\(trimmed)/\(AssetPackPublisher.packKeyPrefix)"
+  }
+
   // MARK: - R2 Upload
 
   /// Uploads processed files to CloudFlare R2.
-  private func uploadToR2Storage(processedRegions: [ProcessedRegion]) async {
+  private func uploadToR2Storage(processedRegions: [ProcessedRegion], assetPacks: AssetPacks) async
+  {
     if skipUpload {
       await reportLog(level: .info, message: "Skipping R2 upload (skipUpload=true)")
       return
@@ -922,6 +970,8 @@ actor SRTMProcessor {
       }
     }
 
+    await uploadAssetPacks(assetPacks, using: uploader)
+
     // Upload manifest
     await reportProgress(.uploadingManifest)
     let manifestFile = outputLocation.appendingPathComponent(Self.manifestFilename)
@@ -939,7 +989,58 @@ actor SRTMProcessor {
     }
   }
 
+  /// Uploads each asset-pack archive under its download URL's key, then the download manifest.
+  ///
+  /// The archives go up before the manifest that indexes them, so a device reading the manifest
+  /// never finds it naming a pack the bucket cannot serve yet.
+  private func uploadAssetPacks(_ assetPacks: AssetPacks, using uploader: R2Uploader) async {
+    for pack in assetPacks.packaged {
+      let region = pack.region
+      await reportProgress(.uploading(region: region, fraction: 0.0))
+      do {
+        try await uploader.uploadFile(
+          at: pack.archiveURL,
+          key: assetPacks.publisher.publishedKey(for: region),
+          onProgress: { fraction in
+            await self.reportProgress(.uploading(region: region, fraction: fraction))
+          }
+        )
+      } catch {
+        await reportLog(
+          level: .error,
+          message: "R2 asset-pack upload failed: \(error.localizedDescription)"
+        )
+        if let onUploadError {
+          await onUploadError(error)
+        }
+      }
+    }
+
+    await reportProgress(.uploadingManifest)
+    do {
+      try await uploader.uploadFile(
+        at: assetPacks.downloadManifest,
+        key: AssetPackPublisher.downloadManifestFilename
+      )
+    } catch {
+      await reportLog(
+        level: .error,
+        message: "R2 asset-pack manifest upload failed: \(error.localizedDescription)"
+      )
+      if let onUploadError {
+        await onUploadError(error)
+      }
+    }
+  }
+
   // MARK: - Nested Types
+
+  /// The packaged asset packs and the download manifest indexing them.
+  private struct AssetPacks {
+    let publisher: AssetPackPublisher
+    let packaged: [AssetPackPublisher.PackagedRegion]
+    let downloadManifest: URL
+  }
 
   /// Result of processing a single region.
   private struct ProcessedRegion {
