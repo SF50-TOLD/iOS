@@ -79,13 +79,21 @@ fi
 # 100-column source needed, and joining them is a decision about the *previous* line, which a
 # line-at-a-time filter cannot make without holding one back.
 printf '%s\n' "$notes" | awk '
-  function flush() { if (buffer != "") { print buffer; buffer = "" } }
+  # A blank line in the source is a paragraph break and has to survive as one: the store renders
+  # this verbatim, so prose that loses its breaks arrives as a single block. `separate` carries a
+  # pending break to the next thing emitted, which is why consecutive bullets stay consecutive —
+  # nothing sets it between them — while paragraphs and headings keep their air.
+  function emit(line) {
+    if (separate && printed) print ""
+    separate = 0
+    print line
+    printed = 1
+  }
+  function flush() { if (buffer != "") { emit(buffer); buffer = "" } }
   { gsub(/`/, "") }
-  # A blank line on both sides of a heading. Without the trailing one the heading sits flush against
-  # the first bullet beneath it, which on a store listing reads as though it belongs to that bullet.
-  /^#+ / { flush(); sub(/^#+ /, ""); print ""; print; print ""; next }
+  /^#+ / { flush(); sub(/^#+ /, ""); separate = 1; emit($0); next }
   /^[-*] / { flush(); sub(/^[-*] /, "• "); buffer = $0; next }
-  /^[[:space:]]*$/ { flush(); next }
+  /^[[:space:]]*$/ { flush(); separate = 1; next }
   { sub(/^[[:space:]]+/, ""); buffer = (buffer == "" ? $0 : buffer " " $0) }
   END { flush() }
 ' | sed -e '/./,$!d'
