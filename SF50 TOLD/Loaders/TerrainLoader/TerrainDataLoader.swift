@@ -83,8 +83,8 @@ final class TerrainDataLoader: ObservableObject {
   /// Base URL for terrain data downloads.
   private var baseURL = TerrainManifest.defaultBaseURL.absoluteString
 
-  /// Receives the system's download events; `BADownloadManager` holds its delegate weakly.
-  private var backgroundDownloadObserver: TerrainBackgroundDownloadObserver?
+  /// Watches the system's asset-pack downloads for as long as the loader lives.
+  private var packStatusTask: Task<Void, Never>?
 
   /// URL session for manifest fetches.
   private lazy var urlSession = URLSession(configuration: Self.downloadConfiguration)
@@ -114,12 +114,8 @@ final class TerrainDataLoader: ObservableObject {
   // MARK: - Initializers
 
   init() {
-    let observer = TerrainBackgroundDownloadObserver(inventory: inventory, loader: self)
-    backgroundDownloadObserver = observer
-    BADownloadManager.shared.delegate = observer
-
     refreshAvailableRegions()
-    refreshBackgroundDownloads()
+    observePackDownloads()
     setupNotificationObserver()
   }
 
@@ -136,22 +132,45 @@ final class TerrainDataLoader: ObservableObject {
     return locator.state(of: region).url
   }
 
-  /// Queries `BADownloadManager` for active Background Assets downloads.
-  func refreshBackgroundDownloads() {
-    BADownloadManager.shared.fetchCurrentDownloads { [weak self] downloads, error in
-      if let error {
-        self?.logger.warning("Failed to fetch BA downloads: \(error.localizedDescription)")
-      }
-
-      let regions = Set(
-        downloads.compactMap { TerrainRegion.region(forDownloadIdentifier: $0.identifier) }
-      )
-
-      Task { @MainActor [weak self] in
-        self?.backgroundDownloadingRegions = regions
-        self?.logger.info("Active BA downloads: \(regions.map(\.rawValue))")
+  /// Follows the system's asset-pack downloads for as long as the loader lives.
+  ///
+  /// Managed packs are fetched by the system, the locale prefetch the downloader extension asks
+  /// for included, so this stream is the only way the app learns one is running.
+  private func observePackDownloads() {
+    packStatusTask?.cancel()
+    packStatusTask = Task { [weak self] in
+      let updates = await AssetPackManager.shared.statusUpdates
+      for await update in updates {
+        if Task.isCancelled { break }
+        self?.apply(update)
       }
     }
+  }
+
+  /// Turns one pack status update into the region state the UI reads.
+  private func apply(_ update: AssetPackManager.DownloadStatusUpdate) {
+    switch update {
+      case .began(let pack), .paused(let pack):
+        guard let region = region(of: pack) else { return }
+        backgroundDownloadDidProgress(region: region, fraction: 0)
+      case .downloading(let pack, let progress):
+        guard let region = region(of: pack) else { return }
+        backgroundDownloadDidProgress(region: region, fraction: progress.fractionCompleted)
+      case .finished(let pack):
+        guard let region = region(of: pack) else { return }
+        logger.notice("Asset pack for \(region.rawValue) finished downloading")
+        backgroundDownloadDidFinish(region: region)
+      case .failed(let pack, let error):
+        guard let region = region(of: pack) else { return }
+        backgroundDownloadDidFail(region: region, error: error)
+      @unknown default:
+        logger.info("Ignoring an unrecognized asset-pack status update")
+    }
+  }
+
+  /// The region a pack carries, or `nil` for a pack this app does not recognize.
+  private func region(of pack: AssetPack) -> TerrainRegion? {
+    TerrainRegion.region(forDownloadIdentifier: pack.id)
   }
 
   /// Records how far along the system's download of `region` is.
@@ -493,7 +512,6 @@ final class TerrainDataLoader: ObservableObject {
         let loader = Unmanaged<TerrainDataLoader>.fromOpaque(observer).takeUnretainedValue()
         Task { @MainActor in
           loader.refreshAvailableRegions()
-          loader.refreshBackgroundDownloads()
         }
       },
       TerrainDownloadNotification.completed as CFString,

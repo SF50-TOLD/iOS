@@ -47,14 +47,6 @@ public struct TerrainManifest: Decodable, Sendable {
   public let version: Int
   public let regions: [Region]
 
-  /// Returns the effective base URL for downloads.
-  public var effectiveBaseURL: String {
-    if !baseURL.isEmpty {
-      return baseURL.hasSuffix("/") ? baseURL : baseURL + "/"
-    }
-    return Self.defaultBaseURL.absoluteString
-  }
-
   // MARK: - Instance Methods
 
   /// Returns the manifest region for the given region ID.
