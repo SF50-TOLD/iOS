@@ -90,6 +90,17 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     .timeZone()
   }
 
+  /// Names a shared report by operation, airport, runway, and the time it describes.
+  ///
+  /// Uses the same date format as the report body, so the file agrees with what is printed
+  /// inside it rather than quoting a second, different time.
+  func documentTitle() -> String {
+    String(
+      localized:
+        "\(reportTitle()) \(input.airport.locationID) Rwy \(input.runway.name) \(input.date, format: reportDateFormat(for: input.airport))"
+    )
+  }
+
   // MARK: - Template Methods (to be overridden)
 
   // swiftlint:disable:next unavailable_function

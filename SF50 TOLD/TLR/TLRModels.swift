@@ -207,6 +207,23 @@ struct LandingPerformanceScenario {
   let runways: [RunwayInput: LandingRunwayPerformance]
 }
 
+/// A rendered TLR, and the name it carries once it leaves the app.
+struct Report {
+  /// The complete HTML document.
+  let html: String
+
+  /// Names the report by operation, airport, runway, and the time it describes, so a shared
+  /// file is not one of many identically named ones.
+  let documentTitle: String
+
+  /// ``documentTitle`` with the characters a path cannot carry replaced.
+  var fileName: String {
+    documentTitle
+      .replacingOccurrences(of: "/", with: "-")
+      .replacingOccurrences(of: ":", with: "-")
+  }
+}
+
 // MARK: - Generic Report Output
 
 /// Combined output from report data generation.

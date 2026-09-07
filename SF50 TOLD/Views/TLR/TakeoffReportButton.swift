@@ -4,9 +4,9 @@ import Sentry
 import SwiftData
 import SwiftUI
 
-private struct HTMLReport: Identifiable {
+private struct IdentifiableReport: Identifiable {
   let id = UUID()
-  let html: String
+  let report: Report
 }
 
 struct TakeoffReportButton: View {
@@ -17,7 +17,7 @@ struct TakeoffReportButton: View {
   @Environment(\.modelContext)
   private var modelContext
 
-  @State private var reportToShow: HTMLReport?
+  @State private var reportToShow: IdentifiableReport?
   @State private var isGenerating = false
   @State private var error: (any Error)?
 
@@ -42,9 +42,9 @@ struct TakeoffReportButton: View {
     }
     .accessibilityIdentifier("generateTakeoffReportButton")
     .disabled(!canGenerateReport || isGenerating)
-    .sheet(item: $reportToShow) { report in
+    .sheet(item: $reportToShow) { shown in
       HTMLReportViewer(
-        htmlContent: report.html,
+        report: shown.report,
         reportTitle: "Takeoff Report"
       )
     }
@@ -105,10 +105,10 @@ struct TakeoffReportButton: View {
           emptyWeight: emptyWeight,
           date: date
         )
-        let generatedHTML = try generateTakeoffReport(input: input, scenarios: scenarios)
+        let generatedReport = try generateTakeoffReport(input: input, scenarios: scenarios)
 
         await MainActor.run {
-          reportToShow = HTMLReport(html: generatedHTML)
+          reportToShow = IdentifiableReport(report: generatedReport)
           isGenerating = false
         }
       } catch {

@@ -66,7 +66,7 @@ struct `Takeoff Report` {
 
   /// Four runways and a second scenario, so the report is long enough to paginate and has a
   /// scenario that only the print stylesheet reveals.
-  private static func multiRunwayReport() throws -> String {
+  private static func multiRunwayReport() throws -> Report {
     try generateTakeoffReport(
       input: performanceInput(runwayNames: ["36", "18", "09", "27"]),
       scenarios: [
@@ -93,18 +93,34 @@ struct `Takeoff Report` {
       scenarios: [PerformanceScenario(name: "Forecast Conditions")]
     )
 
-    let isHTML = report.contains("<html"),
-      namesAirport = report.contains(input.airport.locationID),
-      namesScenario = report.contains("Forecast Conditions")
+    let isHTML = report.html.contains("<html"),
+      namesAirport = report.html.contains(input.airport.locationID),
+      namesScenario = report.html.contains("Forecast Conditions")
 
     // The rendered HTML goes with a failure only, so a green run carries no attachment.
     if !(isHTML && namesAirport && namesScenario) {
-      Attachment.record(report, named: "takeoff-report.html")
+      Attachment.record(report.html, named: "takeoff-report.html")
     }
 
     #expect(isHTML, "Report should be an HTML document")
     #expect(namesAirport, "Report should name the airport")
     #expect(namesScenario, "Report should name the scenario")
+  }
+
+  /// A shared file should identify the operation it describes rather than be one of many
+  /// identically named ones.
+  @MainActor
+  @Test
+  func `names the PDF after its airport, runway, and time`() throws {
+    let report = try Self.multiRunwayReport(),
+      data = try ReportPDF.render(html: report.html, documentTitle: report.documentTitle),
+      document = try #require(PDFDocument(data: data)),
+      recordedTitle = document.documentAttributes?[PDFDocumentAttribute.titleAttribute] as? String
+
+    #expect(report.documentTitle.contains("TEST"), "The name should carry the airport")
+    #expect(report.documentTitle.contains("36"), "The name should carry the runway")
+    #expect(recordedTitle == report.documentTitle, "The PDF should record that name")
+    #expect(!report.fileName.contains("/"), "A file name cannot carry a path separator")
   }
 
   /// Covers the two things that fail silently in the PDF: page geometry, without which the
@@ -114,7 +130,11 @@ struct `Takeoff Report` {
   @MainActor
   @Test
   func `prints a paginated PDF including the scenarios collapsed on screen`() throws {
-    let data = try ReportPDF.render(html: Self.multiRunwayReport()),
+    let
+      data = try ReportPDF.render(
+        html: Self.multiRunwayReport().html,
+        documentTitle: "Test Report"
+      ),
       document = try #require(PDFDocument(data: data), "PDF data should parse as a document"),
       text = Self.text(of: document),
       performanceTables = text.components(separatedBy: "Ground Run").count - 1

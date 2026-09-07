@@ -4,7 +4,7 @@ import WebKit
 
 /// Presents a rendered TLR and offers it for sharing as a PDF.
 struct HTMLReportViewer: View {
-  let htmlContent: String
+  let report: Report
   let reportTitle: String
 
   @Environment(\.dismiss)
@@ -16,7 +16,7 @@ struct HTMLReportViewer: View {
 
   var body: some View {
     NavigationStack {
-      HTMLWebView(htmlContent: htmlContent)
+      HTMLWebView(htmlContent: report.html)
         .navigationTitle(reportTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -70,8 +70,10 @@ struct HTMLReportViewer: View {
   }
 
   private func writePDF() throws -> URL {
-    let data = try ReportPDF.render(html: htmlContent),
-      url = FileManager.default.temporaryDirectory.appendingPathComponent(reportTitle + ".pdf")
+    let data = try ReportPDF.render(html: report.html, documentTitle: report.documentTitle),
+      url = FileManager.default.temporaryDirectory
+        .appendingPathComponent(report.fileName)
+        .appendingPathExtension("pdf")
     try data.write(to: url)
     return url
   }
@@ -92,7 +94,10 @@ private struct HTMLWebView: UIViewRepresentable {
 
 #Preview {
   HTMLReportViewer(
-    htmlContent: "<html><body><h1>Takeoff Report</h1><p>KTST • Runway 36</p></body></html>",
+    report: .init(
+      html: "<html><body><h1>Takeoff Report</h1><p>KTST • Runway 36</p></body></html>",
+      documentTitle: "Takeoff Report KTST Rwy 36 Sep 7 at 7:08 PM GMT"
+    ),
     reportTitle: "Takeoff Report"
   )
 }
