@@ -241,10 +241,6 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   /// Name this region's payload is stored under in the shared container.
   public var localFilename: String { "\(rawValue).srtm" }
 
-  /// Name of the LZMA-compressed payload some installed devices hold, which expands to
-  /// ``localFilename``.
-  public var legacyCompressedFilename: String { "terrain-\(rawValue).srtm.lzma" }
-
   /// Identifies this region's download to Background Assets, in the app and its extension alike.
   public var downloadIdentifier: String { Self.downloadIdentifierPrefix + rawValue }
 

@@ -4,7 +4,6 @@ import Foundation
 import os
 import Sentry
 import SF50_Shared
-import StreamingLZMA
 
 /// Handles on-demand downloading and management of terrain data.
 ///
@@ -37,9 +36,6 @@ final class TerrainDataLoader: ObservableObject {
 
   static let shared = TerrainDataLoader()
 
-  /// Extension given to a payload still being built, so a scan can't mistake it for a finished one.
-  nonisolated private static let scratchFileExtension = "partial"
-
   /// Configuration shared by the manifest fetch and the region downloads.
   ///
   /// A region runs to several gigabytes, so the resource timeout has to cover a transfer
@@ -65,9 +61,6 @@ final class TerrainDataLoader: ObservableObject {
   /// Regions with active Background Assets downloads managed by the system.
   @Published private(set) var backgroundDownloadingRegions: Set<TerrainRegion> = []
 
-  /// Regions currently being expanded from a compressed payload.
-  @Published private(set) var expandingRegions: Set<TerrainRegion> = []
-
   /// Regions whose payload is on disk but shorter than the manifest says it should be.
   @Published private(set) var unfinishedRegions: Set<TerrainRegion> = []
 
@@ -79,12 +72,6 @@ final class TerrainDataLoader: ObservableObject {
 
   /// Logger for debug output.
   nonisolated private let logger = Logger(
-    subsystem: "codes.tim.SF50-TOLD",
-    category: "TerrainDataLoader"
-  )
-
-  /// Emits the intervals that put decompression on an Instruments timeline.
-  nonisolated private let signposter = OSSignposter(
     subsystem: "codes.tim.SF50-TOLD",
     category: "TerrainDataLoader"
   )
@@ -128,42 +115,6 @@ final class TerrainDataLoader: ObservableObject {
     refreshAvailableRegions()
     refreshBackgroundDownloads()
     setupNotificationObserver()
-  }
-
-  // MARK: - Type Methods
-
-  /// Expands an LZMA-compressed payload into the form the terrain service reads.
-  ///
-  /// The output is built under a scratch name and renamed into place only once it is whole, so a
-  /// concurrent scan sees either no payload or a complete one — never a half-written file that
-  /// would load as corrupt. The compressed original is removed on success.
-  nonisolated private static func expandLegacyPayload(
-    from sourceURL: URL,
-    to destinationURL: URL
-  ) throws {
-    let scratchURL = destinationURL.appendingPathExtension(Self.scratchFileExtension)
-    try? FileManager.default.removeItem(at: scratchURL)
-
-    let inputHandle = try FileHandle(forReadingFrom: sourceURL)
-    defer { try? inputHandle.close() }
-
-    FileManager.default.createFile(atPath: scratchURL.path, contents: nil)
-    let outputHandle = try FileHandle(forWritingTo: scratchURL)
-    defer { try? outputHandle.close() }
-
-    do {
-      try inputHandle.lzmaFileDecompress(to: outputHandle, configuration: .highThroughput)
-      try outputHandle.synchronize()
-      try outputHandle.close()
-    } catch {
-      try? outputHandle.close()
-      try? FileManager.default.removeItem(at: scratchURL)
-      if error.isOutOfDiskSpace { throw TerrainDataLoaderError.outOfDiskSpace }
-      throw TerrainDataLoaderError.decompressionFailed(error)
-    }
-
-    try FileManager.default.moveItem(at: scratchURL, to: destinationURL)
-    try? FileManager.default.removeItem(at: sourceURL)
   }
 
   // MARK: - Public API
@@ -235,10 +186,6 @@ final class TerrainDataLoader: ObservableObject {
       logger.info("Available terrain regions: \(scan.available.map(\.rawValue))")
 
       loadAvailableRegionsIntoService()
-
-      for region in scan.pendingExpansion {
-        Task { await self.expandPendingPayload(for: region) }
-      }
     }
   }
 
@@ -249,12 +196,12 @@ final class TerrainDataLoader: ObservableObject {
 
     var scan = RegionScan()
     for region in TerrainRegion.allCases where !corrupted.contains(region) {
+      if inventory.removeLegacyCompressedPayload(for: region) {
+        logger.info("Reclaimed a v2-era compressed payload for \(region.rawValue)")
+      }
       switch inventory.state(of: region) {
         case .complete:
           scan.available.insert(region)
-        case .legacyCompressed:
-          logger.info("Found a compressed payload for \(region.rawValue), queuing expansion")
-          scan.pendingExpansion.append(region)
         case .incomplete(let bytesOnDisk, let expectedBytes):
           logger.info(
             "Payload for \(region.rawValue) is \(bytesOnDisk) of \(expectedBytes) bytes"
@@ -272,9 +219,7 @@ final class TerrainDataLoader: ObservableObject {
     if let payloadURL = payloadURL(for: region) {
       try? FileManager.default.removeItem(at: payloadURL)
     }
-    if let legacyPayloadURL = legacyPayloadURL(for: region) {
-      try? FileManager.default.removeItem(at: legacyPayloadURL)
-    }
+    inventory?.removeLegacyCompressedPayload(for: region)
     unfinishedRegions.remove(region)
 
     availableRegions.remove(region)
@@ -372,11 +317,6 @@ final class TerrainDataLoader: ObservableObject {
     inventory?.localURL(for: region)
   }
 
-  /// Returns the URL of this region's LZMA-compressed payload, which expands to ``payloadURL(for:)``.
-  nonisolated private func legacyPayloadURL(for region: TerrainRegion) -> URL? {
-    inventory?.legacyCompressedURL(for: region)
-  }
-
   /// Schedules a download via Background Assets.
   private func scheduleBackgroundDownload(for region: TerrainRegion) throws {
     // Store the request for the Background Assets extension
@@ -439,54 +379,6 @@ final class TerrainDataLoader: ObservableObject {
       }
     } catch {
       logger.warning("Failed to fetch manifest: \(error.localizedDescription)")
-    }
-  }
-
-  /// Decompresses a payload off the main actor, bracketed by a signpost interval.
-  ///
-  /// Expansion runs outside the “Terrain Download” transaction, so the interval is the only
-  /// record of what the LZMA pass costs for a given region.
-  private func expandPayload(
-    from legacyPayloadURL: URL,
-    to payloadURL: URL,
-    for region: TerrainRegion
-  ) async throws {
-    let interval = signposter.beginInterval(
-      "terrain expand",
-      id: signposter.makeSignpostID(),
-      "\(region.rawValue, privacy: .public)"
-    )
-    defer { signposter.endInterval("terrain expand", interval) }
-
-    try await Task.detached(priority: .userInitiated) {
-      try Self.expandLegacyPayload(from: legacyPayloadURL, to: payloadURL)
-    }.value
-  }
-
-  /// Expands a compressed payload found in the shared container into a usable one.
-  private func expandPendingPayload(for region: TerrainRegion) async {
-    guard let legacyPayloadURL = legacyPayloadURL(for: region),
-      let payloadURL = payloadURL(for: region)
-    else {
-      return
-    }
-
-    logger.info("Expanding compressed terrain for \(region.rawValue)…")
-    expandingRegions.insert(region)
-    state = .expanding(region: region)
-    defer { expandingRegions.remove(region) }
-
-    do {
-      try await expandPayload(from: legacyPayloadURL, to: payloadURL, for: region)
-      availableRegions.insert(region)
-      loadAvailableRegionsIntoService()
-      logger.info("Terrain for \(region.rawValue) is available")
-    } catch {
-      report(error, for: region, operation: "expand")
-      logger.error(
-        "Failed to expand terrain for \(region.rawValue): \(error.localizedDescription)"
-      )
-      state = .failed(region: region, message: error.localizedDescription)
     }
   }
 
@@ -600,14 +492,12 @@ final class TerrainDataLoader: ObservableObject {
   private struct RegionScan {
     var available: Set<TerrainRegion> = []
     var unfinished: Set<TerrainRegion> = []
-    var pendingExpansion: [TerrainRegion] = []
   }
 
   /// Current download state.
   enum State: Equatable {
     case idle
     case downloading(region: TerrainRegion, progress: Float?)
-    case expanding(region: TerrainRegion)
     case completed(region: TerrainRegion)
     case failed(region: TerrainRegion, message: String)
 
@@ -617,8 +507,6 @@ final class TerrainDataLoader: ObservableObject {
           return true
         case (.downloading(let r1, let p1), .downloading(let r2, let p2)):
           return r1 == r2 && p1 == p2
-        case (.expanding(let r1), .expanding(let r2)):
-          return r1 == r2
         case (.completed(let r1), .completed(let r2)):
           return r1 == r2
         case (.failed(let r1, let m1), .failed(let r2, let m2)):
@@ -634,7 +522,6 @@ final class TerrainDataLoader: ObservableObject {
 enum TerrainDataLoaderError: LocalizedError {
   case noStorageAccess
   case downloadFailed(any Error)
-  case decompressionFailed(any Error)
   case outOfDiskSpace
   case regionNotAvailable(TerrainRegion)
 
@@ -659,8 +546,6 @@ enum TerrainDataLoaderError: LocalizedError {
         String(localized: "Cannot access the terrain storage location.")
       case .downloadFailed(let error):
         String(localized: "Download failed: \(error.localizedDescription)")
-      case .decompressionFailed(let error):
-        String(localized: "Decompression failed: \(error.localizedDescription)")
       case .outOfDiskSpace:
         String(localized: "Your device is out of storage space.")
       case .regionNotAvailable(let region):
@@ -672,7 +557,7 @@ enum TerrainDataLoaderError: LocalizedError {
     switch self {
       case .noStorageAccess:
         String(localized: "Check that the app has permission to access storage.")
-      case .downloadFailed, .decompressionFailed:
+      case .downloadFailed:
         String(localized: "Check your internet connection and try again.")
       case .outOfDiskSpace:
         String(
@@ -689,9 +574,8 @@ private extension Error {
   /// Whether this error, or any error in its `NSUnderlyingErrorKey` chain,
   /// represents a "No space left on device" condition.
   ///
-  /// `StreamingLZMA` surfaces a failed-write `errno` as `LZMAError.ioFailure`,
-  /// whose `CustomNSError` bridging leaves the outermost error in the library's
-  /// own domain and carries the `errno` one level down, so recognizing the
+  /// A file-system error can arrive wrapped, with the outermost error in a
+  /// library's own domain and the `errno` one level down, so recognizing the
   /// condition means walking the chain rather than inspecting only the error in
   /// hand.
   var isOutOfDiskSpace: Bool { (self as NSError).isOutOfDiskSpace }
