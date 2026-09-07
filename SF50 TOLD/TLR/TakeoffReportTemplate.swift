@@ -131,7 +131,7 @@ class TakeoffReportTemplate: BaseReportTemplate<
           Td(
             (input.conditions.seaLevelPressure ?? standardSeaLevelPressure)
               .converted(to: pressureUnit)
-              .formatted(.airPressure)
+              .formatted(.airPressure(in: pressureUnit))
           )
           Td(input.weight.converted(to: weightUnit).formatted(.weight))
         }

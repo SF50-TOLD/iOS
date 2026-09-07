@@ -133,7 +133,7 @@ class LandingReportTemplate: BaseReportTemplate<
           Td(
             (input.conditions.seaLevelPressure ?? standardSeaLevelPressure)
               .converted(to: pressureUnit)
-              .formatted(.airPressure)
+              .formatted(.airPressure(in: pressureUnit))
           )
           Td(input.weight.converted(to: weightUnit).formatted(.weight))
           Td(SF50_TOLD.format(flapSetting: input.flapSetting, short: true))

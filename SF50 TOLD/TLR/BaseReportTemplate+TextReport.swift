@@ -59,6 +59,9 @@ extension BaseReportTemplate {
     return max(48, widest)
   }
 
+  /// Hundredths of an inch of mercury, but whole hectopascals — the precision each is read at.
+  private var pressureDecimals: Int { pressureUnit == .inchesOfMercury ? 2 : 0 }
+
   func textReport(runways: [RunwayInput: RunwayInfo], scenarios: [ScenarioType]) -> String {
     var lines = textHeader()
 
@@ -114,7 +117,7 @@ extension BaseReportTemplate {
       pressure = (input.conditions.seaLevelPressure ?? standardSeaLevelPressure)
         .converted(to: pressureUnit)
     return "POAT \(whole(temperature.value))\(textUnitSymbol(temperatureUnit))"
-      + " PQNH \(decimal(pressure.value, places: 2))\(textUnitSymbol(pressureUnit))"
+      + " PQNH \(decimal(pressure.value, places: pressureDecimals))\(textUnitSymbol(pressureUnit))"
       + " WIND \(wind())"
   }
 

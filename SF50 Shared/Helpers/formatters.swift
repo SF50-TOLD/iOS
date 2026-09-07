@@ -14,8 +14,13 @@ extension FormatStyle where Self == FloatingPointFormatStyle<Double> {
   public static var speed: Self { .number.rounded(increment: 1) }
   public static var mach: Self { .number.precision(.fractionLength(3)) }
   public static var temperature: Self { .number.rounded(increment: 1) }
-  public static var airPressure: Self { .number.rounded(increment: 0.01) }
   public static var heading: Self { .number.rounded(increment: 1) }
+
+  /// Air pressure at the precision its unit is read at: hundredths of an inch of mercury, but
+  /// whole hectopascals, which is how an altimeter setting is given and how a QNH is read.
+  public static func airPressure(in unit: UnitPressure) -> Self {
+    unit == .inchesOfMercury ? .number.rounded(increment: 0.01) : .number.rounded(increment: 1)
+  }
 }
 
 extension FormatStyle where Self == FloatingPointFormatStyle<Double>.Percent {
@@ -131,8 +136,12 @@ extension FormatStyle where Self == Measurement<UnitTemperatureDifference>.Forma
 }
 
 extension FormatStyle where Self == Measurement<UnitPressure>.FormatStyle {
-  public static var airPressure: Self {
-    .measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .airPressure)
+  public static func airPressure(in unit: UnitPressure) -> Self {
+    .measurement(
+      width: .abbreviated,
+      usage: .asProvided,
+      numberFormatStyle: .airPressure(in: unit)
+    )
   }
 }
 

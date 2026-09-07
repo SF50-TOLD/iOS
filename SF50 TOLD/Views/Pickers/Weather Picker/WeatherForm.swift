@@ -66,7 +66,7 @@ struct WeatherForm: View {
           "Altimeter",
           value: $altimeter,
           in: pressureUnit,
-          format: .airPressure,
+          format: .airPressure(in: pressureUnit),
           keypad: .decimal
         )
         .accessibilityIdentifier("altimeterField")
