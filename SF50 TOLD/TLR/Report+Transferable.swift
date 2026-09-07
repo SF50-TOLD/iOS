@@ -1,9 +1,26 @@
 import CoreTransferable
 import Foundation
-import Sentry
 import UniformTypeIdentifiers
 
-extension Report: Transferable {
+/// A report that has been laid out, ready to leave the app.
+///
+/// Holding the rendered PDF rather than rendering on demand lets the share sheet preview it: a
+/// preview needs a thumbnail up front, and a thumbnail needs the document.
+struct SharedReport: Sendable {
+  let pdf: Data
+  let summary: String
+  let documentTitle: String
+  let fileName: String
+
+  init(report: Report, pdf: Data) {
+    self.pdf = pdf
+    summary = report.summary
+    documentTitle = report.documentTitle
+    fileName = report.fileName
+  }
+}
+
+extension SharedReport: Transferable {
 
   /// Offers the report as a PDF first, and as its text summary to anywhere that takes only text.
   ///
@@ -11,26 +28,9 @@ extension Report: Transferable {
   /// the summary — so relaying a number to the other seat no longer means sending a document or
   /// a screenshot.
   static var transferRepresentation: some TransferRepresentation {
-    DataRepresentation(exportedContentType: .pdf) { report in
-      try await report.pdf()
-    }
-    .suggestedFileName { $0.fileName + ".pdf" }
+    DataRepresentation(exportedContentType: .pdf) { $0.pdf }
+      .suggestedFileName { $0.fileName + ".pdf" }
 
     ProxyRepresentation(exporting: \.summary)
-  }
-
-  /// Lays the report out as a PDF, reporting a failure before handing it back to the share sheet.
-  private func pdf() async throws -> Data {
-    do {
-      return try await MainActor.run {
-        try ReportPDF.render(html: html, documentTitle: documentTitle)
-      }
-    } catch {
-      SentrySDK.capture(error: error) { scope in
-        scope.setLevel(.warning)
-        scope.setFingerprint(["report-pdf"])
-      }
-      throw error
-    }
   }
 }

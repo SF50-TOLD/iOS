@@ -54,6 +54,7 @@ extension SF50_TOLDUITests {
 
     let report = takeoff.openReport()
     XCTAssertTrue(report.isDisplayed())
+    XCTAssertTrue(report.showsReportContent(), "The report should render in the viewer")
     report.dismiss()
   }
 
