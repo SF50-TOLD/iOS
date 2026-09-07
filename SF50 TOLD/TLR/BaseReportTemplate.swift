@@ -26,6 +26,8 @@ import SwiftHtml
 /// - ``generatePerformanceTable(_:)``: Renders performance for a scenario
 /// - ``extractPerformances(from:)``: Extracts runway performances from a scenario
 /// - ``extractScenarioName(from:)``: Extracts the scenario name
+/// - ``summaryLines(for:)``: The distances and speeds the text summary states, which differ
+///   between a takeoff and a landing
 ///
 /// ## Rendering
 ///
@@ -101,6 +103,34 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     )
   }
 
+  /// A plain-text digest of the planned runway under the first scenario.
+  ///
+  /// The report answers for every runway and every what-if; this answers only for the one the
+  /// pilot planned, so the numbers can be read to the other seat or to dispatch without sending
+  /// the whole document. It states the configuration they came from, because a distance means
+  /// nothing without the safety factor and the weather behind it.
+  func summary(scenarios: [ScenarioType]) -> String {
+    var lines = [
+      String(localized: "\(reportTitle()) \(input.airport.locationID) Rwy \(input.runway.name)")
+    ]
+    if let performance = plannedPerformance(in: scenarios) {
+      lines += summaryLines(for: performance)
+    }
+    lines.append(
+      String(
+        localized:
+          "Safety factor \(input.safetyFactor, format: .number.precision(.fractionLength(2)))"
+      )
+    )
+    lines.append(formatWeatherSource())
+    return lines.joined(separator: "\n")
+  }
+
+  private func plannedPerformance(in scenarios: [ScenarioType]) -> PerformanceType? {
+    guard let planned = scenarios.first else { return nil }
+    return extractPerformances(from: planned)[input.runway]
+  }
+
   // MARK: - Template Methods (to be overridden)
 
   // swiftlint:disable:next unavailable_function
@@ -131,6 +161,11 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
   // swiftlint:disable:next unavailable_function
   func extractScenarioName(from _: ScenarioType) -> String {
     fatalError("Subclasses must override extractScenarioName(from:)")
+  }
+
+  // swiftlint:disable:next unavailable_function
+  func summaryLines(for _: PerformanceType) -> [String] {
+    fatalError("Subclasses must override summaryLines(for:)")
   }
 
   // MARK: - Common Rendering
@@ -331,21 +366,48 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     }
   }
 
-  func format<T>(value: Value<T>, formatter: (T) -> [Tag]) -> [Tag] {
+  /// How a value that carries no number reads, and the class that colours it.
+  ///
+  /// Shared so the HTML tables and the text summary cannot drift apart on what "offscale"
+  /// prints as. Returns `nil` when the value does carry a number.
+  func unavailableDescription<T>(of value: Value<T>) -> (text: String, cssClass: String)? {
     switch value {
-      case .value(let v), .valueWithUncertainty(let v, _):
-        return formatter(v)
-      case .invalid:
-        return [Span(String(localized: "Inv")).class("invalid")]
-      case .notAvailable:
-        return [Span(String(localized: "-")).class("not-available")]
-      case .notAuthorized:
-        return [Span(String(localized: "N/A")).class("invalid")]
-      case .offscaleHigh:
-        return [Span(String(localized: "N/A")).class("not-available")]
-      case .offscaleLow:
-        return [Span(String(localized: "N/A")).class("not-available")]
+      case .value, .valueWithUncertainty: nil
+      case .invalid: (String(localized: "Inv"), "invalid")
+      case .notAvailable: (String(localized: "-"), "not-available")
+      case .notAuthorized: (String(localized: "N/A"), "invalid")
+      case .offscaleHigh, .offscaleLow: (String(localized: "N/A"), "not-available")
     }
+  }
+
+  func format<T>(value: Value<T>, formatter: (T) -> [Tag]) -> [Tag] {
+    guard let unavailable = unavailableDescription(of: value) else {
+      return value.nominal.map(formatter) ?? []
+    }
+    return [Span(unavailable.text).class(unavailable.cssClass)]
+  }
+
+  /// Renders a value as plain text for the summary, the way the table formatters render it as
+  /// HTML — falling back to the same wording when the value carries no number.
+  func describe<T>(value: Value<T>?, formatter: (T) -> String) -> String {
+    guard let value else { return String(localized: "-") }
+    guard let unavailable = unavailableDescription(of: value) else {
+      return value.nominal.map(formatter) ?? ""
+    }
+    return unavailable.text
+  }
+
+  func describe(distance value: Value<PerformanceDistance>?) -> String {
+    describe(value: value) { distance in
+      let run = distance.distance.converted(to: runwayLengthUnit).formatted(.length),
+        margin = distance.margin.converted(to: runwayLengthUnit)
+          .formatted(.length(plusSign: true))
+      return String(localized: "\(run) (\(margin))")
+    }
+  }
+
+  func describe(speed value: Value<Measurement<UnitSpeed>>?) -> String {
+    describe(value: value) { $0.converted(to: speedUnit).formatted(.speed) }
   }
 
   func format<T>(value: Value<T>?, formatter: (T) -> [Tag]) -> [Tag] {

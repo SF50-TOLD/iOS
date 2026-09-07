@@ -40,6 +40,13 @@ class TakeoffReportTemplate: BaseReportTemplate<
     scenario.scenarioName
   }
 
+  override func summaryLines(for performance: TakeoffRunwayPerformance) -> [String] {
+    [
+      String(localized: "Ground run \(describe(distance: performance.groundRun))"),
+      String(localized: "Distance to 50 ft \(describe(distance: performance.totalDistance))")
+    ]
+  }
+
   override func generateDataTable() -> Table {
     Table {
       Thead {

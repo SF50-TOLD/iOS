@@ -208,13 +208,16 @@ struct LandingPerformanceScenario {
 }
 
 /// A rendered TLR, and the name it carries once it leaves the app.
-struct Report {
+struct Report: Sendable {
   /// The complete HTML document.
   let html: String
 
   /// Names the report by operation, airport, runway, and the time it describes, so a shared
   /// file is not one of many identically named ones.
   let documentTitle: String
+
+  /// A plain-text digest of the planned runway, for relaying the numbers without the document.
+  let summary: String
 
   /// ``documentTitle`` with the characters a path cannot carry replaced.
   var fileName: String {

@@ -1,18 +1,13 @@
-import Sentry
 import SwiftUI
 import WebKit
 
-/// Presents a rendered TLR and offers it for sharing as a PDF.
+/// Presents a rendered TLR and offers it for sharing.
 struct HTMLReportViewer: View {
   let report: Report
   let reportTitle: String
 
   @Environment(\.dismiss)
   private var dismiss
-  @State private var pdfURL: URL?
-  @State private var errorMessage: String?
-  @State private var showError = false
-  @State private var isGeneratingPDF = false
 
   var body: some View {
     NavigationStack {
@@ -27,55 +22,13 @@ struct HTMLReportViewer: View {
           }
 
           ToolbarItem(placement: .navigationBarTrailing) {
-            if let pdfURL {
-              ShareLink(item: pdfURL) {
-                Image(systemName: "square.and.arrow.up")
-                  .accessibilityLabel("Share PDF")
-              }
-            } else {
-              Button(action: generatePDF) {
-                Image(systemName: "square.and.arrow.up")
-                  .accessibilityLabel("Generate PDF")
-              }
-              .disabled(isGeneratingPDF)
+            ShareLink(item: report, preview: SharePreview(report.documentTitle)) {
+              Image(systemName: "square.and.arrow.up")
+                .accessibilityLabel("Share Report")
             }
           }
         }
-        .alert("Error", isPresented: $showError) {
-          Button("OK", role: .cancel) {}
-        } message: {
-          if let errorMessage {
-            Text(errorMessage)
-          }
-        }
-        .onAppear(perform: generatePDF)
     }
-  }
-
-  private func generatePDF() {
-    guard !isGeneratingPDF else { return }
-    isGeneratingPDF = true
-    defer { isGeneratingPDF = false }
-
-    do {
-      pdfURL = try writePDF()
-    } catch {
-      SentrySDK.capture(error: error) { scope in
-        scope.setLevel(.warning)
-        scope.setFingerprint(["pdf-save"])
-      }
-      errorMessage = error.localizedDescription
-      showError = true
-    }
-  }
-
-  private func writePDF() throws -> URL {
-    let data = try ReportPDF.render(html: report.html, documentTitle: report.documentTitle),
-      url = FileManager.default.temporaryDirectory
-        .appendingPathComponent(report.fileName)
-        .appendingPathExtension("pdf")
-    try data.write(to: url)
-    return url
   }
 }
 
@@ -96,7 +49,8 @@ private struct HTMLWebView: UIViewRepresentable {
   HTMLReportViewer(
     report: .init(
       html: "<html><body><h1>Takeoff Report</h1><p>KTST • Runway 36</p></body></html>",
-      documentTitle: "Takeoff Report KTST Rwy 36 Sep 7 at 7:08 PM GMT"
+      documentTitle: "Takeoff Report KTST Rwy 36 Sep 7 at 7:08 PM GMT",
+      summary: "Takeoff Report KTST Rwy 36\nGround run 1,803 ft (+3,197 ft)"
     ),
     reportTitle: "Takeoff Report"
   )

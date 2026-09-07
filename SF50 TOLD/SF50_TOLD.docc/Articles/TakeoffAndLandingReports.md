@@ -20,11 +20,13 @@ The TLR generation pipeline: data calculation, HTML rendering, and what-if scena
 - ``LandingReportData``
 - ``ReportOutput``
 
-### HTML Rendering
+### Rendering
 
 - ``BaseReportTemplate``
 - ``TakeoffReportTemplate``
 - ``LandingReportTemplate``
+- ``Report``
+- ``ReportPDF``
 
 ### Runway Analysis
 
