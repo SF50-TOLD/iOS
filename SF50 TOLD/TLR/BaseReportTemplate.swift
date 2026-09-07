@@ -141,11 +141,15 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
             generatedAt: generatedAt
           )
 
-          H2(String(localized: "\(operationType()) Data"))
-          generateDataTable()
+          keptTogether {
+            H2(String(localized: "\(operationType()) Data"))
+            generateDataTable()
+          }
 
-          H3(String(localized: "Available Runways"))
-          generateRunwaysTable(runways)
+          keptTogether {
+            H3(String(localized: "Available Runways"))
+            generateRunwaysTable(runways)
+          }
 
           generateScenarioSections(scenarios: scenarios)
         }
@@ -205,9 +209,11 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
 
       if index == 0 {
         // First scenario (Forecast Conditions) - always visible
-        H3(String(localized: "\(operationType()) Performance • \(name)"))
-          .class(allInvalid ? "scenario-invalid" : "")
-        generatePerformanceTable(performances)
+        keptTogether {
+          H3(String(localized: "\(operationType()) Performance • \(name)"))
+            .class(allInvalid ? "scenario-invalid" : "")
+          generatePerformanceTable(performances)
+        }
       } else {
         // Other scenarios - accordion
         accordionSection(
@@ -364,6 +370,16 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
       }
     #endif
     return ""
+  }
+
+  /// Groups a heading with the table it introduces so that printing cannot separate them.
+  ///
+  /// The print stylesheet keeps this block off a page boundary. `break-after: avoid` on the
+  /// heading would say the same thing more directly, but the print formatter ignores it and
+  /// honors `page-break-inside`, so the pair has to be a block for the rule to have something
+  /// to hold together.
+  func keptTogether(@TagBuilder content: () -> Tag) -> Tag {
+    Div(content()).class("kept-together")
   }
 
   func accordionSection(id: String, title: String, isInvalid: Bool = false, content: () -> Tag)

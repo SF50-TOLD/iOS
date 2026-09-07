@@ -208,6 +208,14 @@ span.margin-negative {
 
     table { page-break-inside: avoid; }
 
+    /* Keep a heading on the same page as the table it introduces. The print formatter
+       ignores break-after, so each pair is a block that stays whole instead. */
+    .kept-together,
+    .accordion-item {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
     /* Expand all accordions for print */
     .accordion-content {
         max-height: none !important;
@@ -215,7 +223,7 @@ span.margin-negative {
     }
 
     .accordion-header h3::before {
-        content: '';
-        display: none;
+        content: '' !important;
+        display: none !important;
     }
 }

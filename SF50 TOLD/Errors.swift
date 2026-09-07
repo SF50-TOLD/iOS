@@ -71,3 +71,16 @@ extension NOTAMLoader.Errors: @retroactive LocalizedError {
     }
   }
 }
+
+extension ReportPDF.Errors: LocalizedError {
+  var errorDescription: String? {
+    String(localized: "Report couldn’t be saved as a PDF")
+  }
+
+  var failureReason: String? {
+    switch self {
+      case .emptyReport:
+        String(localized: "The report laid out as no pages.")
+    }
+  }
+}
