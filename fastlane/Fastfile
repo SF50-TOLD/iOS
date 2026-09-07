@@ -174,10 +174,24 @@ platform :ios do
   end
 
   desc "Build and upload to TestFlight"
-  lane :beta do
+  lane :beta do |options|
     ensure_signing
-    increment_build_number xcodeproj: XCODEPROJ
-    build_app scheme: SCHEME, export_method: "app-store", output_directory: OUTPUT_DIRECTORY
+
+    # Passed on the command line rather than written into the project, exactly as `ci_release` does:
+    # it stamps every target in the archive alike and leaves no commit behind.
+    #
+    # `increment_build_number` cannot do either. It writes one value into every build configuration
+    # in the project, and it derives that value from the lowest number it finds — so the test
+    # targets, which sit far below the app, drag the app's build number backwards.
+    version = options.fetch(:version) { get_version_number(xcodeproj: XCODEPROJ, target: SCHEME) }
+    build = options.fetch(:build) { resolve_next_build_number }
+
+    build_app(
+      scheme:           SCHEME,
+      export_method:    "app-store",
+      output_directory: OUTPUT_DIRECTORY,
+      xcargs:           "MARKETING_VERSION=#{version} CURRENT_PROJECT_VERSION=#{build}"
+    )
     upload_to_testflight
     upload_debug_symbols
   end
@@ -195,17 +209,7 @@ platform :ios do
 
   desc "Resolve the next build number and write it where CI can read it"
   lane :ci_next_build_number do
-    ensure_api_key
-
-    # App Store Connect is the authority, not the project file: the checked-in build number drifts
-    # behind whatever was last uploaded, and every platform of a release shares one number.
-    latest = PLATFORMS.each_value.map do |platform|
-      latest_testflight_build_number(app_identifier:       APP_IDENTIFIER,
-                                     platform:             platform[:deliver],
-                                     initial_build_number: 0)
-    end.max
-
-    next_build_number = latest + 1
+    next_build_number = resolve_next_build_number
     UI.success("Next build number: #{next_build_number}")
 
     # Only CI needs the value in a file to hand to the next job; a local run just wants to see it.
@@ -254,6 +258,20 @@ platform :ios do
     )
 
     upload_debug_symbols
+  end
+
+  # The build number to ship next.
+  #
+  # App Store Connect is the authority, not the project file: the checked-in build number drifts
+  # behind whatever was last uploaded, and every platform of a release shares one number.
+  private_lane :resolve_next_build_number do
+    ensure_api_key
+
+    PLATFORMS.each_value.map do |platform|
+      latest_testflight_build_number(app_identifier:       APP_IDENTIFIER,
+                                     platform:             platform[:deliver],
+                                     initial_build_number: 0)
+    end.max + 1
   end
 
   # Loads the App Store Connect API key. Kept out of `before_all` so `screenshots`, which runs
