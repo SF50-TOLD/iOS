@@ -1,10 +1,11 @@
 #!/bin/bash
 #
+# release-notes.sh — shared release-notes renderer, revision 4 (2026-09-07).
+# Copies live in six app repositories; a copy that does not say revision 4 is stale.
+#
 # Prints one version's section of CHANGELOG.md, for whatever wants the release notes.
 #
 #   Scripts/release-notes.sh [--plain] <version> [locale]
-#
-# Shared with the other apps in this family; keep changes in step with theirs.
 #
 # The release workflow feeds `--plain` into App Store Connect's "What's New". One source, so the
 # changelog and the store cannot drift into describing the same build differently.
@@ -91,7 +92,11 @@ printf '%s\n' "$notes" | awk '
   }
   function flush() { if (buffer != "") { emit(buffer); buffer = "" } }
   { gsub(/`/, "") }
-  /^#+ / { flush(); sub(/^#+ /, ""); separate = 1; emit($0); next }
+  # `separate` is set on both sides: a heading is given air beneath it whether or not the source
+  # left a blank line there. Deriving that from the source alone would make the spacing depend on
+  # the author remembering, and a heading flush against its first bullet is the one rendering this
+  # was changed to stop producing.
+  /^#+ / { flush(); sub(/^#+ /, ""); separate = 1; emit($0); separate = 1; next }
   /^[-*] / { flush(); sub(/^[-*] /, "• "); buffer = $0; next }
   /^[[:space:]]*$/ { flush(); separate = 1; next }
   { sub(/^[[:space:]]+/, ""); buffer = (buffer == "" ? $0 : buffer " " $0) }
