@@ -68,7 +68,7 @@ class TakeoffReportTemplate: BaseReportTemplate<
   override func runwayColumns() -> [TextColumn] {
     [
       .init(heading: "RWY", width: 4, alignment: .leading),
-      .init(heading: "LENGTH", width: 7),
+      .init(heading: "TODA", width: 7),
       .init(heading: "MTOW", width: 7),
       .init(heading: "LIM", width: 5, alignment: .leading)
     ]
@@ -76,7 +76,7 @@ class TakeoffReportTemplate: BaseReportTemplate<
 
   override func runwayCells(for runway: RunwayInput, _ info: RunwayInfo) -> [String] {
     [
-      whole(runway.length.converted(to: runwayLengthUnit).value),
+      whole(runway.availableTakeoffDistance.converted(to: runwayLengthUnit).value),
       whole(info.maxWeight.converted(to: weightUnit).value),
       textLimitingFactor(info.limitingFactor)
     ]
@@ -144,7 +144,7 @@ class TakeoffReportTemplate: BaseReportTemplate<
       Thead {
         Tr {
           Th(String(localized: "Rwy"))
-          Th(String(localized: "Length"))
+          Th(String(localized: "TODA"))
           Th(String(localized: "MTOW"))
           Th(String(localized: "Limit"))
         }
@@ -153,7 +153,10 @@ class TakeoffReportTemplate: BaseReportTemplate<
         for (runwayInput, info) in runways.sorted(by: { $0.key < $1.key }) {
           Tr {
             Th(runwayInput.name)
-            Td(runwayInput.length.converted(to: runwayLengthUnit).formatted(.length))
+            Td(
+              runwayInput.availableTakeoffDistance.converted(to: runwayLengthUnit)
+                .formatted(.length)
+            )
             Td(info.maxWeight.converted(to: weightUnit).formatted(.weight))
             Td(info.limitingFactor.rawValue)
           }

@@ -14,7 +14,7 @@ import SF50_Shared
 /// The ``determineMaxWeight(runway:)`` method uses binary search to find the highest
 /// weight that satisfies:
 /// 1. AFM performance chart limits
-/// 2. Available runway length
+/// 2. Takeoff distance available
 /// 3. Obstacle clearance (if NOTAM specifies obstacles)
 class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerformanceScenario> {
 
@@ -48,29 +48,23 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
       safetyFactor: input.safetyFactor
     )
 
+    let availableRun = runway.availableTakeoffRun,
+      availableDistance = runway.availableTakeoffDistance
     let groundRun = report.results.takeoffRun.map { value, uncertainty in
       (
-        PerformanceDistance(distance: value, availableDistance: runway.length),
-        uncertainty.map { PerformanceDistance(distance: $0, availableDistance: runway.length) }
+        PerformanceDistance(distance: value, availableDistance: availableRun),
+        uncertainty.map { PerformanceDistance(distance: $0, availableDistance: availableRun) }
       )
     }
     let totalDistance = report.results.takeoffDistance.map { value, uncertainty in
       (
-        PerformanceDistance(distance: value, availableDistance: runway.length),
-        uncertainty.map { PerformanceDistance(distance: $0, availableDistance: runway.length) }
+        PerformanceDistance(distance: value, availableDistance: availableDistance),
+        uncertainty.map { PerformanceDistance(distance: $0, availableDistance: availableDistance) }
       )
     }
     let climbRate = report.results.takeoffClimbGradient
 
-    // Determine if valid based on total distance
-    let isValid: Bool = {
-      switch totalDistance {
-        case .value(let dist), .valueWithUncertainty(let dist, _):
-          return dist.margin >= .zero
-        default:
-          return false
-      }
-    }()
+    let isValid = hasMargin(groundRun) && hasMargin(totalDistance)
 
     return TakeoffRunwayPerformance(
       groundRun: groundRun,
@@ -113,11 +107,8 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
       if case .offscaleLow = report.results.takeoffDistance {
         return (false, .AFM)
       }
-      if case .value(let dist) = report.results.takeoffDistance {
-        // Check runway length
-        if dist > runway.length {
-          return (false, .field)
-        }
+      if !fitsRunway(report.results, on: runway) {
+        return (false, .field)
       }
 
       // Check obstacle clearance if NOTAM present
@@ -147,5 +138,33 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
     }
 
     return (result.weight, result.limitingFactor ?? .AFM)
+  }
+
+  // MARK: - Runway Fit
+
+  /// Whether both takeoff distances fit what the runway declares.
+  ///
+  /// The ground run has to fit the takeoff run and the total distance the takeoff distance, which
+  /// differ wherever a runway has a clearway: measuring the run against the longer of the two
+  /// would pass a takeoff that lifts off beyond the end of the pavement.
+  ///
+  /// A distance the AFM cannot give is no verdict on the runway; the AFM checks answer for it.
+  private func fitsRunway(_ results: TakeoffResults, on runway: RunwayInput) -> Bool {
+    fits(results.takeoffRun, within: runway.availableTakeoffRun)
+      && fits(results.takeoffDistance, within: runway.availableTakeoffDistance)
+  }
+
+  private func fits(
+    _ distance: Value<Measurement<UnitLength>>,
+    within available: Measurement<UnitLength>
+  ) -> Bool {
+    guard let distance = distance.nominal else { return true }
+    return distance <= available
+  }
+
+  /// Whether a calculated distance is known and leaves the runway it was measured against.
+  private func hasMargin(_ distance: Value<PerformanceDistance>) -> Bool {
+    guard let distance = distance.nominal else { return false }
+    return distance.margin >= .zero
   }
 }

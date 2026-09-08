@@ -95,11 +95,40 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
   /// Declared takeoff run available (TORA)
   public let takeoffRun: Measurement<UnitLength>?
 
-  /// Takeoff distance available, adjusted for NOTAMs
-  public let takeoffDistance: Measurement<UnitLength>
+  /// Declared takeoff distance available (TODA)
+  public let takeoffDistance: Measurement<UnitLength>?
 
   /// Declared landing distance available (LDA)
   public let landingDistance: Measurement<UnitLength>?
+
+  /// Takeoff run available, less any NOTAMed shortening.
+  ///
+  /// A ground run has to fit the run rather than the distance, which are different wherever a
+  /// runway has a clearway.
+  public var availableTakeoffRun: Measurement<UnitLength> {
+    (takeoffRun ?? length) - takeoffShortening
+  }
+
+  /// Takeoff distance available, less any NOTAMed shortening.
+  public var availableTakeoffDistance: Measurement<UnitLength> {
+    (takeoffDistance ?? length) - takeoffShortening
+  }
+
+  /// Landing distance available, less any NOTAMed shortening.
+  ///
+  /// Shorter than the pavement wherever the threshold is displaced, so it — not the length — is
+  /// what a landing distance leaves a margin against.
+  public var availableLandingDistance: Measurement<UnitLength> {
+    (landingDistance ?? length) - landingShortening
+  }
+
+  private var takeoffShortening: Measurement<UnitLength> {
+    notam?.takeoffDistanceShortening ?? .zero
+  }
+
+  private var landingShortening: Measurement<UnitLength> {
+    notam?.landingDistanceShortening ?? .zero
+  }
 
   /// Surface type of the runway
   public let surfaceType: SurfaceType
@@ -141,7 +170,7 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     self.gradient = runway.gradientOrBestGuess
     self.length = runway.length
     self.takeoffRun = runway.takeoffRun
-    self.takeoffDistance = runway.notamedTakeoffDistance
+    self.takeoffDistance = runway.takeoffDistance
     self.landingDistance = runway.landingDistance
     self.surfaceType = runway.surfaceType
     self.notam = runway.notam.map { NOTAMInput(from: $0) }
@@ -158,7 +187,7 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     gradient: Float,
     length: Measurement<UnitLength>,
     takeoffRun: Measurement<UnitLength>?,
-    takeoffDistance: Measurement<UnitLength>,
+    takeoffDistance: Measurement<UnitLength>?,
     landingDistance: Measurement<UnitLength>?,
     surfaceType: SurfaceType = .paved,
     notam: NOTAMInput?,

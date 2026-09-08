@@ -38,6 +38,15 @@ Terrain data now downloads through iOS itself rather than through the app.
   scratchpad.
 - A shared report is named for the airport, runway, and time it describes, and
   carries that name inside the file.
+- Takeoff and landing reports measure their margins against the declared
+  distance — TORA, TODA, or LDA, less anything a NOTAM has closed — not the
+  whole pavement, so a displaced threshold or clearway no longer reads long.
+- A takeoff report marks a runway short, and caps the weight, when the ground
+  run does not fit the takeoff run available — not only when the distance to
+  50 feet overruns.
+- On the landing screen the total distance turns red when it overruns, as the
+  takeoff screen already did, and VoiceOver says whether the landing distance
+  available is sufficient.
 
 ## 3.7.1
 

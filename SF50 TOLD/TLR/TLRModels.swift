@@ -94,7 +94,7 @@ struct PerformanceInput {
 /// ## Cases
 ///
 /// - ``AFM``: Limited by Aircraft Flight Manual charts
-/// - ``field``: Limited by available runway length
+/// - ``field``: Limited by the declared distance available
 /// - ``obstacle``: Limited by obstacle clearance requirements
 /// - ``climb``: Limited by climb gradient requirements
 enum LimitingFactor: String, Codable, Sendable {
