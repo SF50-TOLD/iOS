@@ -17,7 +17,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     // Model without contamination
     let cleanModel = TabularPerformanceModel(
@@ -76,7 +76,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: conditions,
@@ -134,7 +134,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: -5)  // Cold for snow
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
@@ -186,7 +186,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: -10)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
@@ -245,7 +245,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: conditions,
@@ -305,7 +305,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 5)
     let config = Helper.createTestConfiguration(weight: 5500, flapSetting: .flaps100)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: conditions,
@@ -365,7 +365,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: -5)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
@@ -427,7 +427,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: -10)
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = RegressionPerformanceModel(
       conditions: conditions,
@@ -486,7 +486,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     // Shallow water (0.25 inches)
     let shallowWaterContamination = Contamination.waterOrSlush(
@@ -568,7 +568,7 @@ struct ContaminationTests {
     )
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway(heading: 360)
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: headwindConditions,
@@ -628,7 +628,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway(slope: 1.0)  // 1% uphill
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: conditions,
@@ -690,7 +690,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     // Model without contamination
     let cleanModel = TabularPerformanceModel(
@@ -753,7 +753,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     // Model without contamination
     let cleanModel = RegressionPerformanceModel(
@@ -804,7 +804,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     // Model without contamination
     let cleanModel = TabularPerformanceModel(
@@ -867,7 +867,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     // Model without contamination
     let cleanModel = RegressionPerformanceModel(
@@ -918,7 +918,7 @@ struct ContaminationTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: conditions,
@@ -1000,7 +1000,7 @@ struct ContaminationTests {
       let conditions = Helper.createTestConditions(temperature: testCase.temp)
       let config = Helper.createTestConfiguration(weight: testCase.weight)
       let runway = Helper.createTestRunway()
-      let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+      let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
       let notam: NOTAMInput? =
         if let contamination = testCase.contamination {

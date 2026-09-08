@@ -27,14 +27,11 @@
 - ``landingDistance``
 - ``landingDistanceOrLength``
 
-### NOTAM-Adjusted Distances
+### Distances a NOTAM Restricts
 
-- ``notam``
-- ``notamedTakeoffDistance``
-- ``notamedTakeoffRun``
-- ``notamedLandingDistance``
-- ``hasTakeoffDistanceNOTAM``
-- ``hasLandingDistanceNOTAM``
+- ``availableTakeoffRun(notamedBy:)``
+- ``availableTakeoffDistance(notamedBy:)``
+- ``availableLandingDistance(notamedBy:)``
 
 ### Wind Calculations
 

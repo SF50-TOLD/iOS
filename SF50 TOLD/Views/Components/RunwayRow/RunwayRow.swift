@@ -5,6 +5,12 @@ import SwiftUI
 
 struct RunwayRow: View {
   var runway: Runway
+
+  /// The NOTAM restricting this runway, or `nil` if none does.
+  ///
+  /// Resolved by whoever draws the list — a picker looks up every runway at the airport in one
+  /// fetch rather than one per row.
+  var notam: NOTAM?
   var conditions: Conditions
   var flapSetting: FlapSetting?
 
@@ -35,7 +41,7 @@ struct RunwayRow: View {
   var body: some View {
     HStack {
       Text(runway.name).bold()
-      RunwayDistances(runway: runway)
+      RunwayDistances(runway: runway, notam: notam)
       if runway.isTurf {
         Text("(turf)")
       }
@@ -70,19 +76,20 @@ extension RunwayRow {
   /// TORA, announced only when it differs from TODA, matching what the row draws.
   fileprivate var takeoffRunContent: Text? {
     guard operation == .takeoff,
-      runway.notamedTakeoffRun != runway.notamedTakeoffDistance
+      runway.availableTakeoffRun(notamedBy: notam)
+        != runway.availableTakeoffDistance(notamedBy: notam)
     else { return nil }
-    return formatted(runway.notamedTakeoffRun)
+    return formatted(runway.availableTakeoffRun(notamedBy: notam))
   }
 
   fileprivate var takeoffDistanceContent: Text? {
     guard operation == .takeoff else { return nil }
-    return formatted(runway.notamedTakeoffDistance)
+    return formatted(runway.availableTakeoffDistance(notamedBy: notam))
   }
 
   fileprivate var landingDistanceContent: Text? {
     guard operation == .landing else { return nil }
-    return formatted(runway.notamedLandingDistance)
+    return formatted(runway.availableLandingDistance(notamedBy: notam))
   }
 
   private func formatted(_ distance: Measurement<UnitLength>) -> Text {
@@ -131,7 +138,7 @@ extension RunwayRow {
 
 extension RunwayRow {
   fileprivate var contaminationContent: Text? {
-    switch runway.notam?.contamination {
+    switch notam?.contamination {
       case .waterOrSlush(let depth):
         Text("Water/slush \(depth.converted(to: .inches), format: .depth)")
       case .slushOrWetSnow(let depth):
@@ -147,7 +154,7 @@ extension RunwayRow {
   /// A NOTAMed shortening, described as a reduction rather than a closure: the model has no
   /// closure of its own, and a shortening as long as the runway is the only way it can say so.
   fileprivate var shorteningContent: Text? {
-    guard let notam = runway.notam else { return nil }
+    guard let notam else { return nil }
 
     let shortening = operationShortening(of: notam)
     guard shortening.value > 0 else { return nil }
@@ -241,10 +248,19 @@ extension AccessibilityCustomContentKey {
 #Preview("Landing, NOTAMed") {
   PreviewView(insert: .KSQL) { preview in
     let shortened = try preview.load(airportID: "SQL", runway: "30")!
-    try preview.addNOTAM(to: shortened, shortenLanding: 500, contamination: .compactSnow)
+    let notam = try preview.addNOTAM(
+      to: shortened,
+      shortenLanding: 500,
+      contamination: .compactSnow
+    )
 
     return List {
-      RunwayRow(runway: shortened, conditions: preview.strongWinds, flapSetting: .flaps100)
+      RunwayRow(
+        runway: shortened,
+        notam: notam,
+        conditions: preview.strongWinds,
+        flapSetting: .flaps100
+      )
     }
     .environment(\.operation, .landing)
   }

@@ -57,7 +57,7 @@ struct RwyCCTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: conditions,
@@ -118,7 +118,7 @@ struct RwyCCTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: conditions,
@@ -175,7 +175,7 @@ struct RwyCCTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = TabularPerformanceModel(
       conditions: conditions,
@@ -243,7 +243,7 @@ struct RwyCCTests {
     )
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway(heading: 360)
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let rwyCC3 = Contamination.rwyCC(3)
     let rwyCCNotam = NOTAMInput(
@@ -303,8 +303,8 @@ struct RwyCCTests {
     let config = Helper.createTestConfiguration(weight: 5000)
     let pavedRunway = Helper.createTestRunway(surfaceType: .paved)
     let turfRunway = Helper.createTestRunway(surfaceType: .turf)
-    let pavedInput = RunwayInput(from: pavedRunway, airport: pavedRunway.airport)
-    let turfInput = RunwayInput(from: turfRunway, airport: turfRunway.airport)
+    let pavedInput = RunwayInput(from: pavedRunway, airport: pavedRunway.airport, notam: nil)
+    let turfInput = RunwayInput(from: turfRunway, airport: turfRunway.airport, notam: nil)
 
     let rwyCC4 = Contamination.rwyCC(4)
     let rwyCCNotam = NOTAMInput(
@@ -363,7 +363,7 @@ struct RwyCCTests {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5000)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let cleanModel = RegressionPerformanceModel(
       conditions: conditions,

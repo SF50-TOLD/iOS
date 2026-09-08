@@ -81,8 +81,9 @@ struct TakeoffReportButton: View {
         try await Task.sleep(nanoseconds: 100_000_000)
 
         // Capture snapshots and settings on main actor
-        let airportSnapshot = AirportInput(from: airport),
-          runwaySnapshot = RunwayInput(from: runway, airport: airport),
+        let notams = NOTAMStore(context: modelContext).notams(at: airport),
+          airportSnapshot = AirportInput(from: airport, notams: notams),
+          runwaySnapshot = RunwayInput(from: runway, airport: airport, notam: notams[runway.name]),
           conditions = performance.conditions,
           weight = performance.weight,
           flapSetting = performance.flapSetting,

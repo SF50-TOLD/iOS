@@ -50,13 +50,15 @@ public struct RunwaySnapshot: Sendable, RunwayOrientation {
   /// lengths: a readout that measured against pavement a NOTAM has closed would call a runway usable
   /// that the app calls short.
   ///
-  /// - Parameter runway: The runway to snapshot.
-  public init(from runway: Runway) {
+  /// - Parameters:
+  ///   - runway: The runway to snapshot.
+  ///   - notam: The NOTAM restricting that runway, or `nil` if none does.
+  public init(from runway: Runway, notam: NOTAM?) {
     self.init(
       name: runway.name,
-      takeoffRun: runway.notamedTakeoffRun,
-      takeoffDistance: runway.notamedTakeoffDistance,
-      landingDistance: runway.notamedLandingDistance,
+      takeoffRun: runway.availableTakeoffRun(notamedBy: notam),
+      takeoffDistance: runway.availableTakeoffDistance(notamedBy: notam),
+      landingDistance: runway.availableLandingDistance(notamedBy: notam),
       trueHeading: runway.trueHeading
     )
   }

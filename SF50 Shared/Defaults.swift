@@ -5,7 +5,7 @@ public import SwiftData
 // MARK: - Defaults
 
 nonisolated(unsafe) private let groupDefaults = UserDefaults(suiteName: "group.codes.tim.TOLD")!
-public let latestSchemaVersion = 7
+public let latestSchemaVersion = 8
 
 extension TerrainRegion: Defaults.Serializable {}
 

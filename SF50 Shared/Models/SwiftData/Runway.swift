@@ -43,10 +43,6 @@ public final class Runway {
   @Relationship(deleteRule: .nullify, inverse: \Airport.runways)
   public var airport: Airport
 
-  /// Active NOTAM affecting this runway
-  @Relationship(deleteRule: .cascade, inverse: \NOTAM.runway)
-  public var notam: NOTAM?
-
   /// Name of the reciprocal runway (e.g., "10R" for runway "28L")
   public var reciprocalName: String?
 
@@ -196,39 +192,6 @@ public final class Runway {
       .clCoordinate
   }
 
-  /// Takeoff distance available adjusted for any active NOTAM restrictions
-  public var notamedTakeoffDistance: Measurement<UnitLength> {
-    if let shortening = notam?.takeoffDistanceShortening {
-      takeoffDistanceOrLength - shortening
-    } else {
-      takeoffDistanceOrLength
-    }
-  }
-
-  /// Takeoff run available adjusted for any active NOTAM restrictions
-  public var notamedTakeoffRun: Measurement<UnitLength> {
-    if let shortening = notam?.takeoffDistanceShortening {
-      takeoffRunOrLength - shortening
-    } else {
-      takeoffRunOrLength
-    }
-  }
-
-  /// Landing distance available adjusted for any active NOTAM restrictions
-  public var notamedLandingDistance: Measurement<UnitLength> {
-    if let shortening = notam?.landingDistanceShortening {
-      landingDistanceOrLength - shortening
-    } else {
-      landingDistanceOrLength
-    }
-  }
-
-  /// Whether there is an active NOTAM reducing takeoff distance
-  public var hasTakeoffDistanceNOTAM: Bool { notam?.takeoffDistanceShortening.value ?? 0 > 0 }
-
-  /// Whether there is an active NOTAM reducing landing distance
-  public var hasLandingDistanceNOTAM: Bool { notam?.landingDistanceShortening.value ?? 0 > 0 }
-
   /**
    * Creates a new runway.
    *
@@ -283,7 +246,34 @@ public final class Runway {
     _displacedThresholdDistance = displacedThresholdDistance?.converted(to: .meters).value
     self.airport = airport
     reciprocalName = nil
-    notam = nil
+  }
+}
+
+// MARK: - Distances a NOTAM restricts
+
+extension Runway {
+  /// Takeoff run available, less any shortening `notam` declares.
+  ///
+  /// A ground run has to fit the run rather than the distance, which differ wherever a runway has
+  /// a clearway.
+  ///
+  /// - Parameter notam: The NOTAM restricting this runway, or `nil` if none does.
+  public func availableTakeoffRun(notamedBy notam: NOTAM?) -> Measurement<UnitLength> {
+    takeoffRunOrLength - (notam?.takeoffDistanceShortening ?? .zero)
+  }
+
+  /// Takeoff distance available, less any shortening `notam` declares.
+  ///
+  /// - Parameter notam: The NOTAM restricting this runway, or `nil` if none does.
+  public func availableTakeoffDistance(notamedBy notam: NOTAM?) -> Measurement<UnitLength> {
+    takeoffDistanceOrLength - (notam?.takeoffDistanceShortening ?? .zero)
+  }
+
+  /// Landing distance available, less any shortening `notam` declares.
+  ///
+  /// - Parameter notam: The NOTAM restricting this runway, or `nil` if none does.
+  public func availableLandingDistance(notamedBy notam: NOTAM?) -> Measurement<UnitLength> {
+    landingDistanceOrLength - (notam?.landingDistanceShortening ?? .zero)
   }
 }
 

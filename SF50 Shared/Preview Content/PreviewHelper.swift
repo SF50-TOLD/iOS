@@ -217,7 +217,6 @@ public final class PreviewHelper: Sendable {
       obstacleHeight: obstacleHeight.map { .init(value: $0, unit: .feet) },
       obstacleDistance: obstacleDistance.map { .init(value: $0, unit: .nauticalMiles) }
     )
-    runway.notam = notam
     mainContext.insert(notam)
     try mainContext.save()
     return notam
