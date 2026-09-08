@@ -37,6 +37,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   private(set) var deferred = false
 
   private let container: ModelContainer
+  private let installer = NavDataStoreInstaller(layout: .appGroup)
   private var cancellables: Set<Task<Void, Never>> = []
 
   var showLoader: Bool {
@@ -64,27 +65,31 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   /// pool rather than on the main thread at the moment the user taps Load.
   @concurrent
   nonisolated private static func makeImportLoader(
-    matching container: ModelContainer
+    matching container: ModelContainer,
+    generation: Int
   ) async throws -> NavDataLoader {
-    NavDataLoader(modelContainer: try makeImportContainer(matching: container))
+    NavDataLoader(
+      modelContainer: try makeImportContainer(matching: container, generation: generation)
+    )
   }
 
-  /// Creates a writable container on the nav-data store for the importer.
+  /// Creates a writable container for the importer, on the generation it is about to write.
   ///
   /// The importer's bulk transactions queue on their own persistent store coordinator, so
   /// main-context work (`@Query` fetches, model faults, history merges) never waits behind them —
   /// with WAL journaling, readers on another coordinator are not blocked by an in-flight write.
   ///
-  /// It holds nav data alone. The app reads that store read-only, and the pilot's own entries are
-  /// in a store the importer has no business touching.
+  /// It writes a generation nothing is reading. The dataset in use is not touched at all, which is
+  /// what makes an import safe to abandon: a failed one leaves a file nobody points at.
   nonisolated private static func makeImportContainer(
-    matching container: ModelContainer
+    matching container: ModelContainer,
+    generation: Int
   ) throws -> ModelContainer {
     // In-memory stores (used by UI tests) cannot be shared between containers.
     guard !container.configurations.contains(where: \.isStoredInMemoryOnly) else {
       return container
     }
-    return try AppStore.makeWritableContainer(layout: .appGroup)
+    return try AppStore.makeWritableContainer(layout: .appGroup, generation: generation)
   }
 
   private func setupObservation() {
@@ -151,15 +156,16 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   private func runLoad() async {
-    guard let loader = await makeLoader() else { return }
+    let generation = installer.reserveGeneration()
+    guard let loader = await makeLoader(generation: generation) else { return }
     let progressTask = await observeProgress(of: loader)
     addTask(progressTask)
-    await performLoad(with: loader, progressTask: progressTask)
+    await performLoad(with: loader, generation: generation, progressTask: progressTask)
   }
 
-  private func makeLoader() async -> NavDataLoader? {
+  private func makeLoader(generation: Int) async -> NavDataLoader? {
     do {
-      return try await Self.makeImportLoader(matching: container)
+      return try await Self.makeImportLoader(matching: container, generation: generation)
     } catch {
       SentrySDK.capture(error: error) { scope in
         scope.setTag(value: "importContainer", key: "navData.operation")
@@ -191,7 +197,11 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     }
   }
 
-  private func performLoad(with loader: NavDataLoader, progressTask: Task<Void, Never>) async {
+  private func performLoad(
+    with loader: NavDataLoader,
+    generation: Int,
+    progressTask: Task<Void, Never>
+  ) async {
     let transaction = SentrySDK.startTransaction(
       name: "Nav Data Load",
       operation: "navData.load"
@@ -199,10 +209,9 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     defer { progressTask.cancel() }
     do {
       error = nil
-      try await loader.clearCycles()
       Defaults[.ourAirportsLastUpdated] = nil
       let result = try await loader.load()
-      try clearNOTAMs()
+      try install(generation: generation)
       state = .finished
 
       Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
@@ -222,14 +231,26 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     }
   }
 
+  /// Switches to the generation just imported, and reopens the store against it.
+  ///
+  /// The switch is a single recorded number, made only after the new store has been opened and
+  /// found to hold airports. Until that point the dataset in use has not been touched, so a failure
+  /// here — or a process killed mid-import — costs the pilot nothing.
+  private func install(generation: Int) throws {
+    try installer.install(generation: generation)
+    clearNOTAMs()
+    // The app watches the active generation and reopens its own store; doing it here as well would
+    // race that, and leave the container the views hold pointing at the older file.
+  }
+
   /// Discards the NOTAMs the pilot entered against the dataset just replaced.
   ///
   /// A NOTAM carries no effective time, so one written against a previous cycle would otherwise
   /// keep asserting a contamination or a closure that nothing has re-confirmed.
-  private func clearNOTAMs() throws {
+  private func clearNOTAMs() {
     let context = ModelContext(container)
-    try NOTAMStore(context: context).removeAll()
-    try context.save()
+    try? NOTAMStore(context: context).removeAll()
+    try? context.save()
   }
 
   private func applyState(_ state: NavDataStateHelper.State) {
