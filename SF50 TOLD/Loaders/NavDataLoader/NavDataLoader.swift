@@ -17,6 +17,12 @@ import SwiftNASR
 /// 3. **Import**: Populates SwiftData with `Airport`, `Runway`, `Procedure`,
 ///    `ProcedureSegment`, `Leg`, and `Obstacle` models
 ///
+/// It writes into an empty store of its own — the next *generation* of the
+/// dataset — and never touches the one in use. Nothing switches to what it wrote
+/// until the import finishes and the result is found to hold airports, so an
+/// import that fails, or is killed when the pilot swipes the app away, costs the
+/// pilot nothing. That is why there is no step here that clears anything first.
+///
 /// ## Data Source
 ///
 /// Navigation data is pre-processed and published as GitHub release assets at:
@@ -208,9 +214,6 @@ actor NavDataLoader {
     state = .extracting(progress: nil)
     let nasr = try await timing("decode") { try await Self.decompress(fileAt: payload) }
 
-    // The replacement data is fully decoded, so the old dataset can go
-    try await timing("reset") { try await resetData() }
-
     // Load navaids first so they're available for leg relationships
     try await timing("navaids") { try await loadNavaids(nasr.navaids ?? []) }
 
@@ -267,15 +270,6 @@ actor NavDataLoader {
     let result = try await phase()
     logger.info("nav data \(label) took \(start.duration(to: .now), privacy: .public)")
     return result
-  }
-
-  /// Deletes all persisted `Cycle` records on the loader's background context.
-  ///
-  /// Performed off the main thread so it never contends with the main
-  /// `NSManagedObjectContext` for the persistent store coordinator.
-  func clearCycles() throws {
-    try modelContext.delete(model: Cycle.self)
-    try modelContext.save()
   }
 
   private func writeCycles(_ cycles: AirportDataCodable.DataCycles) throws {
@@ -395,38 +389,6 @@ actor NavDataLoader {
         modelContext.insert(navaid)
         navaidLookup["\(navaidData.identifier):\(navaidData.icaoRegion)"] = navaid
       }
-      try modelContext.save()
-      await Task.yield()
-    }
-  }
-
-  /// Deletes the previous dataset in bounded batches, one entity type at a time.
-  ///
-  /// Child entities are deleted before their parents so each delete touches
-  /// only its own table instead of fanning out through cascade rules.
-  private func resetData() async throws {
-    try await deleteAll(SF50_Shared.Leg.self)
-    try await deleteAll(SF50_Shared.ProcedureSegment.self)
-    try await deleteAll(SF50_Shared.Procedure.self)
-    try await deleteAll(SF50_Shared.Runway.self)
-    try await deleteAll(SF50_Shared.Airport.self)
-    try await deleteAll(SF50_Shared.Navaid.self)
-    try await deleteAll(SF50_Shared.Obstacle.self)
-  }
-
-  /// Deletes every row of `model` in `saveBatchRowLimit`-sized transactions.
-  ///
-  /// SwiftData's bulk `delete(model:)` removes all rows in a single transaction
-  /// that holds the store's write lock for its full duration, stalling
-  /// concurrent main-context reads long enough to trip an app-hang report.
-  /// Deleting in bounded transactions with a pause between them keeps each lock
-  /// hold short so other store users can interleave, mirroring the insert path.
-  private func deleteAll<Model: PersistentModel>(_: Model.Type) async throws {
-    var descriptor = FetchDescriptor<Model>()
-    descriptor.fetchLimit = Self.saveBatchRowLimit
-
-    while case let batch = try modelContext.fetch(descriptor), !batch.isEmpty {
-      for object in batch { modelContext.delete(object) }
       try modelContext.save()
       await Task.yield()
     }

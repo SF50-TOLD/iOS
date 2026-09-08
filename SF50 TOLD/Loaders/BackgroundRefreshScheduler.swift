@@ -16,12 +16,13 @@ import os
 ///
 /// ## Refresh Work
 ///
-/// The refresh action pre-warms `WeatherLoader`'s bulk caches. Nav-data is
-/// intentionally **not** refreshed here: ``NavDataLoader`` deletes the live
-/// dataset before re-importing over several minutes, far longer than an
-/// app-refresh window, so a mid-window force-cancellation could leave the store
-/// empty or partially imported. Nav-data staleness is resolved on the next launch
-/// instead.
+/// The refresh action pre-warms `WeatherLoader`'s bulk caches. Nav-data is not
+/// refreshed here: an import runs for several minutes, far longer than an
+/// app-refresh window. It is now safe to abandon one — an import writes a new
+/// generation of the store and nothing switches to it until it is complete — but
+/// an unattended refresh wants a `BGProcessingTask` and a staleness decision made
+/// off the launch path, which is its own piece of work. Nav-data staleness is
+/// resolved on the next launch instead.
 @MainActor
 final class BackgroundRefreshScheduler {
   /// Shared singleton owning background-refresh scheduling.
@@ -101,14 +102,15 @@ final class BackgroundRefreshScheduler {
 
   /// Nav-data refresh is deliberately skipped in the app-refresh window.
   ///
-  /// ``NavDataLoader/load()`` deletes the live dataset and re-imports over
-  /// several minutes — longer than an app-refresh window — and its import
-  /// container shares the live persistent store, so a force-cancellation
-  /// mid-import could corrupt or empty the store. Refreshing nav data off-launch
-  /// safely requires either importing into a genuinely separate store and
-  /// atomically swapping it in, or moving the import to a `BGProcessingTask`
+  /// ``NavDataLoader/load()`` runs for several minutes, longer than an app-refresh
+  /// window gives it. Being cut short no longer costs anything — the import writes
+  /// a generation nothing is reading, and the app only switches to it once it is
+  /// whole — but running it here would still leave it unfinished every time.
+  ///
+  /// Refreshing off-launch wants a `BGProcessingTask`
   /// (`codes.tim.SF50-TOLD.navdata-processing`, `UIBackgroundModes` `processing`,
-  /// `requiresNetworkConnectivity = true`) that gets a longer runtime budget.
+  /// `requiresNetworkConnectivity = true`), and a decision about when data is
+  /// stale enough to spend a pilot's cellular data on. That is a separate feature.
   /// Until then, nav-data staleness is resolved on the next launch.
   private func refreshNavDataIfStale() {
     logger.debug("Skipping nav-data refresh in app-refresh window (handled on launch).")

@@ -1,5 +1,6 @@
 import BackgroundTasks
 import Combine
+import Defaults
 import SF50_Shared
 import Sentry
 import SwiftData
@@ -33,19 +34,8 @@ private class WidgetReloadObserver: ObservableObject {
 
 @main
 struct SF50_TOLDApp: App {
-  var sharedModelContainer: ModelContainer = {
-    // Screenshot runs hold their data in memory so the generated shots never depend on, or
-    // disturb, whatever is in the group container.
-    let isGeneratingScreenshots = ProcessInfo.processInfo.arguments.contains("GENERATE-SCREENSHOTS")
-    guard isGeneratingScreenshots else {
-      // Nav data is read-only once the app holds it, so a UI test's airports go in first.
-      MainActor.assumeIsolated { UITestingHelper.seedNavData() }
-      return AppStore.shared
-    }
-    do { return try AppStore.makeInMemoryContainer() } catch {
-      fatalError("Could not create ModelContainer: \(error)")
-    }
-  }()
+  @State private var sharedModelContainer = Self.makeContainer()
+  @State private var navDataGeneration = Defaults[.activeNavDataGeneration]
 
   // periphery:ignore - side-effect-only observer; retained for its lifetime, never read
   @StateObject private var widgetReloadObserver = WidgetReloadObserver()
@@ -57,11 +47,13 @@ struct SF50_TOLDApp: App {
     WindowGroup {
       ContentView()
         .modelContainer(sharedModelContainer)
+        .id(navDataGeneration)
         .terrainPurgeAlert()
         .task {
           await ScenarioSeeder(container: sharedModelContainer).seedDefaultScenariosIfNeeded()
           _ = TerrainDataLoader.shared
         }
+        .task { await adoptNewNavDataGenerations() }
     }
     .backgroundTask(.appRefresh(BackgroundRefreshScheduler.appRefreshIdentifier)) {
       await BackgroundRefreshScheduler.shared.handleAppRefresh()
@@ -77,7 +69,7 @@ struct SF50_TOLDApp: App {
 
   init() {
     if ProcessInfo.processInfo.arguments.contains("UI-TESTING") {
-      UITestingHelper.setupUITestingEnvironment(container: sharedModelContainer)
+      UITestingHelper.setupUITestingEnvironment()
       // Skip Sentry under UI tests: its profiling registers a CADisplayLink and
       // its logging runs on the main thread, which XCTest treats as never-ending
       // work — stalling wait-for-idle until tests time out (matches FART).
@@ -119,6 +111,38 @@ struct SF50_TOLDApp: App {
           return event
         #endif
       }
+    }
+  }
+
+  /// Opens the app's stores, or an in-memory stand-in for a screenshot run.
+  private static func makeContainer() -> ModelContainer {
+    // Screenshot runs hold their data in memory so the generated shots never depend on, or
+    // disturb, whatever is in the group container.
+    guard ProcessInfo.processInfo.arguments.contains("GENERATE-SCREENSHOTS") else {
+      // Nav data is read-only once the app holds it, so a UI test's airports go in first.
+      MainActor.assumeIsolated { UITestingHelper.prepareStores() }
+      return AppStore.shared
+    }
+    do { return try AppStore.makeInMemoryContainer() } catch {
+      fatalError("Could not create ModelContainer: \(error)")
+    }
+  }
+
+  /// Rebuilds the store when an import switches to a newly downloaded generation.
+  ///
+  /// The container holds an open handle on one generation's file, so a new one only reaches the app
+  /// by opening it. The generation it was reading is left on disk until the next launch, when
+  /// nothing holds it — which is what makes swapping safe while the app is running.
+  private func adoptNewNavDataGenerations() async {
+    var isFirstEmission = true
+    for await _ in Defaults.updates(.activeNavDataGeneration) {
+      guard !isFirstEmission else {
+        isFirstEmission = false
+        continue
+      }
+      AppStore.reopen()
+      sharedModelContainer = AppStore.shared
+      navDataGeneration = Defaults[.activeNavDataGeneration]
     }
   }
 }
