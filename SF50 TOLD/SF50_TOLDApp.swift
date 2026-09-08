@@ -37,10 +37,12 @@ struct SF50_TOLDApp: App {
     // Screenshot runs hold their data in memory so the generated shots never depend on, or
     // disturb, whatever is in the group container.
     let isGeneratingScreenshots = ProcessInfo.processInfo.arguments.contains("GENERATE-SCREENSHOTS")
-    do {
-      return try isGeneratingScreenshots
-        ? AppStore.makeInMemoryContainer() : AppStore.makeGroupContainer()
-    } catch {
+    guard isGeneratingScreenshots else {
+      // Nav data is read-only once the app holds it, so a UI test's airports go in first.
+      MainActor.assumeIsolated { UITestingHelper.seedNavData() }
+      return AppStore.shared
+    }
+    do { return try AppStore.makeInMemoryContainer() } catch {
       fatalError("Could not create ModelContainer: \(error)")
     }
   }()

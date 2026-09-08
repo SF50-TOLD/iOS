@@ -69,12 +69,14 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     NavDataLoader(modelContainer: try makeImportContainer(matching: container))
   }
 
-  /// Creates a standalone container on the same store for the importer.
+  /// Creates a writable container on the nav-data store for the importer.
   ///
-  /// The importer's bulk transactions then queue on their own persistent store
-  /// coordinator, so main-context work (`@Query` fetches, model faults, history
-  /// merges) never waits behind them — with WAL journaling, readers on another
-  /// coordinator are not blocked by an in-flight write transaction.
+  /// The importer's bulk transactions queue on their own persistent store coordinator, so
+  /// main-context work (`@Query` fetches, model faults, history merges) never waits behind them —
+  /// with WAL journaling, readers on another coordinator are not blocked by an in-flight write.
+  ///
+  /// It holds nav data alone. The app reads that store read-only, and the pilot's own entries are
+  /// in a store the importer has no business touching.
   nonisolated private static func makeImportContainer(
     matching container: ModelContainer
   ) throws -> ModelContainer {
@@ -82,10 +84,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     guard !container.configurations.contains(where: \.isStoredInMemoryOnly) else {
       return container
     }
-    return try ModelContainer(
-      for: container.schema,
-      configurations: Array(container.configurations)
-    )
+    return try AppStore.makeWritableContainer(layout: .appGroup)
   }
 
   private func setupObservation() {
@@ -203,6 +202,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       try await loader.clearCycles()
       Defaults[.ourAirportsLastUpdated] = nil
       let result = try await loader.load()
+      try clearNOTAMs()
       state = .finished
 
       Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
@@ -220,6 +220,16 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       progressTask.cancel()
       state = .idle
     }
+  }
+
+  /// Discards the NOTAMs the pilot entered against the dataset just replaced.
+  ///
+  /// A NOTAM carries no effective time, so one written against a previous cycle would otherwise
+  /// keep asserting a contamination or a closure that nothing has re-confirmed.
+  private func clearNOTAMs() throws {
+    let context = ModelContext(container)
+    try NOTAMStore(context: context).removeAll()
+    try context.save()
   }
 
   private func applyState(_ state: NavDataStateHelper.State) {

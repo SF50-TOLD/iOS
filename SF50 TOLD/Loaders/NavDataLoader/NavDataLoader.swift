@@ -405,7 +405,6 @@ actor NavDataLoader {
   /// Child entities are deleted before their parents so each delete touches
   /// only its own table instead of fanning out through cascade rules.
   private func resetData() async throws {
-    try await deleteAll(NOTAM.self)
     try await deleteAll(SF50_Shared.Leg.self)
     try await deleteAll(SF50_Shared.ProcedureSegment.self)
     try await deleteAll(SF50_Shared.Procedure.self)

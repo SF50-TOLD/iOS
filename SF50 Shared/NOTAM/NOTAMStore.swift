@@ -66,4 +66,18 @@ public struct NOTAMStore {
     context.insert(notam)
     return notam
   }
+
+  /// Deletes every NOTAM, as a new data cycle does.
+  ///
+  /// A NOTAM carries no effective time, so one written against a previous cycle would otherwise
+  /// keep asserting a contamination or a closure nothing has re-confirmed.
+  ///
+  /// Deleted one at a time rather than through `delete(model:)`, whose batch request runs against
+  /// every store the coordinator holds — including the nav-data store, which is open read-only. A
+  /// pilot has a handful of NOTAMs, so there is nothing to gain by batching them anyway.
+  public func removeAll() throws {
+    for notam in try context.fetch(FetchDescriptor<NOTAM>()) {
+      context.delete(notam)
+    }
+  }
 }
