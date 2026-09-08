@@ -208,22 +208,8 @@ struct ProcedureTerrainPathGeneratorTests {
   private let takeoffAltitudeFt = 62.0
   private var climbProfile: ClimbProfile { Helper.createTestClimbProfile() }
 
-  /// Creates an in-memory ModelContainer with the full schema.
   private func makeModelContainer() throws -> ModelContainer {
-    let schema = Schema([
-      Airport.self,
-      Runway.self,
-      NOTAM.self,
-      Scenario.self,
-      Cycle.self,
-      Obstacle.self,
-      Procedure.self,
-      ProcedureSegment.self,
-      Leg.self,
-      Navaid.self
-    ])
-    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    return try ModelContainer(for: schema, configurations: [config])
+    try AppStore.makeInMemoryContainer()
   }
 
   /// Generates a simple departure ProcedurePath for test use.
@@ -563,20 +549,7 @@ struct ProcedureTerrainPathGeneratorTests {
 struct ObstacleFetchDescriptorTests {
 
   private func makeModelContainer() throws -> ModelContainer {
-    let schema = Schema([
-      Airport.self,
-      Runway.self,
-      NOTAM.self,
-      Scenario.self,
-      Cycle.self,
-      Obstacle.self,
-      Procedure.self,
-      ProcedureSegment.self,
-      Leg.self,
-      Navaid.self
-    ])
-    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    return try ModelContainer(for: schema, configurations: [config])
+    try AppStore.makeInMemoryContainer()
   }
 
   @Test

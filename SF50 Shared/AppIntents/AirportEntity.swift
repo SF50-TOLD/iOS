@@ -54,7 +54,7 @@ public struct AirportEntityQuery: EntityStringQuery {
   // swiftlint:disable async_without_await
 
   public func entities(for identifiers: [String]) async throws -> [AirportEntity] {
-    let context = ModelContext(AppGroupStore.container)
+    let context = ModelContext(AppStore.shared)
     let descriptor = FetchDescriptor<Airport>(
       predicate: #Predicate { identifiers.contains($0.recordID) }
     )
@@ -62,7 +62,7 @@ public struct AirportEntityQuery: EntityStringQuery {
   }
 
   public func entities(matching string: String) async throws -> [AirportEntity] {
-    let context = ModelContext(AppGroupStore.container)
+    let context = ModelContext(AppStore.shared)
     let descriptor = FetchDescriptor<Airport>(predicate: Airport.searchPredicate(matching: string))
     let matches = try context.fetch(descriptor)
     return Airport.ranked(matches, matching: string).map(AirportEntity.init(from:))
