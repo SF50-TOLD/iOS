@@ -51,8 +51,8 @@ struct `Takeoff Report` {
     airport.runways = runways
 
     return PerformanceInput(
-      airport: .init(from: airport),
-      runway: .init(from: runways[0], airport: airport),
+      airport: .init(from: airport, notams: [:]),
+      runway: .init(from: runways[0], airport: airport, notam: nil),
       conditions: .init(
         windDirection: .init(value: 360, unit: .degrees),
         windSpeed: .init(value: 10, unit: .knots),

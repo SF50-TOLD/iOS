@@ -80,7 +80,7 @@ enum Helper {
       slope: slope,
       surfaceType: surfaceType
     )
-    return RunwayInput(from: runway, airport: runway.airport)
+    return RunwayInput(from: runway, airport: runway.airport, notam: nil)
   }
 
   static func createTestLeg(

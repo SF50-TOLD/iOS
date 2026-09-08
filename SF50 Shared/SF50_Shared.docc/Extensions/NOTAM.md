@@ -2,6 +2,11 @@
 
 ## Topics
 
+### The Runway It Restricts
+
+- ``airportRecordID``
+- ``runwayName``
+
 ### Contamination
 
 - ``contamination``
@@ -10,6 +15,8 @@
 
 - ``takeoffDistanceShortening``
 - ``landingDistanceShortening``
+- ``shortensTakeoffDistance``
+- ``shortensLandingDistance``
 
 ### Obstacles
 

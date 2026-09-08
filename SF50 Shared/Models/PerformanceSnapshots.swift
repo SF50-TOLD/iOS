@@ -133,6 +133,18 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
   /// Surface type of the runway
   public let surfaceType: SurfaceType
 
+  /// Surface type as the source data recorded it, or `nil` where it recorded none.
+  ///
+  /// ``surfaceType`` substitutes `.paved` for a surface nothing established, so a readout that
+  /// named it would state a fact the data never gave.
+  public let recordedSurfaceType: SurfaceType?
+
+  /// Whether the gradient was surveyed, or estimable from a reciprocal threshold elevation.
+  ///
+  /// ``gradient`` answers zero for a runway that is neither, and announcing that as level asserts
+  /// a slope nothing measured.
+  public let hasKnownGradient: Bool
+
   /// Whether the runway has a turf surface
   public var isTurf: Bool { surfaceType.isTurf }
 
@@ -163,7 +175,8 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
   /// - Parameters:
   ///   - runway: The runway to capture.
   ///   - airport: The airport the runway belongs to.
-  public init(from runway: Runway, airport: Airport) {
+  ///   - notam: The NOTAM restricting that runway, or `nil` if none does.
+  public init(from runway: Runway, airport: Airport, notam: NOTAM?) {
     self.id = runway.name
     self.elevation = runway.elevationOrAirportElevation
     self.trueHeading = runway.trueHeading
@@ -173,7 +186,9 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     self.takeoffDistance = runway.takeoffDistance
     self.landingDistance = runway.landingDistance
     self.surfaceType = runway.surfaceType
-    self.notam = runway.notam.map { NOTAMInput(from: $0) }
+    self.recordedSurfaceType = runway.recordedSurfaceType
+    self.hasKnownGradient = runway.gradient != nil || runway.reciprocal != nil
+    self.notam = notam.map { NOTAMInput(from: $0) }
     self.airportVariation = airport.variation
     self.thresholdCrossingHeight = runway.thresholdCrossingHeight
     self.glidepathAngle = runway.glidepathAngle
@@ -190,6 +205,8 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     takeoffDistance: Measurement<UnitLength>?,
     landingDistance: Measurement<UnitLength>?,
     surfaceType: SurfaceType = .paved,
+    recordedSurfaceType: SurfaceType? = nil,
+    hasKnownGradient: Bool = true,
     notam: NOTAMInput?,
     airportVariation: Measurement<UnitAngle>,
     thresholdCrossingHeight: Measurement<UnitLength>? = nil,
@@ -205,6 +222,8 @@ public struct RunwayInput: Identifiable, Hashable, Sendable, Comparable {
     self.takeoffDistance = takeoffDistance
     self.landingDistance = landingDistance
     self.surfaceType = surfaceType
+    self.recordedSurfaceType = recordedSurfaceType
+    self.hasKnownGradient = hasKnownGradient
     self.notam = notam
     self.airportVariation = airportVariation
     self.thresholdCrossingHeight = thresholdCrossingHeight
@@ -328,14 +347,19 @@ public struct AirportInput: Sendable {
   public let runways: [RunwayInput]
 
   /// Creates a snapshot from a SwiftData Airport model.
-  /// - Parameter airport: The airport to capture.
-  public init(from airport: Airport) {
+  /// - Parameters:
+  ///   - airport: The airport to capture.
+  ///   - notams: The airport's NOTAMs, keyed by the runway designator each restricts, as
+  ///     ``NOTAMStore/notams(at:)`` returns them.
+  public init(from airport: Airport, notams: [String: NOTAM]) {
     self.recordID = airport.recordID
     self.locationID = airport.locationID
     self.name = airport.name
     self.elevation = airport.elevation
     self.variation = airport.variation
     self.timeZone = airport.timeZone
-    self.runways = airport.runways.map { RunwayInput(from: $0, airport: airport) }
+    self.runways = airport.runways.map {
+      RunwayInput(from: $0, airport: airport, notam: notams[$0.name])
+    }
   }
 }

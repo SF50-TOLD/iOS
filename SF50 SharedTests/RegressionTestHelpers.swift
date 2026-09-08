@@ -36,7 +36,11 @@ func validateRegressionPredictions<Model: BasePerformanceModel>(
     let config = configBuilder(weight)
     let runway = Helper.createTestRunway(elevation: altitude)
 
-    let model = modelBuilder(conditions, config, RunwayInput(from: runway, airport: runway.airport))
+    let model = modelBuilder(
+      conditions,
+      config,
+      RunwayInput(from: runway, airport: runway.airport, notam: nil)
+    )
     let result = valueExtractor(model)
 
     guard case .valueWithUncertainty(let predicted, let uncertainty) = result else {

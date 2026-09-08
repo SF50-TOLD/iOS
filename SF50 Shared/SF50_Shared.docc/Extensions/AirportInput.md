@@ -14,4 +14,4 @@
 
 ### Creating Snapshots
 
-- ``init(from:)``
+- ``init(from:notams:)``

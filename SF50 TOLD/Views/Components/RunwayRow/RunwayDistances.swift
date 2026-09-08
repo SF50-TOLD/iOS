@@ -5,30 +5,35 @@ import SwiftUI
 struct RunwayDistances: View {
   var runway: Runway
 
+  /// The NOTAM restricting this runway, or `nil` if none does.
+  var notam: NOTAM?
+
   @Environment(\.operation)
   private var operation
 
   var body: some View {
     switch operation {
       case .takeoff:
-        if runway.notamedTakeoffRun == runway.notamedTakeoffDistance {
+        if runway.availableTakeoffRun(notamedBy: notam)
+          == runway.availableTakeoffDistance(notamedBy: notam)
+        {
           RunwayDistance(
-            distance: runway.notamedTakeoffRun,
-            NOTAMed: runway.hasTakeoffDistanceNOTAM
+            distance: runway.availableTakeoffRun(notamedBy: notam),
+            NOTAMed: notam?.shortensTakeoffDistance ?? false
           )
         } else {
           HStack {
             HStack(alignment: .bottom, spacing: 3) {
               RunwayDistance(
-                distance: runway.notamedTakeoffRun,
-                NOTAMed: runway.hasTakeoffDistanceNOTAM
+                distance: runway.availableTakeoffRun(notamedBy: notam),
+                NOTAMed: notam?.shortensTakeoffDistance ?? false
               )
               Text("TORA").font(.caption2).padding(.bottom, 2)
             }
             HStack(alignment: .bottom, spacing: 3) {
               RunwayDistance(
-                distance: runway.notamedTakeoffDistance,
-                NOTAMed: runway.hasTakeoffDistanceNOTAM
+                distance: runway.availableTakeoffDistance(notamedBy: notam),
+                NOTAMed: notam?.shortensTakeoffDistance ?? false
               )
               Text("TODA").font(.caption2).padding(.bottom, 2)
             }
@@ -36,8 +41,8 @@ struct RunwayDistances: View {
         }
       case .landing:
         RunwayDistance(
-          distance: runway.notamedLandingDistance,
-          NOTAMed: runway.hasLandingDistanceNOTAM
+          distance: runway.availableLandingDistance(notamedBy: notam),
+          NOTAMed: notam?.shortensLandingDistance ?? false
         )
     }
   }
@@ -66,26 +71,26 @@ private struct RunwayDistance: View {
     let runway30 = try preview.load(airportID: "OAK", runway: "30")!
     let runway28R = try preview.load(airportID: "OAK", runway: "28R")!
     let runway33 = try preview.load(airportID: "OAK", runway: "33")!
-    try preview.addNOTAM(to: runway33, shortenLanding: 500)
+    let runway33NOTAM = try preview.addNOTAM(to: runway33, shortenLanding: 500)
 
     return List {
       HStack {
         Text("TORA/TODA").foregroundStyle(.secondary)
         Spacer()
-        RunwayDistances(runway: runway30)
+        RunwayDistances(runway: runway30, notam: nil)
           .environment(\.operation, .takeoff)
       }
 
       HStack {
         Text("Length Only").foregroundStyle(.secondary)
         Spacer()
-        RunwayDistances(runway: runway28R)
+        RunwayDistances(runway: runway28R, notam: nil)
           .environment(\.operation, .takeoff)
       }
       HStack {
         Text("NOTAMed").foregroundStyle(.secondary)
         Spacer()
-        RunwayDistances(runway: runway33)
+        RunwayDistances(runway: runway33, notam: runway33NOTAM)
           .environment(\.operation, .landing)
       }
     }

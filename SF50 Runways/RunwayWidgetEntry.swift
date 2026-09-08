@@ -107,7 +107,7 @@ extension RunwayWidgetEntry {
         airportName: airport.name,
         airportDisplayID: airport.displayID,
         operation: operation,
-        runways: airport.runways.map(RunwaySnapshot.init(from:)),
+        runways: airport.runways.map { RunwaySnapshot(from: $0, notam: nil) },
         conditions: sampleConditions,
         results: airport.runways.reduce(into: [:]) { results, runway in
           results[runway.name] = sampleResult(for: operation)

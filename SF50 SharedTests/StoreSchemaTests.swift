@@ -15,7 +15,7 @@ struct `Store Schema` {
   /// part of the published contract rather than an implementation detail. Pinning it here turns an
   /// accidental model edit into a failing test rather than a store the app quietly migrates.
   private static let navDataFingerprint =
-    "e34a40fabe9d77b410a12986d67fe8006ac1ad4d32735c46a3eeb98c9908feef"
+    "d46f345bdc1174823b0a2de34bc754d1af5e3c5416d560feb27102856e25c323"
 
   @Test("the two stores declare no model in common")
   func storesAreDisjoint() {
@@ -31,6 +31,19 @@ struct `Store Schema` {
     let entities = Set(AppSchema.schema.entities.map(\.name))
 
     #expect(declared == entities)
+  }
+
+  /// SwiftData cannot express a relationship between models in different store configurations, and
+  /// answers one by quietly pulling the destination into the configuration rather than by raising
+  /// an error. A schema that has grown past the models it names is the only symptom, and it means
+  /// the two stores would open as one.
+  @Test("neither store drags in a model it does not name")
+  func storesDoNotExpand() {
+    let navDeclared = Set(NavDataSchema.models.map { String(describing: $0) })
+    let userDeclared = Set(UserDataSchema.models.map { String(describing: $0) })
+
+    #expect(Set(NavDataSchema.schema.entities.map(\.name)) == navDeclared)
+    #expect(Set(Schema(UserDataSchema.models).entities.map(\.name)) == userDeclared)
   }
 
   @Test("the nav-data schema matches its pinned fingerprint")

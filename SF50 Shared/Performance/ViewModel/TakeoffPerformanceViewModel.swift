@@ -61,8 +61,8 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
   public var requiredClimbGradient: Measurement<UnitSlope>? {
     guard case .value(let takeoffRun) = takeoffRun,
       let availableTakeoffRun,
-      let obstacleHeight = runway?.notam?.obstacleHeight,
-      let obstacleDistance = runway?.notam?.obstacleDistance,
+      let obstacleHeight = notam?.obstacleHeight,
+      let obstacleDistance = notam?.obstacleDistance,
       obstacleHeight.value > 0
     else { return nil }
 
@@ -87,8 +87,12 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
     return valuesOffscaleHigh || (model?.takeoffInputsOffscaleHigh ?? false)
   }
 
-  public var availableTakeoffRun: Measurement<UnitLength>? { runway?.notamedTakeoffRun }
-  public var availableTakeoffDistance: Measurement<UnitLength>? { runway?.notamedTakeoffDistance }
+  public var availableTakeoffRun: Measurement<UnitLength>? {
+    runway?.availableTakeoffRun(notamedBy: notam)
+  }
+  public var availableTakeoffDistance: Measurement<UnitLength>? {
+    runway?.availableTakeoffDistance(notamedBy: notam)
+  }
 
   // MARK: Overrides
 
