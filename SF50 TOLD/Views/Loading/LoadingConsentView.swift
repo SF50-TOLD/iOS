@@ -24,7 +24,7 @@ struct LoadingConsentView: View {
         .multilineTextAlignment(.center)
 
       Text(
-        "This process usually takes a few minutes. It must be done the first time the app launches, and approximately once a month as new navigation data is released. Leave this app open until it finishes; \(localizedModel()) pauses the download if you switch away."
+        "This process usually takes a few minutes. It must be done the first time the app launches, and approximately once a month as new navigation data is released. You can switch away while it runs; \(localizedModel()) shows its progress and keeps it going."
       )
       .font(.footnote)
       .padding(.horizontal, 20)

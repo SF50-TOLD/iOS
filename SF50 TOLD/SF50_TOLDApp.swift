@@ -68,6 +68,10 @@ struct SF50_TOLDApp: App {
   }
 
   init() {
+    // Registered while launching: the permitted identifiers are read once, and a handler offered
+    // afterwards is not matched against them.
+    NavDataDownloadTask.shared.registerHandler()
+
     if ProcessInfo.processInfo.arguments.contains("UI-TESTING") {
       UITestingHelper.setupUITestingEnvironment()
       // Skip Sentry under UI tests: its profiling registers a CADisplayLink and
