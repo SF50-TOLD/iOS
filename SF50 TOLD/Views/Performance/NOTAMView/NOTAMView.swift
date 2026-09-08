@@ -10,6 +10,10 @@ private enum PreviewError: Error {
 
 struct NOTAMView: View {
   @Bindable var notam: NOTAM
+
+  /// The runway this NOTAM restricts.
+  let runway: Runway
+
   let downloadedNOTAMs: [NOTAMResponse]
   let plannedTime: Date
   let isLoadingNOTAMs: Bool
@@ -80,7 +84,7 @@ struct NOTAMView: View {
 
   var body: some View {
     Form {
-      RunwayShorteningView(notam: notam)
+      RunwayShorteningView(notam: notam, runway: runway)
       if operation == .takeoff { ObstacleView(notam: notam) }
       if operation == .landing {
         ContaminationView(contamination: $notam.contamination)
@@ -182,6 +186,7 @@ struct NOTAMView: View {
 
     return NOTAMView(
       notam: notam,
+      runway: runway,
       downloadedNOTAMs: sampleNOTAMs,
       plannedTime: .now,
       isLoadingNOTAMs: false
@@ -206,6 +211,7 @@ struct NOTAMView: View {
 
     return NOTAMView(
       notam: notam,
+      runway: runway,
       downloadedNOTAMs: sampleNOTAMs,
       plannedTime: .now,
       isLoadingNOTAMs: false
@@ -228,6 +234,7 @@ struct NOTAMView: View {
 
     return NOTAMView(
       notam: notam,
+      runway: runway,
       downloadedNOTAMs: [],
       plannedTime: .now,
       isLoadingNOTAMs: false
@@ -245,6 +252,7 @@ struct NOTAMView: View {
 
     return NOTAMView(
       notam: notam,
+      runway: runway,
       downloadedNOTAMs: [],
       plannedTime: .now,
       isLoadingNOTAMs: true

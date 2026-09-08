@@ -44,7 +44,8 @@ public final class RunwayPerformanceService {
     }
 
     let airport = try resolveAirport(recordID: airportRecordID, operation: operation)
-    let runways = airport.runways.map(RunwaySnapshot.init(from:))
+    let notams = NOTAMStore(context: modelContext).notams(at: airport)
+    let runways = airport.runways.map { RunwaySnapshot(from: $0, notam: notams[$0.name]) }
     let conditions = await loadConditions(for: airport)
 
     return .init(
@@ -139,8 +140,9 @@ extension RunwayPerformanceService {
       aircraftType = Defaults.Keys.aircraftType,
       VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value
 
+    let notams = NOTAMStore(context: modelContext).notams(at: airport)
     return airport.runways.reduce(into: [:]) { results, runway in
-      let input = RunwayInput(from: runway, airport: airport)
+      let input = RunwayInput(from: runway, airport: airport, notam: notams[runway.name])
       let model = calculationService.createPerformanceModel(
         conditions: conditions,
         configuration: configuration,

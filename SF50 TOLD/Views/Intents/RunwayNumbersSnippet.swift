@@ -144,7 +144,7 @@ private struct SnippetRow<UnitType: Dimension, Content: View>: View {
 
     return RunwayNumbersSnippet(
       airportDisplayID: "SQL",
-      runway: .init(from: runway),
+      runway: .init(from: runway, notam: nil),
       operation: .takeoff,
       flapSetting: .flaps50,
       performance: .init(
@@ -163,7 +163,7 @@ private struct SnippetRow<UnitType: Dimension, Content: View>: View {
 
     return RunwayNumbersSnippet(
       airportDisplayID: "SQL",
-      runway: .init(from: runway),
+      runway: .init(from: runway, notam: nil),
       operation: .landing,
       flapSetting: .flaps100,
       performance: .init(
@@ -182,7 +182,7 @@ private struct SnippetRow<UnitType: Dimension, Content: View>: View {
 
     return RunwayNumbersSnippet(
       airportDisplayID: "SQL",
-      runway: .init(from: runway),
+      runway: .init(from: runway, notam: nil),
       operation: .takeoff,
       flapSetting: .flaps50,
       performance: .init(groundRun: .offscaleHigh, distance: .offscaleHigh),

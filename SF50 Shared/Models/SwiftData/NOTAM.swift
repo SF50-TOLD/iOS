@@ -25,6 +25,9 @@ public enum ShorteningLocation: String, Codable, CaseIterable, Sendable {
 /// including contamination (ice, snow, water), displaced thresholds, and obstacles.
 @Model
 public final class NOTAM {
+  /// Accelerates resolving every NOTAM at an airport in one fetch.
+  #Index<NOTAM>([\.airportRecordID])
+
   private var _contaminationType: String?
   private var _contaminationDepth: Double  // meters
   private var _rwyCC: UInt8?
@@ -35,8 +38,21 @@ public final class NOTAM {
   private var _takeoffShorteningLocation: String?
   private var _landingShorteningLocation: String?
 
-  @Relationship(deleteRule: .nullify)
-  public var runway: Runway
+  /// Record ID of the airport whose runway this NOTAM restricts.
+  ///
+  /// A NOTAM names its runway rather than pointing at it. Nav data lives in a store replaced whole
+  /// every cycle, and SwiftData cannot express a relationship reaching into another store — so the
+  /// link is the pair `Runway` is already unique on, the same pair the app's `RunwayEntity`
+  /// identifies a runway by, and the same pair the selected-runway defaults resolve through.
+  ///
+  /// Defaults to empty so a NOTAM written before this shape existed can migrate: SwiftData
+  /// synthesizes no value for a new mandatory attribute, and a store it cannot migrate is a store
+  /// the app cannot open. A NOTAM left holding empty identifiers names no runway, so it resolves to
+  /// nothing and is cleared with the rest at the next import.
+  public var airportRecordID: String = ""
+
+  /// Designator of the runway this NOTAM restricts.
+  public var runwayName: String = ""
 
   /// Runway surface contamination (ice, snow, slush, water)
   public var contamination: Contamination? {
@@ -92,6 +108,12 @@ public final class NOTAM {
     set { _landingShorteningLocation = newValue.rawValue }
   }
 
+  /// Whether this NOTAM reduces the takeoff distance available.
+  public var shortensTakeoffDistance: Bool { takeoffDistanceShortening.value > 0 }
+
+  /// Whether this NOTAM reduces the landing distance available.
+  public var shortensLandingDistance: Bool { landingDistanceShortening.value > 0 }
+
   /// Returns true if the NOTAM has no restrictions set.
   public var isEmpty: Bool {
     return contamination == nil
@@ -112,7 +134,8 @@ public final class NOTAM {
     obstacleHeight: Measurement<UnitLength>? = nil,
     obstacleDistance: Measurement<UnitLength>? = nil
   ) {
-    self.runway = runway
+    airportRecordID = runway.airport.recordID
+    runwayName = runway.name
     _contaminationType = contamination?.type
     _contaminationDepth = contamination?.depth ?? 0
     _rwyCC = contamination?.rwyCC

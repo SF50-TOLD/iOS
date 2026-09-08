@@ -6,6 +6,12 @@ import SwiftUI
 struct RunwayShorteningView: View {
   @Bindable var notam: NOTAM
 
+  /// The runway this NOTAM restricts.
+  ///
+  /// Passed in rather than reached through the NOTAM: a NOTAM names its runway by identifier, and
+  /// a designator the pilot is looking at should come from the runway itself.
+  var runway: Runway
+
   @Environment(\.operation)
   private var operation
 
@@ -13,7 +19,7 @@ struct RunwayShorteningView: View {
   private var runwayLengthUnit
 
   private var runwayName: String {
-    notam.runway.name
+    runway.name
   }
 
   private var shortenPrompt: String {
@@ -42,7 +48,7 @@ struct RunwayShorteningView: View {
   }
 
   private var DERLabel: String {
-    if let reciprocalName = notam.runway.reciprocal?.name {
+    if let reciprocalName = runway.reciprocal?.name {
       String(localized: "Runway \(reciprocalName) Threshold")
     } else {
       String(localized: "Runway \(runwayName) DER")
@@ -79,7 +85,7 @@ struct RunwayShorteningView: View {
     let notam = try preview.addNOTAM(to: runway, shortenTakeoff: 400)
 
     return List {
-      RunwayShorteningView(notam: notam)
+      RunwayShorteningView(notam: notam, runway: runway)
     }.environment(\.operation, .takeoff)
   }
 }

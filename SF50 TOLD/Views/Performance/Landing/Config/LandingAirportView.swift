@@ -13,9 +13,6 @@ struct LandingAirportView: View {
   @Environment(WeatherViewModel.self)
   private var weather
 
-  @Environment(\.modelContext)
-  private var modelContext
-
   @Default(.landingAirport)
   private var airportID
 
@@ -34,11 +31,7 @@ struct LandingAirportView: View {
   }
 
   private var runwayNOTAM: NOTAM {
-    guard let runway = performance.runway else { fatalError("Runway is nil") }
-    if let notam = runway.notam { return notam }
-    let notam = NOTAM(runway: runway)
-    runway.notam = notam
-    modelContext.insert(notam)
+    guard let notam = performance.notam else { fatalError("Runway is nil") }
     return notam
   }
 
@@ -85,6 +78,7 @@ struct LandingAirportView: View {
             if let runway = performance.runway {
               RunwayRow(
                 runway: runway,
+                notam: performance.notam,
                 conditions: performance.conditions,
                 flapSetting: performance.flapSetting
               )
@@ -99,10 +93,11 @@ struct LandingAirportView: View {
         }.accessibilityIdentifier("weatherSelector")
       }
 
-      if performance.runway != nil {
+      if let selectedRunway = performance.runway {
         NavigationLink(
           destination: NOTAMView(
             notam: runwayNOTAM,
+            runway: selectedRunway,
             downloadedNOTAMs: performance.downloadedNOTAMs,
             plannedTime: weather.time,
             isLoadingNOTAMs: performance.isLoadingNOTAMs

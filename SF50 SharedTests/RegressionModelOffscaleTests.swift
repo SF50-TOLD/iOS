@@ -13,7 +13,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 3550)  // Below 4500 lbs minimum
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -45,7 +45,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5650)  // Above 5550 lbs maximum
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -77,7 +77,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 4000)  // Below 4500 lbs minimum
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -108,7 +108,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5700)  // Above 5550 lbs maximum
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -141,7 +141,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 4800)  // Below 5000 lbs minimum
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -171,7 +171,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 6100)  // Above 6000 lbs maximum
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -201,7 +201,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 4900)  // Below 5000 lbs minimum
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -231,7 +231,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 6050)  // Above 6000 lbs maximum
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -264,7 +264,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: -5)
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps100)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -295,7 +295,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 55)
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps100)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -325,7 +325,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: -25)  // Below -20°C minimum
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -355,7 +355,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 55)  // Above 50°C maximum
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -387,7 +387,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5200)
     let runway = Helper.createTestRunway(elevation: 11000)  // Above 10000 ft maximum
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -417,7 +417,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5500)
     let runway = Helper.createTestRunway(elevation: 10500)  // Above 10000 ft maximum
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -449,7 +449,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5200)  // Within 4500-5550 lbs
     let runway = Helper.createTestRunway(elevation: 5000)  // Within 0-10000 ft
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -492,7 +492,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 25)
     let config = Helper.createTestConfiguration(weight: 5500)  // Within 5000-6000 lbs
     let runway = Helper.createTestRunway(elevation: 3000)  // Within 0-10000 ft
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -539,7 +539,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 15)
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps50Ice)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,
@@ -571,7 +571,7 @@ struct `Regression Model Offscale Detection` {
     let conditions = Helper.createTestConditions(temperature: 5)  // Within -20°C to 10°C
     let config = Helper.createTestConfiguration(weight: 5200, flapSetting: .flaps50Ice)
     let runway = Helper.createTestRunway()
-    let runwayInput = RunwayInput(from: runway, airport: runway.airport)
+    let runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil)
 
     let model = RegressionPerformanceModel(
       conditions: conditions,

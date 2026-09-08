@@ -44,6 +44,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   private static let logger = Logger(label: "codes.tim.SF50-TOLD.BasePerformanceViewModel")
 
   private let container: ModelContainer
+
+  private var notamStore: NOTAMStore { .init(context: container.mainContext) }
   private let notamLoader: any NOTAMLoaderProtocol
   internal var model: (any PerformanceModel)?
   private var cancellables: Set<Task<Void, Never>> = []
@@ -70,6 +72,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   public private(set) var runway: Runway? {
     didSet {
+      notam = runway.flatMap { notamStore.upsert(for: $0) }
       model = initializeModel()
       Task { recalculate() }
 
@@ -77,6 +80,16 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       setupRunwayNOTAMObservation()
     }
   }
+
+  /// The NOTAM restricting the selected runway.
+  ///
+  /// Resolved when the runway changes rather than followed through a relationship: a NOTAM names
+  /// its runway, so that nav data can be replaced without taking the pilot's entries with it.
+  ///
+  /// A runway that has none yet gets an empty one, because the NOTAM editor binds to a model object
+  /// and so needs one to exist before it opens. An empty NOTAM restricts nothing and counts for
+  /// nothing on the badge.
+  public private(set) var notam: NOTAM?
 
   public var conditions: Conditions {
     didSet {
@@ -103,8 +116,6 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   internal var configuration: Configuration {
     .init(weight: weight, flapSetting: flapSetting)
   }
-
-  public var notam: NOTAM? { runway?.notam }
 
   // MARK: - Abstract Properties (must be overridden)
 
@@ -377,7 +388,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   internal func initializeModel() -> (any PerformanceModel)? {
     guard let runway, let airport else { return nil }
 
-    let runwaySnapshot = RunwayInput(from: runway, airport: airport),
+    let runwaySnapshot = RunwayInput(from: runway, airport: airport, notam: notam),
       notamInput = notam.map { NOTAMInput(from: $0) },
       aircraftType = Defaults.Keys.aircraftType
 

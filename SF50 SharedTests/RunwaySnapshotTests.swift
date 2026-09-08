@@ -44,7 +44,7 @@ struct `Runway Snapshot Distances` {
 
   @Test("the ground run is measured against the run, not the distance over the clearway")
   func runAndDistanceAreDistinct() {
-    let snapshot = RunwaySnapshot(from: Self.runwayWithClearway())
+    let snapshot = RunwaySnapshot(from: Self.runwayWithClearway(), notam: nil)
 
     #expect(Self.feet(snapshot.availableRun(for: .takeoff)) == 5000)
     #expect(Self.feet(snapshot.availableDistance(for: .takeoff)) == 6000)
@@ -53,12 +53,12 @@ struct `Runway Snapshot Distances` {
   @Test("a NOTAM shortening the runway shortens what the snapshot reports as available")
   func NOTAMShorteningIsCarried() {
     let runway = Self.runwayWithClearway()
-    runway.notam = NOTAM(
+    let notam = NOTAM(
       runway: runway,
       takeoffDistanceShortening: .init(value: 1000, unit: .feet),
       landingDistanceShortening: .init(value: 800, unit: .feet)
     )
-    let snapshot = RunwaySnapshot(from: runway)
+    let snapshot = RunwaySnapshot(from: runway, notam: notam)
 
     #expect(Self.feet(snapshot.availableRun(for: .takeoff)) == 4000)
     #expect(Self.feet(snapshot.availableDistance(for: .takeoff)) == 5000)
@@ -67,7 +67,7 @@ struct `Runway Snapshot Distances` {
 
   @Test("a landing measures both its run and its distance against the landing distance available")
   func landingUsesOneDenominator() {
-    let snapshot = RunwaySnapshot(from: Self.runwayWithClearway())
+    let snapshot = RunwaySnapshot(from: Self.runwayWithClearway(), notam: nil)
 
     #expect(snapshot.availableRun(for: .landing) == snapshot.availableDistance(for: .landing))
   }

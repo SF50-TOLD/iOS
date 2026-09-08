@@ -66,7 +66,9 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
     return valuesOffscaleHigh || (model?.landingInputsOffscaleHigh ?? false)
   }
 
-  public var availableLandingRun: Measurement<UnitLength>? { runway?.notamedLandingDistance }
+  public var availableLandingRun: Measurement<UnitLength>? {
+    runway?.availableLandingDistance(notamedBy: notam)
+  }
 
   // MARK: Overrides
 

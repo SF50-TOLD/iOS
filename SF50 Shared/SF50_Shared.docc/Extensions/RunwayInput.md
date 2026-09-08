@@ -14,6 +14,8 @@
 - ``gradient``
 - ``length``
 - ``isTurf``
+- ``recordedSurfaceType``
+- ``hasKnownGradient``
 
 ### Declared Distances
 
