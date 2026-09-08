@@ -350,8 +350,47 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   private func install(generation: Int) throws {
     try installer.install(generation: generation)
     clearNOTAMs()
+    clearSelectionsMissing(fromGeneration: generation)
     // The app watches the active generation and reopens its own store; doing it here as well would
     // race that, and leave the container the views hold pointing at the older file.
+  }
+
+  /// Forgets a selected airport the incoming dataset no longer carries, and the runway chosen on
+  /// it.
+  ///
+  /// The FAA retires airports between cycles, and occasionally corrects the site number that
+  /// identifies one, so a selection made under an earlier dataset can name a record the new one
+  /// does not hold. Left in place it resolves to nothing in the widget and in Siri, which report a
+  /// missing airport and suggest reloading the very data that removed it.
+  private func clearSelectionsMissing(fromGeneration generation: Int) {
+    guard let context = try? navDataContext(forGeneration: generation) else { return }
+    for operation in Operation.allCases {
+      guard let recordID = operation.selectedAirportRecordID,
+        airportIsMissing(recordID, from: context)
+      else { continue }
+      operation.clearSelection()
+      logger.notice(
+        "Cleared the \(operation.rawValue, privacy: .public) airport, absent from the new dataset"
+      )
+    }
+  }
+
+  /// Whether the dataset lacks the airport a selection names. A failed fetch reads as present, so
+  /// nothing is cleared on the strength of an error.
+  private func airportIsMissing(_ recordID: String, from context: ModelContext) -> Bool {
+    do { return try findAirport(for: recordID, in: context) == nil } catch { return false }
+  }
+
+  /// A context on the generation just installed.
+  ///
+  /// The container the views hold still reads the previous generation here, so this check opens the
+  /// new one itself. In-memory stores cannot be shared between containers, so tests and previews
+  /// read the container they were given.
+  private func navDataContext(forGeneration generation: Int) throws -> ModelContext {
+    guard !container.configurations.contains(where: \.isStoredInMemoryOnly) else {
+      return ModelContext(container)
+    }
+    return ModelContext(try AppStore.makeContainer(layout: .appGroup, generation: generation))
   }
 
   /// Discards the NOTAMs the pilot entered against the dataset just replaced.
