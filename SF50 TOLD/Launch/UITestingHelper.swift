@@ -67,10 +67,25 @@ enum UITestingHelper {
 
     // Only seed test data for regular UI tests, not screenshot generation
     if !isGeneratingScreenshots {
-      // Seed test data for airports used in UI tests
       Task { @MainActor in
-        seedTestData(container: container)
+        clearUserData(container: container)
       }
+    }
+  }
+
+  /// Seeds the nav-data store before the app opens it.
+  ///
+  /// Nav data is read-only once the app holds it, so a test's airports have to be written through
+  /// a writable container first — the same way a downloaded cycle is.
+  @MainActor
+  static func seedNavData() {
+    guard isUITesting, !isGeneratingScreenshots else { return }
+
+    do {
+      let context = ModelContext(try AppStore.makeWritableContainer(layout: .appGroup))
+      try seedNavData(into: context)
+    } catch {
+      assertionFailure("Couldn’t seed nav data for UI testing: \(error)")
     }
   }
 
@@ -108,10 +123,17 @@ enum UITestingHelper {
     return .init(latitude: latitude, longitude: longitude)
   }
 
+  /// Clears what a previous run left in the store the pilot writes to.
   @MainActor
-  private static func seedTestData(container: ModelContainer) {
+  private static func clearUserData(container: ModelContainer) {
     let context = container.mainContext
+    try? context.delete(model: NOTAM.self)
+    try? context.delete(model: Scenario.self)
+    try? context.save()
+  }
 
+  @MainActor
+  private static func seedNavData(into context: ModelContext) throws {
     // Delete existing data
     try? context.delete(model: Leg.self)
     try? context.delete(model: ProcedureSegment.self)
@@ -119,8 +141,6 @@ enum UITestingHelper {
     try? context.delete(model: Obstacle.self)
     try? context.delete(model: Runway.self)
     try? context.delete(model: Airport.self)
-    try? context.delete(model: NOTAM.self)
-    try? context.delete(model: Scenario.self)
     try? context.delete(model: Cycle.self)
 
     // Insert test airports
@@ -162,7 +182,7 @@ enum UITestingHelper {
 
     seedProcedureData(context: context)
 
-    try? context.save()
+    try context.save()
   }
 
   @MainActor

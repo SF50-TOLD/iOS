@@ -41,6 +41,9 @@ public enum NavDataSchema {
 public enum UserDataSchema {
   /// Every model describing user-authored data.
   public static let models: [any PersistentModel.Type] = [NOTAM.self, Scenario.self]
+
+  /// The schema these models form, as the configuration opening the user store names it.
+  public static let schema = Schema(models)
 }
 
 /// Both stores' models together, as a single container's schema describes them.
