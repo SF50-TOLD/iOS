@@ -12,6 +12,7 @@ import SwiftNASR
 /// - `NASR_BUILD_STORE_FROM`: Path to an already-published `<cycle>.plist`. Builds the SwiftData
 ///   store and its manifest from that dataset instead of downloading anything, and exits.
 /// - `NASR_STORE_OUTPUT`: Where to write the store and manifest. Defaults to the plist's directory.
+/// - `NASR_PUBLISH_STORE`: Set to "1" to upload the built store and manifest to R2.
 ///
 /// Output is written to the app's Documents directory.
 enum NavDataHeadlessProcessor {
@@ -40,6 +41,10 @@ enum NavDataHeadlessProcessor {
       let output = try await NavDataStoreBuilder(logger: logger)
         .build(fromPlistAt: plist, cycle: cycle, outputLocation: outputLocation)
       logger.notice("Wrote \(output.store.path) and \(output.manifest.path)")
+
+      if env["NASR_PUBLISH_STORE"] == "1" {
+        try await NavDataStoreUploader(logger: logger).upload(output, cycle: cycle)
+      }
       return 0
     } catch {
       logger.error("Couldn’t build the store: \(error)")
