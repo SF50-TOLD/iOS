@@ -9,6 +9,9 @@ import SwiftNASR
 /// - `NASR_HEADLESS`: Set to "1" to enable headless mode
 /// - `NASR_CYCLE`: Cycle to download ("current", "next", or "YYYY-MM-DD")
 /// - `NASR_SKIP_UPLOAD`: Set to "1" to skip GitHub upload
+/// - `NASR_BUILD_STORE_FROM`: Path to an already-published `<cycle>.plist`. Builds the SwiftData
+///   store and its manifest from that dataset instead of downloading anything, and exits.
+/// - `NASR_STORE_OUTPUT`: Where to write the store and manifest. Defaults to the plist's directory.
 ///
 /// Output is written to the app's Documents directory.
 enum NavDataHeadlessProcessor {
@@ -19,10 +22,42 @@ enum NavDataHeadlessProcessor {
     env["NASR_HEADLESS"] == "1"
   }
 
+  /// Builds the prebuilt store for a dataset that has already been published.
+  ///
+  /// - Parameters:
+  ///   - plistPath: The `<cycle>.plist` to build from.
+  ///   - logger: Where to report progress.
+  /// - Returns: An exit code.
+  private static func buildStore(fromPlistAt plistPath: String, logger: Logger) async -> Int32 {
+    let plist = URL(filePath: plistPath)
+    let cycle = plist.deletingPathExtension().lastPathComponent
+    let outputLocation =
+      env["NASR_STORE_OUTPUT"].map { URL(filePath: $0) }
+      ?? plist.deletingLastPathComponent()
+
+    do {
+      try FileManager.default.createDirectory(at: outputLocation, withIntermediateDirectories: true)
+      let output = try await NavDataStoreBuilder(logger: logger)
+        .build(fromPlistAt: plist, cycle: cycle, outputLocation: outputLocation)
+      logger.notice("Wrote \(output.store.path) and \(output.manifest.path)")
+      return 0
+    } catch {
+      logger.error("Couldn’t build the store: \(error)")
+      return 1
+    }
+  }
+
   /// Runs the NASR processor in headless mode.
   /// - Returns: Exit code (0 for success, 1 for error)
   static func run() async -> Int32 {
     let logger = Logger(label: "codes.tim.DownloadNASR")
+
+    // Building a store transcodes a dataset that has already been published, rather than going back
+    // to the FAA for it: the store is then a pure function of the payload the app falls back to,
+    // and cannot drift from it.
+    if let plistPath = env["NASR_BUILD_STORE_FROM"] {
+      return await buildStore(fromPlistAt: plistPath, logger: logger)
+    }
 
     // Parse and validate NASR_CYCLE
     guard let cycleString = env["NASR_CYCLE"] else {
