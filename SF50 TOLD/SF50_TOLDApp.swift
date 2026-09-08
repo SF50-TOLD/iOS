@@ -34,37 +34,12 @@ private class WidgetReloadObserver: ObservableObject {
 @main
 struct SF50_TOLDApp: App {
   var sharedModelContainer: ModelContainer = {
-    let schema = Schema([
-      Airport.self,
-      Runway.self,
-      NOTAM.self,
-      Scenario.self,
-      Cycle.self,
-      Obstacle.self,
-      Procedure.self,
-      ProcedureSegment.self,
-      Leg.self,
-      Navaid.self
-    ])
-
-    // Use in-memory storage for screenshot generation to avoid file access issues
+    // Screenshot runs hold their data in memory so the generated shots never depend on, or
+    // disturb, whatever is in the group container.
     let isGeneratingScreenshots = ProcessInfo.processInfo.arguments.contains("GENERATE-SCREENSHOTS")
-    let modelConfiguration =
-      if isGeneratingScreenshots {
-        ModelConfiguration(
-          schema: schema,
-          isStoredInMemoryOnly: true
-        )
-      } else {
-        ModelConfiguration(
-          schema: schema,
-          isStoredInMemoryOnly: false,
-          groupContainer: .identifier("group.codes.tim.TOLD")
-        )
-      }
-
     do {
-      return try ModelContainer(for: schema, configurations: [modelConfiguration])
+      return try isGeneratingScreenshots
+        ? AppStore.makeInMemoryContainer() : AppStore.makeGroupContainer()
     } catch {
       fatalError("Could not create ModelContainer: \(error)")
     }

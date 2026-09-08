@@ -17,12 +17,7 @@ struct ProfilePipelineIntegrationTests {
   private var climbProfile: ClimbProfile { Helper.createTestClimbProfile() }
 
   private func makeModelContainer() throws -> ModelContainer {
-    let schema = Schema([
-      Airport.self, Runway.self, NOTAM.self, Scenario.self, Cycle.self,
-      Obstacle.self, Procedure.self, ProcedureSegment.self, Leg.self, Navaid.self
-    ])
-    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    return try ModelContainer(for: schema, configurations: [config])
+    try AppStore.makeInMemoryContainer()
   }
 
   // MARK: - Fixtures

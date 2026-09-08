@@ -21,7 +21,7 @@ public final class RunwayPerformanceService {
 
   /// Creates a service reading the shared app-group store.
   public init() {
-    modelContext = ModelContext(AppGroupStore.container)
+    modelContext = ModelContext(AppStore.shared)
   }
 
   /// Calculates performance for every runway at an airport.
