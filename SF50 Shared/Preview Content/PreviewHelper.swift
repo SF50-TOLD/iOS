@@ -85,18 +85,7 @@ public final class PreviewHelper: Sendable {
   }
 
   public init() throws {
-    container = try .init(
-      for: Airport.self,
-      Runway.self,
-      NOTAM.self,
-      Scenario.self,
-      Cycle.self,
-      Obstacle.self,
-      Procedure.self,
-      ProcedureSegment.self,
-      Leg.self,
-      configurations: .init(isStoredInMemoryOnly: true)
-    )
+    container = try AppStore.makeInMemoryContainer()
   }
 
   @MainActor

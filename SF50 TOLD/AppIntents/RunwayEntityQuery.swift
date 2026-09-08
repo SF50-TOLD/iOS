@@ -49,7 +49,7 @@ extension RunwayEntityQuery {
   /// query's `async` requirements meaningful rather than decorative.
   @MainActor
   private func allRunways() throws -> [RunwayEntity] {
-    let modelContext = ModelContext(AppGroupStore.container)
+    let modelContext = ModelContext(AppStore.shared)
     guard let airportRecordID,
       let airport = try findAirport(for: airportRecordID, in: modelContext)
     else { return [] }
@@ -61,7 +61,7 @@ extension RunwayEntityQuery {
   private func runways(named requested: [(airportRecordID: String, name: String)]) throws
     -> [RunwayEntity]
   {
-    let modelContext = ModelContext(AppGroupStore.container),
+    let modelContext = ModelContext(AppStore.shared),
       wanted = Dictionary(
         grouping: requested,
         by: \.airportRecordID
