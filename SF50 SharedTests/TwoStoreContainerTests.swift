@@ -64,7 +64,7 @@ struct `Two Store Container` {
     let layout = Self.temporaryLayout()
     defer { try? FileManager.default.removeItem(at: layout.baseDirectory) }
 
-    let context = ModelContext(try AppStore.makeContainer(layout: layout))
+    let context = ModelContext(try AppStore.makeContainer(layout: layout, generation: 0))
 
     #expect(throws: Never.self) { try context.fetchCount(FetchDescriptor<Airport>()) }
     #expect(throws: Never.self) { try context.fetchCount(FetchDescriptor<Scenario>()) }
@@ -75,9 +75,9 @@ struct `Two Store Container` {
     let layout = Self.temporaryLayout()
     defer { try? FileManager.default.removeItem(at: layout.baseDirectory) }
 
-    _ = try AppStore.makeContainer(layout: layout)
+    _ = try AppStore.makeContainer(layout: layout, generation: 0)
 
-    #expect(FileManager.default.fileExists(atPath: layout.navStoreURL.path))
+    #expect(FileManager.default.fileExists(atPath: layout.navStoreURL(generation: 0).path))
   }
 
   /// The pilot's own entries are what a cycle must not disturb, so they have to be written through
@@ -87,7 +87,7 @@ struct `Two Store Container` {
     let layout = Self.temporaryLayout()
     defer { try? FileManager.default.removeItem(at: layout.baseDirectory) }
 
-    let context = ModelContext(try AppStore.makeContainer(layout: layout))
+    let context = ModelContext(try AppStore.makeContainer(layout: layout, generation: 0))
     context.insert(Scenario(name: "Test", operation: .takeoff))
 
     #expect(throws: Never.self) { try context.save() }
@@ -96,35 +96,69 @@ struct `Two Store Container` {
 
   /// This is the swap a data cycle performs, and the reason the two stores are separate files.
   ///
-  /// The stores are opened in scopes: replacing a file SQLite still has a handle on leaves the
-  /// reader on a deleted inode, which is why a downloaded store is installed before any container
-  /// opens rather than underneath one.
-  @Test("replacing the nav-data store leaves user data alone")
+  /// The new dataset is written to a generation of its own and switched to by number. Nothing
+  /// overwrites a file another reader might hold, which is what makes an abandoned import harmless.
+  @Test("switching to a new nav-data generation leaves user data alone")
   func swappingNavDataKeepsUserData() throws {
     let layout = Self.temporaryLayout()
     defer { try? FileManager.default.removeItem(at: layout.baseDirectory) }
 
+    let live = ModelContext(try AppStore.makeContainer(layout: layout, generation: 0))
+    live.insert(Scenario(name: "Carried", operation: .landing))
+    try live.save()
+
     do {
-      let context = ModelContext(try AppStore.makeContainer(layout: layout))
-      context.insert(Scenario(name: "Carried", operation: .landing))
-      try context.save()
+      let next = ModelContext(try AppStore.makeWritableContainer(layout: layout, generation: 1))
+      next.insert(Self.airport(recordID: "REPLACED"))
+      try next.save()
     }
 
-    let replacement = layout.baseDirectory.appending(path: "replacement.store")
-    do {
-      let context = ModelContext(
-        try AppStore.makeWritableContainer(layout: layout.addressingNavStore(at: replacement))
-      )
-      context.insert(Self.airport(recordID: "REPLACED"))
-      try context.save()
-    }
-
-    try StoreLayout.moveStore(from: replacement, to: layout.navStoreURL)
-
-    let reopened = ModelContext(try AppStore.makeContainer(layout: layout))
+    let reopened = ModelContext(try AppStore.makeContainer(layout: layout, generation: 1))
 
     #expect(try reopened.fetch(FetchDescriptor<Scenario>()).map(\.name) == ["Carried"])
     #expect(try reopened.fetch(FetchDescriptor<Airport>()).map(\.recordID) == ["REPLACED"])
+  }
+
+  /// The dataset in use must survive an import that never finishes — the failure that blocked
+  /// running the import anywhere the system can kill it.
+  @Test("an abandoned import leaves the dataset in use untouched")
+  func abandonedImportChangesNothing() throws {
+    let layout = Self.temporaryLayout()
+    defer { try? FileManager.default.removeItem(at: layout.baseDirectory) }
+
+    do {
+      let live = ModelContext(try AppStore.makeWritableContainer(layout: layout, generation: 0))
+      live.insert(Self.airport(recordID: "LIVE"))
+      try live.save()
+    }
+
+    // An import that wrote some rows and then stopped.
+    do {
+      let abandoned = ModelContext(
+        try AppStore.makeWritableContainer(layout: layout, generation: 1)
+      )
+      abandoned.insert(Self.airport(recordID: "HALF-WRITTEN"))
+      try abandoned.save()
+    }
+
+    let reopened = ModelContext(try AppStore.makeContainer(layout: layout, generation: 0))
+
+    #expect(try reopened.fetch(FetchDescriptor<Airport>()).map(\.recordID) == ["LIVE"])
+  }
+
+  @Test("superseded generations are reclaimed, and the one in use is not")
+  func staleGenerationsAreSwept() throws {
+    let layout = Self.temporaryLayout()
+    defer { try? FileManager.default.removeItem(at: layout.baseDirectory) }
+
+    for generation in 0...2 {
+      _ = try AppStore.makeWritableContainer(layout: layout, generation: generation)
+    }
+    #expect(layout.navStoreGenerations() == [0, 1, 2])
+
+    layout.removeNavStores(exceptGeneration: 2)
+
+    #expect(layout.navStoreGenerations() == [2])
   }
 
   @Test("scenarios are carried out of the store that predated the split")
@@ -133,7 +167,7 @@ struct `Two Store Container` {
     defer { try? FileManager.default.removeItem(at: layout.baseDirectory) }
     try Self.writeLegacyStore(named: "Mine", to: layout)
 
-    let context = ModelContext(try AppStore.makeContainer(layout: layout))
+    let context = ModelContext(try AppStore.makeContainer(layout: layout, generation: 0))
 
     #expect(try context.fetch(FetchDescriptor<Scenario>()).map(\.name) == ["Mine"])
     #expect(!FileManager.default.fileExists(atPath: layout.legacyStoreURL.path))
@@ -150,7 +184,7 @@ struct `Two Store Container` {
     try Self.writeLegacyStore(named: "Mine", to: layout)
     try Self.writeUserStore(scenarioNames: [], to: layout)
 
-    let context = ModelContext(try AppStore.makeContainer(layout: layout))
+    let context = ModelContext(try AppStore.makeContainer(layout: layout, generation: 0))
 
     #expect(try context.fetch(FetchDescriptor<Scenario>()).map(\.name) == ["Mine"])
     #expect(!FileManager.default.fileExists(atPath: layout.legacyStoreURL.path))
@@ -165,7 +199,7 @@ struct `Two Store Container` {
     try Self.writeLegacyStore(named: "Mine", to: layout)
     try Self.writeUserStore(scenarioNames: ["Mine"], to: layout)
 
-    let context = ModelContext(try AppStore.makeContainer(layout: layout))
+    let context = ModelContext(try AppStore.makeContainer(layout: layout, generation: 0))
 
     #expect(try context.fetch(FetchDescriptor<Scenario>()).map(\.name) == ["Mine"])
     #expect(!FileManager.default.fileExists(atPath: layout.legacyStoreURL.path))

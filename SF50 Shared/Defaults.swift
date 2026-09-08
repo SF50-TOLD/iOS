@@ -10,6 +10,20 @@ public let latestSchemaVersion = 8
 extension TerrainRegion: Defaults.Serializable {}
 
 extension Defaults.Keys {
+  /// Which generation of the nav-data store the app is reading.
+  ///
+  /// An import writes the next generation to its own file and this is switched to it only once
+  /// that file has been opened and found sound. Recording a number is the whole of the swap: no
+  /// store is ever overwritten, so an import that dies part-way leaves a file nobody points at
+  /// rather than a dataset half-replaced.
+  ///
+  /// Lives in the group suite because the widget and the App Intents surfaces open the same store.
+  public static let activeNavDataGeneration = Key<Int>(
+    "SF50/3/activeNavDataGeneration",
+    default: 0,
+    suite: groupDefaults
+  )
+
   /// Terrain regions the pilot has asked for, whether or not a payload is on disk right now.
   ///
   /// Asset packs are purgeable: the system reclaims one under storage pressure without telling

@@ -46,7 +46,7 @@ enum UITestingHelper {
   /// read would hand the picker a different object than its view model is watching.
   @MainActor static let locationStreamer: (any LocationStreamer)? = scriptedLocationStreamer()
 
-  static func setupUITestingEnvironment(container: ModelContainer) {
+  static func setupUITestingEnvironment() {
     // Reset all defaults
     Defaults.removeAll(suite: UserDefaults(suiteName: "group.codes.tim.TOLD")!)
 
@@ -64,28 +64,29 @@ enum UITestingHelper {
     if ProcessInfo.processInfo.arguments.contains("SKIP-SCENARIO-SEEDING") {
       Defaults[.defaultScenariosSeeded] = true
     }
-
-    // Only seed test data for regular UI tests, not screenshot generation
-    if !isGeneratingScreenshots {
-      Task { @MainActor in
-        clearUserData(container: container)
-      }
-    }
   }
 
-  /// Seeds the nav-data store before the app opens it.
+  /// Puts both stores into the state a UI test expects, before the app opens either.
   ///
   /// Nav data is read-only once the app holds it, so a test's airports have to be written through
-  /// a writable container first — the same way a downloaded cycle is.
+  /// a writable container first — the same way a downloaded cycle is. What a previous run left in
+  /// the user store is cleared in the same pass, synchronously: doing it afterwards raced the
+  /// default-scenario seeder and sometimes deleted what it had just written.
   @MainActor
-  static func seedNavData() {
+  static func prepareStores() {
     guard isUITesting, !isGeneratingScreenshots else { return }
 
+    // Always the first generation, so a run never depends on what the last one left behind.
+    Defaults[.activeNavDataGeneration] = 0
+
     do {
-      let context = ModelContext(try AppStore.makeWritableContainer(layout: .appGroup))
+      let context = ModelContext(
+        try AppStore.makeWritableContainer(layout: .appGroup, generation: 0)
+      )
+      clearUserData(in: context)
       try seedNavData(into: context)
     } catch {
-      assertionFailure("Couldn’t seed nav data for UI testing: \(error)")
+      assertionFailure("Couldn’t prepare the stores for UI testing: \(error)")
     }
   }
 
@@ -125,8 +126,7 @@ enum UITestingHelper {
 
   /// Clears what a previous run left in the store the pilot writes to.
   @MainActor
-  private static func clearUserData(container: ModelContainer) {
-    let context = container.mainContext
+  private static func clearUserData(in context: ModelContext) {
     try? context.delete(model: NOTAM.self)
     try? context.delete(model: Scenario.self)
     try? context.save()

@@ -1,20 +1,25 @@
 public import Foundation
 
-/// Where the app keeps its two persistent stores.
+/// Where the app keeps its stores.
 ///
-/// Nav data and user data are separate files because nav data is replaced whole every cycle: a
-/// downloaded store is staged beside the live one and installed by replacing it, which is only
-/// atomic if nothing the pilot authored lives in the file being replaced.
+/// Nav data is replaced whole every cycle, and the replacement is a new file rather than a rewrite
+/// of the old one: each import writes the next *generation*, and the app switches to it by
+/// recording which generation is current. Nothing ever overwrites a store another process might
+/// still have open, and an import that never finishes leaves a file nobody points at.
 ///
-/// Paths are resolved from a base directory rather than assumed, so tests can build a real
-/// two-store container in a temporary directory. Only ``appGroup`` reaches for the group
-/// container — which a test bundle stripped of the entitlement cannot do.
+/// What the pilot authored lives in one store that no cycle touches.
+///
+/// Paths are resolved from a base directory rather than assumed, so tests can build real stores in
+/// a temporary directory. Only ``appGroup`` reaches for the group container — which a test bundle
+/// stripped of the entitlement cannot do.
 public struct StoreLayout: Sendable {
   /// The identifier of the app group the app and its extensions are entitled to.
   public static let groupIdentifier = "group.codes.tim.TOLD"
 
   private static let navDataDirectoryName = "NavData"
   private static let userDataDirectoryName = "UserData"
+  private static let navStorePrefix = "navdata-"
+  private static let navStoreSuffix = ".store"
 
   /// The layout rooted in the shared app-group container.
   ///
@@ -33,13 +38,6 @@ public struct StoreLayout: Sendable {
 
   /// The directory the stores live under.
   public let baseDirectory: URL
-
-  private let navStoreOverride: URL?
-
-  /// The nav-data store currently in use.
-  public var navStoreURL: URL {
-    navStoreOverride ?? navDataDirectory.appending(path: "current.store")
-  }
 
   /// The store holding what the pilot authored.
   public var userStoreURL: URL {
@@ -63,60 +61,56 @@ public struct StoreLayout: Sendable {
 
   /// Creates a layout rooted at `baseDirectory`.
   ///
-  /// - Parameter baseDirectory: The directory to keep both stores under.
+  /// - Parameter baseDirectory: The directory to keep the stores under.
   public init(baseDirectory: URL) {
     self.baseDirectory = baseDirectory
-    navStoreOverride = nil
-  }
-
-  private init(baseDirectory: URL, navStoreOverride: URL?) {
-    self.baseDirectory = baseDirectory
-    self.navStoreOverride = navStoreOverride
   }
 
   /// Deletes a store and the write-ahead log and shared-memory files SQLite keeps beside it.
   ///
   /// - Parameter url: The store to delete.
   public static func removeStore(at url: URL) {
-    for path in sidecars(of: url) {
+    for path in [url.path, "\(url.path)-wal", "\(url.path)-shm"] {
       try? FileManager.default.removeItem(atPath: path)
     }
   }
 
-  /// Puts a store, and the files SQLite keeps beside it, where another one was.
+  /// The nav-data store holding a given generation of the dataset.
   ///
-  /// Only safe while no container holds either store open: replacing a file SQLite has a handle on
-  /// leaves the reader on a deleted inode. A downloaded store is installed at launch, before any
-  /// container opens.
+  /// - Parameter generation: Which generation to address.
+  /// - Returns: That generation's store, whether or not it exists yet.
+  public func navStoreURL(generation: Int) -> URL {
+    navDataDirectory.appending(path: "\(Self.navStorePrefix)\(generation)\(Self.navStoreSuffix)")
+  }
+
+  /// Every generation with a store on disk, in ascending order.
+  public func navStoreGenerations() -> [Int] {
+    let contents =
+      (try? FileManager.default.contentsOfDirectory(atPath: navDataDirectory.path)) ?? []
+    return
+      contents
+      .compactMap { name in
+        guard name.hasPrefix(Self.navStorePrefix), name.hasSuffix(Self.navStoreSuffix) else {
+          return nil
+        }
+        return Int(name.dropFirst(Self.navStorePrefix.count).dropLast(Self.navStoreSuffix.count))
+      }
+      .sorted()
+  }
+
+  /// Deletes every nav-data store except the one in use.
   ///
-  /// - Parameters:
-  ///   - source: The store to install.
-  ///   - destination: Where it should end up.
-  public static func moveStore(from source: URL, to destination: URL) throws {
-    removeStore(at: destination)
-    let fileManager = FileManager.default
-    for (from, to) in zip(sidecars(of: source), sidecars(of: destination)) {
-      guard fileManager.fileExists(atPath: from) else { continue }
-      try fileManager.moveItem(atPath: from, toPath: to)
+  /// Called at launch, when nothing holds a superseded generation open. An import that failed
+  /// part-way leaves a store nobody points at, and this is what reclaims it.
+  ///
+  /// - Parameter generation: The generation to keep.
+  public func removeNavStores(exceptGeneration generation: Int) {
+    for stale in navStoreGenerations() where stale != generation {
+      Self.removeStore(at: navStoreURL(generation: stale))
     }
   }
 
-  private static func sidecars(of url: URL) -> [String] {
-    [url.path, "\(url.path)-wal", "\(url.path)-shm"]
-  }
-
-  /// The same layout with its nav-data store at `url`.
-  ///
-  /// An importer writes a store somewhere other than the one in use, and has to open it through the
-  /// same pair of configurations that will later read it.
-  ///
-  /// - Parameter url: Where the nav-data store should be.
-  /// - Returns: A layout naming that store.
-  public func addressingNavStore(at url: URL) -> Self {
-    .init(baseDirectory: baseDirectory, navStoreOverride: url)
-  }
-
-  /// Creates the directories both stores live in, if they are not there already.
+  /// Creates the directories the stores live in, if they are not there already.
   public func createDirectories() throws {
     for directory in [navDataDirectory, userDataDirectory] {
       try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
