@@ -37,6 +37,10 @@ aircraft.
   force. One whose cycle has lapsed is passed over and the current cycle's data
   imported instead, rather than installing data already out of date and asking
   to download it again at every launch.
+- An airport the new dataset no longer carries is forgotten, along with the
+  runway chosen on it. The FAA retires airports between cycles, and a selection
+  left pointing at one made the widget and Siri fail and then suggest reloading
+  the very data that had removed it.
 
 ### Elsewhere
 

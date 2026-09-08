@@ -230,6 +230,18 @@ extension Operation {
       case .landing: Defaults[.landingRunway]
     }
   }
+
+  /// Forgets the airport and the runway selected for this leg.
+  public func clearSelection() {
+    switch self {
+      case .takeoff:
+        Defaults[.takeoffAirport] = nil
+        Defaults[.takeoffRunway] = nil
+      case .landing:
+        Defaults[.landingAirport] = nil
+        Defaults[.landingRunway] = nil
+    }
+  }
 }
 
 // MARK: - Measurement
