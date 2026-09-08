@@ -49,6 +49,23 @@ Terrain data now downloads through iOS itself rather than through the app.
   file as well.
 - A printed report no longer shows a stray marker beside the what-if sections,
   which print expands anyway.
+- Takeoff and landing reports measure their margins against the distance
+  declared for the operation — TORA, TODA, or LDA, less anything a NOTAM has
+  closed — rather than against the whole length of the pavement. On a runway
+  with a displaced threshold or a clearway the reports credited runway that is
+  not available for the operation, so the margins read long and the maximum
+  weights read heavy. The runways table now names the distance it shows.
+- A takeoff report marks a runway short, and caps the weight it says the runway
+  will carry, when the ground run does not fit the takeoff run available — not
+  only when the distance to 50 feet overruns. The two differ wherever a runway
+  has a clearway.
+- On the landing screen the total distance turns red when it overruns the
+  runway, the way the takeoff screen already did, and VoiceOver says whether the
+  landing distance available is sufficient. The overrun was reported only in the
+  warnings behind the Adjustments link.
+- In a printed report, a figure the performance tables cannot give reads the way
+  it does on screen: grey where there is no data, red where the aircraft is off
+  the top of the chart. It printed unstyled in both cases.
 
 ## 3.7.1
 

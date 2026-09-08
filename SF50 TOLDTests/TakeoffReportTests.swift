@@ -12,10 +12,15 @@ import Testing
 struct `Takeoff Report` {
 
   private static let scenarioBehindAccordion = "Hot Day"
+  private static let pavementLength = Measurement(value: 5000, unit: UnitLength.feet)
 
-  /// A sea-level airport flown at mid weight on a standard day, with a 5,000 ft paved runway
-  /// for each name given.
-  private static func performanceInput(runwayNames: [String] = ["36"]) -> PerformanceInput {
+  /// A sea-level airport flown at mid weight on a standard day, with a paved runway of
+  /// ``pavementLength`` for each name given, declaring the takeoff distance given.
+  private static func performanceInput(
+    runwayNames: [String] = ["36"],
+    takeoffRun: Measurement<UnitLength>? = nil,
+    takeoffDistance: Measurement<UnitLength>? = nil
+  ) -> PerformanceInput {
     let airport = Airport(
       recordID: "TEST",
       locationID: "TEST",
@@ -35,9 +40,9 @@ struct `Takeoff Report` {
         elevation: nil,
         trueHeading: .init(value: 360, unit: .degrees),
         gradient: 0,
-        length: .init(value: 5000, unit: .feet),
-        takeoffRun: nil,
-        takeoffDistance: nil,
+        length: pavementLength,
+        takeoffRun: takeoffRun,
+        takeoffDistance: takeoffDistance,
         landingDistance: nil,
         surfaceType: .paved,
         airport: airport
@@ -77,6 +82,30 @@ struct `Takeoff Report` {
         )
       ]
     )
+  }
+
+  private static func analysis(of input: PerformanceInput) throws
+    -> ReportOutput<TakeoffPerformanceScenario>
+  {
+    try TakeoffReportData(
+      input: input,
+      scenarios: [PerformanceScenario(name: "Forecast Conditions")]
+    ).generate()
+  }
+
+  /// The takeoff-distance margin the planned runway carries under the only scenario.
+  private static func takeoffMargin(of input: PerformanceInput) throws
+    -> Measurement<UnitLength>
+  {
+    let scenario = try #require(analysis(of: input).scenarios.first),
+      performance = try #require(scenario.runways[input.runway]),
+      totalDistance = try #require(performance.totalDistance?.nominal)
+    return totalDistance.margin
+  }
+
+  /// What holds the planned runway's maximum takeoff weight down.
+  private static func limitingFactor(of input: PerformanceInput) throws -> LimitingFactor {
+    try #require(analysis(of: input).runwayInfo[input.runway]).limitingFactor
   }
 
   private static func text(of document: PDFDocument) -> String {
@@ -140,6 +169,39 @@ struct `Takeoff Report` {
       text.contains(Self.scenarioBehindAccordion.uppercased()),
       "The report should name every scenario"
     )
+  }
+
+  /// A clearway, a stopway, or a displaced threshold makes the declared distance shorter than the
+  /// pavement it sits on, and the margin has to be measured against what is declared — measuring
+  /// against the pavement overstates it, on the optimistic side.
+  @Test
+  func `measures margin against the declared distance, not the pavement`() throws {
+    let shortfall = Measurement(value: 1200, unit: UnitLength.feet),
+      overPavement = try Self.takeoffMargin(of: Self.performanceInput()),
+      overDeclared = try Self.takeoffMargin(
+        of: Self.performanceInput(takeoffDistance: Self.pavementLength - shortfall)
+      ),
+      lost = (overPavement - overDeclared).converted(to: .feet)
+
+    #expect(
+      abs(lost.value - shortfall.value) < 1,
+      "The declared distance should cost the margin every foot it gives up to the pavement"
+    )
+  }
+
+  /// A clearway lets the distance to 50 feet run past the end of the pavement, but the ground run
+  /// cannot: a weight that lifts off beyond the takeoff run available is field-limited however
+  /// much clearway follows it.
+  @Test
+  func `limits weight by the takeoff run, not only the distance to 50 feet`() throws {
+    let
+      overClearway = try Self.limitingFactor(
+        of: Self.performanceInput(takeoffRun: .init(value: 1000, unit: .feet))
+      ),
+      overPavement = try Self.limitingFactor(of: Self.performanceInput())
+
+    #expect(overClearway == .field, "A takeoff run too short for the ground run is a field limit")
+    #expect(overPavement != .field, "The same runway without a clearway is not field-limited")
   }
 
   /// A shared file should identify the operation it describes rather than be one of many

@@ -113,19 +113,14 @@ table tr.invalid td {
     background-color: var(--color-invalid-bg);
 }
 
-table td.not-available {
-    font-weight: bold;
-    color: var(--color-na-text);
-}
-
-table td.invalid {
-    color: var(--color-invalid-text);
-    font-weight: bold;
-}
-
 span.invalid {
     font-weight: bold;
     color: var(--color-invalid-text);
+}
+
+span.not-available {
+    font-weight: bold;
+    color: var(--color-na-text);
 }
 
 span.margin-positive {

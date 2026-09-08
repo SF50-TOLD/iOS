@@ -15,7 +15,7 @@ import SF50_Shared
 /// The ``determineMaxWeight(runway:)`` method uses binary search to find the highest
 /// weight that satisfies:
 /// 1. AFM performance chart limits
-/// 2. Available runway length
+/// 2. Landing distance available
 /// 3. Go-around climb gradient requirements
 class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerformanceScenario> {
 
@@ -50,16 +50,17 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
       VREFAdditiveKts: input.VREFAdditiveKts
     )
 
+    let available = runway.availableLandingDistance
     let landingRun = report.results.landingRun.map { value, uncertainty in
       (
-        PerformanceDistance(distance: value, availableDistance: runway.length),
-        uncertainty.map { PerformanceDistance(distance: $0, availableDistance: runway.length) }
+        PerformanceDistance(distance: value, availableDistance: available),
+        uncertainty.map { PerformanceDistance(distance: $0, availableDistance: available) }
       )
     }
     let landingDistance = report.results.landingDistance.map { value, uncertainty in
       (
-        PerformanceDistance(distance: value, availableDistance: runway.length),
-        uncertainty.map { PerformanceDistance(distance: $0, availableDistance: runway.length) }
+        PerformanceDistance(distance: value, availableDistance: available),
+        uncertainty.map { PerformanceDistance(distance: $0, availableDistance: available) }
       )
     }
 
@@ -118,11 +119,10 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
       if case .offscaleLow = report.results.landingDistance {
         return (false, .AFM)
       }
-      if case .value(let dist) = report.results.landingDistance {
-        // Check runway length
-        if dist > runway.length {
-          return (false, .field)
-        }
+      if let dist = report.results.landingDistance.nominal,
+        dist > runway.availableLandingDistance
+      {
+        return (false, .field)
       }
 
       // Check go-around climb gradient requirement

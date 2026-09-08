@@ -388,13 +388,17 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
   ///
   /// Shared so the HTML tables and the text summary cannot drift apart on what "offscale"
   /// prints as. Returns `nil` when the value does carry a number.
+  ///
+  /// A value off the top of the chart colours as a warning, the way the performance screens
+  /// colour it; off the bottom is only outside the tables, and reads as absent.
   func unavailableDescription<T>(of value: Value<T>) -> (text: String, cssClass: String)? {
     switch value {
       case .value, .valueWithUncertainty: nil
       case .invalid: (String(localized: "Inv"), "invalid")
       case .notAvailable: (String(localized: "-"), "not-available")
       case .notAuthorized: (String(localized: "N/A"), "invalid")
-      case .offscaleHigh, .offscaleLow: (String(localized: "N/A"), "not-available")
+      case .offscaleHigh: (String(localized: "N/A"), "invalid")
+      case .offscaleLow: (String(localized: "N/A"), "not-available")
     }
   }
 
