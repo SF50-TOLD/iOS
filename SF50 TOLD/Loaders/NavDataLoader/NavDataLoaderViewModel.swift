@@ -1,5 +1,6 @@
 import BackgroundTasks
 import Defaults
+import os
 import Observation
 import SF50_Shared
 import Sentry
@@ -39,6 +40,11 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   private(set) var canSkip = false
   private(set) var networkIsExpensive = false
   private(set) var deferred = false
+
+  private let logger = Logger(
+    subsystem: "codes.tim.SF50-TOLD",
+    category: "NavDataLoaderViewModel"
+  )
 
   private let container: ModelContainer
   private let installer = NavDataStoreInstaller(layout: .appGroup)
@@ -161,7 +167,6 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
 
   private func runLoad() async {
     let generation = installer.reserveGeneration()
-    guard let loader = await makeLoader(generation: generation) else { return }
 
     // Ask the system to let this keep running if the pilot leaves the app. Safe now that an import
     // writes a generation nothing reads: a task the system cancels costs a file, not a database.
@@ -172,11 +177,66 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     backgroundTask?.expirationHandler = { [weak self] in
       MainActor.assumeIsolated { self?.cancelLoad() }
     }
+    defer { backgroundTask?.setTaskCompleted(success: error == nil) }
+
+    // A store built ahead of time turns minutes of assembling the database into a download. It is
+    // an optimization, not a dependency: anything that goes wrong falls back to importing the
+    // property list, which is still published and still works.
+    if await installPrebuiltStore(generation: generation, reportingTo: backgroundTask) { return }
+
+    await importPropertyList(generation: generation, reportingTo: backgroundTask)
+  }
+
+  /// Downloads and installs a store that was built ahead of time.
+  ///
+  /// - Returns: Whether the app is now running on a prebuilt store.
+  private func installPrebuiltStore(
+    generation: Int,
+    reportingTo backgroundTask: BGContinuedProcessingTask?
+  ) async -> Bool {
+    let (updates, continuation) = AsyncStream<NavDataLoader.State>.makeStream(
+      of: NavDataLoader.State.self,
+      bufferingPolicy: .bufferingNewest(1)
+    )
+    backgroundTask?.progress.totalUnitCount = Self.progressUnits
+    let mirror = Task { [weak self] in
+      for await update in updates where !Task.isCancelled {
+        guard let self else { return }
+        state = update
+        report(update, to: backgroundTask)
+      }
+    }
+    defer { mirror.cancel() }
+
+    do {
+      let manifest = try await PrebuiltNavDataStore().download(
+        to: StoreLayout.appGroup.navStoreURL(generation: generation),
+        reportingTo: continuation
+      )
+      continuation.finish()
+      try install(generation: generation)
+      Defaults[.ourAirportsLastUpdated] = manifest.ourAirportsLastUpdated
+      Defaults[.schemaVersion] = latestSchemaVersion
+      state = .finished
+      logger.notice("Installed the prebuilt store for cycle \(manifest.cycle, privacy: .public)")
+      return true
+    } catch {
+      continuation.finish()
+      logger.notice("Importing instead of using a prebuilt store: \(error.localizedDescription)")
+      StoreLayout.removeStore(at: StoreLayout.appGroup.navStoreURL(generation: generation))
+      return false
+    }
+  }
+
+  private func importPropertyList(
+    generation: Int,
+    reportingTo backgroundTask: BGContinuedProcessingTask?
+  ) async {
+    guard let loader = await makeLoader(generation: generation) else { return }
 
     let progressTask = await observeProgress(of: loader, reportingTo: backgroundTask)
     addTask(progressTask)
     await performLoad(with: loader, generation: generation, progressTask: progressTask)
-    backgroundTask?.setTaskCompleted(success: error == nil)
   }
 
   /// Abandons an import the system has asked to stop.
