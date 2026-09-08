@@ -1,0 +1,156 @@
+name: Publish Nav Data Store
+
+# The app used to spend minutes assembling its airport database on the pilot's device, once a cycle,
+# before it could be used at all. This builds that database on a Mac instead and publishes it, so the
+# app downloads one rather than builds one.
+#
+# It transcodes a dataset that has already been published rather than going back to the FAA for it:
+# the store is then a pure function of the property list the app falls back to, and cannot drift from
+# it. Generation stays where it is, on Linux, in the NavDataDistribution repository — SwiftData does
+# not exist there, which is the whole reason this job runs on macOS.
+#
+# Idempotent: a cycle whose manifest is already published is skipped, so running daily costs a couple
+# of HTTP requests until there is something new to do.
+
+on:
+  schedule:
+    # An hour after NavDataDistribution publishes, so the release is there to transcode.
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+    inputs:
+      cycle:
+        description: Cycle to publish (YYYY-MM-DD), or blank for the newest released.
+        required: false
+        type: string
+
+concurrency:
+  group: publish-nav-data-store
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build and publish the store
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Work out which cycle to publish
+        id: cycle
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Never inline, to keep a dispatch input off the shell command line.
+          DISPATCH_CYCLE: ${{ inputs.cycle }}
+          PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -n "$DISPATCH_CYCLE" ]]; then
+            cycle="$DISPATCH_CYCLE"
+          else
+            cycle="$(gh release view --repo SF50-TOLD/NavDataDistribution --json tagName -q .tagName)"
+          fi
+          echo "Newest released cycle: $cycle"
+
+          if curl -sfI "${PUBLIC_URL%/}/navdata/$cycle.json" > /dev/null; then
+            echo "Cycle $cycle is already published; nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "cycle=$cycle" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch the published dataset
+        if: steps.cycle.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYCLE: ${{ steps.cycle.outputs.cycle }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          gh release download "$CYCLE" \
+            --repo SF50-TOLD/NavDataDistribution \
+            --pattern "$CYCLE.plist.lzma" \
+            --dir out
+          # Python's lzma reads the same XZ container the app does, and is always present.
+          python3 -c "
+          import lzma, sys
+          with lzma.open(sys.argv[1]) as f, open(sys.argv[2], 'wb') as o:
+              o.write(f.read())
+          " "out/$CYCLE.plist.lzma" "out/$CYCLE.plist"
+          ls -lh out
+
+      - name: Write R2 credentials
+        if: steps.cycle.outputs.skip == 'false'
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          # The URL is escaped so xcconfig does not read "//" as a comment. The "$()" is meant to
+          # reach the file literally, which is what SC2016 would otherwise object to.
+          # shellcheck disable=SC2016
+          {
+            echo "R2_ACCOUNT_ID = $R2_ACCOUNT_ID"
+            echo "R2_ACCESS_KEY_ID = $R2_ACCESS_KEY_ID"
+            echo "R2_SECRET_ACCESS_KEY = $R2_SECRET_ACCESS_KEY"
+            echo "R2_BUCKET_NAME = $R2_BUCKET_NAME"
+            printf 'R2_PUBLIC_URL = %s\n' "$(printf '%s' "$R2_PUBLIC_URL" | sed 's|://|:/$()/|')"
+            echo "GITHUB_TOKEN = unused"
+          } > DownloadNASR/Credentials.xcconfig
+
+      - name: Enable macros
+        if: steps.cycle.outputs.skip == 'false'
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      - name: Cache SwiftPM dependencies
+        if: steps.cycle.outputs.skip == 'false'
+        uses: actions/cache@v6
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Build DownloadNASR
+        if: steps.cycle.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          # Unsandboxed and unsigned: this run writes to the workspace and needs no entitlement.
+          xcodebuild build \
+            -project "SF50 TOLD.xcodeproj" \
+            -scheme DownloadNASR \
+            -destination platform=macOS \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            ENABLE_APP_SANDBOX=NO \
+            | xcbeautify
+
+      - name: Build and publish the store
+        if: steps.cycle.outputs.skip == 'false'
+        env:
+          CYCLE: ${{ steps.cycle.outputs.cycle }}
+          NASR_HEADLESS: "1"
+          NASR_PUBLISH_STORE: "1"
+        run: |
+          set -euo pipefail
+          app="build/DerivedData/Build/Products/Debug/DownloadNASR.app/Contents/MacOS/DownloadNASR"
+          NASR_BUILD_STORE_FROM="$PWD/out/$CYCLE.plist" NASR_STORE_OUTPUT="$PWD/out" "$app"
+
+      - name: Confirm the cycle is fetchable
+        if: steps.cycle.outputs.skip == 'false'
+        env:
+          CYCLE: ${{ steps.cycle.outputs.cycle }}
+          PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          set -euo pipefail
+          manifest="${PUBLIC_URL%/}/navdata/$CYCLE.json"
+          curl -sf "$manifest" | tee /dev/stderr | python3 -c "
+          import json, sys
+          m = json.load(sys.stdin)
+          assert m['counts']['airports'] > 0, m
+          print('Published', m['cycle'], 'expiring', m['expires'])
+          "
