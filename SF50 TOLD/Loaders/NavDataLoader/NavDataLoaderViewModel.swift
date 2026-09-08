@@ -1,3 +1,4 @@
+import BackgroundTasks
 import Defaults
 import Observation
 import SF50_Shared
@@ -27,6 +28,9 @@ import SwiftData
 @Observable
 @MainActor
 final class NavDataLoaderViewModel: WithIdentifiableError {
+  /// The scale the loader's 0…1 progress is reported to the system on.
+  private static let progressUnits: Int64 = 100
+
   private(set) var state: NavDataLoader.State = .idle
   var error: (any Swift.Error)?
 
@@ -158,9 +162,30 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   private func runLoad() async {
     let generation = installer.reserveGeneration()
     guard let loader = await makeLoader(generation: generation) else { return }
-    let progressTask = await observeProgress(of: loader)
+
+    // Ask the system to let this keep running if the pilot leaves the app. Safe now that an import
+    // writes a generation nothing reads: a task the system cancels costs a file, not a database.
+    let backgroundTask = await NavDataDownloadTask.shared.begin(
+      title: String(localized: "Updating Navigation Data"),
+      subtitle: String(localized: "Downloading")
+    )
+    backgroundTask?.expirationHandler = { [weak self] in
+      MainActor.assumeIsolated { self?.cancelLoad() }
+    }
+
+    let progressTask = await observeProgress(of: loader, reportingTo: backgroundTask)
     addTask(progressTask)
     await performLoad(with: loader, generation: generation, progressTask: progressTask)
+    backgroundTask?.setTaskCompleted(success: error == nil)
+  }
+
+  /// Abandons an import the system has asked to stop.
+  ///
+  /// The generation being written is left where it is; nothing points at it, and the next launch
+  /// reclaims it. The dataset in use was never touched.
+  private func cancelLoad() {
+    for task in cancellables { task.cancel() }
+    state = .idle
   }
 
   private func makeLoader(generation: Int) async -> NavDataLoader? {
@@ -184,8 +209,12 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   /// The loader yields into an `AsyncStream`, so following its progress never
   /// enqueues a job onto the loader's executor — an enqueue would block the main
   /// thread for as long as the import occupies that executor.
-  private func observeProgress(of loader: NavDataLoader) async -> Task<Void, Never> {
+  private func observeProgress(
+    of loader: NavDataLoader,
+    reportingTo backgroundTask: BGContinuedProcessingTask?
+  ) async -> Task<Void, Never> {
     let updates = await loader.stateUpdates()
+    backgroundTask?.progress.totalUnitCount = Self.progressUnits
     return Task { [weak self] in
       for await loaderState in updates where !Task.isCancelled {
         guard let self else { return }
@@ -193,8 +222,30 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
         // The actor hasn't begun loading; don't regress the UI to consent
         if case .idle = loaderState { continue }
         state = loaderState
+        report(loaderState, to: backgroundTask)
       }
     }
+  }
+
+  /// Mirrors the loader's phase and progress onto the system's own display of the work.
+  ///
+  /// A continued-processing task must report progress: one the system reads as stalled is expired
+  /// to reclaim its resources.
+  private func report(_ state: NavDataLoader.State, to backgroundTask: BGContinuedProcessingTask?) {
+    guard let backgroundTask else { return }
+
+    let (subtitle, fraction): (String, Float?) =
+      switch state {
+        case .idle: (String(localized: "Starting"), 0)
+        case .downloading(let progress): (String(localized: "Downloading"), progress)
+        case .extracting: (String(localized: "Decompressing"), nil)
+        case .loading(let progress): (String(localized: "Processing"), progress)
+        case .finished: (String(localized: "Finished"), 1)
+      }
+
+    backgroundTask.updateTitle(String(localized: "Updating Navigation Data"), subtitle: subtitle)
+    guard let fraction else { return }
+    backgroundTask.progress.completedUnitCount = Int64(fraction * Float(Self.progressUnits))
   }
 
   private func performLoad(
