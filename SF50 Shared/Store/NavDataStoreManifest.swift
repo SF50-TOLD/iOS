@@ -43,6 +43,18 @@ public struct NavDataStoreManifest: Codable, Sendable {
   /// Optional because a manifest published before this was carried has none to give.
   public let ourAirportsLastUpdated: Date?
 
+  /// Whether this cycle's data is in force right now.
+  public var isEffective: Bool { isEffective(at: .now) }
+
+  /// Whether the store this manifest describes has the shape this build reads.
+  ///
+  /// Worth asking before the store is downloaded, let alone opened: SwiftData answers a near-miss
+  /// by migrating the store rather than by refusing it, so a client that opened first would get a
+  /// silent, slow migration where it wanted a clean fall back to building the dataset itself.
+  public var matchesSchema: Bool {
+    schemaFingerprint == NavDataSchema.fingerprint && schemaVersion == latestSchemaVersion
+  }
+
   /// Creates a manifest.
   ///
   /// - Parameters:
@@ -72,6 +84,22 @@ public struct NavDataStoreManifest: Codable, Sendable {
     self.store = store
     self.counts = counts
     self.ourAirportsLastUpdated = ourAirportsLastUpdated
+  }
+
+  /// Whether this cycle's data is in force at a given moment.
+  ///
+  /// The window is half-open. A cycle takes effect at the instant its manifest names and stops
+  /// being in force at the instant it expires, which is the same instant its successor takes
+  /// effect, so exactly one cycle is in force at any moment.
+  ///
+  /// Judging a cycle on the window it publishes, rather than on the client's own reckoning of
+  /// which cycle is current, is what lets a client accept a cycle that is still in force but is
+  /// not the one today's calendar names — and refuse one that has already lapsed.
+  ///
+  /// - Parameter date: The moment to judge the cycle at.
+  /// - Returns: Whether the cycle's data is in force.
+  public func isEffective(at date: Date) -> Bool {
+    effective <= date && date < expires
   }
 
   /// A published file.

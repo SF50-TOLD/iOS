@@ -15,7 +15,9 @@ changed in the cockpit rather than what changed in the code.
 
 ## 3.8
 
-Terrain data now downloads through iOS itself rather than through the app.
+Terrain data now downloads through iOS itself rather than through the app, and
+the airport database arrives ready-built instead of being assembled on the
+aircraft.
 
 ### Terrain
 
@@ -24,6 +26,17 @@ Terrain data now downloads through iOS itself rather than through the app.
 - If iOS reclaims downloaded terrain for storage, Terrain settings marks those
   regions "Removed for space" with a Download button.
 - Regions you have already downloaded are kept.
+
+### Navigation Data
+
+- The airport database now arrives ready-built. The app used to spend several
+  minutes assembling it on the aircraft before it could be used at all. It now
+  downloads a database built ahead of time, and builds one itself only where no
+  published database suits this version of the app.
+- A published database is used only while the cycle it was built for is in
+  force. One whose cycle has lapsed is passed over and the current cycle's data
+  imported instead, rather than installing data already out of date and asking
+  to download it again at every launch.
 
 ### Elsewhere
 

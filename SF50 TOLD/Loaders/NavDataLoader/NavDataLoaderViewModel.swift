@@ -1,5 +1,6 @@
 import BackgroundTasks
 import Defaults
+import os
 import Observation
 import SF50_Shared
 import Sentry
@@ -40,9 +41,22 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   private(set) var networkIsExpensive = false
   private(set) var deferred = false
 
+  private let logger = Logger(
+    subsystem: "codes.tim.SF50-TOLD",
+    category: "NavDataLoaderViewModel"
+  )
+
   private let container: ModelContainer
   private let installer = NavDataStoreInstaller(layout: .appGroup)
-  private var cancellables: Set<Task<Void, Never>> = []
+
+  /// The observers that keep the loader's state true for as long as this view model exists.
+  ///
+  /// Kept apart from the tasks doing a load, because abandoning a load must not also tear down the
+  /// observers that decide when the loader is needed again.
+  private var observations: Set<Task<Void, Never>> = []
+
+  /// The tasks belonging to the load in progress, cancelled together when one is abandoned.
+  private var loadTasks: Set<Task<Void, Never>> = []
 
   var showLoader: Bool {
     (noData || needsLoad) && !deferred
@@ -97,8 +111,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   private func setupObservation() {
-    addTask(schemaVersionObservationTask())
-    addTask(statePollingTask())
+    observations.insert(schemaVersionObservationTask())
+    observations.insert(statePollingTask())
   }
 
   private func schemaVersionObservationTask() -> Task<Void, Never> {
@@ -142,8 +156,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     }
   }
 
-  private func addTask(_ task: Task<Void, Never>) {
-    cancellables.insert(task)
+  private func addLoadTask(_ task: Task<Void, Never>) {
+    loadTasks.insert(task)
   }
 
   func load() {
@@ -152,7 +166,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     // Block re-entry and switch to the progress UI before the actor reports
     state = .downloading(progress: nil)
 
-    addTask(Task { await runLoad() })
+    addLoadTask(Task { await runLoad() })
   }
 
   func loadLater() {
@@ -160,8 +174,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   private func runLoad() async {
+    error = nil
     let generation = installer.reserveGeneration()
-    guard let loader = await makeLoader(generation: generation) else { return }
 
     // Ask the system to let this keep running if the pilot leaves the app. Safe now that an import
     // writes a generation nothing reads: a task the system cancels costs a file, not a database.
@@ -172,20 +186,107 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     backgroundTask?.expirationHandler = { [weak self] in
       MainActor.assumeIsolated { self?.cancelLoad() }
     }
+    // A load the system stopped finished nothing, whether or not it left an error behind: the
+    // dataset in use is the one the pilot already had.
+    defer { backgroundTask?.setTaskCompleted(success: error == nil && !Task.isCancelled) }
+
+    // A store built ahead of time turns minutes of assembling the database into a download. It is
+    // an optimization, not a dependency: anything that goes wrong falls back to importing the
+    // property list, which is still published and still works.
+    if await installPrebuiltStore(generation: generation, reportingTo: backgroundTask) { return }
+
+    // The prebuilt path reports a cancellation the same way it reports a cycle that was never
+    // published, so ask directly. Starting the import here would raise an error alert at a pilot
+    // who did nothing but leave the app.
+    guard !Task.isCancelled else { return }
+
+    await importPropertyList(generation: generation, reportingTo: backgroundTask)
+  }
+
+  /// Downloads and installs a store that was built ahead of time.
+  ///
+  /// - Returns: Whether the app is now running on a prebuilt store.
+  private func installPrebuiltStore(
+    generation: Int,
+    reportingTo backgroundTask: BGContinuedProcessingTask?
+  ) async -> Bool {
+    let (updates, continuation) = AsyncStream<NavDataLoader.State>.makeStream(
+      of: NavDataLoader.State.self,
+      bufferingPolicy: .bufferingNewest(1)
+    )
+    backgroundTask?.progress.totalUnitCount = Self.progressUnits
+    let mirror = Task { [weak self] in
+      for await update in updates where !Task.isCancelled {
+        guard let self else { return }
+        state = update
+        report(update, to: backgroundTask)
+      }
+    }
+    addLoadTask(mirror)
+    defer { mirror.cancel() }
+
+    do {
+      let manifest = try await PrebuiltNavDataStore().download(
+        to: StoreLayout.appGroup.navStoreURL(generation: generation),
+        reportingTo: continuation
+      )
+      continuation.finish()
+      try install(generation: generation)
+      Defaults[.ourAirportsLastUpdated] = manifest.ourAirportsLastUpdated
+      Defaults[.schemaVersion] = latestSchemaVersion
+      finish(reportingTo: backgroundTask)
+      logger.notice("Installed the prebuilt store for cycle \(manifest.cycle, privacy: .public)")
+      return true
+    } catch {
+      continuation.finish()
+      // `localizedDescription` renders only a `LocalizedError`'s category, which is the same
+      // sentence for every reason a prebuilt store was passed over; the specifics are its reason.
+      let cause = [error.localizedDescription, (error as? any LocalizedError)?.failureReason]
+        .compactMap(\.self)
+        .joined(separator: " ")
+      // What happens next is the caller's to decide: a cancelled load imports nothing.
+      logger.notice("Passed over the prebuilt store: \(cause, privacy: .public)")
+      StoreLayout.removeStore(at: StoreLayout.appGroup.navStoreURL(generation: generation))
+      return false
+    }
+  }
+
+  private func importPropertyList(
+    generation: Int,
+    reportingTo backgroundTask: BGContinuedProcessingTask?
+  ) async {
+    guard let loader = await makeLoader(generation: generation) else { return }
 
     let progressTask = await observeProgress(of: loader, reportingTo: backgroundTask)
-    addTask(progressTask)
-    await performLoad(with: loader, generation: generation, progressTask: progressTask)
-    backgroundTask?.setTaskCompleted(success: error == nil)
+    addLoadTask(progressTask)
+    await performLoad(
+      with: loader,
+      generation: generation,
+      progressTask: progressTask,
+      reportingTo: backgroundTask
+    )
   }
 
   /// Abandons an import the system has asked to stop.
   ///
   /// The generation being written is left where it is; nothing points at it, and the next launch
   /// reclaims it. The dataset in use was never touched.
+  ///
+  /// Only the load's own tasks stop. The observers that decide when the loader is needed keep
+  /// running, so the next launch — or the next schema change — still finds its way back here.
   private func cancelLoad() {
-    for task in cancellables { task.cancel() }
+    for task in loadTasks { task.cancel() }
+    loadTasks.removeAll()
     state = .idle
+  }
+
+  /// Records a completed load, and tells the system's own display of the work that it is done.
+  ///
+  /// The system reads the title, subtitle, and progress it was last given until the moment the task
+  /// completes, so a load that never reports its last phase is shown mid-download as it finishes.
+  private func finish(reportingTo backgroundTask: BGContinuedProcessingTask?) {
+    state = .finished
+    report(.finished, to: backgroundTask)
   }
 
   private func makeLoader(generation: Int) async -> NavDataLoader? {
@@ -238,7 +339,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       switch state {
         case .idle: (String(localized: "Starting"), 0)
         case .downloading(let progress): (String(localized: "Downloading"), progress)
-        case .extracting: (String(localized: "Decompressing"), nil)
+        case .extracting(let progress): (String(localized: "Decompressing"), progress)
         case .loading(let progress): (String(localized: "Processing"), progress)
         case .finished: (String(localized: "Finished"), 1)
       }
@@ -251,7 +352,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   private func performLoad(
     with loader: NavDataLoader,
     generation: Int,
-    progressTask: Task<Void, Never>
+    progressTask: Task<Void, Never>,
+    reportingTo backgroundTask: BGContinuedProcessingTask?
   ) async {
     let transaction = SentrySDK.startTransaction(
       name: "Nav Data Load",
@@ -259,26 +361,32 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     )
     defer { progressTask.cancel() }
     do {
-      error = nil
       Defaults[.ourAirportsLastUpdated] = nil
       let result = try await loader.load()
       try install(generation: generation)
-      state = .finished
+      finish(reportingTo: backgroundTask)
 
       Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
       Defaults[.schemaVersion] = latestSchemaVersion
       transaction.finish()
     } catch {
+      // Return to the consent screen so the user can retry the download
+      progressTask.cancel()
+      state = .idle
+
+      // A cancelled transfer fails the same way a broken one does. Neither the pilot nor Sentry
+      // needs to hear about work the system stopped because the app went to the background.
+      guard !Task.isCancelled else {
+        transaction.finish(status: .cancelled)
+        return
+      }
+
       transaction.finish(status: .internalError)
       SentrySDK.capture(error: error) { scope in
         scope.setTag(value: "load", key: "navData.operation")
         scope.setFingerprint(["navData", "load"])
       }
       self.error = error
-
-      // Return to the consent screen so the user can retry the download
-      progressTask.cancel()
-      state = .idle
     }
   }
 
@@ -315,6 +423,11 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       scope.setFingerprint(["navData", fingerprint])
     }
     self.error = error
+  }
+
+  isolated deinit {
+    for task in observations { task.cancel() }
+    for task in loadTasks { task.cancel() }
   }
 }
 
