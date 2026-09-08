@@ -97,22 +97,9 @@ import SwiftNASR
 ///
 /// - ``NavDataLoaderViewModel``
 /// - ``State``
-@ModelActor
 actor NavDataLoader {
   private static let dataURLTemplate =
     "https://github.com/SF50-TOLD/NavDataDistribution/releases/download/%1$@/%1$@.plist.lzma"
-
-  /// Maximum number of rows written per save.
-  ///
-  /// Each save holds the store's write lock for its full commit, so the import
-  /// is split into bounded transactions rather than one that spans the whole
-  /// dataset. The bound is generous because the importer writes through its
-  /// own persistent store coordinator against a WAL-journaled store, where
-  /// readers — the main context and the widget process — are never blocked by
-  /// a write in flight; the only cost a long transaction imposes is on this
-  /// actor's own executor, which a smaller bound would trade for many more
-  /// commits.
-  private static let saveBatchRowLimit = 10000
 
   /// Smallest change in download progress worth pushing to consumers.
   ///
@@ -134,11 +121,19 @@ actor NavDataLoader {
     category: "NavDataLoader"
   )
 
-  private var navaidLookup: [String: SF50_Shared.Navaid] = [:]
+  private let writer: NavDataStoreWriter
   private var stateContinuation: AsyncStream<State>.Continuation?
 
   private var dataURL: URL {
     URL(string: String(format: Self.dataURLTemplate, "\(Cycle.effective)"))!
+  }
+
+  /// Creates a loader writing into `modelContainer`.
+  ///
+  /// - Parameter modelContainer: A container whose nav-data store accepts writes, holding the
+  ///   generation this import is producing.
+  init(modelContainer: ModelContainer) {
+    writer = .init(modelContainer: modelContainer)
   }
 
   /// Inflates the LZMA payload and decodes it, off this actor's executor.
@@ -214,29 +209,8 @@ actor NavDataLoader {
     state = .extracting(progress: nil)
     let nasr = try await timing("decode") { try await Self.decompress(fileAt: payload) }
 
-    // Load navaids first so they're available for leg relationships
-    try await timing("navaids") { try await loadNavaids(nasr.navaids ?? []) }
-
-    // Combined progress tracking across both loading phases
     state = .loading(progress: 0)
-    let totalItems = nasr.airports.count + nasr.obstacles.count
-
-    try await timing("airports") {
-      try await loadAirports(nasr.airports) { airportsProcessed in
-        self.state = .loading(progress: Float(airportsProcessed) / Float(totalItems))
-      }
-    }
-
-    let airportCount = nasr.airports.count
-    try await timing("obstacles") {
-      try await loadObstacles(nasr.obstacles) { obstaclesProcessed in
-        self.state = .loading(
-          progress: Float(airportCount + obstaclesProcessed) / Float(totalItems)
-        )
-      }
-    }
-
-    try writeCycles(nasr.cycles)
+    try await timing("write") { try await write(nasr) }
 
     state = .finished
     return LoadResult(
@@ -272,32 +246,26 @@ actor NavDataLoader {
     return result
   }
 
-  private func writeCycles(_ cycles: AirportDataCodable.DataCycles) throws {
-    insertCycle(cycles.nasr, source: .nasr)
-    insertCycle(cycles.cifp, source: .cifp)
-    insertCycle(cycles.dof, source: .dof)
-    try modelContext.save()
-  }
-
-  private func insertCycle(
-    _ info: AirportDataCodable.CycleInfo?,
-    source: CycleDataSource
-  ) {
-    guard let info else { return }
-    modelContext.insert(
-      Cycle(
-        dataSource: source,
-        name: info.name,
-        effective: info.effective,
-        expires: info.expires
-      )
-    )
-  }
-
   private func reportDownloadProgress(_ progress: Float) {
     guard case .downloading(let reported) = state else { return }
     if let reported, abs(progress - reported) < Self.progressReportingStep { return }
     state = .downloading(progress: progress)
+  }
+
+  /// Writes the decoded dataset, mirroring the writer's progress onto this actor's state.
+  ///
+  /// The write runs as a child task so this actor stays free to drain its progress; the stream
+  /// closes when the write settles, ending the loop.
+  private func write(_ data: AirportDataCodable) async throws {
+    let (progressUpdates, continuation) = AsyncStream<Float>.makeStream(
+      of: Float.self,
+      bufferingPolicy: .bufferingNewest(1)
+    )
+
+    async let written: Void = writer.write(data, reportingTo: continuation)
+    for await completed in progressUpdates { state = .loading(progress: completed) }
+
+    try await written
   }
 
   /// Downloads the payload, forwarding the transfer's progress to `progress`.
@@ -314,207 +282,6 @@ actor NavDataLoader {
     for await completed in progressUpdates { progress(completed) }
 
     return try await downloaded
-  }
-
-  private func loadAirports(
-    _ airports: [AirportDataCodable.AirportCodable],
-    progress: (Int) -> Void
-  ) async throws {
-    var processed = 0,
-      rowsSinceLastSave = 0
-
-    // An airport carries nested runway/procedure/segment/leg inserts, so
-    // batches are bounded by total inserted rows rather than airport count.
-    for airport in airports {
-      rowsSinceLastSave += addAirport(airport)
-      processed += 1
-
-      if rowsSinceLastSave >= Self.saveBatchRowLimit {
-        try modelContext.save()
-        rowsSinceLastSave = 0
-        progress(processed)
-        await Task.yield()
-      }
-    }
-
-    if modelContext.hasChanges {
-      try modelContext.save()
-      progress(processed)
-    }
-  }
-
-  private func loadObstacles(
-    _ obstacles: [AirportDataCodable.ObstacleCodable],
-    progress: (Int) -> Void
-  ) async throws {
-    var processed = 0
-
-    for batch in obstacles.chunks(ofCount: Self.saveBatchRowLimit) {
-      for obstacleData in batch {
-        let obstacle = Obstacle(
-          heightMSL: .init(value: Double(obstacleData.heightFtMSL), unit: .feet),
-          latitude: .init(value: obstacleData.latitude, unit: .degrees),
-          longitude: .init(value: obstacleData.longitude, unit: .degrees)
-        )
-        modelContext.insert(obstacle)
-      }
-
-      try modelContext.save()
-
-      processed += batch.count
-      progress(processed)
-      await Task.yield()
-    }
-  }
-
-  private func lookupNavaid(_ legData: AirportDataCodable.LegCodable) -> SF50_Shared.Navaid? {
-    guard let id = legData.recommendedNavaidIdentifier,
-      let icao = legData.recommendedNavaidICAO
-    else { return nil }
-    return navaidLookup["\(id):\(icao)"]
-  }
-
-  private func loadNavaids(_ navaids: [NavaidCodable]) async throws {
-    navaidLookup.removeAll()
-    for batch in navaids.chunks(ofCount: Self.saveBatchRowLimit) {
-      for navaidData in batch {
-        let navaid = SF50_Shared.Navaid(
-          identifier: navaidData.identifier,
-          icaoRegion: navaidData.icaoRegion,
-          type: navaidData.type,
-          latitude: .init(value: navaidData.latitude, unit: .degrees),
-          longitude: .init(value: navaidData.longitude, unit: .degrees),
-          elevation: navaidData.elevationFt.map { .init(value: $0, unit: .feet) }
-        )
-        modelContext.insert(navaid)
-        navaidLookup["\(navaidData.identifier):\(navaidData.icaoRegion)"] = navaid
-      }
-      try modelContext.save()
-      await Task.yield()
-    }
-  }
-
-  /// Inserts an airport and its runways, procedures, segments, and legs.
-  ///
-  /// - Returns: The number of rows inserted, so callers can bound save batches
-  ///   by row count.
-  private func addAirport(_ airport: AirportDataCodable.AirportCodable) -> Int {
-    let dataSource = DataSource(rawValue: airport.dataSource) ?? .NASR
-    let timeZone = airport.timeZone.flatMap { TimeZone(identifier: $0) }
-
-    let record = Airport(
-      recordID: airport.recordID,
-      locationID: airport.locationID,
-      ICAO_ID: airport.ICAO_ID,
-      name: airport.name,
-      city: airport.city,
-      dataSource: dataSource,
-      latitude: .init(value: airport.latitude, unit: .degrees),
-      longitude: .init(value: airport.longitude, unit: .degrees),
-      elevation: .init(value: airport.elevation, unit: .meters),
-      variation: .init(value: airport.variation, unit: .degrees),
-      timeZone: timeZone
-    )
-
-    // Create a map to find reciprocal runways
-    var runwayMap = [String: SF50_Shared.Runway]()
-
-    for runwayData in airport.runways {
-      // Create threshold coordinate if both lat/lon are available
-      var thresholdCoordinate: CLLocationCoordinate2D?
-      if let lat = runwayData.thresholdLatitude,
-        let lon = runwayData.thresholdLongitude
-      {
-        thresholdCoordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-      }
-
-      let runway = SF50_Shared.Runway(
-        name: runwayData.name,
-        elevation: runwayData.elevation.map { .init(value: $0, unit: .meters) },
-        trueHeading: .init(value: runwayData.trueHeading, unit: .degrees),
-        gradient: runwayData.gradient,
-        length: .init(value: runwayData.length, unit: .meters),
-        width: runwayData.width.map { .init(value: $0, unit: .meters) },
-        takeoffRun: runwayData.takeoffRun.map { .init(value: $0, unit: .meters) },
-        takeoffDistance: runwayData.takeoffDistance.map { .init(value: $0, unit: .meters) },
-        landingDistance: runwayData.landingDistance.map { .init(value: $0, unit: .meters) },
-        surfaceType: runwayData.decodedSurfaceType,
-        thresholdCoordinate: thresholdCoordinate,
-        thresholdCrossingHeight: runwayData.thresholdCrossingHeight.map {
-          .init(value: $0, unit: .meters)
-        },
-        glidepathAngle: runwayData.glidepathAngle.map { .init(value: $0, unit: .degrees) },
-        displacedThresholdDistance: runwayData.displacedThresholdDistance.map {
-          .init(value: $0, unit: .meters)
-        },
-        airport: record
-      )
-      runwayMap[runwayData.name] = runway
-    }
-
-    // Only insert the airport and runways if we have runways
-    guard !runwayMap.isEmpty else { return 0 }
-
-    var insertedRows = 1 + runwayMap.count
-
-    modelContext.insert(record)
-    for runway in runwayMap.values {
-      modelContext.insert(runway)
-    }
-
-    // Set reciprocal runway names
-    for runwayData in airport.runways {
-      if let runway = runwayMap[runwayData.name] {
-        runway.reciprocalName = runwayData.reciprocalName
-      }
-    }
-
-    // Load procedures (departures and approaches)
-    for procedureData in airport.procedures ?? [] {
-      let procedureType = Procedure.ProcedureType(rawValue: procedureData.type) ?? .departure
-      let procedure = Procedure(
-        type: procedureType,
-        identifier: procedureData.identifier,
-        name: procedureData.name,
-        runwayName: procedureData.runwayName,
-        requiredClimbGradientFtPerNM: procedureData.requiredClimbGradientFtPerNM,
-        airport: record
-      )
-      modelContext.insert(procedure)
-      insertedRows += 1
-
-      for segmentData in procedureData.segments ?? [] {
-        let segment = ProcedureSegment(
-          runwayNames: segmentData.runwayNames ?? [],
-          procedure: procedure
-        )
-        modelContext.insert(segment)
-        insertedRows += 1
-
-        for (index, legData) in segmentData.legs.enumerated() {
-          let altitudeRestriction = legData.altitudeRestriction.map {
-            AltitudeRestriction(from: $0)
-          }
-          let navaid = lookupNavaid(legData)
-          let leg = Leg(
-            identifier: legData.identifier,
-            latitude: legData.latitude.map { .init(value: $0, unit: .degrees) },
-            longitude: legData.longitude.map { .init(value: $0, unit: .degrees) },
-            altitudeRestriction: altitudeRestriction,
-            legType: legData.legType,
-            sequenceIndex: index,
-            segment: segment,
-            navaid: navaid,
-            dmeDistance: legData.dmeDistanceNM.map { .init(value: $0, unit: .nauticalMiles) },
-            theta: legData.thetaDeg.map { .init(value: $0, unit: .degrees) }
-          )
-          modelContext.insert(leg)
-          insertedRows += 1
-        }
-      }
-    }
-
-    return insertedRows
   }
 
   /// Current state of the loading process.

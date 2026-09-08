@@ -13,6 +13,7 @@
 		0128374E2E5B8BB8002195A0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128374D2E5B8BB8002195A0 /* SwiftUI.framework */; };
 		0128375F2E5B8BB9002195A0 /* SF50 RunwaysExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0128374A2E5B8BB8002195A0 /* SF50 RunwaysExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
+		94CC1E014886B23174174CD9 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 02BD3D6AFE77DA2CAC646D3B /* Algorithms */; };
 		012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E512DE2F272000D9ADC /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0163BC742DDEE9D4008FEE8F /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
@@ -307,6 +308,7 @@
 		012B1E382DE2F272000D9ADC /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				94CC1E014886B23174174CD9 /* Algorithms in Frameworks */,
 				01AC00212FE0000000000021 /* MeasurementKitLocation in Frameworks */,
 				01AC00202FE0000000000020 /* MeasurementKit in Frameworks */,
 				018ED7A62F345C2000D084B4 /* SwiftMETAR in Frameworks */,
@@ -504,6 +506,7 @@
 				01A1014E2E93C12E0032AB29 /* Gzip */,
 				018ED7A52F345C2000D084B4 /* SwiftMETAR */,
 				EEB6B6DD4229EEB6363A2AA1 /* NavData */,
+				02BD3D6AFE77DA2CAC646D3B /* Algorithms */,
 			);
 			productName = "SF50 Shared";
 			productReference = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */;
@@ -1947,6 +1950,11 @@
 			productName = SwiftTimeZoneLookup;
 		};
 		01714C7F2F234A7E003DADCF /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
+		};
+		02BD3D6AFE77DA2CAC646D3B /* Algorithms */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */;
 			productName = Algorithms;
