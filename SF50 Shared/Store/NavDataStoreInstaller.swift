@@ -69,18 +69,24 @@ public struct NavDataStoreInstaller: Sendable {
     case storeIsEmpty
 
     public var errorDescription: String? {
-      String(localized: "Couldn’t use the navigation data that was downloaded.")
+      String(
+        localized: "Couldn’t use the navigation data that was downloaded.",
+        bundle: .sharedFramework
+      )
     }
 
     public var failureReason: String? {
       switch self {
         case .storeIsEmpty:
-          String(localized: "The downloaded database contained no airports.")
+          String(
+            localized: "The downloaded database contained no airports.",
+            bundle: .sharedFramework
+          )
       }
     }
 
     public var recoverySuggestion: String? {
-      String(localized: "Try downloading the navigation data again.")
+      String(localized: "Try downloading the navigation data again.", bundle: .sharedFramework)
     }
   }
 }

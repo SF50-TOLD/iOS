@@ -72,8 +72,8 @@ public struct WindsAloftForecast: Sendable, Hashable {
     /// an airport, and naming it would say less than the publisher does.
     public var attributedDescription: AttributedString {
       switch self {
-        case .station: .init(String(localized: "FAA"))
-        case .interpolated: .init(String(localized: "FAA (Interpolated)"))
+        case .station: .init(String(localized: "FAA", bundle: .sharedFramework))
+        case .interpolated: .init(String(localized: "FAA (Interpolated)", bundle: .sharedFramework))
         case .openMeteo: WeatherProviders.openMeteoCredit
       }
     }

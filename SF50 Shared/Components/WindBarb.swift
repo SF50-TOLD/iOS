@@ -59,12 +59,13 @@ public struct WindBarb: View {
   private var accessibilityLabel: String {
     let speed = component.magnitude
     if Feathers(componentKts: componentKts).isCalm {
-      return String(localized: "Wind along course under 5 knots")
+      return String(localized: "Wind along course under 5 knots", bundle: .sharedFramework)
     }
     return componentKts < 0
-      ? String(localized: "Headwind \(speed, format: .speed)")
+      ? String(localized: "Headwind \(speed, format: .speed)", bundle: .sharedFramework)
       : String(
-        localized: "Tailwind \(speed, format: .speed)"
+        localized: "Tailwind \(speed, format: .speed)",
+        bundle: .sharedFramework
       )
   }
 

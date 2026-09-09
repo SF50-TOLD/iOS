@@ -509,13 +509,16 @@ class DataTable {
     case badEncoding
 
     var errorDescription: String? {
-      String(localized: "Data table couldn’t be loaded.")
+      String(localized: "Data table couldn’t be loaded.", bundle: .sharedFramework)
     }
 
     var failureReason: String? {
       switch self {
         case .badEncoding:
-          String(localized: "The file data could not be decoded as UTF-8.")
+          String(
+            localized: "The file data could not be decoded as UTF-8.",
+            bundle: .sharedFramework
+          )
       }
     }
   }
