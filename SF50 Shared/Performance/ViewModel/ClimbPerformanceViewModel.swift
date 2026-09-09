@@ -118,7 +118,8 @@ public final class ClimbPerformanceViewModel {
     // Observe takeoff fuel changes (one-way binding)
     cancellables.insert(
       Task {
-        for await newFuel in Defaults.updates(.takeoffFuel) where !Task.isCancelled {
+        for await newFuel in Defaults.updates(.takeoffFuel) {
+          if Task.isCancelled { break }
           fuel = newFuel
           // recalculate() will be called by fuel's didSet
         }
@@ -132,7 +133,8 @@ public final class ClimbPerformanceViewModel {
           .emptyWeight,
           .payload,
           .fuelDensity
-        ) where !Task.isCancelled {
+        ) {
+          if Task.isCancelled { break }
           recalculate()
         }
       }
@@ -141,8 +143,8 @@ public final class ClimbPerformanceViewModel {
     // Observe model type changes
     cancellables.insert(
       Task {
-        for await _ in Defaults.updates(.updatedThrustSchedule, .useRegressionModel)
-        where !Task.isCancelled {
+        for await _ in Defaults.updates(.updatedThrustSchedule, .useRegressionModel) {
+          if Task.isCancelled { break }
           recalculate()
         }
       }

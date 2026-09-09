@@ -109,8 +109,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
 
   private func schemaVersionObservationTask() -> Task<Void, Never> {
     Task { [weak self] in
-      for await _ in Defaults.updates(.schemaVersion)
-      where !Task.isCancelled {
+      for await _ in Defaults.updates(.schemaVersion) {
+        if Task.isCancelled { break }
         guard let self else { return }
         await refreshState(fingerprint: "recalculate")
       }
@@ -200,7 +200,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     )
     backgroundTask?.progress.totalUnitCount = Self.progressUnits
     let mirror = Task { [weak self] in
-      for await update in updates where !Task.isCancelled {
+      for await update in updates {
+        if Task.isCancelled { break }
         guard let self else { return }
         state = update
         report(update, to: backgroundTask)
@@ -276,7 +277,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     let updates = await loader.stateUpdates()
     backgroundTask?.progress.totalUnitCount = Self.progressUnits
     return Task { [weak self] in
-      for await loaderState in updates where !Task.isCancelled {
+      for await loaderState in updates {
+        if Task.isCancelled { break }
         guard let self else { return }
 
         // The actor hasn't begun loading; don't regress the UI to consent

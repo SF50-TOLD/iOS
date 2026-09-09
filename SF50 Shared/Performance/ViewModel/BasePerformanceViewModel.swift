@@ -167,8 +167,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     let runwayKey = runwayDefaultsKey
     addTask(
       Task { [weak self] in
-        for await (airportID, runwayID) in Defaults.updates(airportKey, runwayKey)
-        where !Task.isCancelled {
+        for await (airportID, runwayID) in Defaults.updates(airportKey, runwayKey) {
+          if Task.isCancelled { break }
           guard let self else { return }
           do {
             let ids = try await fetchSelectionIDs(airportID: airportID, runwayID: runwayID)
@@ -189,7 +189,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
           .fuelDensity,
           .payload,
           fuelKey
-        ) where !Task.isCancelled {
+        ) {
+          if Task.isCancelled { break }
           guard let self else { return }
           weight = emptyWeight + payload + fuel * fuelDensity
         }
@@ -199,10 +200,12 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     // Observe aircraft type and model type changes
     addTask(
       Task { [weak self] in
-        for await _
-          in Defaults
-          .updates(.aircraftTypeSetting, .updatedThrustSchedule, .useRegressionModel)
-        where !Task.isCancelled {
+        for await _ in Defaults.updates(
+          .aircraftTypeSetting,
+          .updatedThrustSchedule,
+          .useRegressionModel
+        ) {
+          if Task.isCancelled { break }
           guard let self else { return }
           model = initializeModel()
           recalculate()
@@ -213,8 +216,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     // Observe safety factor changes
     addTask(
       Task { [weak self] in
-        for await _ in Defaults.updates(.safetyFactorDry, .safetyFactorWet, .VREFAdditive)
-        where !Task.isCancelled {
+        for await _ in Defaults.updates(.safetyFactorDry, .safetyFactorWet, .VREFAdditive) {
+          if Task.isCancelled { break }
           guard let self else { return }
           recalculate()
         }
@@ -278,7 +281,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   ///
   /// The loop re-acquires `self` weakly on each element, so it holds no strong
   /// reference across the sequence's suspension points and the view model stays
-  /// deallocatable; deallocation cancels the task through `deinit`.
+  /// deallocatable; deallocation cancels the task through `deinit`, and the loop
+  /// breaks out on cancellation rather than draining the remaining elements.
   private func setupRunwayNOTAMObservation() {
     notamObservationTask?.cancel()
     guard runway != nil else {
@@ -291,7 +295,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
         return notam.map { NOTAMInput(from: $0) }
       }
       var isFirstEmission = true
-      for await _ in changes where !Task.isCancelled {
+      for await _ in changes {
+        if Task.isCancelled { break }
         guard let self else { return }
         guard !isFirstEmission else {
           isFirstEmission = false
