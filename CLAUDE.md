@@ -55,6 +55,21 @@ type_contents_order:
 - When working with dimensional values, use Measurement for front-end display and manipulation. For low-level calculations, primitives are OK.
 - Suffix any dimensional primitives or functions with the abbreviated units (e.g., `timeMin` or `distanceNM`).
 
+## Performance Data
+
+The two performance models answer to different standards, and code that serves both must not
+average them into one behaviour.
+
+- **Tabular** must adhere to the AFM tables. It interpolates between tabulated points and nothing
+  more: where the tables give no value, it reports N/A rather than inventing one. Clamping an input
+  to the nearest tabulated point is inventing a value — it presents an answer the AFM never gave.
+- **Regression** may extrapolate and interpolate wherever that is sensible, since that is what the
+  fitted equations are for. Where extrapolation becomes nonsensical it must clamp or report N/A,
+  whichever suits the context.
+
+A figure the model cannot stand behind is reported as N/A. Silently substituting the nearest
+answer it does have is the one thing neither model may do.
+
 ## SwiftUI Views
 
 - This app uses icons sparingly. Do not use icons for every label; only when it enhances readability or as a shorthand for a text label. Icons or images without labels should have their accessibility label set.
