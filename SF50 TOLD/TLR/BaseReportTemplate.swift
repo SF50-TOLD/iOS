@@ -351,7 +351,7 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     guard let contamination else {
       return String(localized: "Dry", comment: "A runway condition: no contamination.")
     }
-    return String(localized: contamination.localizedDescription)
+    return String(localized: contamination.localizedTitle)
   }
 
   func format(performanceDistance value: Value<PerformanceDistance>?) -> [Tag] {
