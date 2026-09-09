@@ -76,6 +76,13 @@ extension FormatStyle where Self == Measurement<UnitLength>.FormatStyle {
     .measurement(width: .narrow, usage: .asProvided, numberFormatStyle: .depth)
   }
 
+  /// The depth format for a screen reader, which spells the unit out — “0.5 inches” — where the
+  /// written form gives it as a prime. Voices disagree about that mark: some expand it, and the
+  /// system default drops it, leaving a depth with nothing to say what it measures.
+  public static var spokenDepth: Self {
+    .measurement(width: .wide, usage: .asProvided, numberFormatStyle: .depth)
+  }
+
   public static func length(plusSign: Bool = false) -> Self {
     plusSign
       ? .measurement(

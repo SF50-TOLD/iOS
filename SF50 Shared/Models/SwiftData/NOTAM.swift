@@ -187,6 +187,66 @@ public enum Contamination: Sendable, Hashable {
   /// Runway Condition Code (AC 91-79B) with landing distance factor
   case rwyCC(UInt8)
 
+  /// How the condition reads wherever the app names it, so a runway row and a TLR report say the
+  /// same thing about the same runway.
+  ///
+  /// Depth is given in inches, the unit the AFM contaminated-runway tables are written in.
+  public var localizedDescription: LocalizedStringResource {
+    switch self {
+      case .waterOrSlush(let depth):
+        LocalizedStringResource(
+          "Water/Slush \(depth.converted(to: .inches), format: .depth)",
+          comment: "A runway condition. The argument is the depth of the water or slush, in inches."
+        )
+      case .slushOrWetSnow(let depth):
+        LocalizedStringResource(
+          "Slush/Wet Snow \(depth.converted(to: .inches), format: .depth)",
+          comment:
+            "A runway condition. The argument is the depth of the slush or wet snow, in inches."
+        )
+      case .drySnow:
+        LocalizedStringResource("Dry Snow", comment: "A runway condition.")
+      case .compactSnow:
+        LocalizedStringResource("Compact Snow", comment: "A runway condition.")
+      case .wetRunway:
+        LocalizedStringResource("Wet Runway", comment: "A runway condition.")
+      case .rwyCC(let rwyCC):
+        LocalizedStringResource(
+          "RwyCC \(rwyCC, format: .number)",
+          comment: "A runway condition. The argument is the runway condition code, 1 through 6."
+        )
+    }
+  }
+
+  /// The description as VoiceOver reads it aloud.
+  ///
+  /// The conditions that ``localizedDescription`` writes in symbols read differently aloud: “RwyCC”
+  /// is an abbreviation with no pronunciation, so the spoken form spells the term out, and a depth’s
+  /// prime is a mark voices disagree about, so the spoken form names the unit outright.
+  public var accessibilityDescription: LocalizedStringResource {
+    switch self {
+      case .waterOrSlush(let depth):
+        LocalizedStringResource(
+          "Water/Slush \(depth.converted(to: .inches), format: .spokenDepth)",
+          comment: "A runway condition. The argument is the depth of the water or slush, in inches."
+        )
+      case .slushOrWetSnow(let depth):
+        LocalizedStringResource(
+          "Slush/Wet Snow \(depth.converted(to: .inches), format: .spokenDepth)",
+          comment:
+            "A runway condition. The argument is the depth of the slush or wet snow, in inches."
+        )
+      case .rwyCC(let rwyCC):
+        LocalizedStringResource(
+          "Runway condition code \(rwyCC, format: .number)",
+          comment:
+            "A runway condition, spoken aloud. The argument is the runway condition code, 1 through 6."
+        )
+      case .drySnow, .compactSnow, .wetRunway:
+        localizedDescription
+    }
+  }
+
   /// Raw type string for persistence.
   var type: String {
     switch self {

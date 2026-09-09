@@ -137,18 +137,11 @@ extension RunwayRow {
 // MARK: - NOTAM restrictions
 
 extension RunwayRow {
+  /// An uncontaminated runway announces nothing: custom content exists to flag what restricts a
+  /// runway, and a clean surface restricts nothing.
   fileprivate var contaminationContent: Text? {
-    switch notam?.contamination {
-      case .waterOrSlush(let depth):
-        Text("Water/slush \(depth.converted(to: .inches), format: .depth)")
-      case .slushOrWetSnow(let depth):
-        Text("Slush/wet snow \(depth.converted(to: .inches), format: .depth)")
-      case .drySnow: Text("Dry snow")
-      case .compactSnow: Text("Compact snow")
-      case .wetRunway: Text("Wet runway")
-      case .rwyCC(let rwyCC): Text("Runway condition code \(rwyCC, format: .number)")
-      case nil: nil
-    }
+    guard let contamination = notam?.contamination else { return nil }
+    return Text(contamination.accessibilityDescription)
   }
 
   /// A NOTAMed shortening, described as a reduction rather than a closure: the model has no
