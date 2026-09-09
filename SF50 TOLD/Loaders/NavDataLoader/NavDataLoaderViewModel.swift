@@ -362,7 +362,9 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   /// identifies one, so a selection made under an earlier dataset can name a record the new one
   /// does not hold. Left in place it resolves to nothing in the widget and in Siri, which report a
   /// missing airport and suggest reloading the very data that removed it.
-  private func clearSelectionsMissing(fromGeneration generation: Int) {
+  ///
+  /// Internal so a test can run the check against a generation on disk without downloading one.
+  func clearSelectionsMissing(fromGeneration generation: Int) {
     guard let context = try? navDataContext(forGeneration: generation) else { return }
     for operation in Operation.allCases {
       guard let recordID = operation.selectedAirportRecordID,
