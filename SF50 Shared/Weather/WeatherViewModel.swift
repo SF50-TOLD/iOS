@@ -130,7 +130,8 @@ public final class WeatherViewModel: WithIdentifiableError {
   private func setupObservation(container: ModelContainer) {
     let key = airportKey
     defaultsTask = Task { [weak self, container] in
-      for await airportID in Defaults.updates(key) where !Task.isCancelled {
+      for await airportID in Defaults.updates(key) {
+        if Task.isCancelled { break }
         guard let self else { return }
         do {
           self.airport = try await fetchAirport(for: airportID, container: container)
@@ -177,7 +178,8 @@ public final class WeatherViewModel: WithIdentifiableError {
       await withTaskGroup(of: Void.self) { group in
         group.addTask { [weak self] in
           let stream = await loader.streamConditions(for: key)
-          for await conditions in stream where !Task.isCancelled {
+          for await conditions in stream {
+            if Task.isCancelled { break }
             guard let self else { return }
             await MainActor.run {
               // Preserve manual weather if user has entered custom values
@@ -218,21 +220,24 @@ public final class WeatherViewModel: WithIdentifiableError {
         }
         group.addTask { [weak self] in
           let stream = await loader.streamMETAR(for: key)
-          for await value in stream where !Task.isCancelled {
+          for await value in stream {
+            if Task.isCancelled { break }
             guard let self else { return }
             await MainActor.run { self.METAR = value }
           }
         }
         group.addTask { [weak self] in
           let stream = await loader.streamTAF(for: key)
-          for await value in stream where !Task.isCancelled {
+          for await value in stream {
+            if Task.isCancelled { break }
             guard let self else { return }
             await MainActor.run { self.TAF = value }
           }
         }
         group.addTask { [weak self] in
           let stream = await loader.streamWindsAloft(for: key)
-          for await value in stream where !Task.isCancelled {
+          for await value in stream {
+            if Task.isCancelled { break }
             guard let self else { return }
             await MainActor.run { self.windsAloft = value }
           }
