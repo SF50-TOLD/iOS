@@ -5,6 +5,9 @@ import SF50_Shared
 import SwiftData
 
 enum UITestingHelper {
+  private static let oneDay: TimeInterval = 24 * 60 * 60,
+    cycleDuration: TimeInterval = 28 * oneDay
+
   static var isUITesting: Bool {
     ProcessInfo.processInfo.arguments.contains("UI-TESTING")
   }
@@ -150,11 +153,12 @@ enum UITestingHelper {
 
     // Expire the cycles 1 day in the past when the test forces stale nav data so
     // the loading consent screen gates the app; otherwise set expiration 28 days
-    // in the future to keep the database loader from appearing.
-    let effectiveDate = Date()
+    // in the future to keep the database loader from appearing. Either way the
+    // window runs a whole cycle back from its expiry, as a real one does.
     let forceStale = ProcessInfo.processInfo.arguments.contains("STALE-NAV-DATA")
-    let expirationInterval: TimeInterval = forceStale ? -24 * 60 * 60 : 28 * 24 * 60 * 60
-    let expirationDate = effectiveDate.addingTimeInterval(expirationInterval)
+    let expirationInterval: TimeInterval = forceStale ? -oneDay : cycleDuration
+    let expirationDate = Date().addingTimeInterval(expirationInterval),
+      effectiveDate = expirationDate.addingTimeInterval(-cycleDuration)
     context.insert(
       Cycle(
         dataSource: .nasr,
