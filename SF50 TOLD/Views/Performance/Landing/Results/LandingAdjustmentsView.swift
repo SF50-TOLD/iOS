@@ -12,13 +12,13 @@ struct LandingAdjustmentsView: View {
           title: String(localized: "Ground Run"),
           breakdown: report.groundRunBreakdown,
           total: report.results.landingRun,
-          maximum: performance.availableLandingRun
+          maximum: performance.availableLandingDistance
         )
         BreakdownSection(
           title: String(localized: "Total Distance"),
           breakdown: report.distanceBreakdown,
           total: report.results.landingDistance,
-          maximum: performance.availableLandingRun
+          maximum: performance.availableLandingDistance
         )
       }
       if !performance.notes.isEmpty {

@@ -13,7 +13,7 @@ struct LandingGroundRunView: View {
     LabeledContent("Ground Run") {
       InterpolationView(
         value: performance.landingRun,
-        maximum: performance.availableLandingRun,
+        maximum: performance.availableLandingDistance,
         displayValue: {
           Text($0.converted(to: runwayLengthUnit), format: .length).fontWeight(.semibold)
         },
