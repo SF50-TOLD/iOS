@@ -345,23 +345,13 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     return String(localized: "calm")
   }
 
+  /// Every runway gets a condition in the report, so an uncontaminated one is named rather than
+  /// left blank.
   func format(contamination: Contamination?) -> String {
-    switch contamination {
-      case .waterOrSlush(let depth):
-        String(localized: "Water/Slush \(depth.converted(to: .inches), format: .depth)")
-      case .slushOrWetSnow(let depth):
-        String(localized: "Slush/Wet Snow \(depth.converted(to: .inches), format: .depth)")
-      case .drySnow:
-        String(localized: "Dry Snow")
-      case .compactSnow:
-        String(localized: "Compact Snow")
-      case .wetRunway:
-        String(localized: "Wet Runway")
-      case .rwyCC(let rwyCC):
-        String(localized: "RwyCC \(rwyCC, format: .number)")
-      case nil:
-        String(localized: "Dry")
+    guard let contamination else {
+      return String(localized: "Dry", comment: "A runway condition: no contamination.")
     }
+    return String(localized: contamination.localizedDescription)
   }
 
   func format(performanceDistance value: Value<PerformanceDistance>?) -> [Tag] {
