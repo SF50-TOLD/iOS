@@ -41,6 +41,8 @@ aircraft.
   runway chosen on it. The FAA retires airports between cycles, and a selection
   left pointing at one made the widget and Siri fail and then suggest reloading
   the very data that had removed it.
+- A selection survives a dataset that cannot be read at all. Only a dataset that
+  answers, and does not carry the airport, clears it.
 
 ### Elsewhere
 

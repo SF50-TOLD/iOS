@@ -41,8 +41,9 @@ public struct NavDataStoreInstaller: Sendable {
   /// Switches to `generation`, if the store it names holds a usable dataset.
   ///
   /// - Parameter generation: The generation an import has just written.
-  /// - Throws: ``Errors/storeIsEmpty`` if the candidate holds no airports, or the error SwiftData
-  ///   raised trying to open it.
+  /// - Throws: ``Errors/storeIsEmpty`` if the candidate holds no airports,
+  ///   ``AppStore/Errors/navDataStoreIsMissing(generation:)`` if its store has gone from disk, or
+  ///   the error SwiftData raised trying to open it.
   public func install(generation: Int) throws {
     try validate(generation: generation)
     Defaults[.activeNavDataGeneration] = generation
@@ -52,11 +53,18 @@ public struct NavDataStoreInstaller: Sendable {
   /// Opens a candidate generation and confirms it holds a dataset.
   ///
   /// Opening it here, through the same configurations the app uses, is what turns a store this
-  /// binary cannot read into a failed install rather than a broken launch.
+  /// binary cannot read into a failed install rather than a broken launch. It is opened as a
+  /// generation that must already be on disk: a candidate an extension's launch-time sweep
+  /// reclaimed between reserving it and installing it is a store that has gone, and bootstrapping
+  /// an empty one in its place would refuse the install for the wrong reason and leave a file
+  /// behind that nothing wrote.
   ///
   /// - Parameter generation: The generation to check.
   private func validate(generation: Int) throws {
-    let container = try AppStore.makeContainer(layout: layout, generation: generation)
+    let container = try AppStore.makeContainerForExistingGeneration(
+      layout: layout,
+      generation: generation
+    )
     let context = ModelContext(container)
     guard try context.fetchCount(FetchDescriptor<Airport>()) > 0 else {
       throw Errors.storeIsEmpty

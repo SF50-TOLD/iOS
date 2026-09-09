@@ -110,6 +110,16 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     return try AppStore.makeWritableContainer(layout: .appGroup, generation: generation)
   }
 
+  /// The whole of what an error says.
+  ///
+  /// `localizedDescription` renders only a `LocalizedError`'s category, which is the same sentence
+  /// for every case in it; the specifics are its reason.
+  private static func wholeOf(_ error: any Swift.Error) -> String {
+    [error.localizedDescription, (error as? any LocalizedError)?.failureReason]
+      .compactMap(\.self)
+      .joined(separator: " ")
+  }
+
   private func setupObservation() {
     observations.insert(schemaVersionObservationTask())
     observations.insert(statePollingTask())
@@ -240,13 +250,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       return true
     } catch {
       continuation.finish()
-      // `localizedDescription` renders only a `LocalizedError`'s category, which is the same
-      // sentence for every reason a prebuilt store was passed over; the specifics are its reason.
-      let cause = [error.localizedDescription, (error as? any LocalizedError)?.failureReason]
-        .compactMap(\.self)
-        .joined(separator: " ")
       // What happens next is the caller's to decide: a cancelled load imports nothing.
-      logger.notice("Passed over the prebuilt store: \(cause, privacy: .public)")
+      logger.notice("Passed over the prebuilt store: \(Self.wholeOf(error), privacy: .public)")
       StoreLayout.removeStore(at: StoreLayout.appGroup.navStoreURL(generation: generation))
       return false
     }
@@ -415,7 +420,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   ///
   /// Internal so a test can run the check against a generation on disk without downloading one.
   func clearSelectionsMissing(fromGeneration generation: Int) {
-    guard let context = try? navDataContext(forGeneration: generation) else { return }
+    guard let context = navDataContext(forGeneration: generation) else { return }
     for operation in Operation.allCases {
       guard let recordID = operation.selectedAirportRecordID,
         airportIsMissing(recordID, from: context)
@@ -433,16 +438,32 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     do { return try findAirport(for: recordID, in: context) == nil } catch { return false }
   }
 
-  /// A context on the generation just installed.
+  /// A context on the generation just installed, or `nil` when that generation cannot be read.
   ///
   /// The container the views hold still reads the previous generation here, so this check opens the
-  /// new one itself. In-memory stores cannot be shared between containers, so tests and previews
-  /// read the container they were given.
-  private func navDataContext(forGeneration generation: Int) throws -> ModelContext {
+  /// new one itself — and opens it as a generation that must already be on disk. A generation
+  /// another process has swept out from under the install would otherwise be bootstrapped into an
+  /// empty store, which answers that it carries no airports and costs the pilot both selections.
+  ///
+  /// In-memory stores cannot be shared between containers, so tests and previews read the container
+  /// they were given.
+  private func navDataContext(forGeneration generation: Int) -> ModelContext? {
     guard !container.configurations.contains(where: \.isStoredInMemoryOnly) else {
       return ModelContext(container)
     }
-    return ModelContext(try AppStore.makeContainer(layout: .appGroup, generation: generation))
+    do {
+      return ModelContext(
+        try AppStore.makeContainerForExistingGeneration(layout: .appGroup, generation: generation)
+      )
+    } catch {
+      logger.error(
+        """
+        Kept the airport selections; couldn’t read generation \(generation, privacy: .public): \
+        \(Self.wholeOf(error), privacy: .public)
+        """
+      )
+      return nil
+    }
   }
 
   /// Discards the NOTAMs the pilot entered against the dataset just replaced.

@@ -83,6 +83,14 @@ public struct StoreLayout: Sendable {
     navDataDirectory.appending(path: "\(Self.navStorePrefix)\(generation)\(Self.navStoreSuffix)")
   }
 
+  /// Whether a generation has a store on disk.
+  ///
+  /// - Parameter generation: Which generation to look for.
+  /// - Returns: Whether that generation's store file is there.
+  public func navStoreExists(generation: Int) -> Bool {
+    FileManager.default.fileExists(atPath: navStoreURL(generation: generation).path)
+  }
+
   /// Every generation with a store on disk, in ascending order.
   public func navStoreGenerations() -> [Int] {
     let contents =

@@ -54,6 +54,30 @@ public enum AppStore {
     return try open(layout: layout, generation: generation, navAllowsSave: false)
   }
 
+  /// Opens both stores against a nav-data generation that must already be on disk.
+  ///
+  /// Where ``makeContainer(layout:generation:)`` bootstraps an empty store for a generation with no
+  /// file, this refuses one. A caller reading a generation to learn what the dataset holds needs a
+  /// generation that has gone missing to read as an error, not as a dataset carrying nothing.
+  ///
+  /// - Parameters:
+  ///   - layout: Where the stores live.
+  ///   - generation: Which generation of nav data to read.
+  /// - Returns: A container holding a read-only nav store and a writable user store.
+  /// - Throws: ``Errors/navDataStoreIsMissing(generation:)`` if that generation has no store on
+  ///   disk, or the error SwiftData raised trying to open it.
+  public static func makeContainerForExistingGeneration(
+    layout: StoreLayout,
+    generation: Int
+  ) throws -> ModelContainer {
+    guard layout.navStoreExists(generation: generation) else {
+      throw Errors.navDataStoreIsMissing(generation: generation)
+    }
+    try layout.createDirectories()
+    try LegacyStoreMigration(layout: layout).migrateIfNeeded()
+    return try open(layout: layout, generation: generation, navAllowsSave: false)
+  }
+
   /// Opens both stores with a nav-data generation writable, for an importer.
   ///
   /// The importer writes through its own container so its bulk transactions queue on their own
@@ -163,8 +187,31 @@ public enum AppStore {
   /// It is created through the same pair of configurations that will read it, for the reason given
   /// on the type.
   private static func bootstrapIfAbsent(layout: StoreLayout, generation: Int) throws {
-    let url = layout.navStoreURL(generation: generation)
-    guard !FileManager.default.fileExists(atPath: url.path) else { return }
+    guard !layout.navStoreExists(generation: generation) else { return }
     _ = try open(layout: layout, generation: generation, navAllowsSave: true)
+  }
+
+  /// Reasons a store couldn’t be opened.
+  public enum Errors: Swift.Error, LocalizedError {
+    /// The generation asked for has no store on disk.
+    case navDataStoreIsMissing(generation: Int)
+
+    public var errorDescription: String? {
+      String(localized: "Couldn’t open the navigation data.", bundle: .sharedFramework)
+    }
+
+    public var failureReason: String? {
+      switch self {
+        case .navDataStoreIsMissing(let generation):
+          String(
+            localized: "Generation \(generation, format: .number) has no database on disk.",
+            bundle: .sharedFramework
+          )
+      }
+    }
+
+    public var recoverySuggestion: String? {
+      String(localized: "Try downloading the navigation data again.", bundle: .sharedFramework)
+    }
   }
 }

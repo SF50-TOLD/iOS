@@ -152,6 +152,23 @@ struct `Selection Pruning on Install` {
     }
   }
 
+  @Test
+  func `keeps both selections when the incoming generation is gone from disk`() throws {
+    try Self.withInstalledGeneration(
+      takeoff: Self.retiredAirport,
+      landing: Self.retiredAirport
+    ) { viewModel, generation in
+      // What an extension's launch-time sweep does to a generation installed alongside it.
+      StoreLayout.removeStore(at: StoreLayout.appGroup.navStoreURL(generation: generation))
+      viewModel.clearSelectionsMissing(fromGeneration: generation)
+
+      #expect(Defaults[.takeoffAirport] == Self.retiredAirport)
+      #expect(Defaults[.takeoffRunway] == Self.selectedRunway)
+      #expect(Defaults[.landingAirport] == Self.retiredAirport)
+      #expect(Defaults[.landingRunway] == Self.selectedRunway)
+    }
+  }
+
   /// The defaults a leg selection lives in, captured so one test's selections cannot reach
   /// another's.
   private struct LegSelections {

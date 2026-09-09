@@ -72,6 +72,9 @@
     "Contamination" : {
 
     },
+    "Couldn’t open the navigation data." : {
+
+    },
     "Couldn’t use the navigation data that was downloaded." : {
 
     },
@@ -161,6 +164,9 @@
           }
         }
       }
+    },
+    "Generation %@ has no database on disk." : {
+
     },
     "Go-around climb gradient requirement is not met." : {
 
