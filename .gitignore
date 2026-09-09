@@ -21,6 +21,7 @@ scripts/regression_plots/
 
 # Credentials Configuration (contains API tokens)
 DownloadNASR/Credentials.xcconfig
+.claude/settings.json
 .claude/settings.local.json
 .mcp.json
 
