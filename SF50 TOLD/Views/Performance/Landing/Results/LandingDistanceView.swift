@@ -14,7 +14,7 @@ struct LandingDistanceView: View {
       content: {
         InterpolationView(
           value: performance.landingDistance,
-          maximum: performance.availableLandingRun,
+          maximum: performance.availableLandingDistance,
           displayValue: {
             Text($0.converted(to: runwayLengthUnit), format: .length).fontWeight(.semibold)
           },
@@ -42,7 +42,7 @@ extension LandingDistanceView {
   /// reddens the distance when it overruns the runway and the uncertainty when only the upper
   /// estimate does, so the verdict has to name that middle case rather than call it sufficient.
   fileprivate var sufficiencyContent: Text? {
-    guard let available = performance.availableLandingRun else { return nil }
+    guard let available = performance.availableLandingDistance else { return nil }
 
     switch performance.landingDistance {
       case .value(let distance):
@@ -58,7 +58,7 @@ extension LandingDistanceView {
   }
 
   fileprivate var availableDistanceContent: Text? {
-    guard let available = performance.availableLandingRun else { return nil }
+    guard let available = performance.availableLandingDistance else { return nil }
     return Text(available.converted(to: runwayLengthUnit), format: .length)
   }
 
