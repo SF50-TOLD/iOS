@@ -30,27 +30,39 @@ public enum AdjustmentKind: Sendable {
   public var localizedDescription: String {
     switch self {
       case .headwind(let speed):
-        return String(localized: "Headwind — \(speed.asSpeed, format: .speed)")
+        return String(
+          localized: "Headwind — \(speed.asSpeed, format: .speed)",
+          bundle: .sharedFramework
+        )
       case .tailwind(let speed):
-        return String(localized: "Tailwind — \(speed.asSpeed, format: .speed)")
+        return String(
+          localized: "Tailwind — \(speed.asSpeed, format: .speed)",
+          bundle: .sharedFramework
+        )
       case .uphillGradient(let gradient):
         return String(
-          localized: "Uphill — \(gradient, format: .percent.precision(.fractionLength(0...2)))"
+          localized: "Uphill — \(gradient, format: .percent.precision(.fractionLength(0...2)))",
+          bundle: .sharedFramework
         )
       case .downhillGradient(let gradient):
         return String(
-          localized: "Downhill — \(gradient, format: .percent.precision(.fractionLength(0...2)))"
+          localized: "Downhill — \(gradient, format: .percent.precision(.fractionLength(0...2)))",
+          bundle: .sharedFramework
         )
       case .unpavedSurface:
-        return String(localized: "Unpaved Surface")
+        return String(localized: "Unpaved Surface", bundle: .sharedFramework)
       case .contamination:
-        return String(localized: "Contamination")
+        return String(localized: "Contamination", bundle: .sharedFramework)
       case .safetyMargin(let factor):
         return String(
-          localized: "Safety Factor — \(factor, format: .number.precision(.fractionLength(2)))"
+          localized: "Safety Factor — \(factor, format: .number.precision(.fractionLength(2)))",
+          bundle: .sharedFramework
         )
       case .VREFAdditive(let speed):
-        return String(localized: "VREF — \(speed.asSpeed, format: .speed(plusSign: true))")
+        return String(
+          localized: "VREF — \(speed.asSpeed, format: .speed(plusSign: true))",
+          bundle: .sharedFramework
+        )
     }
   }
 
@@ -60,7 +72,8 @@ public enum AdjustmentKind: Sendable {
       case .VREFAdditive(let speed):
         .VREF
           + AttributedString(
-            localized: " — \(speed.asSpeed, format: .speed(plusSign: true))"
+            localized: " — \(speed.asSpeed, format: .speed(plusSign: true))",
+            bundle: .sharedFramework
           )
       default:
         AttributedString(localizedDescription)
@@ -176,71 +189,90 @@ public enum PerformanceNote: Sendable {
       case .offscaleHigh:
         return String(
           localized:
-            "The input values are above the maximums specified in the AFM table. Proceed with extreme caution."
+            "The input values are above the maximums specified in the AFM table. Proceed with extreme caution.",
+          bundle: .sharedFramework
         )
       case .offscaleLow:
         return String(
-          localized: "The input values are below the minimums specified in the AFM table."
+          localized: "The input values are below the minimums specified in the AFM table.",
+          bundle: .sharedFramework
         )
       case .contaminationSupplemental:
         return String(
           localized:
-            "Contaminated runway performance data is considered supplemental and is not FAA approved."
+            "Contaminated runway performance data is considered supplemental and is not FAA approved.",
+          bundle: .sharedFramework
         )
       case .rwyCCSafetyFactorNotApplied:
         return String(
           localized:
-            "AC 91-79B landing distance factors are applied. The configured safety factor is not applied to RwyCC landing distances."
+            "AC 91-79B landing distance factors are applied. The configured safety factor is not applied to RwyCC landing distances.",
+          bundle: .sharedFramework
         )
       case .VREFAdditiveApproximate:
         return String(
           localized:
-            "Landing distances include an AC 91-79B §5.2.2 adjustment for the VREF additive. This is an approximation."
+            "Landing distances include an AC 91-79B §5.2.2 adjustment for the VREF additive. This is an approximation.",
+          bundle: .sharedFramework
         )
       case .crosswindExceedance(let crosswind, let limit):
         return String(
           localized:
-            "Crosswind of \(crosswind.asSpeed, format: .speed) exceeds the \(limit.asSpeed, format: .speed) limit."
+            "Crosswind of \(crosswind.asSpeed, format: .speed) exceeds the \(limit.asSpeed, format: .speed) limit.",
+          bundle: .sharedFramework
         )
       case .tailwindExceedance(let tailwind, let limit):
         return String(
           localized:
-            "Tailwind of \(tailwind.asSpeed, format: .speed) exceeds the \(limit.asSpeed, format: .speed) limit."
+            "Tailwind of \(tailwind.asSpeed, format: .speed) exceeds the \(limit.asSpeed, format: .speed) limit.",
+          bundle: .sharedFramework
         )
       case .weightAboveMax(let weight, let limit):
         return String(
           localized:
-            "Weight of \(weight.asWeight, format: .weight) exceeds the \(limit.asWeight, format: .weight) maximum."
+            "Weight of \(weight.asWeight, format: .weight) exceeds the \(limit.asWeight, format: .weight) maximum.",
+          bundle: .sharedFramework
         )
       case .zeroFuelWeightExceeded(let weight, let limit):
         return String(
           localized:
-            "Zero-fuel weight of \(weight.asWeight, format: .weight) exceeds the \(limit.asWeight, format: .weight) maximum."
+            "Zero-fuel weight of \(weight.asWeight, format: .weight) exceeds the \(limit.asWeight, format: .weight) maximum.",
+          bundle: .sharedFramework
         )
       case .fuelExceedsCapacity(let fuel, let limit):
         return String(
           localized:
-            "Fuel quantity of \(fuel.asFuel, format: .fuel) exceeds the \(limit.asFuel, format: .fuel) usable capacity."
+            "Fuel quantity of \(fuel.asFuel, format: .fuel) exceeds the \(limit.asFuel, format: .fuel) usable capacity.",
+          bundle: .sharedFramework
         )
       case .takeoffDistanceExceedsAvailable(let required, let available):
         return String(
           localized:
-            "Takeoff distance of \(required.asLength, format: .length) exceeds the available \(available.asLength, format: .length)."
+            "Takeoff distance of \(required.asLength, format: .length) exceeds the available \(available.asLength, format: .length).",
+          bundle: .sharedFramework
         )
       case .takeoffRunExceedsAvailable(let required, let available):
         return String(
           localized:
-            "Takeoff run of \(required.asLength, format: .length) exceeds the available \(available.asLength, format: .length)."
+            "Takeoff run of \(required.asLength, format: .length) exceeds the available \(available.asLength, format: .length).",
+          bundle: .sharedFramework
         )
       case .landingDistanceExceedsAvailable(let required, let available):
         return String(
           localized:
-            "Landing distance of \(required.asLength, format: .length) exceeds the available \(available.asLength, format: .length)."
+            "Landing distance of \(required.asLength, format: .length) exceeds the available \(available.asLength, format: .length).",
+          bundle: .sharedFramework
         )
       case .insufficientClimbGradient:
-        return String(localized: "Required climb gradient may exceed actual climb performance.")
+        return String(
+          localized: "Required climb gradient may exceed actual climb performance.",
+          bundle: .sharedFramework
+        )
       case .doesNotMeetGoAroundGradient:
-        return String(localized: "Go-around climb gradient requirement is not met.")
+        return String(
+          localized: "Go-around climb gradient requirement is not met.",
+          bundle: .sharedFramework
+        )
     }
   }
 }

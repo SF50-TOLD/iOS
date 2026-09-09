@@ -20,7 +20,7 @@ public struct WeatherProviders: OptionSet, Sendable, Hashable {
   /// Where Open-Meteo's CC-BY 4.0 licence requires its credit to point.
   public static let openMeteoURL = URL(string: "https://open-meteo.com")!
 
-  private static let openMeteoName = String(localized: "Open-Meteo")
+  private static let openMeteoName = String(localized: "Open-Meteo", bundle: .sharedFramework)
 
   /// Open-Meteo's name, linked to its site — the credit its CC-BY 4.0 licence asks for.
   public static let openMeteoCredit: AttributedString = {
@@ -30,9 +30,9 @@ public struct WeatherProviders: OptionSet, Sendable, Hashable {
   }()
 
   private static let namesInPrecedenceOrder: [(provider: Self, name: String, plainName: String)] = [
-    (.NWS, String(localized: "NWS"), "NWS"),
+    (.NWS, String(localized: "NWS", bundle: .sharedFramework), "NWS"),
     (.openMeteo, openMeteoName, "OPEN-METEO"),
-    (.weatherKit, String(localized: "Apple Weather"), "APPLE WEATHER")
+    (.weatherKit, String(localized: "Apple Weather", bundle: .sharedFramework), "APPLE WEATHER")
   ]
 
   public let rawValue: Int

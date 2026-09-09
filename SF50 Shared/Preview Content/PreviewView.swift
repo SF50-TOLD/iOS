@@ -15,9 +15,13 @@ public struct PreviewView<Content: View>: View {
         }
       case .failure(let error):
         VStack {
-          Label("Preview Failed", systemImage: "exclamationmark.triangle")
-            .font(.title2)
-            .foregroundColor(.red)
+          Label {
+            Text("Preview Failed", bundle: .sharedFramework)
+          } icon: {
+            Image(systemName: "exclamationmark.triangle")
+          }
+          .font(.title2)
+          .foregroundColor(.red)
           Text(error.localizedDescription)
             .font(.body)
             .multilineTextAlignment(.center)

@@ -327,24 +327,38 @@ final class RegressionEquation {
     case typeMismatch(expected: EquationType, got: EquationType)
 
     var errorDescription: String? {
-      String(localized: "Regression equation couldn’t be loaded.")
+      String(localized: "Regression equation couldn’t be loaded.", bundle: .sharedFramework)
     }
 
     var failureReason: String? {
       switch self {
         case .badEncoding:
-          String(localized: "The file data could not be decoded.")
+          String(localized: "The file data could not be decoded.", bundle: .sharedFramework)
         case .decodingFailed(let error):
-          String(localized: "The JSON schema is invalid: \(error.localizedDescription)")
+          String(
+            localized: "The JSON schema is invalid: \(error.localizedDescription)",
+            bundle: .sharedFramework
+          )
         case .missingEquationDefinition(let type):
-          String(localized: "Missing \(type.rawValue) equation definition.")
+          String(
+            localized: "Missing \(type.rawValue) equation definition.",
+            bundle: .sharedFramework
+          )
         case .unsupportedVersion(let version):
-          String(localized: "Schema version “\(version)” is not supported.")
+          String(
+            localized: "Schema version “\(version)” is not supported.",
+            bundle: .sharedFramework
+          )
         case .missingVariable(let name):
-          String(localized: "Required input variable “\(name)” is missing.")
+          String(
+            localized: "Required input variable “\(name)” is missing.",
+            bundle: .sharedFramework
+          )
         case .typeMismatch(let expected, let got):
           String(
-            localized: "Equation type mismatch: expected \(expected.rawValue), got \(got.rawValue)."
+            localized:
+              "Equation type mismatch: expected \(expected.rawValue), got \(got.rawValue).",
+            bundle: .sharedFramework
           )
       }
     }

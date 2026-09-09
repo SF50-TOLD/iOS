@@ -50,7 +50,7 @@ public struct WindComponents: View {
         HStack(spacing: 0) {
           Image(systemName: "arrowtriangle.down.fill")
             .foregroundStyle(.green)
-            .accessibilityLabel("headwind")
+            .accessibilityLabel(Text("headwind", bundle: .sharedFramework))
           Text(headwind.converted(to: speedUnit).value.magnitude, format: .speed)
             .contentTransition(.numericText())
             .fixedSize(horizontal: true, vertical: false)
@@ -61,7 +61,7 @@ public struct WindComponents: View {
         HStack(spacing: 0) {
           Image(systemName: "arrowtriangle.up.fill")
             .foregroundStyle(.red)
-            .accessibilityLabel("tailwind")
+            .accessibilityLabel(Text("tailwind", bundle: .sharedFramework))
           Text(headwind.converted(to: speedUnit).value.magnitude, format: .speed)
             .contentTransition(.numericText())
             .foregroundStyle(exceedsTailwindLimits ? .red : .primary)
@@ -73,7 +73,7 @@ public struct WindComponents: View {
         HStack(spacing: 0) {
           Image(systemName: "arrowtriangle.left.fill")
             .foregroundStyle(.gray)
-            .accessibilityLabel("left crosswind")
+            .accessibilityLabel(Text("left crosswind", bundle: .sharedFramework))
           Text(crosswind.converted(to: speedUnit).value.magnitude, format: .speed)
             .contentTransition(.numericText())
             .foregroundStyle(exceedsCrosswindLimits ? .red : .primary)
@@ -84,7 +84,7 @@ public struct WindComponents: View {
         HStack(spacing: 0) {
           Image(systemName: "arrowtriangle.right.fill")
             .foregroundStyle(.gray)
-            .accessibilityLabel("right crosswind")
+            .accessibilityLabel(Text("right crosswind", bundle: .sharedFramework))
           Text(crosswind.converted(to: speedUnit).value.magnitude, format: .speed)
             .contentTransition(.numericText())
             .foregroundStyle(exceedsCrosswindLimits ? .red : .primary)

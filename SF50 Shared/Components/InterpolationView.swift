@@ -61,24 +61,28 @@ public struct InterpolationView<ValueType, Content: View>: View {
             }
           }
         case .invalid:
-          Label("Error", systemImage: "exclamationmark.circle")
-            .foregroundStyle(.red)
-            .bold()
-            .labelStyle(CompactLabelStyle())
+          Label {
+            Text("Error", bundle: .sharedFramework)
+          } icon: {
+            Image(systemName: "exclamationmark.circle")
+          }
+          .foregroundStyle(.red)
+          .bold()
+          .labelStyle(CompactLabelStyle())
         case .notAvailable:
-          Text("N/A")
+          Text("N/A", bundle: .sharedFramework)
             .foregroundStyle(.secondary)
             .bold()
         case .notAuthorized:
-          Text("Configuration not authorized")
+          Text("Configuration not authorized", bundle: .sharedFramework)
             .foregroundStyle(.red)
             .bold()
         case .offscaleHigh:
-          Text("Offscale high")
+          Text("Offscale high", bundle: .sharedFramework)
             .foregroundStyle(.red)
             .bold()
         case .offscaleLow:
-          Text("Offscale low")
+          Text("Offscale low", bundle: .sharedFramework)
             .foregroundStyle(.secondary)
             .bold()
       }

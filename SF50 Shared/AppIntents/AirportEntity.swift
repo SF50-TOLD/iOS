@@ -8,7 +8,9 @@ import SwiftData
 /// type. It is a `Sendable` copy keyed on `Airport.recordID` rather than the SwiftData model, which
 /// cannot leave the context that fetched it.
 public struct AirportEntity: AppEntity {
-  public static var typeDisplayRepresentation: TypeDisplayRepresentation { "Airport" }
+  public static var typeDisplayRepresentation: TypeDisplayRepresentation {
+    .init(name: .init("Airport", bundle: .sharedFramework))
+  }
 
   public static var defaultQuery: AirportEntityQuery { .init() }
 
@@ -26,8 +28,11 @@ public struct AirportEntity: AppEntity {
 
   public var displayRepresentation: DisplayRepresentation {
     .init(
-      title: "\(displayID)",
-      subtitle: city.map { "\(name) — \($0)" } ?? "\(name)"
+      title: .init("\(displayID)", bundle: .sharedFramework),
+      subtitle: .init(
+        city.map { "\(name) — \($0)" } ?? "\(name)",
+        bundle: .sharedFramework
+      )
     )
   }
 

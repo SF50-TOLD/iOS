@@ -91,17 +91,17 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   /// Human-readable display name for the region.
   public var displayName: String {
     switch self {
-      case .northAmerica: String(localized: "North America")
-      case .southAmerica: String(localized: "South America")
-      case .europe: String(localized: "Europe")
-      case .asia: String(localized: "Asia")
-      case .middleEast: String(localized: "Middle East")
-      case .africa: String(localized: "Africa")
-      case .australia: String(localized: "Australia")
-      case .oceania: String(localized: "Oceania")
-      case .midAtlantic: String(localized: "Mid-Atlantic")
-      case .indianOcean: String(localized: "Indian Ocean")
-      case .antarctica: String(localized: "Antarctica")
+      case .northAmerica: String(localized: "North America", bundle: .sharedFramework)
+      case .southAmerica: String(localized: "South America", bundle: .sharedFramework)
+      case .europe: String(localized: "Europe", bundle: .sharedFramework)
+      case .asia: String(localized: "Asia", bundle: .sharedFramework)
+      case .middleEast: String(localized: "Middle East", bundle: .sharedFramework)
+      case .africa: String(localized: "Africa", bundle: .sharedFramework)
+      case .australia: String(localized: "Australia", bundle: .sharedFramework)
+      case .oceania: String(localized: "Oceania", bundle: .sharedFramework)
+      case .midAtlantic: String(localized: "Mid-Atlantic", bundle: .sharedFramework)
+      case .indianOcean: String(localized: "Indian Ocean", bundle: .sharedFramework)
+      case .antarctica: String(localized: "Antarctica", bundle: .sharedFramework)
     }
   }
 

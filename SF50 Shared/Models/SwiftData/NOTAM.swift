@@ -196,23 +196,38 @@ public enum Contamination: Sendable, Hashable {
       case .waterOrSlush(let depth):
         LocalizedStringResource(
           "Water/Slush \(depth.converted(to: .inches), format: .depth)",
+          bundle: .sharedFramework,
           comment: "A runway condition. The argument is the depth of the water or slush, in inches."
         )
       case .slushOrWetSnow(let depth):
         LocalizedStringResource(
           "Slush/Wet Snow \(depth.converted(to: .inches), format: .depth)",
+          bundle: .sharedFramework,
           comment:
             "A runway condition. The argument is the depth of the slush or wet snow, in inches."
         )
       case .drySnow:
-        LocalizedStringResource("Dry Snow", comment: "A runway condition.")
+        LocalizedStringResource(
+          "Dry Snow",
+          bundle: .sharedFramework,
+          comment: "A runway condition."
+        )
       case .compactSnow:
-        LocalizedStringResource("Compact Snow", comment: "A runway condition.")
+        LocalizedStringResource(
+          "Compact Snow",
+          bundle: .sharedFramework,
+          comment: "A runway condition."
+        )
       case .wetRunway:
-        LocalizedStringResource("Wet Runway", comment: "A runway condition.")
+        LocalizedStringResource(
+          "Wet Runway",
+          bundle: .sharedFramework,
+          comment: "A runway condition."
+        )
       case .rwyCC(let rwyCC):
         LocalizedStringResource(
           "RwyCC \(rwyCC, format: .number)",
+          bundle: .sharedFramework,
           comment: "A runway condition. The argument is the runway condition code, 1 through 6."
         )
     }
@@ -228,17 +243,20 @@ public enum Contamination: Sendable, Hashable {
       case .waterOrSlush(let depth):
         LocalizedStringResource(
           "Water/Slush \(depth.converted(to: .inches), format: .spokenDepth)",
+          bundle: .sharedFramework,
           comment: "A runway condition. The argument is the depth of the water or slush, in inches."
         )
       case .slushOrWetSnow(let depth):
         LocalizedStringResource(
           "Slush/Wet Snow \(depth.converted(to: .inches), format: .spokenDepth)",
+          bundle: .sharedFramework,
           comment:
             "A runway condition. The argument is the depth of the slush or wet snow, in inches."
         )
       case .rwyCC(let rwyCC):
         LocalizedStringResource(
           "Runway condition code \(rwyCC, format: .number)",
+          bundle: .sharedFramework,
           comment:
             "A runway condition, spoken aloud. The argument is the runway condition code, 1 through 6."
         )
