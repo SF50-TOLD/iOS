@@ -116,10 +116,11 @@ public final class ClimbPerformanceViewModel {
 
   private func setupObservation() {
     // Observe takeoff fuel changes (one-way binding)
-    cancellables.insert(
-      Task {
+    addTask(
+      Task { [weak self] in
         for await newFuel in Defaults.updates(.takeoffFuel) {
           if Task.isCancelled { break }
+          guard let self else { return }
           fuel = newFuel
           // recalculate() will be called by fuel's didSet
         }
@@ -127,28 +128,34 @@ public final class ClimbPerformanceViewModel {
     )
 
     // Observe weight-related changes
-    cancellables.insert(
-      Task {
+    addTask(
+      Task { [weak self] in
         for await (_, _, _) in Defaults.updates(
           .emptyWeight,
           .payload,
           .fuelDensity
         ) {
           if Task.isCancelled { break }
+          guard let self else { return }
           recalculate()
         }
       }
     )
 
     // Observe model type changes
-    cancellables.insert(
-      Task {
+    addTask(
+      Task { [weak self] in
         for await _ in Defaults.updates(.updatedThrustSchedule, .useRegressionModel) {
           if Task.isCancelled { break }
+          guard let self else { return }
           recalculate()
         }
       }
     )
+  }
+
+  private func addTask(_ task: Task<Void, Never>) {
+    cancellables.insert(task)
   }
 
   // MARK: Calculation
@@ -225,5 +232,11 @@ public final class ClimbPerformanceViewModel {
         uncertainty.map { Measurement(value: $0, unit: UnitSlope.feetPerNauticalMile) }
       )
     }
+  }
+
+  // MARK: Deinitialization
+
+  isolated deinit {
+    for task in cancellables { task.cancel() }
   }
 }

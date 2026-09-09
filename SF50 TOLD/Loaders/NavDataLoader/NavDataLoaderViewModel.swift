@@ -48,7 +48,15 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
 
   private let container: ModelContainer
   private let installer = NavDataStoreInstaller(layout: .appGroup)
-  private var cancellables: Set<Task<Void, Never>> = []
+
+  /// The observers that keep the loader's state true for as long as this view model exists.
+  ///
+  /// Kept apart from the tasks doing a load, because abandoning a load must not also tear down the
+  /// observers that decide when the loader is needed again.
+  private var observations: Set<Task<Void, Never>> = []
+
+  /// The tasks belonging to the load in progress, cancelled together when one is abandoned.
+  private var loadTasks: Set<Task<Void, Never>> = []
 
   var showLoader: Bool {
     (noData || needsLoad) && !deferred
@@ -103,8 +111,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   private func setupObservation() {
-    addTask(schemaVersionObservationTask())
-    addTask(statePollingTask())
+    observations.insert(schemaVersionObservationTask())
+    observations.insert(statePollingTask())
   }
 
   private func schemaVersionObservationTask() -> Task<Void, Never> {
@@ -148,8 +156,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     }
   }
 
-  private func addTask(_ task: Task<Void, Never>) {
-    cancellables.insert(task)
+  private func addLoadTask(_ task: Task<Void, Never>) {
+    loadTasks.insert(task)
   }
 
   func load() {
@@ -158,7 +166,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     // Block re-entry and switch to the progress UI before the actor reports
     state = .downloading(progress: nil)
 
-    addTask(Task { await runLoad() })
+    addLoadTask(Task { await runLoad() })
   }
 
   func loadLater() {
@@ -166,6 +174,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   }
 
   private func runLoad() async {
+    error = nil
     let generation = installer.reserveGeneration()
 
     // Ask the system to let this keep running if the pilot leaves the app. Safe now that an import
@@ -177,12 +186,19 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     backgroundTask?.expirationHandler = { [weak self] in
       MainActor.assumeIsolated { self?.cancelLoad() }
     }
-    defer { backgroundTask?.setTaskCompleted(success: error == nil) }
+    // A load the system stopped finished nothing, whether or not it left an error behind: the
+    // dataset in use is the one the pilot already had.
+    defer { backgroundTask?.setTaskCompleted(success: error == nil && !Task.isCancelled) }
 
     // A store built ahead of time turns minutes of assembling the database into a download. It is
     // an optimization, not a dependency: anything that goes wrong falls back to importing the
     // property list, which is still published and still works.
     if await installPrebuiltStore(generation: generation, reportingTo: backgroundTask) { return }
+
+    // The prebuilt path reports a cancellation the same way it reports a cycle that was never
+    // published, so ask directly. Starting the import here would raise an error alert at a pilot
+    // who did nothing but leave the app.
+    guard !Task.isCancelled else { return }
 
     await importPropertyList(generation: generation, reportingTo: backgroundTask)
   }
@@ -207,6 +223,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
         report(update, to: backgroundTask)
       }
     }
+    addLoadTask(mirror)
     defer { mirror.cancel() }
 
     do {
@@ -218,12 +235,18 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       try install(generation: generation)
       Defaults[.ourAirportsLastUpdated] = manifest.ourAirportsLastUpdated
       Defaults[.schemaVersion] = latestSchemaVersion
-      state = .finished
+      finish(reportingTo: backgroundTask)
       logger.notice("Installed the prebuilt store for cycle \(manifest.cycle, privacy: .public)")
       return true
     } catch {
       continuation.finish()
-      logger.notice("Importing instead of using a prebuilt store: \(error.localizedDescription)")
+      // `localizedDescription` renders only a `LocalizedError`'s category, which is the same
+      // sentence for every reason a prebuilt store was passed over; the specifics are its reason.
+      let cause = [error.localizedDescription, (error as? any LocalizedError)?.failureReason]
+        .compactMap(\.self)
+        .joined(separator: " ")
+      // What happens next is the caller's to decide: a cancelled load imports nothing.
+      logger.notice("Passed over the prebuilt store: \(cause, privacy: .public)")
       StoreLayout.removeStore(at: StoreLayout.appGroup.navStoreURL(generation: generation))
       return false
     }
@@ -236,17 +259,35 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     guard let loader = await makeLoader(generation: generation) else { return }
 
     let progressTask = await observeProgress(of: loader, reportingTo: backgroundTask)
-    addTask(progressTask)
-    await performLoad(with: loader, generation: generation, progressTask: progressTask)
+    addLoadTask(progressTask)
+    await performLoad(
+      with: loader,
+      generation: generation,
+      progressTask: progressTask,
+      reportingTo: backgroundTask
+    )
   }
 
   /// Abandons an import the system has asked to stop.
   ///
   /// The generation being written is left where it is; nothing points at it, and the next launch
   /// reclaims it. The dataset in use was never touched.
+  ///
+  /// Only the load's own tasks stop. The observers that decide when the loader is needed keep
+  /// running, so the next launch — or the next schema change — still finds its way back here.
   private func cancelLoad() {
-    for task in cancellables { task.cancel() }
+    for task in loadTasks { task.cancel() }
+    loadTasks.removeAll()
     state = .idle
+  }
+
+  /// Records a completed load, and tells the system's own display of the work that it is done.
+  ///
+  /// The system reads the title, subtitle, and progress it was last given until the moment the task
+  /// completes, so a load that never reports its last phase is shown mid-download as it finishes.
+  private func finish(reportingTo backgroundTask: BGContinuedProcessingTask?) {
+    state = .finished
+    report(.finished, to: backgroundTask)
   }
 
   private func makeLoader(generation: Int) async -> NavDataLoader? {
@@ -300,7 +341,7 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       switch state {
         case .idle: (String(localized: "Starting"), 0)
         case .downloading(let progress): (String(localized: "Downloading"), progress)
-        case .extracting: (String(localized: "Decompressing"), nil)
+        case .extracting(let progress): (String(localized: "Decompressing"), progress)
         case .loading(let progress): (String(localized: "Processing"), progress)
         case .finished: (String(localized: "Finished"), 1)
       }
@@ -313,7 +354,8 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
   private func performLoad(
     with loader: NavDataLoader,
     generation: Int,
-    progressTask: Task<Void, Never>
+    progressTask: Task<Void, Never>,
+    reportingTo backgroundTask: BGContinuedProcessingTask?
   ) async {
     let transaction = SentrySDK.startTransaction(
       name: "Nav Data Load",
@@ -321,26 +363,32 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     )
     defer { progressTask.cancel() }
     do {
-      error = nil
       Defaults[.ourAirportsLastUpdated] = nil
       let result = try await loader.load()
       try install(generation: generation)
-      state = .finished
+      finish(reportingTo: backgroundTask)
 
       Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
       Defaults[.schemaVersion] = latestSchemaVersion
       transaction.finish()
     } catch {
+      // Return to the consent screen so the user can retry the download
+      progressTask.cancel()
+      state = .idle
+
+      // A cancelled transfer fails the same way a broken one does. Neither the pilot nor Sentry
+      // needs to hear about work the system stopped because the app went to the background.
+      guard !Task.isCancelled else {
+        transaction.finish(status: .cancelled)
+        return
+      }
+
       transaction.finish(status: .internalError)
       SentrySDK.capture(error: error) { scope in
         scope.setTag(value: "load", key: "navData.operation")
         scope.setFingerprint(["navData", "load"])
       }
       self.error = error
-
-      // Return to the consent screen so the user can retry the download
-      progressTask.cancel()
-      state = .idle
     }
   }
 
@@ -378,6 +426,11 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
     }
     self.error = error
   }
+
+  isolated deinit {
+    for task in observations { task.cancel() }
+    for task in loadTasks { task.cancel() }
+  }
 }
 
 /// File-scope helper for computing nav-data loader state from any `ModelContext`.
@@ -391,8 +444,7 @@ private enum NavDataStateHelper {
     let noData = try context.fetch(airportDescriptor).isEmpty
 
     let schemaOutOfDate = Defaults[.schemaVersion] != latestSchemaVersion
-    let nasrExpiration = try fetchNASRExpiration(context: context)
-    let dataOutOfDate = nasrExpiration.map { Date() > $0 } ?? true
+    let dataOutOfDate = try !isNASRCycleEffective(context: context)
 
     return State(
       noData: noData,
@@ -401,13 +453,19 @@ private enum NavDataStateHelper {
     )
   }
 
-  private static func fetchNASRExpiration(context: ModelContext) throws -> Date? {
+  /// Whether the installed NASR cycle is inside the window it is effective for.
+  ///
+  /// The cycle judges itself, on the same half-open window a published manifest states: in force
+  /// from the instant it takes effect until the instant it expires, which is the instant its
+  /// successor takes effect. Anything else installed — a cycle that has lapsed, one dated ahead of
+  /// today, or no cycle at all — is data outside its validity, and the loader is what replaces it.
+  private static func isNASRCycleEffective(context: ModelContext) throws -> Bool {
     let nasrRawValue = CycleDataSource.nasr.rawValue
     var descriptor = FetchDescriptor<Cycle>(
       predicate: #Predicate { $0._dataSource == nasrRawValue }
     )
     descriptor.fetchLimit = 1
-    return try context.fetch(descriptor).first?.expires
+    return try context.fetch(descriptor).first?.isEffective ?? false
   }
 
   struct State {
