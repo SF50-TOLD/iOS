@@ -60,6 +60,10 @@ aircraft.
 - On the landing screen the total distance turns red when it overruns, as the
   takeoff screen already did, and VoiceOver says whether the landing distance
   available is sufficient.
+- A departure or arrival time already behind now draws its conditions from the
+  forecast rather than from the current observation. An observation describes
+  the hour it was taken in, which says as little about an hour ago as it does
+  about an hour ahead.
 
 ## 3.7.1
 

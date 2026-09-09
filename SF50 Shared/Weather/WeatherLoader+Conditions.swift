@@ -27,8 +27,10 @@ extension WeatherLoader {
 
   /// The METAR or TAF conditions published for a key, or `nil` if none covers it.
   ///
-  /// An observation stands for the hour it was taken in; past that, the forecast period covering
-  /// the requested time is used instead.
+  /// An observation stands for the hour it was taken in; outside that hour, the forecast period
+  /// covering the requested time is used instead. A time already behind that hour has no such
+  /// period — a TAF forecasts only ahead — so it answers `nil` and the models supply the
+  /// conditions.
   private func aviationConditions(for key: Key) -> Loadable<Conditions?> {
     guard key.isCurrent else {
       return forecasts.map { forecasts in
@@ -105,8 +107,14 @@ extension WeatherLoader {
 }
 
 extension WeatherLoader.Key {
-  /// Whether the requested time is near enough to now to be served by a current observation.
-  fileprivate var isCurrent: Bool { time.timeIntervalSinceNow < 3600 }
+  /// Whether the requested time falls within an hour either side of now, near enough to be served by
+  /// a current observation.
+  ///
+  /// The window is two-sided. An observation describes the hour it was taken in, which says as
+  /// little about a time an hour behind as it does about one an hour ahead, so neither is served
+  /// from it. Only the future side has a TAF period to fall through to; a time further behind than
+  /// this window draws its conditions from the forecast models alone.
+  fileprivate var isCurrent: Bool { abs(time.timeIntervalSinceNow) < HourWeather.length }
 }
 
 extension HourWeather {
