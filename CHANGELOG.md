@@ -64,6 +64,9 @@ aircraft.
   forecast rather than from the current observation. An observation describes
   the hour it was taken in, which says as little about an hour ago as it does
   about an hour ahead.
+- VoiceOver speaks a contaminant's depth with its unit — "zero point five
+  inches" — rather than the prime mark, which some voices drop entirely and
+  leave a depth with nothing to say what it measures.
 
 ## 3.7.1
 
