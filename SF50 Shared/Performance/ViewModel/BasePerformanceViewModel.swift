@@ -498,5 +498,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   // MARK: - Deinitialization
 
-  isolated deinit { notamObservationTask?.cancel() }
+  isolated deinit {
+    notamObservationTask?.cancel()
+    for task in cancellables { task.cancel() }
+  }
 }

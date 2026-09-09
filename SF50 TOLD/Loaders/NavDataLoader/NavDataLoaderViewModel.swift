@@ -444,8 +444,7 @@ private enum NavDataStateHelper {
     let noData = try context.fetch(airportDescriptor).isEmpty
 
     let schemaOutOfDate = Defaults[.schemaVersion] != latestSchemaVersion
-    let nasrExpiration = try fetchNASRExpiration(context: context)
-    let dataOutOfDate = nasrExpiration.map { Date() > $0 } ?? true
+    let dataOutOfDate = try !isNASRCycleEffective(context: context)
 
     return State(
       noData: noData,
@@ -454,13 +453,19 @@ private enum NavDataStateHelper {
     )
   }
 
-  private static func fetchNASRExpiration(context: ModelContext) throws -> Date? {
+  /// Whether the installed NASR cycle is inside the window it is effective for.
+  ///
+  /// The cycle judges itself, on the same half-open window a published manifest states: in force
+  /// from the instant it takes effect until the instant it expires, which is the instant its
+  /// successor takes effect. Anything else installed — a cycle that has lapsed, one dated ahead of
+  /// today, or no cycle at all — is data outside its validity, and the loader is what replaces it.
+  private static func isNASRCycleEffective(context: ModelContext) throws -> Bool {
     let nasrRawValue = CycleDataSource.nasr.rawValue
     var descriptor = FetchDescriptor<Cycle>(
       predicate: #Predicate { $0._dataSource == nasrRawValue }
     )
     descriptor.fetchLimit = 1
-    return try context.fetch(descriptor).first?.expires
+    return try context.fetch(descriptor).first?.isEffective ?? false
   }
 
   struct State {

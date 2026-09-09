@@ -49,8 +49,12 @@ public final class Cycle: AnyCycle {
   }
 
   /// Whether the current date falls within the cycle's effective period.
+  ///
+  /// The period is half-open: a cycle is in force from the instant it takes effect until the
+  /// instant it expires, which is the same instant its successor takes effect.
   public var isEffective: Bool {
-    (effective..<expires).contains(Date())
+    let now = Date()
+    return effective <= now && now < expires
   }
 
   /// Whether the cycle has expired.
