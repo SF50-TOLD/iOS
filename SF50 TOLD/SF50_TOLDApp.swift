@@ -15,13 +15,23 @@ private class WidgetReloadObserver: ObservableObject {
     setupObserver()
   }
 
+  /// Watches for a changed default and asks the widget to redraw.
+  ///
+  /// The observer names no queue and hands the reload to the main actor itself, so the thread
+  /// that posted the notification is never made to wait. An observer bound to a queue is
+  /// delivered by making every poster wait for that queue to run it, and the posters include
+  /// `registerDefaults(_:)`, which `Defaults` calls from inside a key's one-time initializer:
+  /// a background thread first touching a key would hold that initializer while waiting on
+  /// the main queue, and a main thread touching the same key would wait on the initializer.
   private func setupObserver() {
     notificationObserver = NotificationCenter.default.addObserver(
       forName: UserDefaults.didChangeNotification,
       object: nil,
-      queue: .main
+      queue: nil
     ) { _ in
-      WidgetCenter.shared.reloadTimelines(ofKind: "SF50_SelectedAirport")
+      Task { @MainActor in
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetKind.selectedAirportPerformance)
+      }
     }
   }
 

@@ -6,9 +6,7 @@ import Testing
 @testable import SF50_TOLD
 
 /// Exercises TLR report generation end to end, through to the PDF a pilot files.
-///
-/// Serialized because generating two reports at once deadlocks.
-@Suite(.serialized)
+@Suite
 struct `Takeoff Report` {
 
   private static let scenarioBehindAccordion = "Hot Day"
