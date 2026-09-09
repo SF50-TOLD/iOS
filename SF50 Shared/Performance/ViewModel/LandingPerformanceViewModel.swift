@@ -66,7 +66,12 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
     return valuesOffscaleHigh || (model?.landingInputsOffscaleHigh ?? false)
   }
 
-  public var availableLandingRun: Measurement<UnitLength>? {
+  /// Landing distance available on the selected runway, less any NOTAMed shortening, or `nil`
+  /// until a runway is selected.
+  ///
+  /// A landing declares one distance rather than a separate run and distance, so both the ground
+  /// run and the total landing distance are measured against this length.
+  public var availableLandingDistance: Measurement<UnitLength>? {
     runway?.availableLandingDistance(notamedBy: notam)
   }
 
@@ -156,7 +161,7 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
     notes += generateInputNotes(for: .landing, VREFAdditiveKts: VREFAdditiveKts)
 
     // Distance exceedance
-    if let available = availableLandingRun,
+    if let available = availableLandingDistance,
       let dist = landingDistance.nominal, dist > available
     {
       notes.append(.landingDistanceExceedsAvailable(required: dist, available: available))
