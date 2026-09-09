@@ -15,7 +15,7 @@ import WidgetKit
 /// The airport, the leg, and the landing flap setting are all editable on the widget itself, so two
 /// pinned widgets can show departure and destination at the same time.
 struct SelectedAirportPerformanceWidget: Widget {
-  let kind: String = "SF50_SelectedAirport"
+  let kind = WidgetKind.selectedAirportPerformance
 
   var body: some WidgetConfiguration {
     AppIntentConfiguration(
