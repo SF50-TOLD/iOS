@@ -115,7 +115,8 @@ struct ScenarioDetailView: View {
               ),
               in: .inches,
               format: .depth,
-              minimum: .init(value: 0, unit: .inches)
+              minimum: Contamination.shallowestTabulatedDepth,
+              maximum: Contamination.deepestTabulatedDepth
             )
             .accessibilityIdentifier("contaminationDepthField")
           }

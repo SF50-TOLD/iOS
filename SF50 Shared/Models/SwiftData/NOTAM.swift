@@ -187,6 +187,15 @@ public enum Contamination: Sendable, Hashable {
   /// Runway Condition Code (AC 91-79B) with landing distance factor
   case rwyCC(UInt8)
 
+  /// The shallowest and deepest contaminant depths the AFM’s water and slush tables tabulate.
+  ///
+  /// The tabular model answers between these depths and nowhere else: outside them the AFM gives
+  /// no distance, so the model reports the depth as offscale rather than reading it at the
+  /// nearest depth the tables do hold. The regression model, fitted to these same tables,
+  /// extrapolates past them.
+  public static let shallowestTabulatedDepth = Measurement(value: 0.125, unit: UnitLength.inches),
+    deepestTabulatedDepth = Measurement(value: 0.5, unit: UnitLength.inches)
+
   /// How the condition reads wherever the app writes it down, so a runway row and a TLR report say
   /// the same thing about the same runway.
   ///
@@ -296,15 +305,19 @@ public enum Contamination: Sendable, Hashable {
   }
 
   /// Creates contamination from persistence storage values.
+  ///
+  /// A depth of zero or less describes a runway with nothing on it, so the reading is rejected the
+  /// way a missing one is: every reader — the runway row, the TLR report, the performance models —
+  /// then sees a clean runway and says the same thing about it.
   init?(type: String?, depth: Double?, rwyCC: UInt8? = nil) {
     guard let type, let typeEnum = ContaminationType(rawValue: type) else { return nil }
 
     switch typeEnum {
       case .waterOrSlush:
-        guard let depth else { return nil }
+        guard let depth, depth > 0 else { return nil }
         self = .waterOrSlush(depth: .init(value: depth, unit: .meters))
       case .slushOrWetSnow:
-        guard let depth else { return nil }
+        guard let depth, depth > 0 else { return nil }
         self = .slushOrWetSnow(depth: .init(value: depth, unit: .meters))
       case .drySnow:
         self = .drySnow

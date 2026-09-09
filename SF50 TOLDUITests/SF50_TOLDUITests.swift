@@ -134,7 +134,9 @@ extension SF50_TOLDUITests {
 
     let notams = landing.openNOTAMs()
     notams.selectContamination("Water/Slush")
-    notams.adjustContaminationDepth(to: 0.4)
+    // The slider spans the AFM's applicability, 0.1″–0.5″ in tenths, so a quarter
+    // of the way along is two tenths of an inch.
+    notams.adjustContaminationDepth(to: 0.25)
     notams.goBack()
 
     _ = landing.app.staticTexts["landingDistanceValue"].waitForExistence(timeout: 5)

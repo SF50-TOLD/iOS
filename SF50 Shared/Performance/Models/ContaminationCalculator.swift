@@ -45,11 +45,28 @@ final class ContaminationCalculator {
 
   // MARK: - Constants
 
-  /// Minimum contamination depth in inches from AFM tables.
-  /// Depths below this threshold are treated as clean runway (no contamination effect).
-  /// Per AFM: "Data is primarily for runways where greater than 0.1 inch (3.0 mm)
-  /// of contaminant is observed (FICON 4 or worse)."
-  private static let minimumDepthInches: Double = 0.125
+  /// The shallowest and deepest contaminant depths, in inches, the AFM's water and slush tables
+  /// tabulate, and so the span the regression formulas were fitted over.
+  private static let
+    shallowestTabulatedDepthInches = Contamination.shallowestTabulatedDepth
+      .converted(to: .inches).value,
+    deepestTabulatedDepthInches = Contamination.deepestTabulatedDepth
+      .converted(to: .inches).value
+
+  /// The deepest contaminant, in inches, the regression formulas are extrapolated to.
+  ///
+  /// The formulas are extrapolated no further past the tabulated depths than those depths
+  /// themselves span — three eighths of an inch — which puts the ceiling at seven eighths of an
+  /// inch. Deeper than that the fitted shape rather than the physics sets the answer: both
+  /// formulas carry a term in distance times depth that grows without bound, so the water formula
+  /// falls through zero near an inch and a half and reaches thousands of feet negative by three.
+  ///
+  /// Below the ceiling the water formula does put a deep contaminant's ground run under the dry
+  /// one, from about two thirds of an inch. That is an answer rather than a failure: deep
+  /// contaminant displaces and sprays, and the drag of it decelerates the aircraft. What the
+  /// ceiling rules out is the distance the formula has no physics left to justify.
+  private static let deepestExtrapolatedDepthInches =
+    deepestTabulatedDepthInches + (deepestTabulatedDepthInches - shallowestTabulatedDepthInches)
 
   /// Wet runway landing distance factor per AFM (15% increase).
   private static let wetRunwayFactor: Double = 1.15
@@ -105,6 +122,20 @@ final class ContaminationCalculator {
     self.waterData = nil
     self.rwyCCLDFGrooved = Self.loadRwyCCFactors(filename: "rwycc_ldf_grooved")
     self.rwyCCLDFSmooth = Self.loadRwyCCFactors(filename: "rwycc_ldf_smooth")
+  }
+
+  // MARK: - Type Methods
+
+  /// Whether the regression formulas answer for a contaminant of the given depth, in inches.
+  ///
+  /// Shallower than the tabulated depths the formulas converge on the tables' own shallow-water
+  /// worst case — roughly nineteen tenths of the dry ground run for water and seventeen tenths for
+  /// slush, since shallow contaminant brakes worse than deep contaminant drags — so extrapolating
+  /// down to a film of water stays bounded and conservative. A depth of zero is the one that falls
+  /// out below: it describes a clean runway, which is not what a contaminant reading is for.
+  /// Deeper, the formulas run out at the extrapolation ceiling.
+  private static func isExtrapolable(depthInches: Double) -> Bool {
+    depthInches > 0 && depthInches <= deepestExtrapolatedDepthInches
   }
 
   // MARK: - Public Methods
@@ -209,10 +240,12 @@ final class ContaminationCalculator {
         }
 
       case .waterOrSlush(let depth):
-        return tabularWaterContamination(distance: distance, depth: depth)
+        guard let waterData else { return distance }
+        return tabularDepthContamination(distance: distance, depth: depth, in: waterData)
 
       case .slushOrWetSnow(let depth):
-        return tabularSlushContamination(distance: distance, depth: depth)
+        guard let slushData else { return distance }
+        return tabularDepthContamination(distance: distance, depth: depth, in: slushData)
 
       case .drySnow:
         return tabularDrySnowContamination(distance: distance)
@@ -259,43 +292,21 @@ final class ContaminationCalculator {
 
   // MARK: - Tabular Contamination Methods
 
-  private func tabularWaterContamination(
+  /// The AFM's contaminated ground run, read from a table tabulated by dry ground run and
+  /// contaminant depth.
+  ///
+  /// The depth axis is left unclamped, so a depth outside the tabulated range comes back offscale.
+  /// The tables carry no distance for such a runway, and reading one at the nearest depth they do
+  /// carry would present an answer the AFM never gave.
+  private func tabularDepthContamination(
     distance: Value<Double>,
-    depth: Measurement<UnitLength>
+    depth: Measurement<UnitLength>,
+    in table: DataTable
   ) -> Value<Double> {
-    guard let waterData else { return distance }
-
     let depthInches = depth.converted(to: .inches).value
 
-    // Per AFM, contamination data is only for depths > 0.1" (minimum table value is 0.125")
-    // For depths below this, treat as clean runway (no contamination effect)
-    guard depthInches >= Self.minimumDepthInches else { return distance }
-
     return distance.flatMap { distanceValue in
-      waterData.value(
-        for: [distanceValue, depthInches],
-        clamping: [.clampBoth, .clampHigh]  // Clamp depth to max only, not below minimum
-      )
-    }
-  }
-
-  private func tabularSlushContamination(
-    distance: Value<Double>,
-    depth: Measurement<UnitLength>
-  ) -> Value<Double> {
-    guard let slushData else { return distance }
-
-    let depthInches = depth.converted(to: .inches).value
-
-    // Per AFM, contamination data is only for depths > 0.1" (minimum table value is 0.125")
-    // For depths below this, treat as clean runway (no contamination effect)
-    guard depthInches >= Self.minimumDepthInches else { return distance }
-
-    return distance.flatMap { distanceValue in
-      slushData.value(
-        for: [distanceValue, depthInches],
-        clamping: [.clampBoth, .clampHigh]  // Clamp depth to max only, not below minimum
-      )
+      table.value(for: [distanceValue, depthInches], clamping: [.clampBoth, .none])
     }
   }
 
@@ -322,10 +333,7 @@ final class ContaminationCalculator {
     depth: Measurement<UnitLength>
   ) -> Value<Double> {
     let depthInches = depth.converted(to: .inches).value
-
-    // Per AFM, contamination data is only for depths > 0.1" (minimum table value is 0.125")
-    // For depths below this, treat as clean runway (no contamination effect)
-    guard depthInches >= Self.minimumDepthInches else { return distance }
+    guard Self.isExtrapolable(depthInches: depthInches) else { return .notAvailable }
 
     return distance.map { distanceValue, existingUncertainty in
       // Polynomial regression with interaction term: distance * depth
@@ -359,10 +367,7 @@ final class ContaminationCalculator {
     depth: Measurement<UnitLength>
   ) -> Value<Double> {
     let depthInches = depth.converted(to: .inches).value
-
-    // Per AFM, contamination data is only for depths > 0.1" (minimum table value is 0.125")
-    // For depths below this, treat as clean runway (no contamination effect)
-    guard depthInches >= Self.minimumDepthInches else { return distance }
+    guard Self.isExtrapolable(depthInches: depthInches) else { return .notAvailable }
 
     return distance.map { distanceValue, existingUncertainty in
       let newDistance =

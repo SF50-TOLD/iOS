@@ -327,7 +327,7 @@ struct ContaminationTests {
         return
     }
 
-    let slushContamination2 = Contamination.slushOrWetSnow(depth: .init(value: 0.75, unit: .inches))
+    let slushContamination2 = Contamination.slushOrWetSnow(depth: .init(value: 0.5, unit: .inches))
     let contaminatedNotam = NOTAMInput(
       contaminationType: slushContamination2.type,
       contaminationDepth: .init(value: slushContamination2.depth ?? 0, unit: .meters),
@@ -509,9 +509,9 @@ struct ContaminationTests {
       aircraftType: .g1
     )
 
-    // Deep water (0.75 inches)
+    // Deep water (0.5 inches)
     let deepWaterContamination = Contamination.waterOrSlush(
-      depth: .init(value: 0.75, unit: .inches)
+      depth: .init(value: 0.5, unit: .inches)
     )
     let deepNotam = NOTAMInput(
       contaminationType: deepWaterContamination.type,
@@ -990,7 +990,7 @@ struct ContaminationTests {
   func `landing run never exceeds total landing distance`() {
     let testCases: [(contamination: Contamination?, weight: Double, temp: Double)] = [
       (.waterOrSlush(depth: .init(value: 0.5, unit: .inches)), 6000, 20),
-      (.slushOrWetSnow(depth: .init(value: 0.75, unit: .inches)), 5500, 10),
+      (.slushOrWetSnow(depth: .init(value: 0.5, unit: .inches)), 5500, 10),
       (.drySnow, 5000, -5),
       (.compactSnow, 5500, -10),
       (nil, 6000, 15)  // Clean runway as control
@@ -1033,6 +1033,197 @@ struct ContaminationTests {
             "Landing run should not exceed total landing distance",
             results: ["landing run": run, "landing distance": distance]
           )
+      }
+    }
+  }
+
+  // MARK: - Depths Outside the Tables
+
+  /// ``Contamination/shallowestTabulatedDepth`` and ``Contamination/deepestTabulatedDepth`` state
+  /// where the AFM's water and slush data stops, and the regression formulas' extrapolation
+  /// ceiling is measured from them. Nothing else ties the two constants to the CSVs they
+  /// describe, so this checks them against those: were they widened without the data widening
+  /// too, the regression would extrapolate exactly as far past the fit as they claim is still
+  /// inside it.
+  @Test(arguments: [AircraftType.g1, .g2(updatedThrustSchedule: false), .g2Plus])
+  func `the tabulated depth range matches the AFM tables`(aircraftType: AircraftType) {
+    let loader = DataTableLoader(aircraftType: aircraftType),
+      shallowest = Contamination.shallowestTabulatedDepth.converted(to: .inches).value,
+      deepest = Contamination.deepestTabulatedDepth.converted(to: .inches).value
+
+    for table in [loader.loadContaminationWaterData(), loader.loadContaminationSlushData()] {
+      #expect(table.min(dimension: Self.depthDimension) == shallowest)
+      #expect(table.max(dimension: Self.depthDimension) == deepest)
+    }
+  }
+
+  /// A reading of water or slush no depth at all describes a runway with nothing on it, so it is
+  /// rejected where the reading is parsed. Every reader then agrees: the runway row and the report
+  /// write a clean runway, and both models compute one, instead of printing “Water/Slush 0″”
+  /// beside a penalty for the shallowest depth the AFM tabulates.
+  @Test
+  func `a contaminant of no depth reads as a clean runway`() throws {
+    for condition in DepthCondition.allCases {
+      #expect(Contamination(type: condition.contamination(atDepthInches: 0).type, depth: 0) == nil)
+    }
+
+    let
+      dryRun = try #require(Self.landingRunFt(contamination: nil, usingTabularData: true).nominal),
+      zeroDepthRun = try #require(
+        Self.landingRunFt(
+          contamination: .waterOrSlush(depth: .init(value: 0, unit: .inches)),
+          usingTabularData: true
+        ).nominal
+      )
+    #expect(zeroDepthRun == dryRun)
+  }
+
+  /// The AFM tabulates water and slush from an eighth of an inch through half an inch and gives no
+  /// distance outside that, so the tabular model reports the depth as offscale. Reading such a
+  /// runway at the nearest depth the tables do hold would answer for a runway the AFM never
+  /// covered; handing back the dry distance would be worse still, since the pilot has said there
+  /// is water on it.
+  @Test(arguments: DepthCondition.allCases)
+  func `the tabular model reports a depth outside the AFM tables as offscale`(
+    condition: DepthCondition
+  ) throws {
+    let dryRun = try #require(Self.landingRunFt(contamination: nil, usingTabularData: true).nominal)
+
+    for depthInches in [0.05, 0.1] {
+      let run = Self.landingRunFt(
+        contamination: condition.contamination(atDepthInches: depthInches),
+        usingTabularData: true
+      )
+      #expect(
+        run == .offscaleLow,
+        "\(depthInches)\u{2033} should read offscale low"
+      )
+      #expect(run.nominal != dryRun)
+    }
+
+    for depthInches in [0.6, 3.0] {
+      #expect(
+        Self.landingRunFt(
+          contamination: condition.contamination(atDepthInches: depthInches),
+          usingTabularData: true
+        ) == .offscaleHigh,
+        "\(depthInches)\u{2033} should read offscale high"
+      )
+    }
+  }
+
+  /// The regression formulas are fitted equations, so they answer past the depths the tables
+  /// tabulate: shallower they converge on the tables’ own shallow-water worst case, which is
+  /// both bounded and conservative, and deeper they hold up as far as the fit is extrapolated.
+  /// Past that ceiling the answer is N/A.
+  ///
+  /// Across the tabulated depths the answer stays longer than the dry ground run and shortens as
+  /// the contaminant deepens, the way the tables do. Past them the water formula carries that
+  /// shortening below the dry run, which deep contaminant's displacement and spray drag make an
+  /// answer rather than a failure; what the ceiling keeps out is a distance at or below zero.
+  @Test(arguments: DepthCondition.allCases)
+  func `the regression model extrapolates past the AFM tables and stops at the fit edge`(
+    condition: DepthCondition
+  ) throws {
+    let dryRun = try #require(
+      Self.landingRunFt(contamination: nil, usingTabularData: false).nominal
+    )
+
+    let shallowRun = try #require(
+      Self.landingRunFt(
+        contamination: condition.contamination(atDepthInches: 0.1),
+        usingTabularData: false
+      ).nominal
+    )
+    #expect(shallowRun > dryRun)
+
+    let tabulatedDeepRun = try #require(
+      Self.landingRunFt(
+        contamination: condition.contamination(atDepthInches: 0.5),
+        usingTabularData: false
+      ).nominal
+    )
+    #expect(tabulatedDeepRun > dryRun)
+    #expect(tabulatedDeepRun < shallowRun)
+
+    let extrapolatedDeepRun = try #require(
+      Self.landingRunFt(
+        contamination: condition.contamination(atDepthInches: 0.875),
+        usingTabularData: false
+      ).nominal
+    )
+    #expect(extrapolatedDeepRun > 0)
+    #expect(extrapolatedDeepRun < tabulatedDeepRun)
+
+    for depthInches in [0.9, 3.0] {
+      #expect(
+        Self.landingRunFt(
+          contamination: condition.contamination(atDepthInches: depthInches),
+          usingTabularData: false
+        ) == .notAvailable,
+        "\(depthInches)\u{2033} should read not available"
+      )
+    }
+  }
+}
+
+// MARK: - Helpers
+
+extension ContaminationTests {
+
+  /// The contaminant-depth axis of the AFM's water and slush tables, which are tabulated by dry
+  /// ground run and then by depth.
+  fileprivate static let depthDimension = 1
+
+  /// The G1 landing ground run, in feet, over a runway in the given condition.
+  fileprivate static func landingRunFt(
+    contamination: Contamination?,
+    usingTabularData: Bool
+  ) -> Value<Double> {
+    let runway = Helper.createTestRunway()
+    let conditions = Helper.createTestConditions(temperature: 20),
+      configuration = Helper.createTestConfiguration(weight: 5000),
+      runwayInput = RunwayInput(from: runway, airport: runway.airport, notam: nil),
+      notamInput = contamination.map(notam(for:))
+
+    return usingTabularData
+      ? TabularPerformanceModel(
+        conditions: conditions,
+        configuration: configuration,
+        runway: runwayInput,
+        notam: notamInput,
+        aircraftType: .g1
+      ).landingRunFt
+      : RegressionPerformanceModel(
+        conditions: conditions,
+        configuration: configuration,
+        runway: runwayInput,
+        notam: notamInput,
+        aircraftType: .g1
+      ).landingRunFt
+  }
+
+  private static func notam(for contamination: Contamination) -> NOTAMInput {
+    .init(
+      contaminationType: contamination.type,
+      contaminationDepth: .init(value: contamination.depth ?? 0, unit: .meters),
+      takeoffDistanceShortening: .init(value: 0, unit: .feet),
+      landingDistanceShortening: .init(value: 0, unit: .feet),
+      obstacleHeight: .init(value: 0, unit: .feet),
+      obstacleDistance: .init(value: 0, unit: .nauticalMiles)
+    )
+  }
+
+  /// A runway condition the AFM tabulates by contaminant depth.
+  enum DepthCondition: CaseIterable {
+    case waterOrSlush
+    case slushOrWetSnow
+
+    func contamination(atDepthInches depthInches: Double) -> Contamination {
+      let depth = Measurement(value: depthInches, unit: UnitLength.inches)
+      return switch self {
+        case .waterOrSlush: .waterOrSlush(depth: depth)
+        case .slushOrWetSnow: .slushOrWetSnow(depth: depth)
       }
     }
   }

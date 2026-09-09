@@ -73,6 +73,11 @@ aircraft.
 - VoiceOver speaks a contaminant's depth with its unit — "zero point five
   inches" — rather than the prime mark, which some voices drop entirely and
   leave a depth with nothing to say what it measures.
+- A contaminated runway is answered only where the performance data reaches. A
+  contaminant shallower than the AFM tables tabulate was named on screen and
+  then charged nothing at all: the tabular model now reports it offscale, and
+  the regression model answers where its formulas still hold and reports N/A
+  past that.
 
 ## 3.7.1
 
