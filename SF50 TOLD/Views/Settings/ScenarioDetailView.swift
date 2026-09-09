@@ -63,9 +63,17 @@ struct ScenarioDetailView: View {
           Text("None").tag(nil as String?)
           Text("Flaps Up").tag("flapsUp" as String?)
           Text("Flaps Up ICE").tag("flapsUpIce" as String?)
-          Text("Flaps 50").tag("flaps50" as String?)
+          Text(
+            "Flaps 50",
+            comment:
+              "A flap setting. The number is a percentage of full flap travel, not an angle in degrees."
+          ).tag("flaps50" as String?)
           Text("Flaps 50 ICE").tag("flaps50Ice" as String?)
-          Text("Flaps 100").tag("flaps100" as String?)
+          Text(
+            "Flaps 100",
+            comment:
+              "A flap setting. The number is a percentage of full flap travel, not an angle in degrees."
+          ).tag("flaps100" as String?)
         }
         .accessibilityIdentifier("flapSettingPicker")
 

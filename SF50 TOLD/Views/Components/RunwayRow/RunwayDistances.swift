@@ -28,14 +28,24 @@ struct RunwayDistances: View {
                 distance: runway.availableTakeoffRun(notamedBy: notam),
                 NOTAMed: notam?.shortensTakeoffDistance ?? false
               )
-              Text("TORA").font(.caption2).padding(.bottom, 2)
+              Text(
+                "TORA",
+                comment:
+                  "The takeoff run available. “TORA” is the ICAO abbreviation and is left as it is in every language."
+              )
+              .font(.caption2).padding(.bottom, 2)
             }
             HStack(alignment: .bottom, spacing: 3) {
               RunwayDistance(
                 distance: runway.availableTakeoffDistance(notamedBy: notam),
                 NOTAMed: notam?.shortensTakeoffDistance ?? false
               )
-              Text("TODA").font(.caption2).padding(.bottom, 2)
+              Text(
+                "TODA",
+                comment:
+                  "The takeoff distance available. “TODA” is the ICAO abbreviation and is left as it is in every language."
+              )
+              .font(.caption2).padding(.bottom, 2)
             }
           }
         }

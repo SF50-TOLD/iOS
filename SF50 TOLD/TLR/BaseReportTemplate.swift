@@ -307,7 +307,11 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
         )
 
       case .ISA:
-        return String(localized: "Weather: ISA")
+        return String(
+          localized: "Weather: ISA",
+          comment:
+            "“ISA” is the International Standard Atmosphere, the modeled weather the report falls back to."
+        )
 
       case .entered:
         return String(localized: "Weather: User")
@@ -340,7 +344,11 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
       )
     }
     if let speed {
-      return String(localized: "VRB/\(speed.converted(to: speedUnit), format: .speed)")
+      return String(
+        localized: "VRB/\(speed.converted(to: speedUnit), format: .speed)",
+        comment:
+          "A wind whose direction varies. “VRB” is the METAR abbreviation for a variable direction; the argument is the wind speed."
+      )
     }
     return String(localized: "calm")
   }
@@ -367,7 +375,9 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
         Span(
           String(
             localized:
-              " (\(perfDist.margin.converted(to: runwayLengthUnit), format: .length(plusSign: true)))"
+              " (\(perfDist.margin.converted(to: runwayLengthUnit), format: .length(plusSign: true)))",
+            comment:
+              "Appended to a performance distance to show its margin over the runway. The argument is that margin, in the runway length unit the pilot chose."
           )
         ).class(marginClass)
       ]

@@ -51,7 +51,11 @@ struct RunwayShorteningView: View {
     if let reciprocalName = runway.reciprocal?.name {
       String(localized: "Runway \(reciprocalName) Threshold")
     } else {
-      String(localized: "Runway \(runwayName) DER")
+      String(
+        localized: "Runway \(runwayName) DER",
+        comment:
+          "The departure end of a runway. “DER” abbreviates “departure end of runway”; the argument is the runway name."
+      )
     }
   }
 

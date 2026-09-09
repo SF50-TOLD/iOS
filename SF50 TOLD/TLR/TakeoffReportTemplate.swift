@@ -107,7 +107,13 @@ class TakeoffReportTemplate: BaseReportTemplate<
     Table {
       Thead {
         Tr {
-          Th(String(localized: "A/P"))
+          Th(
+            String(
+              localized: "A/P",
+              comment:
+                "Column header over the airport identifier. “A/P” abbreviates “airport”, not “autopilot”."
+            )
+          )
           Th(String(localized: "Rwy"))
           Th(String(localized: "OAT"))
           Th(String(localized: "Wind"))
@@ -144,7 +150,13 @@ class TakeoffReportTemplate: BaseReportTemplate<
       Thead {
         Tr {
           Th(String(localized: "Rwy"))
-          Th(String(localized: "TODA"))
+          Th(
+            String(
+              localized: "TODA",
+              comment:
+                "The takeoff distance available. “TODA” is the ICAO abbreviation and is left as it is in every language."
+            )
+          )
           Th(String(localized: "MTOW"))
           Th(String(localized: "Limit"))
         }

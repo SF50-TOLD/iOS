@@ -108,7 +108,13 @@ class LandingReportTemplate: BaseReportTemplate<
     Table {
       Thead {
         Tr {
-          Th(String(localized: "A/P"))
+          Th(
+            String(
+              localized: "A/P",
+              comment:
+                "Column header over the airport identifier. “A/P” abbreviates “airport”, not “autopilot”."
+            )
+          )
           Th(String(localized: "Rwy"))
           Th(String(localized: "OAT"))
           Th(String(localized: "Wind"))
@@ -147,7 +153,13 @@ class LandingReportTemplate: BaseReportTemplate<
       Thead {
         Tr {
           Th(String(localized: "Rwy"))
-          Th(String(localized: "LDA"))
+          Th(
+            String(
+              localized: "LDA",
+              comment:
+                "Column header over the landing distance available. “LDA” is the ICAO abbreviation and is left as it is in every language."
+            )
+          )
           Th(String(localized: "MLW"))
           Th(String(localized: "Limit"))
           Th(String(localized: "Cond"))

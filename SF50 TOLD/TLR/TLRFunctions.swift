@@ -68,9 +68,19 @@ func format(flapSetting setting: FlapSetting, short: Bool = false) -> String {
     switch setting {
       case .flapsUp: return String(localized: "Flaps Up")
       case .flapsUpIce: return String(localized: "Flaps Up ICE")
-      case .flaps50: return String(localized: "Flaps 50")
+      case .flaps50:
+        return String(
+          localized: "Flaps 50",
+          comment:
+            "A flap setting. The number is a percentage of full flap travel, not an angle in degrees."
+        )
       case .flaps50Ice: return String(localized: "Flaps 50 ICE")
-      case .flaps100: return String(localized: "Flaps 100")
+      case .flaps100:
+        return String(
+          localized: "Flaps 100",
+          comment:
+            "A flap setting. The number is a percentage of full flap travel, not an angle in degrees."
+        )
     }
   }
 }

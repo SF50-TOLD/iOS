@@ -158,7 +158,9 @@ struct ClimbConfigView: View {
           let deviation = performance.ISADeviation.converted(to: deviationUnit)
 
           Text(
-            "\(OAT, format: .temperature) (ISA\(deviation.value, format: .temperature.sign(strategy: .always())))"
+            "\(OAT, format: .temperature) (ISA\(deviation.value, format: .temperature.sign(strategy: .always())))",
+            comment:
+              "The outside air temperature and how far it departs from the International Standard Atmosphere. The first argument is that temperature, the second the signed difference from ISA."
           )
           .fontWeight(.semibold)
           .id(temperatureUnit)

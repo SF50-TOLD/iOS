@@ -26,8 +26,13 @@ struct WeatherRow: View {
       }
     } else if weather.conditions.source == .ISA {
       if weather.error != nil {
-        Text("Couldn’t load weather — using ISA").foregroundStyle(.red)
-          .accessibilityIdentifier("loadingWeatherFailedLabel")
+        Text(
+          "Couldn’t load weather — using ISA",
+          comment:
+            "“ISA” is the International Standard Atmosphere, the modeled weather the app falls back to."
+        )
+        .foregroundStyle(.red)
+        .accessibilityIdentifier("loadingWeatherFailedLabel")
       } else {
         Text("No weather — using ISA").foregroundStyle(.secondary)
           .accessibilityIdentifier("noWeatherLabel")

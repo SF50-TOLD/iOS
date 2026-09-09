@@ -43,9 +43,13 @@ struct WeatherSource: View {
               .font(.subheadline)
           case .ISA:
             if weather.error != nil {
-              Text("Couldn’t load weather — using ISA")
-                .font(.subheadline)
-                .foregroundStyle(.red)
+              Text(
+                "Couldn’t load weather — using ISA",
+                comment:
+                  "“ISA” is the International Standard Atmosphere, the modeled weather the app falls back to."
+              )
+              .font(.subheadline)
+              .foregroundStyle(.red)
             } else {
               Text("Using ISA weather")
                 .font(.subheadline)

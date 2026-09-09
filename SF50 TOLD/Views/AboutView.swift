@@ -174,15 +174,27 @@ private struct CycleRow: View {
             .bold()
           switch state {
             case .active:
-              Text("expires \(cycle.expires, format: .dateTime.year().month().day())")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+              Text(
+                "expires \(cycle.expires, format: .dateTime.year().month().day())",
+                comment:
+                  "When a navigation data cycle stops being current. The argument is that date."
+              )
+              .font(.caption)
+              .foregroundStyle(.secondary)
             case .expired:
-              Text("expired \(cycle.expires, format: .dateTime.year().month().day())")
-                .font(.caption)
+              Text(
+                "expired \(cycle.expires, format: .dateTime.year().month().day())",
+                comment:
+                  "When a navigation data cycle stopped being current. The argument is that date."
+              )
+              .font(.caption)
             case .notYetActive:
-              Text("effective \(cycle.effective, format: .dateTime.year().month().day())")
-                .font(.caption)
+              Text(
+                "effective \(cycle.effective, format: .dateTime.year().month().day())",
+                comment:
+                  "When a navigation data cycle starts being current. The argument is that date."
+              )
+              .font(.caption)
           }
         }
         .foregroundStyle(state.color)
