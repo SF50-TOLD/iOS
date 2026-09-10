@@ -29,20 +29,11 @@ aircraft.
 
 ### Navigation Data
 
-- The airport database now arrives ready-built. The app used to spend several
-  minutes assembling it on the aircraft before it could be used at all. It now
-  downloads a database built ahead of time, and builds one itself only where no
-  published database suits this version of the app.
-- A published database is used only while the cycle it was built for is in
-  force. One whose cycle has lapsed is passed over and the current cycle's data
-  imported instead, rather than installing data already out of date and asking
-  to download it again at every launch.
-- An airport the new dataset no longer carries is forgotten, along with the
-  runway chosen on it. The FAA retires airports between cycles, and a selection
-  left pointing at one made the widget and Siri fail and then suggest reloading
-  the very data that had removed it.
-- A selection survives a dataset that cannot be read at all. Only a dataset that
-  answers, and does not carry the airport, clears it.
+- A database is used only while its cycle is in force; a lapsed one is passed
+  over and the current cycle imported.
+- An airport the new dataset no longer carries is forgotten along with its
+  runway, instead of the widget and Siri failing on a retired one.
+- A selection survives a dataset that cannot be read at all.
 
 ### Elsewhere
 
@@ -66,18 +57,11 @@ aircraft.
 - On the landing screen the total distance turns red when it overruns, as the
   takeoff screen already did, and VoiceOver says whether the landing distance
   available is sufficient.
-- A departure or arrival time already behind now draws its conditions from the
-  forecast rather than from the current observation. An observation describes
-  the hour it was taken in, which says as little about an hour ago as it does
-  about an hour ahead.
-- VoiceOver speaks a contaminant's depth with its unit — "zero point five
-  inches" — rather than the prime mark, which some voices drop entirely and
-  leave a depth with nothing to say what it measures.
-- A contaminated runway is answered only where the performance data reaches. A
-  contaminant shallower than the AFM tables tabulate was named on screen and
-  then charged nothing at all: the tabular model now reports it offscale, and
-  the regression model answers where its formulas still hold and reports N/A
-  past that.
+- A departure or arrival time already behind draws its conditions from the
+  forecast rather than the current observation.
+- VoiceOver speaks a contaminant's depth with its unit, not a prime mark that
+  some voices drop.
+- A contaminated runway is answered only where the performance data reaches.
 
 ## 3.7.1
 
