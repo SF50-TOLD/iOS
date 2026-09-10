@@ -40,6 +40,7 @@
 		01AA52322F2DDF110085F4C6 /* SwiftR2 in Frameworks */ = {isa = PBXBuildFile; productRef = 01AA52312F2DDF110085F4C6 /* SwiftR2 */; };
 		01AC00202FE0000000000020 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00102FE0000000000010 /* MeasurementKit */; };
 		01AC00212FE0000000000021 /* MeasurementKitLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00112FE0000000000011 /* MeasurementKitLocation */; };
+		01AC00282FE0000000000028 /* MeasurementKitLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00182FE0000000000018 /* MeasurementKitLocation */; };
 		01AC00222FE0000000000022 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00122FE0000000000012 /* MeasurementKit */; };
 		01AC00232FE0000000000023 /* MeasurementKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00132FE0000000000013 /* MeasurementKitUI */; };
 		01AC00242FE0000000000024 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00142FE0000000000014 /* MeasurementKit */; };
@@ -333,6 +334,7 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				01AC00232FE0000000000023 /* MeasurementKitUI in Frameworks */,
+				01AC00282FE0000000000028 /* MeasurementKitLocation in Frameworks */,
 				01AC00222FE0000000000022 /* MeasurementKit in Frameworks */,
 				0198B44E2E986226003CB126 /* Sentry in Frameworks */,
 				01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */,
@@ -564,6 +566,7 @@
 			packageProductDependencies = (
 				01AC00122FE0000000000012 /* MeasurementKit */,
 				01AC00132FE0000000000013 /* MeasurementKitUI */,
+				01AC00182FE0000000000018 /* MeasurementKitLocation */,
 				0163BCA82DDEF40D008FEE8F /* SwiftNASR */,
 				01D1E3122DDF890100C1CAC8 /* Logging */,
 				01BEBCB72E8A401100631DE6 /* SwiftHtml */,
@@ -2001,6 +2004,11 @@
 			productName = MeasurementKit;
 		};
 		01AC00112FE0000000000011 /* MeasurementKitLocation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKitLocation;
+		};
+		01AC00182FE0000000000018 /* MeasurementKitLocation */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
 			productName = MeasurementKitLocation;
