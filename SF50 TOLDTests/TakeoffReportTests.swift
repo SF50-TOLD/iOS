@@ -17,7 +17,9 @@ struct `Takeoff Report` {
   private static func performanceInput(
     runwayNames: [String] = ["36"],
     takeoffRun: Measurement<UnitLength>? = nil,
-    takeoffDistance: Measurement<UnitLength>? = nil
+    takeoffDistance: Measurement<UnitLength>? = nil,
+    obstacle: (height: Measurement<UnitLength>, distance: Measurement<UnitLength>)? = nil,
+    useRegressionModel: Bool = false
   ) -> PerformanceInput {
     let airport = Airport(
       recordID: "TEST",
@@ -48,9 +50,13 @@ struct `Takeoff Report` {
     }
     airport.runways = runways
 
+    let notam = obstacle.map {
+      NOTAM(runway: runways[0], obstacleHeight: $0.height, obstacleDistance: $0.distance)
+    }
+
     return PerformanceInput(
-      airport: .init(from: airport, notams: [:]),
-      runway: .init(from: runways[0], airport: airport, notam: nil),
+      airport: .init(from: airport, notams: notam.map { [runways[0].name: $0] } ?? [:]),
+      runway: .init(from: runways[0], airport: airport, notam: notam),
       conditions: .init(
         windDirection: .init(value: 360, unit: .degrees),
         windSpeed: .init(value: 10, unit: .knots),
@@ -60,7 +66,7 @@ struct `Takeoff Report` {
       weight: .init(value: 5500, unit: .pounds),
       flapSetting: .flaps50,
       safetyFactor: 1.0,
-      useRegressionModel: false,
+      useRegressionModel: useRegressionModel,
       aircraftType: .g1,
       emptyWeight: .init(value: 3550, unit: .pounds),
       date: .now
@@ -200,6 +206,36 @@ struct `Takeoff Report` {
 
     #expect(overClearway == .field, "A takeoff run too short for the ground run is a field limit")
     #expect(overPavement != .field, "The same runway without a clearway is not field-limited")
+  }
+
+  /// The maximum-weight search has to reach the same verdict whichever model computed the figures.
+  /// The regression model reports every figure with an uncertainty band, and a search that reads
+  /// only bare values sees nothing to test the obstacle against — so it publishes a weight that
+  /// was never checked against it.
+  @Test(arguments: [false, true])
+  func `limits weight by an obstacle under either performance model`(
+    useRegressionModel: Bool
+  ) throws {
+    let obstacle = (
+      height: Measurement(value: 200, unit: UnitLength.feet),
+      distance: Measurement(value: 3000, unit: UnitLength.feet)
+    )
+
+    let limitedByObstacle = try Self.limitingFactor(
+      of: Self.performanceInput(obstacle: obstacle, useRegressionModel: useRegressionModel)
+    )
+    let unobstructed = try Self.limitingFactor(
+      of: Self.performanceInput(useRegressionModel: useRegressionModel)
+    )
+
+    #expect(
+      limitedByObstacle == .obstacle,
+      "An obstacle the climb cannot clear should limit the weight"
+    )
+    #expect(
+      unobstructed != .obstacle,
+      "The same runway without the obstacle is not obstacle-limited"
+    )
   }
 
   /// A shared file should identify the operation it describes rather than be one of many

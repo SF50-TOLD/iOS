@@ -30,11 +30,21 @@ public enum Value<T> {
   /// The calculation is not authorized (e.g., missing required data).
   case notAuthorized
 
-  /// The required value exceeds the maximum valid range for the performance model.
-  case offscaleHigh
+  /**
+   * The required value exceeds the maximum valid range for the performance model.
+   *
+   * `clamped` carries the figure the model substituted by holding the input at the top of its
+   * range, or `nil` where it had no figure to substitute.
+   */
+  case offscaleHigh(clamped: T?)
 
-  /// The required value is below the minimum valid range for the performance model.
-  case offscaleLow
+  /**
+   * The required value is below the minimum valid range for the performance model.
+   *
+   * `clamped` carries the figure the model substituted by holding the input at the bottom of its
+   * range, or `nil` where it had no figure to substitute.
+   */
+  case offscaleLow(clamped: T?)
 
   /**
    * Transforms the value using the provided closure.
@@ -53,8 +63,8 @@ public enum Value<T> {
       case .invalid: .invalid
       case .notAvailable: .notAvailable
       case .notAuthorized: .notAuthorized
-      case .offscaleHigh: .offscaleHigh
-      case .offscaleLow: .offscaleLow
+      case .offscaleHigh(let clamped): try .offscaleHigh(clamped: clamped.map(transform))
+      case .offscaleLow(let clamped): try .offscaleLow(clamped: clamped.map(transform))
     }
   }
 
@@ -73,8 +83,10 @@ public enum Value<T> {
       case .invalid: .invalid
       case .notAvailable: .notAvailable
       case .notAuthorized: .notAuthorized
-      case .offscaleHigh: .offscaleHigh
-      case .offscaleLow: .offscaleLow
+      case .offscaleHigh(let clamped):
+        try .offscaleHigh(clamped: clamped.flatMap { try transform($0).nominalOrClamped })
+      case .offscaleLow(let clamped):
+        try .offscaleLow(clamped: clamped.flatMap { try transform($0).nominalOrClamped })
     }
   }
 
@@ -97,8 +109,10 @@ public enum Value<T> {
       case .invalid: return .invalid
       case .notAvailable: return .notAvailable
       case .notAuthorized: return .notAuthorized
-      case .offscaleHigh: return .offscaleHigh
-      case .offscaleLow: return .offscaleLow
+      case .offscaleHigh(let clamped):
+        return try .offscaleHigh(clamped: clamped.map { try transform($0, nil).0 })
+      case .offscaleLow(let clamped):
+        return try .offscaleLow(clamped: clamped.map { try transform($0, nil).0 })
     }
   }
 }
@@ -109,8 +123,9 @@ extension Value: Equatable where T: Equatable {}
 extension Value where T: FloatingPoint, T: Comparable {
   /// Multiplies two values, propagating uncertainty through quadrature.
   static func *= (lhs: inout Value<T>, rhs: Value<T>) {
+    let left = lhs
     lhs =
-      switch (lhs, rhs) {
+      switch (left, rhs) {
         case (.value(let lv), .value(let rv)):
           .value(lv * rv)
         case (.value(let lv), .valueWithUncertainty(let rv, uncertainty: let ru)):
@@ -136,11 +151,7 @@ extension Value where T: FloatingPoint, T: Comparable {
               rightUncertainty: ru
             )
           )
-        case (.invalid, _), (_, .invalid): .invalid
-        case (.notAuthorized, _), (_, .notAuthorized): .notAuthorized
-        case (.notAvailable, _), (_, .notAvailable): .notAvailable
-        case (.offscaleHigh, _), (_, .offscaleHigh): .offscaleHigh
-        case (.offscaleLow, _), (_, .offscaleLow): .offscaleLow
+        default: refusal(left, rhs, combining: { $0 * $1 })
       }
   }
 
@@ -160,8 +171,9 @@ extension Value where T: FloatingPoint, T: Comparable {
 
   /// Adds two values, propagating uncertainty through quadrature (RSS).
   static func += (lhs: inout Value<T>, rhs: Value<T>) {
+    let left = lhs
     lhs =
-      switch (lhs, rhs) {
+      switch (left, rhs) {
         case (.value(let lv), .value(let rv)):
           .value(lv + rv)
         case (.value(let lv), .valueWithUncertainty(let rv, uncertainty: let ru)):
@@ -173,11 +185,7 @@ extension Value where T: FloatingPoint, T: Comparable {
           .valueWithUncertainty(let rv, uncertainty: let ru)
         ):
           .valueWithUncertainty(lv + rv, uncertainty: addUncertaintiesRSS(lu, ru))
-        case (.invalid, _), (_, .invalid): .invalid
-        case (.notAuthorized, _), (_, .notAuthorized): .notAuthorized
-        case (.notAvailable, _), (_, .notAvailable): .notAvailable
-        case (.offscaleHigh, _), (_, .offscaleHigh): .offscaleHigh
-        case (.offscaleLow, _), (_, .offscaleLow): .offscaleLow
+        default: refusal(left, rhs, combining: { $0 + $1 })
       }
   }
 
@@ -197,8 +205,9 @@ extension Value where T: FloatingPoint, T: Comparable {
 
   /// Subtracts two values, propagating uncertainty through quadrature (RSS).
   static func -= (lhs: inout Value<T>, rhs: Value<T>) {
+    let left = lhs
     lhs =
-      switch (lhs, rhs) {
+      switch (left, rhs) {
         case (.value(let lv), .value(let rv)):
           .value(lv - rv)
         case (.value(let lv), .valueWithUncertainty(let rv, uncertainty: let ru)):
@@ -210,11 +219,7 @@ extension Value where T: FloatingPoint, T: Comparable {
           .valueWithUncertainty(let rv, uncertainty: let ru)
         ):
           .valueWithUncertainty(lv - rv, uncertainty: addUncertaintiesRSS(lu, ru))
-        case (.invalid, _), (_, .invalid): .invalid
-        case (.notAuthorized, _), (_, .notAuthorized): .notAuthorized
-        case (.notAvailable, _), (_, .notAvailable): .notAvailable
-        case (.offscaleHigh, _), (_, .offscaleHigh): .offscaleHigh
-        case (.offscaleLow, _), (_, .offscaleLow): .offscaleLow
+        default: refusal(left, rhs, combining: { $0 - $1 })
       }
   }
 
@@ -244,6 +249,41 @@ extension Value where T: FloatingPoint, T: Comparable {
     var result = lhs
     result += rhs
     return result
+  }
+
+  // MARK: - Refusal Propagation
+
+  /**
+   * The refusal that wins when an operand is not a definite value.
+   *
+   * A substituted figure survives the arithmetic: a base distance the model clamped, scaled by a
+   * wind factor, is still that clamped distance scaled by the wind factor, and still says so.
+   * The figure is dropped as soon as either side has none to offer.
+   *
+   * - Parameters:
+   *   - lhs: The left operand, at least one of which must be a refusal.
+   *   - rhs: The right operand.
+   *   - combine: The operation being propagated.
+   * - Returns: The winning refusal, carrying the combined substituted figure where there is one.
+   */
+  private static func refusal(
+    _ lhs: Value<T>,
+    _ rhs: Value<T>,
+    combining combine: (T, T) -> T
+  ) -> Value<T> {
+    var substituted: T? {
+      guard let left = lhs.nominalOrClamped, let right = rhs.nominalOrClamped else { return nil }
+      return combine(left, right)
+    }
+
+    switch (lhs, rhs) {
+      case (.invalid, _), (_, .invalid): return .invalid
+      case (.notAuthorized, _), (_, .notAuthorized): return .notAuthorized
+      case (.notAvailable, _), (_, .notAvailable): return .notAvailable
+      case (.offscaleHigh, _), (_, .offscaleHigh): return .offscaleHigh(clamped: substituted)
+      case (.offscaleLow, _), (_, .offscaleLow): return .offscaleLow(clamped: substituted)
+      default: preconditionFailure("Neither operand is a refusal")
+    }
   }
 
   // MARK: - Uncertainty Helpers
@@ -297,6 +337,31 @@ extension Value {
       case .value(let v), .valueWithUncertainty(let v, _): v
       default: nil
     }
+  }
+
+  /**
+   * The nominal value, or the figure substituted for it where the model held an out-of-range
+   * input at the edge of its data.
+   *
+   * Use this where a substituted figure is an acceptable answer and the caller states as much;
+   * use ``nominal`` where only a figure the model stands behind will do.
+   */
+  public var nominalOrClamped: T? {
+    switch self {
+      case .value(let v), .valueWithUncertainty(let v, _): v
+      case .offscaleHigh(let clamped), .offscaleLow(let clamped): clamped
+      default: nil
+    }
+  }
+
+  /// Whether the input fell below the range the model covers, whether or not it substituted a figure.
+  public var isOffscaleLow: Bool {
+    if case .offscaleLow = self { true } else { false }
+  }
+
+  /// Whether the input rose above the range the model covers, whether or not it substituted a figure.
+  public var isOffscaleHigh: Bool {
+    if case .offscaleHigh = self { true } else { false }
   }
 }
 

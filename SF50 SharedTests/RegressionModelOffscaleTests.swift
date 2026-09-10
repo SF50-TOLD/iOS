@@ -6,6 +6,22 @@ import Testing
 @Suite
 struct `Regression Model Offscale Detection` {
 
+  private static func model(temperature: Double, iceProtection: Bool)
+    -> RegressionPerformanceModel
+  {
+    let runway = Helper.createTestRunway()
+    return RegressionPerformanceModel(
+      conditions: Helper.createTestConditions(temperature: temperature),
+      configuration: Helper.createTestConfiguration(
+        weight: 5200,
+        iceProtection: iceProtection
+      ),
+      runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
+      notam: nil,
+      aircraftType: .g1
+    )
+  }
+
   // MARK: - Landing Weight Tests
 
   @Test
@@ -594,5 +610,30 @@ struct `Regression Model Offscale Detection` {
 
     #expect(model.landingInputsOffscaleLow == false)
     #expect(model.landingInputsOffscaleHigh == false)
+  }
+
+  // MARK: - En Route Climb
+
+  /// The fitted en route climb equations turn past the conditions they were made from: the
+  /// ice-contaminated schedule is tabulated only to +10 °C, and at the temperatures the Climb tab
+  /// can ask for the polynomial reports a descent. A figure like that is not an estimate, so the
+  /// model reports nothing rather than printing it.
+  @Test
+  func `en route climb past the ice-contaminated envelope is not available`() {
+    let model = Self.model(temperature: 50, iceProtection: true)
+
+    #expect(model.enrouteClimbGradientFtNM == .notAvailable)
+    #expect(model.enrouteClimbRateFtMin == .notAvailable)
+    #expect(model.enrouteClimbSpeedKIAS == .notAvailable)
+  }
+
+  @Test
+  func `en route climb inside the envelope still extrapolates a figure`() throws {
+    let model = Self.model(temperature: 5, iceProtection: true)
+
+    let gradient = try #require(model.enrouteClimbGradientFtNM.nominal)
+    let rate = try #require(model.enrouteClimbRateFtMin.nominal)
+    #expect(gradient > 0)
+    #expect(rate > 0)
   }
 }

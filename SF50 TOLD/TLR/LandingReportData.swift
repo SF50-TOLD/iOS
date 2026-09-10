@@ -64,17 +64,15 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
       )
     }
 
-    // Determine if valid based on landing distance and go-around requirement
-    let isValid: Bool = {
-      if case .value(let valid) = landingDistance.flatMap({ dist in
+    // Determine if valid based on landing distance and go-around requirement. A clamped distance
+    // still answers the question, since it is the AFM's own figure for conditions milder than the
+    // ones asked for; only a refusal carrying no figure leaves the runway untested.
+    let isValid =
+      landingDistance.flatMap { dist in
         report.results.meetsGoAroundClimbGradient.map { meetsReq in
           dist.margin >= .zero && meetsReq
         }
-      }) {
-        return valid
-      }
-      return false
-    }()
+      }.nominalOrClamped ?? false
 
     return LandingRunwayPerformance(
       Vref: report.results.Vref,
@@ -112,24 +110,22 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
         VREFAdditiveKts: input.VREFAdditiveKts
       )
 
-      // Check AFM limits
-      if case .offscaleHigh = report.results.landingDistance {
+      // Check AFM limits. A clamped distance still answers the question — it is the AFM's own
+      // figure for conditions milder than the ones asked for — but a refusal carrying no figure
+      // leaves the weight untestable.
+      guard let dist = report.results.landingDistance.nominalOrClamped else {
         return (false, .AFM)
       }
-      if case .offscaleLow = report.results.landingDistance {
-        return (false, .AFM)
-      }
-      if let dist = report.results.landingDistance.nominal,
-        dist > runway.availableLandingDistance
-      {
+      if dist > runway.availableLandingDistance {
         return (false, .field)
       }
 
       // Check go-around climb gradient requirement
-      if case .value(let meetsReq) = report.results.meetsGoAroundClimbGradient {
-        if !meetsReq {
-          return (false, .climb)
-        }
+      guard let meetsReq = report.results.meetsGoAroundClimbGradient.nominalOrClamped else {
+        return (false, .AFM)
+      }
+      if !meetsReq {
+        return (false, .climb)
       }
 
       return (true, .AFM)

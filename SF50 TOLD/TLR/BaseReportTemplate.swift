@@ -397,16 +397,30 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
       case .invalid: (String(localized: "Inv"), "invalid")
       case .notAvailable: (String(localized: "-"), "not-available")
       case .notAuthorized: (String(localized: "N/A"), "invalid")
-      case .offscaleHigh: (String(localized: "N/A"), "invalid")
-      case .offscaleLow: (String(localized: "N/A"), "not-available")
+      case .offscaleHigh(let clamped):
+        clamped == nil ? (String(localized: "N/A"), "invalid") : nil
+      case .offscaleLow(let clamped):
+        clamped == nil ? (String(localized: "N/A"), "not-available") : nil
+    }
+  }
+
+  /// How a figure the model reached only by holding an input at the edge of its chart is
+  /// qualified, or `nil` where the chart covered the conditions that were asked for.
+  func substitutedQualifier<T>(of value: Value<T>) -> String? {
+    switch value {
+      case .offscaleHigh(let clamped): clamped == nil ? nil : String(localized: "offscale high")
+      case .offscaleLow(let clamped): clamped == nil ? nil : String(localized: "offscale low")
+      default: nil
     }
   }
 
   func format<T>(value: Value<T>, formatter: (T) -> [Tag]) -> [Tag] {
-    guard let unavailable = unavailableDescription(of: value) else {
-      return value.nominal.map(formatter) ?? []
+    if let unavailable = unavailableDescription(of: value) {
+      return [Span(unavailable.text).class(unavailable.cssClass)]
     }
-    return [Span(unavailable.text).class(unavailable.cssClass)]
+    guard let figure = value.nominalOrClamped.map(formatter) else { return [] }
+    guard let qualifier = substitutedQualifier(of: value) else { return figure }
+    return figure + [Br(), Span(qualifier).class("clamped")]
   }
 
   func format<T>(value: Value<T>?, formatter: (T) -> [Tag]) -> [Tag] {

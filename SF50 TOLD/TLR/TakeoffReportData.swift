@@ -100,11 +100,10 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
         safetyFactor: input.safetyFactor
       )
 
-      // Check AFM limits
-      if case .offscaleHigh = report.results.takeoffDistance {
-        return (false, .AFM)
-      }
-      if case .offscaleLow = report.results.takeoffDistance {
+      // Check AFM limits. A clamped distance still answers the question — it is the AFM's own
+      // figure for conditions milder than the ones asked for, so it errs long — but a refusal
+      // carrying no figure leaves the weight untestable.
+      if report.results.takeoffDistance.nominalOrClamped == nil {
         return (false, .AFM)
       }
       if !fitsRunway(report.results, on: runway) {
@@ -114,21 +113,23 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
       // Check obstacle clearance if NOTAM present
       if let obstacleHeight = runway.notam?.obstacleHeight,
         let obstacleDistance = runway.notam?.obstacleDistance,
-        case .value(let takeoffRun) = report.results.takeoffRun
+        let takeoffRun = report.results.takeoffRun.nominalOrClamped
       {
         let distanceFromRunwayStart =
           obstacleDistance + (runway.notam?.takeoffDistanceShortening ?? .zero)
         let distanceFromLiftoff = distanceFromRunwayStart - takeoffRun
 
         if distanceFromLiftoff > .zero {
-          let requiredGradient = Measurement(
-            value: obstacleHeight / distanceFromLiftoff,
-            unit: UnitSlope.ratio
-          )
+          let requiredGradient = obstacleHeight / distanceFromLiftoff
 
-          if case .value(let climbGradient) = report.results.takeoffClimbGradient,
-            climbGradient < requiredGradient
-          {
+          guard let climbGradient = report.results.takeoffClimbGradient.nominalOrClamped else {
+            // Nothing to clear the obstacle with, so nothing to publish this weight on.
+            return (false, .AFM)
+          }
+          // Compared as ratios rather than as measurements: the gradient is made in the framework
+          // and the requirement here, and `UnitSlope` is loaded once per image, so the two carry
+          // unit objects that compare unequal even though they are the same unit.
+          if climbGradient.converted(to: .ratio).value < requiredGradient {
             return (false, .obstacle)
           }
         }

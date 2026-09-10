@@ -77,14 +77,36 @@ public struct InterpolationView<ValueType, Content: View>: View {
           Text("Configuration not authorized", bundle: .sharedFramework)
             .foregroundStyle(.red)
             .bold()
-        case .offscaleHigh:
-          Text("Offscale high", bundle: .sharedFramework)
+        case .offscaleHigh(let clamped):
+          if let clamped {
+            VStack(alignment: .trailing) {
+              displayValue(clamped)
+                .bold()
+              Text("offscale high", bundle: .sharedFramework)
+                .font(.footnote)
+            }
+            .accessibilityElement(children: .combine)
             .foregroundStyle(.red)
-            .bold()
-        case .offscaleLow:
-          Text("Offscale low", bundle: .sharedFramework)
+          } else {
+            Text("Offscale high", bundle: .sharedFramework)
+              .foregroundStyle(.red)
+              .bold()
+          }
+        case .offscaleLow(let clamped):
+          if let clamped {
+            VStack(alignment: .trailing) {
+              displayValue(clamped)
+                .bold()
+              Text("offscale low", bundle: .sharedFramework)
+                .font(.footnote)
+            }
+            .accessibilityElement(children: .combine)
             .foregroundStyle(.secondary)
-            .bold()
+          } else {
+            Text("Offscale low", bundle: .sharedFramework)
+              .foregroundStyle(.secondary)
+              .bold()
+          }
       }
     }
     .contentTransition(.numericText())
@@ -384,10 +406,24 @@ private struct CustomType {
         InterpolationView(value: Value<Double>.notAvailable) { Text($0, format: .number) }
       }
       LabeledContent("Offscale High") {
-        InterpolationView(value: Value<Double>.offscaleHigh) { Text($0, format: .number) }
+        InterpolationView(value: Value<Double>.offscaleHigh(clamped: nil)) {
+          Text($0, format: .number)
+        }
       }
       LabeledContent("Offscale Low") {
-        InterpolationView(value: Value<Double>.offscaleLow) { Text($0, format: .number) }
+        InterpolationView(value: Value<Double>.offscaleLow(clamped: nil)) {
+          Text($0, format: .number)
+        }
+      }
+      LabeledContent("Clamped High") {
+        InterpolationView(value: Value<Double>.offscaleHigh(clamped: 3200)) {
+          Text($0, format: .number)
+        }
+      }
+      LabeledContent("Clamped Low") {
+        InterpolationView(value: Value<Double>.offscaleLow(clamped: 1911)) {
+          Text($0, format: .number)
+        }
       }
     }
   }

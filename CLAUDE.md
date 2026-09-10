@@ -63,6 +63,11 @@ average them into one behaviour.
 - **Tabular** must adhere to the AFM tables. It interpolates between tabulated points and nothing
   more: where the tables give no value, it reports N/A rather than inventing one. Clamping an input
   to the nearest tabulated point is inventing a value — it presents an answer the AFM never gave.
+  It may hold an input at the edge of the tables on two conditions: that the substitution is
+  conservative, which on the distance tables means the low edge only, since distance grows with
+  weight, altitude and temperature alike; and that the figure is returned marked, as the clamped
+  payload of an offscale `Value`, so that every readout carrying it says the AFM never covered the
+  conditions asked for. An unmarked substitution is still inventing a value.
 - **Regression** may extrapolate and interpolate wherever that is sensible, since that is what the
   fitted equations are for. Where extrapolation becomes nonsensical it must clamp or report N/A,
   whichever suits the context.

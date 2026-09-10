@@ -16,7 +16,7 @@ struct VxClimbView: View {
   }
 
   private var requiredClimbGradientIfNotMet: Measurement<UnitSlope>? {
-    guard case .value(let takeoffClimbGradient) = performance.takeoffClimbGradient,
+    guard let takeoffClimbGradient = performance.takeoffClimbGradient.nominalOrClamped,
       let requiredClimbGradient = performance.requiredClimbGradient
     else {
       return nil
@@ -26,7 +26,7 @@ struct VxClimbView: View {
 
   private var sufficientRunway: Bool {
     guard let availableTakeoffRun = performance.availableTakeoffRun,
-      case .value(let takeoffRun) = performance.takeoffRun
+      let takeoffRun = performance.takeoffRun.nominalOrClamped
     else {
       return true
     }

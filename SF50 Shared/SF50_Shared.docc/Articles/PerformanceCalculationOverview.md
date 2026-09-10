@@ -145,11 +145,18 @@ Performance values are wrapped in ``Value`` to represent:
 - **Values with uncertainty** — ``Value/valueWithUncertainty(_:uncertainty:)`` for
   regression results with statistical confidence intervals
 - **Error states** — ``Value/invalid``, ``Value/notAvailable``, ``Value/notAuthorized``,
-  ``Value/offscaleHigh``, ``Value/offscaleLow``
+  ``Value/offscaleHigh(clamped:)``, ``Value/offscaleLow(clamped:)``
 
 The ``Value`` wrapper propagates through arithmetic operations (multiplication, addition)
 and the ``Value/toMeasurement(_:)`` conversion, preserving uncertainty from base value
 through every adjustment to the final result.
+
+An offscale result carries a figure of its own where the model reached one by holding an
+out-of-range input at the edge of its data. That figure survives the adjustment chain the same
+way a definite one does, and stays marked throughout, so a substituted figure is never mistaken
+for one the AFM published. Read it with ``Value/nominalOrClamped`` where a conservative
+substitute is an acceptable answer, and ``Value/nominal`` where only a figure the model stands
+behind will do.
 
 ## Output Types
 

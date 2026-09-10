@@ -27,6 +27,25 @@ aircraft.
   regions "Removed for space" with a Download button.
 - Regions you have already downloaded are kept.
 
+### Performance
+
+- A number the AFM charts do not actually cover now says so. Below the lightest
+  weight, the lowest field elevation, or the coldest temperature a chart runs
+  to, the app reads the chart's edge — a longer distance than the real
+  conditions would give — and marks the figure "offscale low". Landing charts
+  start at 0 °C, so this shows up on any cold day.
+- Above the range a chart covers, where reading it at the edge would give a
+  distance shorter than the truth, no figure is shown at all. This affects
+  contaminated-runway corrections and the wind and slope adjustments.
+- The en route climb gradient and rate report N/A beyond the conditions their
+  data covers, instead of a negative climb.
+- On the climb and go-around profiles, the obstacle climb segment says it is
+  drawn from the regression model even with the tabular model selected: the AFM
+  tabulates no obstacle climb.
+- A maximum takeoff weight, the required-gradient warning, and the go-around
+  gradient note are now checked against a NOTAMed obstacle under the regression
+  model as well as the tabular one.
+
 ### Navigation Data
 
 - A database is used only while its cycle is in force; a lapsed one is passed

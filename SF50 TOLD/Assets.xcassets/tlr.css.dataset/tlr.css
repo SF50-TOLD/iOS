@@ -123,6 +123,12 @@ span.not-available {
     color: var(--color-na-text);
 }
 
+span.clamped {
+    font-size: 0.8em;
+    font-style: italic;
+    color: var(--color-na-text);
+}
+
 span.margin-positive {
     font-weight: bold;
     color: var(--color-valid-text);

@@ -298,6 +298,10 @@ final class ContaminationCalculator {
   /// The depth axis is left unclamped, so a depth outside the tabulated range comes back offscale.
   /// The tables carry no distance for such a runway, and reading one at the nearest depth they do
   /// carry would present an answer the AFM never gave.
+  ///
+  /// The distance axis is held only at its lower bound, where the correction the tables give is
+  /// longer than the truth. Holding it at the upper bound would report a runway shorter than the
+  /// AFM allows for, so a dry run past the tabulated range comes back offscale instead.
   private func tabularDepthContamination(
     distance: Value<Double>,
     depth: Measurement<UnitLength>,
@@ -306,7 +310,7 @@ final class ContaminationCalculator {
     let depthInches = depth.converted(to: .inches).value
 
     return distance.flatMap { distanceValue in
-      table.value(for: [distanceValue, depthInches], clamping: [.clampBoth, .none])
+      table.value(for: [distanceValue, depthInches], clamping: [.clampLow, .none])
     }
   }
 
@@ -314,7 +318,7 @@ final class ContaminationCalculator {
     guard let drySnowData else { return distance }
 
     return distance.flatMap { distanceValue in
-      drySnowData.value(for: [distanceValue], clamping: [.clampBoth])
+      drySnowData.value(for: [distanceValue], clamping: [.clampLow])
     }
   }
 
@@ -322,7 +326,7 @@ final class ContaminationCalculator {
     guard let compactSnowData else { return distance }
 
     return distance.flatMap { distanceValue in
-      compactSnowData.value(for: [distanceValue], clamping: [.clampBoth])
+      compactSnowData.value(for: [distanceValue], clamping: [.clampLow])
     }
   }
 

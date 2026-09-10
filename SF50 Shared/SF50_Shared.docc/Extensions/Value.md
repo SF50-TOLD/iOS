@@ -12,8 +12,8 @@
 - ``invalid``
 - ``notAvailable``
 - ``notAuthorized``
-- ``offscaleHigh``
-- ``offscaleLow``
+- ``offscaleHigh(clamped:)``
+- ``offscaleLow(clamped:)``
 
 ### Transformations
 
@@ -24,4 +24,7 @@
 ### Accessing Values
 
 - ``nominal``
+- ``nominalOrClamped``
+- ``isOffscaleHigh``
+- ``isOffscaleLow``
 - ``toMeasurement(_:)``

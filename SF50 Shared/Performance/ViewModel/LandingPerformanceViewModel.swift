@@ -56,13 +56,13 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
 
   public var offscaleLow: Bool {
     let valuesOffscaleLow =
-      Vref == .offscaleLow || landingRun == .offscaleLow || landingDistance == .offscaleLow
+      Vref.isOffscaleLow || landingRun.isOffscaleLow || landingDistance.isOffscaleLow
     return valuesOffscaleLow || (model?.landingInputsOffscaleLow ?? false)
   }
 
   public var offscaleHigh: Bool {
     let valuesOffscaleHigh =
-      Vref == .offscaleHigh || landingRun == .offscaleHigh || landingDistance == .offscaleHigh
+      Vref.isOffscaleHigh || landingRun.isOffscaleHigh || landingDistance.isOffscaleHigh
     return valuesOffscaleHigh || (model?.landingInputsOffscaleHigh ?? false)
   }
 
@@ -168,7 +168,7 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
     }
 
     // Go-around climb gradient
-    if case .value(let meets) = meetsGoAroundClimbGradient, !meets {
+    if let meets = meetsGoAroundClimbGradient.nominalOrClamped, !meets {
       notes.append(.doesNotMeetGoAroundGradient)
     }
 

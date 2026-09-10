@@ -54,12 +54,20 @@ final class TabularPerformanceModel: BasePerformanceModel {
     vrefData.value(for: [weight])
   }
 
+  /// Whether the AFM's go-around climb gradient is met.
+  ///
+  /// The tables publish a landing distance only where the gradient is met, so a distance the model
+  /// can stand behind answers yes and one off the top of the tables answers no. Where the model has
+  /// no distance at all it has no answer either, and says so rather than assuming the gradient
+  /// holds.
   override var meetsGoAroundClimbGradient: Value<Bool> {
     switch landingDistanceFt {
+      case .value, .valueWithUncertainty: .value(true)
+      case .offscaleHigh: .value(false)
+      case .offscaleLow(let clamped): clamped == nil ? .notAvailable : .value(true)
+      case .invalid: .invalid
       case .notAvailable: .notAvailable
       case .notAuthorized: .notAuthorized
-      case .offscaleHigh: .value(false)
-      default: .value(true)
     }
   }
 
@@ -158,6 +166,13 @@ final class TabularPerformanceModel: BasePerformanceModel {
 
   // MARK: - Base Values
 
+  /// The AFM's distance for the current conditions, before any adjustment.
+  ///
+  /// Distance grows with weight, altitude and temperature alike, so an input below the tabulated
+  /// range is held at the bottom of it: the figure that comes back is longer than the truth, which
+  /// is the side to err on. It comes back as a clamped offscale figure rather than a definite one,
+  /// so that the readout can say the AFM never covered the conditions asked for. Above the range,
+  /// where holding the input would understate the distance, no figure is offered at all.
   override func baseValue(for target: DistanceTarget) -> Value<Double> {
     switch target {
       case .takeoffRun:
@@ -272,7 +287,11 @@ final class TabularPerformanceModel: BasePerformanceModel {
   }
 
   /// Looks up a weight-dependent adjustment factor from a data table.
+  ///
+  /// These factors grow with weight, so holding a light aircraft at the lightest tabulated weight
+  /// overstates the penalty and the answer stays on the safe side. A weight above the heaviest
+  /// tabulated one would have its penalty understated, so it comes back offscale instead.
   private func lookupFactor(_ data: DataTable) -> Value<Double> {
-    data.value(for: [weight], clamping: [.clampBoth])
+    data.value(for: [weight], clamping: [.clampLow])
   }
 }

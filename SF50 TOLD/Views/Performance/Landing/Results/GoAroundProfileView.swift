@@ -39,6 +39,7 @@ struct GoAroundProfileView: View {
   @State private var climbProfile: ClimbProfile?
   @State private var isComputing = false
   @State private var pathFailed = false
+  @State private var plotsRegressionClimb = false
   @State private var terrainRevision = 0
 
   var body: some View {
@@ -58,6 +59,7 @@ struct GoAroundProfileView: View {
         time: weather.time,
         isComputing: isComputing,
         pathFailed: pathFailed,
+        plotsRegressionClimb: plotsRegressionClimb,
         noDataDescription: "Select an approach to view missed approach terrain profile."
       )
     }
@@ -211,6 +213,8 @@ struct GoAroundProfileView: View {
       .init(profile: .takeoff, upperBound: .time(.init(value: 2, unit: .minutes))),
       .init(profile: .enrouteObstacle(antiIce: false))
     ])
+    plotsRegressionClimb =
+      !useRegressionModel && schedule.segments.contains(where: \.profile.answeredFromRegressionOnly)
 
     let pathGenerator = ProcedurePathGenerator(
       climbProfile: climbProfile,

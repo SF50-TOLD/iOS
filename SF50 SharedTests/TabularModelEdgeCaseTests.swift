@@ -132,45 +132,29 @@ struct TabularModelEdgeCaseTests {
   // MARK: - Offscale Detection Tests
 
   @Test
-  func `offscale low weight`() {
-    // Test weight below minimum - tabular models clamp rather than return offscale
+  func `a weight below the tables answers with the lightest tabulated figure, marked`() throws {
+    // The tables start at 5,000 lb, and distance grows with weight, so the lightest tabulated
+    // figure is the conservative substitute. It comes back marked, not as a definite value.
     let conditions = Helper.createTestConditions(temperature: 20)
-    let config = Helper.createTestConfiguration(weight: 4000)  // Below minimum of 5000
     let runway = Helper.createTestRunway(elevation: 5000)
 
-    let model = TabularPerformanceModel(
-      conditions: conditions,
-      configuration: config,
-      runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
-      notam: nil,
-      aircraftType: .g1
-    )
-
-    let result = model.takeoffRunFt
-
-    // Tabular models use clamping, so they should return a value (clamped to minimum weight)
-    guard case .value(let value) = result else {
-      PerformanceCase(for: model, aircraftType: .g1)
-        .fail(
-          "Tabular model with clamping should return a value, not \(result)",
-          computing: "takeoff run"
-        )
-      return
+    func takeoffRun(atWeight weight: Double) -> Value<Double> {
+      TabularPerformanceModel(
+        conditions: conditions,
+        configuration: Helper.createTestConfiguration(weight: weight),
+        runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
+        notam: nil,
+        aircraftType: .g1
+      ).takeoffRunFt
     }
 
-    // The value should be the same as at minimum weight (5000 lb)
-    let minWeightConfig = Helper.createTestConfiguration(weight: 5000)
-    let minWeightModel = TabularPerformanceModel(
-      conditions: conditions,
-      configuration: minWeightConfig,
-      runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
-      notam: nil,
-      aircraftType: .g1
-    )
+    let result = takeoffRun(atWeight: 4000)
+    #expect(result.nominal == nil, "A substituted figure is not one the model stands behind")
 
-    if case .value(let minWeightValue) = minWeightModel.takeoffRunFt {
-      #expect(value == minWeightValue, "Clamped value should equal minimum weight value")
-    }
+    let substituted = try #require(result.nominalOrClamped)
+    let atMinimumWeight = try #require(takeoffRun(atWeight: 5000).nominal)
+    #expect(result == .offscaleLow(clamped: substituted))
+    #expect(substituted == atMinimumWeight)
   }
 
   @Test
@@ -189,7 +173,10 @@ struct TabularModelEdgeCaseTests {
     )
 
     let result = model.takeoffRunFt
-    #expect(result == .offscaleHigh, "Altitude above maximum should return offscale high")
+    #expect(
+      result == .offscaleHigh(clamped: nil),
+      "Altitude above maximum should return offscale high"
+    )
   }
 
   @Test
@@ -208,7 +195,10 @@ struct TabularModelEdgeCaseTests {
     )
 
     let result = model.takeoffRunFt
-    #expect(result == .offscaleHigh, "Temperature above maximum should return offscale high")
+    #expect(
+      result == .offscaleHigh(clamped: nil),
+      "Temperature above maximum should return offscale high"
+    )
   }
 
   // MARK: - Boundary Condition Tests

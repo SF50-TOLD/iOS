@@ -48,32 +48,33 @@ struct DataTableTests {
     ]
     let table = DataTable(data: data)
 
-    #expect(table.value(for: [500.0]) == .offscaleLow)
-    #expect(table.value(for: [2500.0]) == .offscaleHigh)
+    #expect(table.value(for: [500.0]) == .offscaleLow(clamped: nil))
+    #expect(table.value(for: [2500.0]) == .offscaleHigh(clamped: nil))
   }
 
   @Test
-  func `clamping 1D`() {
+  func `clamping hands back the edge figure marked as offscale`() {
     let data = [
       [1000.0, 100.0],
       [2000.0, 200.0]
     ]
     let table = DataTable(data: data)
 
-    // Clamp low
-    let clampLowResult = table.value(for: [500.0], clamping: [.clampLow])
-    #expect(clampLowResult == .value(100.0))
+    #expect(table.value(for: [500.0], clamping: [.clampLow]) == .offscaleLow(clamped: 100.0))
+    #expect(table.value(for: [2500.0], clamping: [.clampHigh]) == .offscaleHigh(clamped: 200.0))
+    #expect(table.value(for: [500.0], clamping: [.clampBoth]) == .offscaleLow(clamped: 100.0))
+    #expect(table.value(for: [2500.0], clamping: [.clampBoth]) == .offscaleHigh(clamped: 200.0))
+  }
 
-    // Clamp high
-    let clampHighResult = table.value(for: [2500.0], clamping: [.clampHigh])
-    #expect(clampHighResult == .value(200.0))
+  @Test
+  func `clamping leaves an in-range figure definite`() {
+    let table = DataTable(data: [
+      [1000.0, 100.0],
+      [2000.0, 200.0]
+    ])
 
-    // Clamp both
-    let clampBothLow = table.value(for: [500.0], clamping: [.clampBoth])
-    #expect(clampBothLow == .value(100.0))
-
-    let clampBothHigh = table.value(for: [2500.0], clamping: [.clampBoth])
-    #expect(clampBothHigh == .value(200.0))
+    #expect(table.value(for: [1500.0], clamping: [.clampBoth]) == .value(150.0))
+    #expect(table.value(for: [1000.0], clamping: [.clampBoth]) == .value(100.0))
   }
 
   // MARK: - 2D Interpolation Tests
@@ -144,8 +145,8 @@ struct DataTableTests {
     #expect(table.value(for: [1000.0]) == .value(100.0))
 
     // Off scale
-    #expect(table.value(for: [999.0]) == .offscaleLow)
-    #expect(table.value(for: [1001.0]) == .offscaleHigh)
+    #expect(table.value(for: [999.0]) == .offscaleLow(clamped: nil))
+    #expect(table.value(for: [1001.0]) == .offscaleHigh(clamped: nil))
   }
 
   // MARK: - CSV Parsing Tests

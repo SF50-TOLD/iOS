@@ -24,10 +24,14 @@ import Foundation
 /// When inputs fall outside the table's range, behavior depends on the
 /// ``Clamping`` mode:
 ///
-/// - ``Clamping/none``: Returns ``.offscaleLow`` or ``.offscaleHigh``
-/// - ``Clamping/clampLow``: Clamps to minimum, returns offscale high if above max
-/// - ``Clamping/clampHigh``: Clamps to maximum, returns offscale low if below min
-/// - ``Clamping/clampBoth``: Clamps to both bounds, never returns offscale
+/// - ``Clamping/none``: Returns offscale low or high, carrying no figure
+/// - ``Clamping/clampLow``: Holds at the minimum, returns offscale high if above max
+/// - ``Clamping/clampHigh``: Holds at the maximum, returns offscale low if below min
+/// - ``Clamping/clampBoth``: Holds at either bound
+///
+/// A held input still produces a figure, but it comes back as the clamped payload of an offscale
+/// result rather than as a definite value: the table is answering for an input it does not cover,
+/// and the reader is told so.
 class DataTable {
   private typealias Row = [Double]
 
@@ -136,76 +140,88 @@ class DataTable {
   ///
   /// - Returns: A `Value<Double>` which may be:
   ///   - `.value(_)` for successful interpolation
-  ///   - `.offscaleLow` if inputs are below the table's range
-  ///   - `.offscaleHigh` if inputs are above the table's range or interpolation fails
+  ///   - `.offscaleLow(clamped:)` if inputs are below the table's range
+  ///   - `.offscaleHigh(clamped:)` if inputs are above the table's range or interpolation fails
+  ///
+  ///   Where a clamping mode held an input at the edge of its range, the figure interpolated from
+  ///   the held input is returned as the `clamped` payload of the corresponding offscale case, so
+  ///   that a substituted figure is never mistaken for one the table covers.
   func value(for inputs: [Double], clamping: [Clamping]? = nil) -> Value<Double> {
     precondition(inputs.count == nInputs, "Input dimension mismatch")
 
     let clampingModes = clamping ?? Array(repeating: .none, count: nInputs)
     precondition(clampingModes.count == nInputs, "Clamping dimension mismatch")
 
-    // Apply clamping
-    var clampedInputs: [Double] = []
+    var clampedInputs: [Double] = [],
+      heldEdge: ClampedEdge?
     for dim in 0..<nInputs {
-      let input = inputs[dim]
-      let minVal = dimMin[dim]
-      let maxVal = dimMax[dim]
-
-      // Use a relative tolerance for floating-point comparisons based on the magnitude
-      // of the bound value. This handles precision loss proportional to value size
-      // (e.g., 31000.0 has less precision than 1.0). The factor 1e-9 provides ~6 orders
-      // of magnitude margin above Double's ~1e-15 relative precision, accommodating
-      // accumulated rounding from arithmetic operations while remaining far smaller
-      // than any meaningful data resolution.
-      let tolerance = Self.clampToleranceFactor * Swift.max(abs(minVal), abs(maxVal), 1.0)
-
-      switch clampingModes[dim] {
-        case .none:
-          if input < minVal - tolerance {
-            return .offscaleLow
-          }
-          if input > maxVal + tolerance {
-            return .offscaleHigh
-          }
-          // Clamp to bounds if within tolerance (handles floating-point precision)
-          clampedInputs.append(Swift.min(Swift.max(input, minVal), maxVal))
-        case .clampLow:
-          if input > maxVal + tolerance {
-            return .offscaleHigh
-          }
-          clampedInputs.append(Swift.max(input, minVal))
-        case .clampHigh:
-          if input < minVal - tolerance {
-            return .offscaleLow
-          }
-          clampedInputs.append(Swift.min(input, maxVal))
-        case .clampBoth:
-          clampedInputs.append(Swift.min(Swift.max(input, minVal), maxVal))
+      switch clampInput(inputs[dim], dimension: dim, mode: clampingModes[dim]) {
+        case .offscale(.low): return .offscaleLow(clamped: nil)
+        case .offscale(.high): return .offscaleHigh(clamped: nil)
+        case .within(let value): clampedInputs.append(value)
+        case .held(let value, let edge):
+          clampedInputs.append(value)
+          if heldEdge != .high { heldEdge = edge }
       }
     }
 
-    // Check for exact match first
-    for row in data {
-      let matches = (0..<nInputs).allSatisfy {
-        abs(row[$0] - clampedInputs[$0]) <= Self.matchEpsilon
+    let result = lookUp(clampedInputs)
+    guard let heldEdge else { return result }
+    return substituted(result, heldAt: heldEdge)
+  }
+
+  /// Resolves an input against one dimension's range, honouring the caller's clamping mode.
+  private func clampInput(_ input: Double, dimension: Int, mode: Clamping) -> ClampOutcome {
+    let minVal = dimMin[dimension],
+      maxVal = dimMax[dimension]
+
+    // Use a relative tolerance for floating-point comparisons based on the magnitude
+    // of the bound value. This handles precision loss proportional to value size
+    // (e.g., 31000.0 has less precision than 1.0). The factor 1e-9 provides ~6 orders
+    // of magnitude margin above Double's ~1e-15 relative precision, accommodating
+    // accumulated rounding from arithmetic operations while remaining far smaller
+    // than any meaningful data resolution.
+    let tolerance = Self.clampToleranceFactor * Swift.max(abs(minVal), abs(maxVal), 1.0)
+
+    if input < minVal - tolerance {
+      switch mode {
+        case .none, .clampHigh: return .offscale(.low)
+        case .clampLow, .clampBoth: return .held(minVal, .low)
       }
-      if matches {
-        return .value(row.last!)
+    }
+    if input > maxVal + tolerance {
+      switch mode {
+        case .none, .clampLow: return .offscale(.high)
+        case .clampHigh, .clampBoth: return .held(maxVal, .high)
       }
     }
 
-    // Perform interpolation
-    if nInputs == 1 {
-      return interpolate1D(input: clampedInputs[0])
+    // Snap to bounds within tolerance, which absorbs floating-point error rather than
+    // substituting a figure the table does not cover.
+    return .within(Swift.min(Swift.max(input, minVal), maxVal))
+  }
+
+  /// Reads the table at inputs already known to lie within its range.
+  private func lookUp(_ inputs: [Double]) -> Value<Double> {
+    for row in data
+    where (0..<nInputs).allSatisfy({ abs(row[$0] - inputs[$0]) <= Self.matchEpsilon }) {
+      return .value(row.last!)
     }
-    if nInputs == 2 {
-      return interpolate2D(inputs: clampedInputs)
+
+    switch nInputs {
+      case 1: return interpolate1D(input: inputs[0])
+      case 2: return interpolate2D(inputs: inputs)
+      case 3: return interpolate3D(inputs: inputs)
+      default: return interpolateND(inputs: inputs)
     }
-    if nInputs == 3 {
-      return interpolate3D(inputs: clampedInputs)
+  }
+
+  /// Marks a figure the table produced only because an input was held at the edge of its range.
+  private func substituted(_ result: Value<Double>, heldAt edge: ClampedEdge) -> Value<Double> {
+    switch edge {
+      case .low: .offscaleLow(clamped: result.nominal)
+      case .high: .offscaleHigh(clamped: result.nominal)
     }
-    // For higher dimensions, use general n-D interpolation
-    return interpolateND(inputs: clampedInputs)
   }
 
   private func interpolate1D(input: Double) -> Value<Double> {
@@ -213,7 +229,7 @@ class DataTable {
       let lowerValue = cornerValue(at: [x0]),
       let upperValue = cornerValue(at: [x1])
     else {
-      return .offscaleHigh
+      return .offscaleHigh(clamped: nil)
     }
 
     if x0 == x1 {
@@ -227,7 +243,7 @@ class DataTable {
   private func interpolate2D(inputs: [Double]) -> Value<Double> {
     // Find the x bounds from the sorted x axis.
     guard let (x0, x1) = bounds(forAxis: 0, value: inputs[0]) else {
-      return .offscaleHigh
+      return .offscaleHigh(clamped: nil)
     }
 
     // Restrict the candidate y values to those present at the chosen x bounds.
@@ -266,7 +282,7 @@ class DataTable {
     }
 
     // If no valid bounds found, return offscale
-    guard foundValidBounds else { return .offscaleHigh }
+    guard foundValidBounds else { return .offscaleHigh(clamped: nil) }
     let (y0, y1) = (bestY0, bestY1)
 
     // Find the four corner values; if any is missing, return offscale high (no extrapolation)
@@ -275,7 +291,7 @@ class DataTable {
       let v10 = cornerValue(at: [x1, y0]),
       let v11 = cornerValue(at: [x1, y1])
     else {
-      return .offscaleHigh
+      return .offscaleHigh(clamped: nil)
     }
 
     // Bilinear interpolation
@@ -291,12 +307,12 @@ class DataTable {
   private func interpolate3D(inputs: [Double]) -> Value<Double> {
     // Find the x bounds, then the y bounds restricted to the chosen x bounds.
     guard let (x0, x1) = bounds(forAxis: 0, value: inputs[0]) else {
-      return .offscaleHigh
+      return .offscaleHigh(clamped: nil)
     }
 
     let yCandidates = innerCandidates(outer: [x0, x1], innerDim: 1)
     guard let (y0, y1) = bracket(in: yCandidates, value: inputs[1]) else {
-      return .offscaleHigh
+      return .offscaleHigh(clamped: nil)
     }
 
     // Restrict the candidate z values to those present at the chosen x,y bounds.
@@ -337,7 +353,7 @@ class DataTable {
     }
 
     // If no valid bounds found, return offscale
-    guard foundValidBounds else { return .offscaleHigh }
+    guard foundValidBounds else { return .offscaleHigh(clamped: nil) }
     let (z0, z1) = (bestZ0, bestZ1)
 
     // Find the eight corner values; if any is missing, return offscale high (no extrapolation)
@@ -350,7 +366,7 @@ class DataTable {
       let c6 = cornerValue(at: [x0, y1, z1]),
       let c7 = cornerValue(at: [x1, y1, z1])
     else {
-      return .offscaleHigh
+      return .offscaleHigh(clamped: nil)
     }
 
     // Trilinear interpolation
@@ -375,7 +391,7 @@ class DataTable {
   private func interpolateND(inputs _: [Double]) -> Value<Double> {
     // For higher dimensions, we don't support interpolation yet
     // Return offscale to avoid extrapolation
-    return .offscaleHigh
+    return .offscaleHigh(clamped: nil)
   }
 
   /// Returns the minimum value in the specified input dimension.
@@ -525,15 +541,33 @@ class DataTable {
 
   /// Clamping modes for input dimensions during interpolation.
   ///
-  /// Clamping controls how out-of-bounds input values are handled.
+  /// Clamping controls how out-of-bounds input values are handled. A clamped input still yields a
+  /// figure, but that figure comes back as the `clamped` payload of an offscale ``Value`` rather
+  /// than as a definite one, because the table never covered the input that was asked for.
   enum Clamping {
     /// No clamping - return offscale values if inputs are outside the table's range.
     case none
-    /// Clamp only the lower bound - inputs below minimum are clamped to minimum.
+    /// Clamp only the lower bound - inputs below minimum are held at the minimum.
     case clampLow
-    /// Clamp only the upper bound - inputs above maximum are clamped to maximum.
+    /// Clamp only the upper bound - inputs above maximum are held at the maximum.
     case clampHigh
-    /// Clamp both bounds - inputs are constrained to [min, max] range.
+    /// Clamp both bounds - inputs are held within the [min, max] range.
     case clampBoth
+  }
+
+  /// The edge of a dimension's range at which an out-of-range input was held.
+  private enum ClampedEdge {
+    case low
+    case high
+  }
+
+  /// What resolving one input against one dimension's range produced.
+  private enum ClampOutcome {
+    /// The input lies within the range, snapped to absorb floating-point error.
+    case within(Double)
+    /// The input lies outside the range and was held at the given edge.
+    case held(Double, ClampedEdge)
+    /// The input lies outside the range and the caller asked for no clamping there.
+    case offscale(ClampedEdge)
   }
 }

@@ -35,6 +35,13 @@ struct TerrainProfileSection: View {
   /// Whether the path could not be computed at all.
   let pathFailed: Bool
 
+  /// Whether the plotted climb leans on the fitted equations although the tabular model is chosen.
+  ///
+  /// The AFM publishes no obstacle-climb table, so a schedule containing that segment is flown on
+  /// regression figures whichever model is selected. The footer says so, rather than letting a
+  /// pilot who has chosen the book's numbers read fitted ones as the book's.
+  let plotsRegressionClimb: Bool
+
   /// What to say before anything has been selected to plot.
   let noDataDescription: LocalizedStringKey
 
@@ -97,6 +104,7 @@ struct TerrainProfileSection: View {
       ProfileFooter(
         hasPath: terrainPath != nil,
         hasWindsAloft: hasWindsAloft,
+        plotsRegressionClimb: plotsRegressionClimb,
         atmosphereState: atmosphereState,
         weatherLayer: weatherLayer,
         temperatureRange: temperatureRange,
@@ -170,6 +178,7 @@ struct TerrainProfileSection: View {
     time: Date,
     isComputing: Bool,
     pathFailed: Bool,
+    plotsRegressionClimb: Bool,
     noDataDescription: LocalizedStringKey,
     initialWeatherLayer: WeatherProfileLayer = .none,
     initialShowsWindBarbs: Bool = false
@@ -181,6 +190,7 @@ struct TerrainProfileSection: View {
     self.time = time
     self.isComputing = isComputing
     self.pathFailed = pathFailed
+    self.plotsRegressionClimb = plotsRegressionClimb
     self.noDataDescription = noDataDescription
     _weatherLayer = .init(initialValue: initialWeatherLayer)
     _showsWindBarbs = .init(initialValue: initialShowsWindBarbs)
@@ -320,6 +330,7 @@ private struct ProfileFooter: View {
 
   let hasPath: Bool
   let hasWindsAloft: Bool
+  let plotsRegressionClimb: Bool
   let atmosphereState: AtmosphereState
   let weatherLayer: WeatherProfileLayer
   let temperatureRange: ClosedRange<Measurement<UnitTemperature>>?
@@ -339,6 +350,11 @@ private struct ProfileFooter: View {
     VStack(alignment: .leading, spacing: 6) {
       if hasPath && !hasWindsAloft {
         Text("No winds aloft forecast covers this time, so there are no wind barbs to draw.")
+      }
+      if hasPath && plotsRegressionClimb {
+        Text(
+          "The AFM tabulates no obstacle climb, so that segment is drawn from the regression model."
+        )
       }
       if hasPath && atmosphereState.isLoading {
         Text("Loading weather layers…")
@@ -374,6 +390,7 @@ private struct SectionPreview: View {
         time: .now,
         isComputing: false,
         pathFailed: false,
+        plotsRegressionClimb: false,
         noDataDescription: "Select a departure procedure to view terrain profile.",
         initialWeatherLayer: layer,
         initialShowsWindBarbs: showsWindBarbs

@@ -83,8 +83,25 @@ struct ValueArithmeticTests {
   @Test
   func `adding offscaleHigh propagates offscaleHigh`() {
     let a: Value<Double> = .value(100)
-    let b: Value<Double> = .offscaleHigh
-    #expect(a + b == .offscaleHigh)
+    let b: Value<Double> = .offscaleHigh(clamped: nil)
+    #expect(a + b == .offscaleHigh(clamped: nil))
+  }
+
+  @Test
+  func `a substituted figure survives the arithmetic still marked`() {
+    let base: Value<Double> = .offscaleLow(clamped: 2000)
+
+    #expect(base * 0.95 == .offscaleLow(clamped: 1900))
+    #expect(base + Value<Double>.value(100) == .offscaleLow(clamped: 2100))
+    #expect(base - Value<Double>.value(500) == .offscaleLow(clamped: 1500))
+  }
+
+  @Test
+  func `a refusal carrying no figure erases one that does`() {
+    let substituted: Value<Double> = .offscaleLow(clamped: 2000)
+
+    #expect(substituted + Value<Double>.offscaleLow(clamped: nil) == .offscaleLow(clamped: nil))
+    #expect(substituted + Value<Double>.notAvailable == .notAvailable)
   }
 
   // MARK: - Subtraction

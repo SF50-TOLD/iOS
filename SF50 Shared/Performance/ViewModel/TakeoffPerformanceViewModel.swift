@@ -59,7 +59,7 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
   public var downloadedNOTAMCount: Int { downloadedNOTAMs.count }
 
   public var requiredClimbGradient: Measurement<UnitSlope>? {
-    guard case .value(let takeoffRun) = takeoffRun,
+    guard let takeoffRun = takeoffRun.nominalOrClamped,
       let availableTakeoffRun,
       let obstacleHeight = notam?.obstacleHeight,
       let obstacleDistance = notam?.obstacleDistance,
@@ -75,15 +75,15 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
 
   public var offscaleLow: Bool {
     let valuesOffscaleLow =
-      takeoffRun == .offscaleLow || takeoffDistance == .offscaleLow
-      || takeoffClimbRate == .offscaleLow || takeoffClimbGradient == .offscaleLow
+      takeoffRun.isOffscaleLow || takeoffDistance.isOffscaleLow
+      || takeoffClimbRate.isOffscaleLow || takeoffClimbGradient.isOffscaleLow
     return valuesOffscaleLow || (model?.takeoffInputsOffscaleLow ?? false)
   }
 
   public var offscaleHigh: Bool {
     let valuesOffscaleHigh =
-      takeoffRun == .offscaleHigh || takeoffDistance == .offscaleHigh
-      || takeoffClimbRate == .offscaleHigh || takeoffClimbGradient == .offscaleHigh
+      takeoffRun.isOffscaleHigh || takeoffDistance.isOffscaleHigh
+      || takeoffClimbRate.isOffscaleHigh || takeoffClimbGradient.isOffscaleHigh
     return valuesOffscaleHigh || (model?.takeoffInputsOffscaleHigh ?? false)
   }
 

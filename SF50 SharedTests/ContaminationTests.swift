@@ -1087,27 +1087,27 @@ struct ContaminationTests {
   func `the tabular model reports a depth outside the AFM tables as offscale`(
     condition: DepthCondition
   ) throws {
-    let dryRun = try #require(Self.landingRunFt(contamination: nil, usingTabularData: true).nominal)
-
     for depthInches in [0.05, 0.1] {
       let run = Self.landingRunFt(
         contamination: condition.contamination(atDepthInches: depthInches),
         usingTabularData: true
       )
+      #expect(run.isOffscaleLow, "\(depthInches)\u{2033} should read offscale low")
       #expect(
-        run == .offscaleLow,
-        "\(depthInches)\u{2033} should read offscale low"
+        run.nominalOrClamped == nil,
+        "\(depthInches)\u{2033} has no tabulated figure to substitute"
       )
-      #expect(run.nominal != dryRun)
     }
 
     for depthInches in [0.6, 3.0] {
+      let run = Self.landingRunFt(
+        contamination: condition.contamination(atDepthInches: depthInches),
+        usingTabularData: true
+      )
+      #expect(run.isOffscaleHigh, "\(depthInches)\u{2033} should read offscale high")
       #expect(
-        Self.landingRunFt(
-          contamination: condition.contamination(atDepthInches: depthInches),
-          usingTabularData: true
-        ) == .offscaleHigh,
-        "\(depthInches)\u{2033} should read offscale high"
+        run.nominalOrClamped == nil,
+        "\(depthInches)\u{2033} has no tabulated figure to substitute"
       )
     }
   }

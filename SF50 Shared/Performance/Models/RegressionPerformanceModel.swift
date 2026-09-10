@@ -120,21 +120,27 @@ final class RegressionPerformanceModel: BasePerformanceModel {
   // MARK: - En Route Climb
 
   override var enrouteClimbGradientFtNM: Value<Double> {
-    configuration.iceProtection
-      ? evaluate(enrouteClimbGradientIceEquation)
-      : evaluate(enrouteClimbGradientNormalEquation)
+    evaluateEnrouteClimb(
+      configuration.iceProtection
+        ? enrouteClimbGradientIceEquation : enrouteClimbGradientNormalEquation,
+      for: .gradient
+    )
   }
 
   override var enrouteClimbRateFtMin: Value<Double> {
-    configuration.iceProtection
-      ? evaluate(enrouteClimbRateIceEquation)
-      : evaluate(enrouteClimbRateNormalEquation)
+    evaluateEnrouteClimb(
+      configuration.iceProtection
+        ? enrouteClimbRateIceEquation : enrouteClimbRateNormalEquation,
+      for: .rate
+    )
   }
 
   override var enrouteClimbSpeedKIAS: Value<Double> {
-    configuration.iceProtection
-      ? evaluate(enrouteClimbSpeedIceEquation)
-      : evaluate(enrouteClimbSpeedNormalEquation)
+    evaluateEnrouteClimb(
+      configuration.iceProtection
+        ? enrouteClimbSpeedIceEquation : enrouteClimbSpeedNormalEquation,
+      for: .speed
+    )
   }
 
   // MARK: - Go-Around Climb Gradient
@@ -382,6 +388,33 @@ extension RegressionPerformanceModel {
       "altitude": altitude,
       "temperature": temperature
     ])
+  }
+
+  /**
+   * Evaluates an en route climb equation, refusing outside the envelope its table covers.
+   *
+   * Extrapolation is the regression model's business, but these fits turn once past the conditions
+   * they were made from: at the temperatures the Climb tab can ask for, the ice-contaminated
+   * gradient reports a descent. A figure like that is not an estimate the model can stand behind,
+   * so it reports nothing instead — with a sign check behind the envelope check, since a
+   * non-positive climb is nonsense wherever it comes from.
+   */
+  private func evaluateEnrouteClimb(
+    _ equation: RegressionEquation,
+    for quantity: BoundsChecker.EnrouteClimbQuantity
+  ) -> Value<Double> {
+    let status = boundsChecker.enrouteClimbBoundsStatus(
+      for: quantity,
+      weight: weight,
+      altitude: altitude,
+      temperature: temperature,
+      iceContaminated: configuration.iceProtection
+    )
+    guard status == .withinBounds else { return .notAvailable }
+
+    let result = evaluate(equation)
+    guard let climb = result.nominal, climb > 0 else { return .notAvailable }
+    return result
   }
 
   /// Evaluates a logistic equation with the current input conditions.

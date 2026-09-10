@@ -185,7 +185,10 @@ private struct SnippetRow<UnitType: Dimension, Content: View>: View {
       runway: .init(from: runway, notam: nil),
       operation: .takeoff,
       flapSetting: .flaps50,
-      performance: .init(groundRun: .offscaleHigh, distance: .offscaleHigh),
+      performance: .init(
+        groundRun: .offscaleHigh(clamped: nil),
+        distance: .offscaleHigh(clamped: nil)
+      ),
       conditions: preview.veryHot
     )
   }

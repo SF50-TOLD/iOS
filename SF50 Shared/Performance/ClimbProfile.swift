@@ -152,6 +152,18 @@ public struct ClimbProfile: Sendable {
     fileprivate let schedule: ClimbSchedule
     fileprivate let antiIce: Bool
 
+    /**
+     * Whether the AFM publishes no table for this schedule, so it is answered from the fitted
+     * equations however the model is set.
+     *
+     * Only the obstacle climb is served this way. Anything plotting it while the tabular model is
+     * selected is showing regression figures, and says so rather than presenting them as the
+     * book's.
+     */
+    public var answeredFromRegressionOnly: Bool {
+      schedule == .enrouteObstacle
+    }
+
     public static func enrouteObstacle(antiIce: Bool) -> Self {
       Self(schedule: .enrouteObstacle, antiIce: antiIce)
     }
