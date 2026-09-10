@@ -13,6 +13,12 @@ one of the two places.
 These notes are read by pilots deciding whether to update, so they describe what
 changed in the cockpit rather than what changed in the code.
 
+## 3.8.1
+
+- Version 3.8 closed immediately on launch and never reached the first screen.
+  It opens again. Nothing you had saved was affected, and the terrain and
+  airport data already on the aircraft are still there.
+
 ## 3.8
 
 Terrain data now downloads through iOS itself rather than through the app, and
