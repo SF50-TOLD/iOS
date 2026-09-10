@@ -43,6 +43,8 @@
 		01AC00282FE0000000000028 /* MeasurementKitLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00182FE0000000000018 /* MeasurementKitLocation */; };
 		01AC00222FE0000000000022 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00122FE0000000000012 /* MeasurementKit */; };
 		01AC00232FE0000000000023 /* MeasurementKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00132FE0000000000013 /* MeasurementKitUI */; };
+		01AC00292FE0000000000029 /* MeasurementKitUI in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00132FE0000000000013 /* MeasurementKitUI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		01AC002A2FE000000000002A /* MeasurementKitLocation in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00182FE0000000000018 /* MeasurementKitLocation */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		01AC00242FE0000000000024 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00142FE0000000000014 /* MeasurementKit */; };
 		01AC00252FE0000000000025 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00152FE0000000000015 /* MeasurementKit */; };
 		01AC00262FE0000000000026 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00162FE0000000000016 /* MeasurementKit */; };
@@ -142,6 +144,8 @@
 			dstSubfolder = Frameworks;
 			files = (
 				012B1E512DE2F272000D9ADC /* SF50_Shared.framework in Embed Frameworks */,
+				01AC00292FE0000000000029 /* MeasurementKitUI in Embed Frameworks */,
+				01AC002A2FE000000000002A /* MeasurementKitLocation in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 		};
