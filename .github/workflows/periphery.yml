@@ -14,6 +14,9 @@ jobs:
   periphery:
     name: Run Periphery
     runs-on: macos-26
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
     steps:
       - name: Disable Spotlight indexing
         run: |
@@ -78,16 +81,15 @@ jobs:
         with:
           path: ~/Library/Developer/Xcode/DerivedData
           key: derived-periphery-macos-26-${{ steps.toolchain.outputs.xcode }}-${{ hashFiles('**/Package.resolved') }}
-      # The runner image freezes Homebrew's formula index at the image's build date, so a bare
-      # `brew install` can resolve to a Periphery old enough to analyze this project differently
-      # than a current one does. Refresh the index first so every run agrees on the version.
       - name: Install Periphery and jq
         run: |
           brew update
-          brew install periphery jq
+          brew install periphery-pro/tap/periphery-cli jq
       # iOS pass: gates the app and its iOS extensions. Uses .periphery.yml,
       # which report-excludes SF50 Shared (judged by the intersection job below).
       - name: Run Periphery (iOS)
+        env:
+          PERIPHERY_TOKEN: ${{ secrets.PERIPHERY_TOKEN }}
         run: |
           periphery scan --strict -- \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
@@ -95,6 +97,8 @@ jobs:
       # macOS pass: gates the DownloadNASR build tool. Uses .periphery-macos.yml,
       # which also report-excludes SF50 Shared.
       - name: Run Periphery (macOS)
+        env:
+          PERIPHERY_TOKEN: ${{ secrets.PERIPHERY_TOKEN }}
         run: |
           periphery scan --strict --config .periphery-macos.yml -- \
             -destination "platform=macOS"
@@ -103,6 +107,8 @@ jobs:
       # framework from each pass as JSON, then fail on symbols both passes agree
       # are dead.
       - name: Periphery SF50 Shared intersection
+        env:
+          PERIPHERY_TOKEN: ${{ secrets.PERIPHERY_TOKEN }}
         run: |
           periphery scan --config .periphery.yml \
             --report-include "**/SF50 Shared/**" --format json -- \
