@@ -379,17 +379,18 @@ private struct SectionPreview: View {
   var hasWindsAloft = true
   var layer = WeatherProfileLayer.none
   var showsWindBarbs = false
+  var pathFailure: PathFailure?
 
   var body: some View {
     List {
       TerrainProfileSection(
-        terrainPath: .preview,
+        terrainPath: pathFailure == nil ? .preview : nil,
         climbProfile: .preview,
         hasWindsAloft: hasWindsAloft,
         fieldElevation: .zero,
         time: .now,
         isComputing: false,
-        pathFailure: nil,
+        pathFailure: pathFailure,
         plotsRegressionClimb: false,
         noDataDescription: "Select a departure procedure to view terrain profile.",
         initialWeatherLayer: layer,
@@ -439,4 +440,22 @@ private struct SectionPreview: View {
 /// the dead weather pill.
 #Preview("Nothing reported") {
   SectionPreview(outcome: .loaded(.init(columns: [], providers: [])))
+}
+
+// MARK: - Failure states
+
+#Preview("Ran off the charts") {
+  SectionPreview(
+    pathFailure: .outsideCharts(altitude: .init(value: 24000, unit: .feet))
+  )
+}
+
+#Preview("Gap in the charts") {
+  SectionPreview(
+    pathFailure: .chartGap(altitude: .init(value: 12500, unit: .feet))
+  )
+}
+
+#Preview("Procedure could not be plotted") {
+  SectionPreview(pathFailure: .procedure)
 }

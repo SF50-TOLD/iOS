@@ -35,15 +35,13 @@ enum PathFailure {
         Text("The path for this procedure could not be computed.")
       case .outsideCharts(let altitude):
         Text(
-          "The climb charts do not cover these conditions at \(altitude, format: .measurement(width: .abbreviated, usage: .asProvided)). Nothing is plotted above that.",
-          comment:
-            "The altitude is where the climb ran off the charts, e.g. “24,000 ft”."
+          "The climb charts do not cover these conditions at \(altitude.asHeight, format: .height). Nothing is plotted above that.",
+          comment: "The altitude is where the climb ran off the charts, e.g. “24,000 ft”."
         )
       case .chartGap(let altitude):
         Text(
-          "The climb charts carry no figure at \(altitude, format: .measurement(width: .abbreviated, usage: .asProvided)), although they cover these conditions either side of it.",
-          comment:
-            "The altitude is where the charts have a gap, e.g. “24,000 ft”."
+          "The climb charts carry no figure at \(altitude.asHeight, format: .height), although they cover these conditions either side of it.",
+          comment: "The altitude is where the charts have a gap, e.g. “24,000 ft”."
         )
     }
   }

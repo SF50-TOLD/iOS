@@ -20,6 +20,13 @@ extension Measurement where UnitType == UnitVolume {
 
 extension Measurement where UnitType == UnitLength {
   public var asLength: Self { converted(to: Defaults[.runwayLengthUnit]) }
+
+  /// Converts to the user's preferred height unit.
+  ///
+  /// Distinct from ``asLength`` because the two answer different questions: a runway is measured
+  /// along the ground and an altitude above it, and Settings keeps a preference for each. A
+  /// pilot reading runway lengths in feet may still want altitudes in metres.
+  public var asHeight: Self { converted(to: Defaults[.heightUnit]) }
 }
 
 extension Measurement where UnitType == UnitSpeed {
