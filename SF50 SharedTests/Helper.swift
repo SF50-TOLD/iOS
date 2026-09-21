@@ -135,8 +135,8 @@ enum Helper {
     let altitudes: [Double] = [0, 5000, 10000, 15000, 20000, 25000, 30000]
     let dataPoints = altitudes.map { alt in
       let climbData = ClimbProfile.ClimbData(
-        gradientFtPerNM: gradientFtPerNM,
-        indicatedAirspeedKts: 170
+        gradientFtPerNM: .value(gradientFtPerNM),
+        indicatedAirspeedKts: .value(170)
       )
       return ClimbProfile.DataPoint(
         altitudeFt: alt,

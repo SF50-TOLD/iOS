@@ -160,10 +160,10 @@ struct ClimbProfileGeneratorTests {
     for dp in profile.dataPoints {
       let climbData = dp.climbData(for: .takeoff)
       #expect(
-        climbData.indicatedAirspeedKts.isApproximatelyEqual(
+        climbData.indicatedAirspeedKts.nominal?.isApproximatelyEqual(
           to: ClimbProfileGenerator.takeoffClimbSpeedKIAS,
           absoluteTolerance: 0.001
-        )
+        ) == true
       )
     }
   }
@@ -183,16 +183,16 @@ struct ClimbProfileGeneratorTests {
       let normal = dp.climbData(for: .enrouteObstacle(antiIce: false))
       let ice = dp.climbData(for: .enrouteObstacle(antiIce: true))
       #expect(
-        normal.indicatedAirspeedKts.isApproximatelyEqual(
+        normal.indicatedAirspeedKts.nominal?.isApproximatelyEqual(
           to: ClimbProfileGenerator.obstacleClimbSpeedKIAS,
           absoluteTolerance: 0.001
-        )
+        ) == true
       )
       #expect(
-        ice.indicatedAirspeedKts.isApproximatelyEqual(
+        ice.indicatedAirspeedKts.nominal?.isApproximatelyEqual(
           to: ClimbProfileGenerator.obstacleClimbSpeedKIAS,
           absoluteTolerance: 0.001
-        )
+        ) == true
       )
     }
   }

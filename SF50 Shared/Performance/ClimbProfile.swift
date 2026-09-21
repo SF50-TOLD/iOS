@@ -26,46 +26,78 @@ public struct ClimbProfile: Sendable {
 
   // MARK: - Interpolation
 
-  /// Interpolates a value at a given altitude using bracketing data points.
-  /// Clamps to nearest endpoint outside range. Returns nil if empty.
-  private func interpolate(at altitudeFt: Double, _ extract: (DataPoint) -> Double) -> Double? {
+  /// Locates an altitude among the profile's data points, clamping to an endpoint outside the
+  /// range they cover.
+  private func position(at altitudeFt: Double) -> Position? {
     guard let first = dataPoints.first, let last = dataPoints.last else { return nil }
-    if altitudeFt <= first.altitudeFt { return extract(first) }
-    if altitudeFt >= last.altitudeFt { return extract(last) }
+    if altitudeFt <= first.altitudeFt { return .at(first) }
+    if altitudeFt >= last.altitudeFt { return .at(last) }
 
-    for i in 0..<(dataPoints.count - 1) {
-      let lo = dataPoints[i]
-      let hi = dataPoints[i + 1]
-      if altitudeFt >= lo.altitudeFt && altitudeFt <= hi.altitudeFt {
-        let fraction = (altitudeFt - lo.altitudeFt) / (hi.altitudeFt - lo.altitudeFt)
-        return extract(lo) + fraction * (extract(hi) - extract(lo))
-      }
+    for (low, high) in zip(dataPoints, dataPoints.dropFirst())
+    where altitudeFt >= low.altitudeFt && altitudeFt <= high.altitudeFt {
+      // Two observations at one altitude leave nothing to interpolate across, and a span of zero
+      // would divide by it.
+      guard high.altitudeFt > low.altitudeFt else { return .at(low) }
+      let fraction = (altitudeFt - low.altitudeFt) / (high.altitudeFt - low.altitudeFt)
+      return .between(low, high, fraction: fraction)
     }
 
-    return extract(last)
+    return .at(last)
+  }
+
+  /// Interpolates a quantity every data point carries, such as a wind component.
+  private func interpolate(at altitudeFt: Double, _ extract: (DataPoint) -> Double) -> Double? {
+    switch position(at: altitudeFt) {
+      case nil: nil
+      case .at(let point): extract(point)
+      case .between(let low, let high, let fraction):
+        extract(low) + fraction * (extract(high) - extract(low))
+    }
+  }
+
+  /// Interpolates a performance figure, which the model may have no answer for at either end of
+  /// the bracketing interval.
+  ///
+  /// Where a bracketing point carries a refusal, that refusal is the answer for the whole
+  /// interval, and it is passed out intact rather than reduced to "no figure": a profile that
+  /// cannot say what the gradient is at 20,000 ft cannot say what it is at 19,500 ft either, and
+  /// interpolating towards the missing point would invent one.
+  private func interpolateFigure(
+    at altitudeFt: Double,
+    _ extract: (DataPoint) -> Value<Double>
+  ) -> Value<Double> {
+    switch position(at: altitudeFt) {
+      case nil: .notAvailable
+      case .at(let point): extract(point)
+      case .between(let low, let high, let fraction):
+        between(extract(low), extract(high), fraction: fraction)
+    }
+  }
+
+  /// Reads between two figures, or hands back whichever of them the model could not supply.
+  private func between(_ low: Value<Double>, _ high: Value<Double>, fraction: Double)
+    -> Value<Double>
+  {
+    guard let lowFigure = low.nominal else { return low }
+    guard let highFigure = high.nominal else { return high }
+    return .value(lowFigure + fraction * (highFigure - lowFigure))
   }
 
   /// Interpolated gradient at a given altitude for a specific profile.
-  /// Returns nil if the profile is empty or if data contains out-of-bounds values.
+  ///
+  /// Returns nil where the profile is empty, or where the performance model had no figure at a
+  /// bracketing altitude — conditions outside the charts, or a hole in them.
   public func gradient(at altitudeFt: Double, profile: ProfileType) -> Double? {
-    guard let value = interpolate(at: altitudeFt, { $0.climbData(for: profile).gradientFtPerNM }),
-      !value.isNaN
-    else { return nil }
-    return value
+    interpolateFigure(at: altitudeFt) { $0.climbData(for: profile).gradientFtPerNM }.nominal
   }
 
   /// Interpolated true airspeed at a given altitude for a specific profile.
-  /// Returns nil if the profile is empty or if data contains out-of-bounds values.
+  ///
+  /// Returns nil on the same terms as ``gradient(at:profile:)``.
   public func trueAirspeed(at altitudeFt: Double, profile: ProfileType) -> Double? {
-    guard
-      let value = interpolate(
-        at: altitudeFt,
-        {
-          $0.trueAirspeedKts(profile: profile, seaLevelPressureInHg: seaLevelPressureInHg)
-        }
-      ), !value.isNaN
-    else { return nil }
-    return value
+    interpolateFigure(at: altitudeFt) {
+      $0.trueAirspeedKts(profile: profile, seaLevelPressureInHg: seaLevelPressureInHg)
+    }.nominal
   }
 
   /// Interpolated wind direction (true, FROM) at a given altitude.
@@ -81,8 +113,10 @@ public struct ClimbProfile: Sendable {
   // MARK: - Integration
 
   /// Aircraft altitude after climbing a horizontal distance from a starting altitude.
-  /// Uses trapezoidal integration over the gradient curve.
-  /// Returns nil if the profile is empty or distance is negative.
+  ///
+  /// Uses trapezoidal integration over the gradient curve. Returns nil if the profile is empty,
+  /// the distance is negative, or the profile has no gradient at an altitude the climb passes
+  /// through — the conditions there are outside the charts, and there is no figure to integrate.
   public func altitude(after distanceNM: Double, from startAltitudeFt: Double, profile: ProfileType)
     -> Double?
   {
@@ -94,13 +128,9 @@ public struct ClimbProfile: Sendable {
 
     while remainingNM > 0 {
       let step = min(Self.distanceStepNM, remainingNM)
-      guard let g1 = gradient(at: currentAltitudeFt, profile: profile) else {
-        fatalError("Non-empty profile returned nil gradient")
-      }
+      guard let g1 = gradient(at: currentAltitudeFt, profile: profile) else { return nil }
       let predictedAltitudeFt = currentAltitudeFt + g1 * step
-      guard let g2 = gradient(at: predictedAltitudeFt, profile: profile) else {
-        fatalError("Non-empty profile returned nil gradient")
-      }
+      guard let g2 = gradient(at: predictedAltitudeFt, profile: profile) else { return nil }
       currentAltitudeFt += (g1 + g2) / 2.0 * step
       remainingNM -= step
     }
@@ -109,8 +139,10 @@ public struct ClimbProfile: Sendable {
   }
 
   /// Horizontal distance required to climb from one altitude to another.
-  /// Uses trapezoidal integration over the gradient curve.
-  /// Returns nil if the profile is empty or startAltitudeFt >= endAltitudeFt.
+  ///
+  /// Uses trapezoidal integration over the gradient curve. Returns nil if the profile is empty,
+  /// `startAltitudeFt` is not below `endAltitudeFt`, or the profile has no gradient somewhere
+  /// between the two.
   public func distance(from startAltitudeFt: Double, to endAltitudeFt: Double, profile: ProfileType)
     -> Double?
   {
@@ -122,12 +154,9 @@ public struct ClimbProfile: Sendable {
 
     while remainingFt > 0 {
       let step = min(Self.altitudeStepFt, remainingFt)
-      guard let g1 = gradient(at: currentAltitudeFt, profile: profile) else {
-        fatalError("Non-empty profile returned nil gradient")
-      }
-      guard let g2 = gradient(at: currentAltitudeFt + step, profile: profile) else {
-        fatalError("Non-empty profile returned nil gradient")
-      }
+      guard let g1 = gradient(at: currentAltitudeFt, profile: profile),
+        let g2 = gradient(at: currentAltitudeFt + step, profile: profile)
+      else { return nil }
       let avgGradient = (g1 + g2) / 2.0
       if avgGradient > 0 {
         totalNM += step / avgGradient
@@ -180,11 +209,15 @@ public struct ClimbProfile: Sendable {
   // MARK: - Climb Data
 
   /// Gradient and IAS for a single climb schedule at a single altitude.
+  ///
+  /// Both are `Value`s because the model is entitled to have no answer: the conditions at this
+  /// altitude may sit outside the charts, or the charts may have a hole where they should be.
+  /// Which of those it was survives to whoever reads the figure.
   public struct ClimbData: Sendable {
-    public let gradientFtPerNM: Double
-    public let indicatedAirspeedKts: Double
+    public let gradientFtPerNM: Value<Double>
+    public let indicatedAirspeedKts: Value<Double>
 
-    public init(gradientFtPerNM: Double, indicatedAirspeedKts: Double) {
+    public init(gradientFtPerNM: Value<Double>, indicatedAirspeedKts: Value<Double>) {
       self.gradientFtPerNM = gradientFtPerNM
       self.indicatedAirspeedKts = indicatedAirspeedKts
     }
@@ -239,16 +272,34 @@ public struct ClimbProfile: Sendable {
     }
 
     /// Computes TAS from IAS for a given profile using actual density at this altitude.
-    func trueAirspeedKts(profile: ProfileType, seaLevelPressureInHg: Double) -> Double {
+    ///
+    /// Where the model had no indicated airspeed to convert, its refusal is the answer.
+    func trueAirspeedKts(profile: ProfileType, seaLevelPressureInHg: Double) -> Value<Double> {
+      let indicated = climbData(for: profile).indicatedAirspeedKts
+      guard let IASKts = indicated.nominal else { return indicated }
+
       let P = pressureAtAltitude(
         seaLevelPressurePa: seaLevelPressureInHg * inHgToPa,
         altitudeM: altitudeFt * feetToMeters
       )
-      return SF50_Shared.trueAirspeed(
-        indicatedAirspeedKts: climbData(for: profile).indicatedAirspeedKts,
-        pressurePa: P,
-        temperatureC: outsideAirTemperatureC
+      return .value(
+        SF50_Shared.trueAirspeed(
+          indicatedAirspeedKts: IASKts,
+          pressurePa: P,
+          temperatureC: outsideAirTemperatureC
+        )
       )
     }
+  }
+
+  // MARK: - Position
+
+  /// Where an altitude falls among the profile's data points.
+  private enum Position {
+    /// At a single data point: an exact altitude, or one clamped to an endpoint.
+    case at(DataPoint)
+
+    /// Between two data points, `fraction` of the way from the first to the second.
+    case between(DataPoint, DataPoint, fraction: Double)
   }
 }
