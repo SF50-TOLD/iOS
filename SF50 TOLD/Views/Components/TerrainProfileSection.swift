@@ -423,12 +423,12 @@ private struct SectionPreview: View {
 
 /// The go-around case: in the air with no connection. The weather layers can't be fetched and are
 /// offered as disabled, but terrain, obstacles, and the winds aloft still plot.
-#Preview("No connection") {
+///
+/// Stands for every reason the layers can be missing. `.offline` and `.unavailable` are distinct
+/// failures, but `fieldLayersAvailable` reads only `atmosphereState.hasFailed`, so the section
+/// draws them identically — a second preview for the other case showed the same picture.
+#Preview("Weather layers unavailable") {
   SectionPreview(outcome: .offline, showsWindBarbs: true)
-}
-
-#Preview("Service unavailable") {
-  SectionPreview(outcome: .unavailable)
 }
 
 /// No forecast reached this flight, so there is nothing for the barbs to draw.
