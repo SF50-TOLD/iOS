@@ -47,7 +47,7 @@ struct ClimbProfileView: View {
   @State private var terrainPath: ProcedureTerrainPath?
   @State private var climbProfile: ClimbProfile?
   @State private var isComputing = false
-  @State private var pathFailed = false
+  @State private var pathFailure: PathFailure?
   @State private var plotsRegressionClimb = false
   @State private var terrainRevision = 0
 
@@ -75,7 +75,7 @@ struct ClimbProfileView: View {
         fieldElevation: performance.airport?.elevation ?? .zero,
         time: weather.time,
         isComputing: isComputing,
-        pathFailed: pathFailed,
+        pathFailure: pathFailure,
         plotsRegressionClimb: plotsRegressionClimb,
         noDataDescription: "Select a departure procedure to view terrain profile."
       )
@@ -198,7 +198,7 @@ struct ClimbProfileView: View {
     else {
       terrainPath = nil
       climbProfile = nil
-      pathFailed = false
+      pathFailure = nil
       return
     }
 
@@ -280,7 +280,12 @@ struct ClimbProfileView: View {
 
     guard let procedurePath else {
       terrainPath = nil
-      pathFailed = true
+      pathFailure = .init(
+        climbProfile: climbProfile,
+        fromAltitudeFt: fieldElevationFt,
+        toAltitudeFt: targetAltitudeFt,
+        profile: .takeoff
+      )
       return
     }
 
@@ -293,7 +298,7 @@ struct ClimbProfileView: View {
 
     guard !Task.isCancelled else { return }
     terrainPath = result
-    pathFailed = false
+    pathFailure = nil
   }
 
   private func buildClimbSchedule() -> ProcedurePathGenerator.ClimbSchedule {

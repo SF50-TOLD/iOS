@@ -32,8 +32,8 @@ struct TerrainProfileSection: View {
   /// Whether the path is still being computed.
   let isComputing: Bool
 
-  /// Whether the path could not be computed at all.
-  let pathFailed: Bool
+  /// Why the path could not be computed, or nil where it was computed.
+  let pathFailure: PathFailure?
 
   /// Whether the plotted climb leans on the fitted equations although the tabular model is chosen.
   ///
@@ -85,11 +85,11 @@ struct TerrainProfileSection: View {
           hasWindsAloft: hasWindsAloft,
           providers: providers
         )
-      } else if pathFailed {
+      } else if let pathFailure {
         ContentUnavailableView(
-          "Unable to Plot",
+          pathFailure.title,
           systemImage: "mountain.2",
-          description: Text("The path for this procedure could not be computed.")
+          description: pathFailure.message
         )
       } else {
         ContentUnavailableView(
@@ -177,7 +177,7 @@ struct TerrainProfileSection: View {
     fieldElevation: Measurement<UnitLength>,
     time: Date,
     isComputing: Bool,
-    pathFailed: Bool,
+    pathFailure: PathFailure?,
     plotsRegressionClimb: Bool,
     noDataDescription: LocalizedStringKey,
     initialWeatherLayer: WeatherProfileLayer = .none,
@@ -189,7 +189,7 @@ struct TerrainProfileSection: View {
     self.fieldElevation = fieldElevation
     self.time = time
     self.isComputing = isComputing
-    self.pathFailed = pathFailed
+    self.pathFailure = pathFailure
     self.plotsRegressionClimb = plotsRegressionClimb
     self.noDataDescription = noDataDescription
     _weatherLayer = .init(initialValue: initialWeatherLayer)
@@ -389,7 +389,7 @@ private struct SectionPreview: View {
         fieldElevation: .zero,
         time: .now,
         isComputing: false,
-        pathFailed: false,
+        pathFailure: nil,
         plotsRegressionClimb: false,
         noDataDescription: "Select a departure procedure to view terrain profile.",
         initialWeatherLayer: layer,

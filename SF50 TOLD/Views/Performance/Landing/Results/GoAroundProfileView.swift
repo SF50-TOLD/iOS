@@ -38,7 +38,7 @@ struct GoAroundProfileView: View {
   @State private var terrainPath: ProcedureTerrainPath?
   @State private var climbProfile: ClimbProfile?
   @State private var isComputing = false
-  @State private var pathFailed = false
+  @State private var pathFailure: PathFailure?
   @State private var plotsRegressionClimb = false
   @State private var terrainRevision = 0
 
@@ -58,7 +58,7 @@ struct GoAroundProfileView: View {
         fieldElevation: performance.airport?.elevation ?? .zero,
         time: weather.time,
         isComputing: isComputing,
-        pathFailed: pathFailed,
+        pathFailure: pathFailure,
         plotsRegressionClimb: plotsRegressionClimb,
         noDataDescription: "Select an approach to view missed approach terrain profile."
       )
@@ -179,7 +179,7 @@ struct GoAroundProfileView: View {
     else {
       terrainPath = nil
       climbProfile = nil
-      pathFailed = false
+      pathFailure = nil
       return
     }
 
@@ -247,7 +247,12 @@ struct GoAroundProfileView: View {
 
     guard let procedurePath else {
       terrainPath = nil
-      pathFailed = true
+      pathFailure = .init(
+        climbProfile: climbProfile,
+        fromAltitudeFt: fieldElevationFt,
+        toAltitudeFt: (fieldElevation + Self.vectorTargetAltitudeAFE).converted(to: .feet).value,
+        profile: .enrouteObstacle(antiIce: false)
+      )
       return
     }
 
@@ -260,7 +265,7 @@ struct GoAroundProfileView: View {
 
     guard !Task.isCancelled else { return }
     terrainPath = result
-    pathFailed = false
+    pathFailure = nil
   }
 
   // MARK: - Types

@@ -76,6 +76,42 @@ struct ClimbProfileTests {
   // MARK: - Missing figures
 
   @Test
+  func `the first altitude with no gradient says which kind of no-answer it was`() throws {
+    // The charts run out above 5,000 ft.
+    let offscale = makeProfile([
+      (altitudeFt: 0, gradient: .value(400)),
+      (altitudeFt: 5000, gradient: .value(300)),
+      (altitudeFt: 10000, gradient: .offscaleHigh(clamped: nil))
+    ])
+    let gap = try #require(offscale.firstGradientGap(from: 0, to: 10000, profile: defaultProfile))
+    #expect(gap.reason == .offscaleHigh(clamped: nil))
+    // Reported where the reading actually stops — the first step past the last altitude the
+    // model can answer for — rather than the data point that refused.
+    #expect(gap.altitudeFt > 5000)
+    #expect(gap.altitudeFt <= 5050)
+
+    // A hole in the tables is a different answer at the same altitude.
+    let hole = makeProfile([
+      (altitudeFt: 0, gradient: .value(400)),
+      (altitudeFt: 5000, gradient: .value(300)),
+      (altitudeFt: 10000, gradient: .notAvailable)
+    ])
+    let holeGap = try #require(hole.firstGradientGap(from: 0, to: 10000, profile: defaultProfile))
+    #expect(holeGap.reason == .notAvailable)
+  }
+
+  @Test
+  func `a profile that answers throughout reports no gap`() {
+    let profile = makeVaryingProfile([
+      (altitudeFt: 0, gradientFtPerNM: 400),
+      (altitudeFt: 5000, gradientFtPerNM: 300),
+      (altitudeFt: 10000, gradientFtPerNM: 200)
+    ])
+
+    #expect(profile.firstGradientGap(from: 0, to: 10000, profile: defaultProfile) == nil)
+  }
+
+  @Test
   func `an altitude the model could not answer for reports rather than trapping`() {
     // The charts run out above 10,000 ft, so that point carries a refusal instead of a gradient.
     let profile = makeProfile([
