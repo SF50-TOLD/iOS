@@ -1,6 +1,8 @@
 git_url("git@github.com:RISCfuture/certificates.git")
 storage_mode("git")
 
+git_branch("main")
+
 type("appstore")
 team_id("2NFSK2WB24")
 

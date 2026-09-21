@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   ci:
-    uses: RISCfuture/XCUITestKit/.github/workflows/ios-ci.yml@main
+    uses: RISCfuture/XCUITestKit/.github/workflows/ios-ci.yml@1.0.0
     with:
       scheme: "SF50 TOLD"
       unit-test-plan: "SF50 Shared Unit Tests"
@@ -63,7 +63,7 @@ jobs:
           EOF
       - name: Set up iOS simulator
         id: sim
-        uses: RISCfuture/XCUITestKit/ci-templates/setup-ios-simulator@main
+        uses: RISCfuture/XCUITestKit/ci-templates/setup-ios-simulator@1.0.0
         with:
           device: "iPhone 17 Pro"
           device-type: com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro
