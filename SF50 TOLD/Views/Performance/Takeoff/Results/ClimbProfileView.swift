@@ -558,3 +558,23 @@ private struct DepartureSection: View {
     .environment(\.pathAtmosphereLoader, PreviewPathAtmosphereLoader(.loaded(.preview)))
   }
 }
+
+/// 51 °C is a degree past the takeoff climb table's hottest column, so the tabular model refuses
+/// outright and the path cannot be stepped at all. Nothing is staged here — the real performance
+/// model produces the real failure, which is the point of previewing it this way.
+#Preview("Outside the charts") {
+  PreviewView(insert: .KOAK) { helper in
+    let runway = try helper.load(airportID: "OAK", runway: "28L")!
+    helper.setTakeoff(runway: runway)
+
+    let loader = MockWeatherLoader(mockConditions: .value(helper.veryHot))
+    return NavigationStack {
+      ClimbProfileView()
+    }
+    .environment(TakeoffPerformanceViewModel(container: helper.container))
+    .environment(
+      WeatherViewModel(operation: .takeoff, container: helper.container, loader: loader)
+    )
+    .environment(\.pathAtmosphereLoader, PreviewPathAtmosphereLoader(.loaded(.preview)))
+  }
+}

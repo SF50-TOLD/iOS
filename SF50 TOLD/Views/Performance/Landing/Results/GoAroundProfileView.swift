@@ -251,7 +251,8 @@ struct GoAroundProfileView: View {
         climbProfile: climbProfile,
         fromAltitudeFt: fieldElevationFt,
         toAltitudeFt: (fieldElevation + Self.vectorTargetAltitudeAFE).converted(to: .feet).value,
-        profile: .enrouteObstacle(antiIce: false)
+        // The schedule's first segment, which is where a climb that cannot start fails.
+        profile: .takeoff
       )
       return
     }
@@ -360,6 +361,25 @@ private struct GoAroundSection: View {
     }
     .environment(LandingPerformanceViewModel(container: helper.container))
     .environment(WeatherViewModel(operation: .landing, container: helper.container))
+    .environment(\.pathAtmosphereLoader, PreviewPathAtmosphereLoader(.loaded(.preview)))
+  }
+}
+
+/// The go-around's schedule opens on the takeoff climb, whose table stops at 50 °C, so 51 °C
+/// refuses at the first step. The failure is the model's own, not a staged one.
+#Preview("Outside the charts") {
+  PreviewView(insert: .KOAK) { helper in
+    let runway = try helper.load(airportID: "OAK", runway: "28L")!
+    helper.setLanding(runway: runway)
+
+    let loader = MockWeatherLoader(mockConditions: .value(helper.veryHot))
+    return NavigationStack {
+      GoAroundProfileView()
+    }
+    .environment(LandingPerformanceViewModel(container: helper.container))
+    .environment(
+      WeatherViewModel(operation: .landing, container: helper.container, loader: loader)
+    )
     .environment(\.pathAtmosphereLoader, PreviewPathAtmosphereLoader(.loaded(.preview)))
   }
 }
