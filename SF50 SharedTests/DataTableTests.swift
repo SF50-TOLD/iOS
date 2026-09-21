@@ -178,6 +178,29 @@ struct DataTableTests {
     #expect(table.value(for: [0.5, 0.5, 0.5, 0.5]) == .notAvailable)
   }
 
+  @Test
+  func `a 3D table ragged in altitude widens past the hole`() {
+    // f(x, y, z) = 0.1x + 0.02y + 2z, tabulated at every corner except the middle altitude's
+    // heavier weight — the shape the AFM tables take, where the altitudes tabulated vary by
+    // weight. The adjacent altitude bracket around 2500 is therefore incomplete at every
+    // temperature, and the complete box is one step out.
+    let table = DataTable(data: [
+      [0.0, 0.0, 0.0, 0.0],
+      [1000.0, 0.0, 0.0, 100.0],
+      [0.0, 0.0, 20.0, 40.0],
+      [1000.0, 0.0, 20.0, 140.0],
+      [0.0, 5000.0, 0.0, 100.0],
+      [0.0, 5000.0, 20.0, 140.0],
+      [0.0, 10000.0, 0.0, 200.0],
+      [1000.0, 10000.0, 0.0, 300.0],
+      [0.0, 10000.0, 20.0, 240.0],
+      [1000.0, 10000.0, 20.0, 340.0]
+    ])
+
+    // Taking the adjacent altitude pair and only widening temperature found nothing here.
+    #expect(table.value(for: [500.0, 2500.0, 10.0]) == .value(120.0))
+  }
+
   // MARK: - Edge Cases
 
   @Test

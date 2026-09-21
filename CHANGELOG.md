@@ -19,6 +19,9 @@ changed in the cockpit rather than what changed in the code.
   leaves those figures blank instead.
 - A figure outside the charts now says which edge it ran off, instead of always
   reading "offscale high". Where a chart has a gap in it, it reads "N/A".
+  reading “offscale high”. Where a chart has a gap in it, it reads “N/A”.
+- Some conditions the charts do cover were reported as uncovered. They now give
+  you a figure.
 
 ## 3.8.1
 
