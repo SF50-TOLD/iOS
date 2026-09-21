@@ -13,6 +13,11 @@ one of the two places.
 These notes are read by pilots deciding whether to update, so they describe what
 changed in the cockpit rather than what changed in the code.
 
+## 3.8.2
+
+- The app no longer quits when the climb charts do not cover your conditions; it
+  leaves those figures blank instead.
+
 ## 3.8.1
 
 - Version 3.8 closed immediately on launch and never reached the first screen.

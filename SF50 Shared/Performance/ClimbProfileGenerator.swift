@@ -107,15 +107,15 @@ public enum ClimbProfileGenerator {
       windSpeedKts: obs.windSpeedKts,
       takeoff: .init(
         gradientFtPerNM: takeoffGradient,
-        indicatedAirspeedKts: takeoffClimbSpeedKIAS
+        indicatedAirspeedKts: .value(takeoffClimbSpeedKIAS)
       ),
       enrouteObstacle: .init(
         gradientFtPerNM: obstacleGradient,
-        indicatedAirspeedKts: obstacleClimbSpeedKIAS
+        indicatedAirspeedKts: .value(obstacleClimbSpeedKIAS)
       ),
       enrouteObstacleAntiIce: .init(
         gradientFtPerNM: obstacleGradientIce,
-        indicatedAirspeedKts: obstacleClimbSpeedKIAS
+        indicatedAirspeedKts: .value(obstacleClimbSpeedKIAS)
       ),
       enroute: .init(
         gradientFtPerNM: enrouteGradient,
@@ -126,6 +126,45 @@ public enum ClimbProfileGenerator {
         indicatedAirspeedKts: enrouteSpeedIce
       )
     )
+  }
+
+  /// Evaluates a regression equation at a weight, altitude and temperature.
+  ///
+  /// `RegressionEquation` already answers in `Value`; this only spells the inputs, which both
+  /// sources name identically.
+  private static func evaluate(
+    _ equation: RegressionEquation,
+    weight: Double,
+    altitude: Double,
+    temperature: Double
+  ) -> Value<Double> {
+    equation.evaluate(inputs: [
+      "weight": weight,
+      "altitude": altitude,
+      "temperature": temperature
+    ])
+  }
+
+  /// Evaluates a delta polynomial as `base - max(0, delta)`, or the equation itself where it is
+  /// not a delta type.
+  ///
+  /// Where either half has no answer, neither has the difference — so the refusal is passed out
+  /// rather than being allowed to read as a penalty of zero.
+  private static func evaluateDelta(
+    base: RegressionEquation,
+    delta: RegressionEquation,
+    weight: Double,
+    altitude: Double,
+    temperature: Double
+  ) -> Value<Double> {
+    guard delta.type == .deltaPolynomial else {
+      return evaluate(delta, weight: weight, altitude: altitude, temperature: temperature)
+    }
+
+    let deltaValue = evaluate(delta, weight: weight, altitude: altitude, temperature: temperature)
+    guard let penalty = deltaValue.nominal else { return deltaValue }
+    return evaluate(base, weight: weight, altitude: altitude, temperature: temperature)
+      - Swift.max(0, penalty)
   }
 
   /// A winds-aloft observation at a single altitude.
@@ -151,26 +190,31 @@ public enum ClimbProfileGenerator {
   // MARK: - Equation Sources
 
   /// Abstracts whether we use regression equations or data tables.
+  ///
+  /// Every figure is a `Value` because either source is entitled to have no answer, and which
+  /// kind of no-answer it was matters downstream: conditions outside the charts read differently
+  /// to a hole in them, and both read differently to an equation that could not be evaluated.
   private protocol EquationSource {
-    func takeoffClimbGradient(weight: Double, altitude: Double, temperature: Double) -> Double
+    func takeoffClimbGradient(weight: Double, altitude: Double, temperature: Double)
+      -> Value<Double>
     func enrouteObstacleClimbGradient(
       weight: Double,
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double
+    ) -> Value<Double>
     func enrouteClimbGradient(
       weight: Double,
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double
+    ) -> Value<Double>
     func enrouteClimbSpeed(
       weight: Double,
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double
+    ) -> Value<Double>
   }
 
   // MARK: - Regression Source
@@ -201,43 +245,10 @@ public enum ClimbProfileGenerator {
       enrouteSpeedIceEq = loader.loadEnrouteClimbSpeedEquation(iceContaminated: true)
     }
 
-    private func eval(
-      _ eq: RegressionEquation,
-      weight: Double,
-      altitude: Double,
-      temperature: Double
-    ) -> Double {
-      let result = eq.evaluate(inputs: [
-        "weight": weight,
-        "altitude": altitude,
-        "temperature": temperature
-      ])
-      switch result {
-        case .value(let v): return v
-        case .valueWithUncertainty(let v, _): return v
-        default: return .nan
-      }
-    }
-
-    /// Evaluates a delta polynomial: result = base_value - max(0, delta_value).
-    /// Falls back to regular evaluation if the equation is not a delta type.
-    private func evalDelta(
-      base: RegressionEquation,
-      delta: RegressionEquation,
-      weight: Double,
-      altitude: Double,
-      temperature: Double
-    ) -> Double {
-      guard delta.type == .deltaPolynomial else {
-        return eval(delta, weight: weight, altitude: altitude, temperature: temperature)
-      }
-      let baseVal = eval(base, weight: weight, altitude: altitude, temperature: temperature)
-      let deltaVal = eval(delta, weight: weight, altitude: altitude, temperature: temperature)
-      return baseVal - max(0, deltaVal)
-    }
-
-    func takeoffClimbGradient(weight: Double, altitude: Double, temperature: Double) -> Double {
-      eval(takeoffGradientEq, weight: weight, altitude: altitude, temperature: temperature)
+    func takeoffClimbGradient(weight: Double, altitude: Double, temperature: Double)
+      -> Value<Double>
+    {
+      evaluate(takeoffGradientEq, weight: weight, altitude: altitude, temperature: temperature)
     }
 
     func enrouteObstacleClimbGradient(
@@ -245,9 +256,9 @@ public enum ClimbProfileGenerator {
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double {
+    ) -> Value<Double> {
       if iceContaminated {
-        return evalDelta(
+        return evaluateDelta(
           base: obstacleGradientNormalEq,
           delta: obstacleGradientIceEq,
           weight: weight,
@@ -255,7 +266,7 @@ public enum ClimbProfileGenerator {
           temperature: temperature
         )
       }
-      return eval(
+      return evaluate(
         obstacleGradientNormalEq,
         weight: weight,
         altitude: altitude,
@@ -268,9 +279,9 @@ public enum ClimbProfileGenerator {
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double {
+    ) -> Value<Double> {
       let equation = iceContaminated ? enrouteGradientIceEq : enrouteGradientNormalEq
-      return eval(equation, weight: weight, altitude: altitude, temperature: temperature)
+      return evaluate(equation, weight: weight, altitude: altitude, temperature: temperature)
     }
 
     func enrouteClimbSpeed(
@@ -278,9 +289,9 @@ public enum ClimbProfileGenerator {
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double {
+    ) -> Value<Double> {
       let equation = iceContaminated ? enrouteSpeedIceEq : enrouteSpeedNormalEq
-      return eval(equation, weight: weight, altitude: altitude, temperature: temperature)
+      return evaluate(equation, weight: weight, altitude: altitude, temperature: temperature)
     }
   }
 
@@ -318,59 +329,21 @@ public enum ClimbProfileGenerator {
       )
     }
 
-    private func tableValue(_ table: DataTable, inputs: [Double]) -> Double {
-      let result = table.value(for: inputs)
-      switch result {
-        case .value(let v): return v
-        case .valueWithUncertainty(let v, _): return v
-        default: return .nan
-      }
+    /// Reads a table, and asks for no clamping.
+    ///
+    /// `DataTable` can hold an input at its low edge and hand back that edge's figure as the
+    /// `clamped` payload of an offscale result, which is conservative and honest. Nothing here
+    /// can carry it: the profile is read through `gradient(at:profile:)`, which answers in a bare
+    /// `Double`, so a substituted figure would arrive at the climb integration indistinguishable
+    /// from one the chart covered. Until a readout can say a figure came from the edge of a
+    /// chart, the table is asked only for what it actually holds.
+    private func tableValue(_ table: DataTable, inputs: [Double]) -> Value<Double> {
+      table.value(for: inputs)
     }
 
-    private func regressionValue(
-      _ eq: RegressionEquation,
-      weight: Double,
-      altitude: Double,
-      temperature: Double
-    ) -> Double {
-      let result = eq.evaluate(inputs: [
-        "weight": weight,
-        "altitude": altitude,
-        "temperature": temperature
-      ])
-      switch result {
-        case .value(let v): return v
-        case .valueWithUncertainty(let v, _): return v
-        default: return .nan
-      }
-    }
-
-    private func regressionDelta(
-      base: RegressionEquation,
-      delta: RegressionEquation,
-      weight: Double,
-      altitude: Double,
-      temperature: Double
-    ) -> Double {
-      guard delta.type == .deltaPolynomial else {
-        return regressionValue(delta, weight: weight, altitude: altitude, temperature: temperature)
-      }
-      let baseVal = regressionValue(
-        base,
-        weight: weight,
-        altitude: altitude,
-        temperature: temperature
-      )
-      let deltaVal = regressionValue(
-        delta,
-        weight: weight,
-        altitude: altitude,
-        temperature: temperature
-      )
-      return baseVal - max(0, deltaVal)
-    }
-
-    func takeoffClimbGradient(weight: Double, altitude: Double, temperature: Double) -> Double {
+    func takeoffClimbGradient(weight: Double, altitude: Double, temperature: Double)
+      -> Value<Double>
+    {
       // Takeoff table uses [weight, altitude, temperature]
       tableValue(takeoffGradientTable, inputs: [weight, altitude, temperature])
     }
@@ -380,10 +353,10 @@ public enum ClimbProfileGenerator {
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double {
+    ) -> Value<Double> {
       // No tabular data for obstacle climb; fall back to regression
       if iceContaminated {
-        return regressionDelta(
+        return evaluateDelta(
           base: obstacleGradientNormalEq,
           delta: obstacleGradientIceEq,
           weight: weight,
@@ -391,7 +364,7 @@ public enum ClimbProfileGenerator {
           temperature: temperature
         )
       }
-      return regressionValue(
+      return evaluate(
         obstacleGradientNormalEq,
         weight: weight,
         altitude: altitude,
@@ -404,7 +377,7 @@ public enum ClimbProfileGenerator {
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double {
+    ) -> Value<Double> {
       // Enroute tables use [altitude, temperature, weight]
       let table = iceContaminated ? enrouteGradientIceTable : enrouteGradientNormalTable
       return tableValue(table, inputs: [altitude, temperature, weight])
@@ -415,7 +388,7 @@ public enum ClimbProfileGenerator {
       altitude: Double,
       temperature: Double,
       iceContaminated: Bool
-    ) -> Double {
+    ) -> Value<Double> {
       // Enroute tables use [altitude, temperature, weight]
       let table = iceContaminated ? enrouteSpeedIceTable : enrouteSpeedNormalTable
       return tableValue(table, inputs: [altitude, temperature, weight])

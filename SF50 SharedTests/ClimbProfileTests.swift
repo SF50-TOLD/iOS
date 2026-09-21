@@ -13,7 +13,7 @@ struct ClimbProfileTests {
 
   /// Creates a uniform ClimbData with the given gradient and 170 KIAS.
   private func uniformClimbData(gradientFtPerNM: Double) -> ClimbProfile.ClimbData {
-    .init(gradientFtPerNM: gradientFtPerNM, indicatedAirspeedKts: 170)
+    .init(gradientFtPerNM: .value(gradientFtPerNM), indicatedAirspeedKts: .value(170))
   }
 
   /// Creates a simple profile with given gradient, ISA temps, zero wind, 170 KIAS.
@@ -45,8 +45,19 @@ struct ClimbProfileTests {
   private func makeVaryingProfile(
     _ pairs: [(altitudeFt: Double, gradientFtPerNM: Double)]
   ) -> ClimbProfile {
+    makeProfile(pairs.map { (altitudeFt: $0.altitudeFt, gradient: .value($0.gradientFtPerNM)) })
+  }
+
+  /// Creates a profile from altitude/gradient pairs, where a gradient may be a refusal rather
+  /// than a figure.
+  private func makeProfile(
+    _ pairs: [(altitudeFt: Double, gradient: Value<Double>)]
+  ) -> ClimbProfile {
     let dataPoints = pairs.map { pair in
-      let cd = uniformClimbData(gradientFtPerNM: pair.gradientFtPerNM)
+      let cd = ClimbProfile.ClimbData(
+        gradientFtPerNM: pair.gradient,
+        indicatedAirspeedKts: .value(170)
+      )
       return ClimbProfile.DataPoint(
         altitudeFt: pair.altitudeFt,
         outsideAirTemperatureC: 15.0 - pair.altitudeFt * 0.00198,
@@ -60,6 +71,43 @@ struct ClimbProfileTests {
       )
     }
     return ClimbProfile(dataPoints: dataPoints, seaLevelPressureInHg: 29.92)
+  }
+
+  // MARK: - Missing figures
+
+  @Test
+  func `an altitude the model could not answer for reports rather than trapping`() {
+    // The charts run out above 10,000 ft, so that point carries a refusal instead of a gradient.
+    let profile = makeProfile([
+      (altitudeFt: 0, gradient: .value(400)),
+      (altitudeFt: 5000, gradient: .value(300)),
+      (altitudeFt: 10000, gradient: .offscaleHigh(clamped: nil))
+    ])
+
+    // Below the missing point the profile still answers.
+    #expect(profile.gradient(at: 2500, profile: defaultProfile) == 350)
+
+    // Reading towards it does not interpolate half way to a number that was never there, and the
+    // integrators — which used to trap on exactly this — report it instead.
+    #expect(profile.gradient(at: 7500, profile: defaultProfile) == nil)
+    #expect(profile.altitude(after: 30, from: 0, profile: defaultProfile) == nil)
+    #expect(profile.distance(from: 0, to: 9000, profile: defaultProfile) == nil)
+  }
+
+  @Test
+  func `which answer the model lacked survives to the data point`() {
+    // The distinction the bare gradient cannot carry is still on the profile itself: a hole in
+    // the tables reads differently to conditions off the end of them.
+    let profile = makeProfile([
+      (altitudeFt: 0, gradient: .notAvailable),
+      (altitudeFt: 5000, gradient: .offscaleHigh(clamped: nil))
+    ])
+
+    #expect(profile.dataPoints[0].climbData(for: defaultProfile).gradientFtPerNM == .notAvailable)
+    #expect(
+      profile.dataPoints[1].climbData(for: defaultProfile).gradientFtPerNM
+        == .offscaleHigh(clamped: nil)
+    )
   }
 
   // MARK: - gradient(at:profile:)
@@ -318,11 +366,14 @@ struct ClimbProfileTests {
         outsideAirTemperatureC: 15.0 - alt * 0.00198,
         windDirectionDeg: 0,
         windSpeedKts: 0,
-        takeoff: .init(gradientFtPerNM: 500, indicatedAirspeedKts: 91),
-        enrouteObstacle: .init(gradientFtPerNM: 400, indicatedAirspeedKts: 120),
-        enrouteObstacleAntiIce: .init(gradientFtPerNM: 350, indicatedAirspeedKts: 120),
-        enroute: .init(gradientFtPerNM: 300, indicatedAirspeedKts: 170),
-        enrouteAntiIce: .init(gradientFtPerNM: 250, indicatedAirspeedKts: 160)
+        takeoff: .init(gradientFtPerNM: .value(500), indicatedAirspeedKts: .value(91)),
+        enrouteObstacle: .init(gradientFtPerNM: .value(400), indicatedAirspeedKts: .value(120)),
+        enrouteObstacleAntiIce: .init(
+          gradientFtPerNM: .value(350),
+          indicatedAirspeedKts: .value(120)
+        ),
+        enroute: .init(gradientFtPerNM: .value(300), indicatedAirspeedKts: .value(170)),
+        enrouteAntiIce: .init(gradientFtPerNM: .value(250), indicatedAirspeedKts: .value(160))
       )
     }
     let profile = ClimbProfile(dataPoints: dataPoints, seaLevelPressureInHg: 29.92)
