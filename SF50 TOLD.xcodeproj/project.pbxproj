@@ -13,15 +13,15 @@
 		0128374E2E5B8BB8002195A0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0128374D2E5B8BB8002195A0 /* SwiftUI.framework */; };
 		0128375F2E5B8BB9002195A0 /* SF50 RunwaysExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 0128374A2E5B8BB8002195A0 /* SF50 RunwaysExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
-		94CC1E014886B23174174CD9 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 02BD3D6AFE77DA2CAC646D3B /* Algorithms */; };
 		012B1E502DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E512DE2F272000D9ADC /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		0163BC742DDEE9D4008FEE8F /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E6B2DE2F463000D9ADC /* Logging */; };
 		0133C5C92F2A815A00F4BE4A /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01441A6F2F358738005A8A76 /* StreamingLZMA in Frameworks */ = {isa = PBXBuildFile; productRef = 01441A6E2F358738005A8A76 /* StreamingLZMA */; };
 		014457DA2F3125DB003ADBCD /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 014457D92F3125DB003ADBCD /* RealModule */; };
 		01591FF02FCA2ACC007FB6BB /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01591FEF2FCA2ACC007FB6BB /* XCUITestKit */; };
+		0162305A3061A6B90009B74F /* MeasurementKitLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00312FE0000000000031 /* MeasurementKitLocation */; };
+		0163BC742DDEE9D4008FEE8F /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		016945BC2EB30889001602E6 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BB2EB30889001602E6 /* SwiftNASR */; };
 		016945BE2EB30889001602E6 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 016945BD2EB30889001602E6 /* Logging */; };
 		016945C22EB30889001602E6 /* SwiftTimeZoneLookup in Frameworks */ = {isa = PBXBuildFile; productRef = 016945C12EB30889001602E6 /* SwiftTimeZoneLookup */; };
@@ -40,15 +40,16 @@
 		01AA52322F2DDF110085F4C6 /* SwiftR2 in Frameworks */ = {isa = PBXBuildFile; productRef = 01AA52312F2DDF110085F4C6 /* SwiftR2 */; };
 		01AC00202FE0000000000020 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00102FE0000000000010 /* MeasurementKit */; };
 		01AC00212FE0000000000021 /* MeasurementKitLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00112FE0000000000011 /* MeasurementKitLocation */; };
-		01AC00282FE0000000000028 /* MeasurementKitLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00182FE0000000000018 /* MeasurementKitLocation */; };
 		01AC00222FE0000000000022 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00122FE0000000000012 /* MeasurementKit */; };
 		01AC00232FE0000000000023 /* MeasurementKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00132FE0000000000013 /* MeasurementKitUI */; };
-		01AC00292FE0000000000029 /* MeasurementKitUI in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00132FE0000000000013 /* MeasurementKitUI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		01AC002A2FE000000000002A /* MeasurementKitLocation in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00182FE0000000000018 /* MeasurementKitLocation */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		01AC00242FE0000000000024 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00142FE0000000000014 /* MeasurementKit */; };
 		01AC00252FE0000000000025 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00152FE0000000000015 /* MeasurementKit */; };
 		01AC00262FE0000000000026 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00162FE0000000000016 /* MeasurementKit */; };
 		01AC00272FE0000000000027 /* MeasurementKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00172FE0000000000017 /* MeasurementKit */; };
+		01AC00282FE0000000000028 /* MeasurementKitLocation in Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00182FE0000000000018 /* MeasurementKitLocation */; };
+		01AC00292FE0000000000029 /* MeasurementKitUI in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00132FE0000000000013 /* MeasurementKitUI */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		01AC002A2FE000000000002A /* MeasurementKitLocation in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00182FE0000000000018 /* MeasurementKitLocation */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		01AC00332FE0000000000033 /* MeasurementKitLocation in Embed Frameworks */ = {isa = PBXBuildFile; productRef = 01AC00312FE0000000000031 /* MeasurementKitLocation */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		01BABAEA2F3B12E5000EA5E1 /* Charts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01BABAE92F3B12E5000EA5E1 /* Charts.framework */; };
 		01BEBCB82E8A401100631DE6 /* SwiftHtml in Frameworks */ = {isa = PBXBuildFile; productRef = 01BEBCB72E8A401100631DE6 /* SwiftHtml */; };
 		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
@@ -58,6 +59,7 @@
 		01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01EA44382EB327D7008FEB64 /* Security.framework */; };
 		01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01EB070A2FCA2D22007C3D1E /* XCUITestKit */; };
 		0DFF3139357E79F8F862DECF /* NavDataGeneration in Frameworks */ = {isa = PBXBuildFile; productRef = 0968DA50D02C96F6AF47A0CC /* NavDataGeneration */; };
+		94CC1E014886B23174174CD9 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 02BD3D6AFE77DA2CAC646D3B /* Algorithms */; };
 		AB352BDD14B44A2CA78F9D44 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 		C56FF4A70BD4DDF42C6DCBAA /* NavData in Frameworks */ = {isa = PBXBuildFile; productRef = EEB6B6DD4229EEB6363A2AA1 /* NavData */; };
 /* End PBXBuildFile section */
@@ -164,6 +166,7 @@
 			dstSubfolder = Frameworks;
 			files = (
 				01D0DEBF2F27504600856DB4 /* SF50_Shared.framework in Embed Frameworks */,
+				01AC00332FE0000000000033 /* MeasurementKitLocation in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 		};
@@ -365,6 +368,7 @@
 		016945962EB30848001602E6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				0162305A3061A6B90009B74F /* MeasurementKitLocation in Frameworks */,
 				01D0DEBE2F27504500856DB4 /* SF50_Shared.framework in Frameworks */,
 				01441A6F2F358738005A8A76 /* StreamingLZMA in Frameworks */,
 				01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */,
@@ -645,6 +649,7 @@
 			);
 			name = DownloadNASR;
 			packageProductDependencies = (
+				01AC00312FE0000000000031 /* MeasurementKitLocation */,
 				016945BB2EB30889001602E6 /* SwiftNASR */,
 				016945BD2EB30889001602E6 /* Logging */,
 				016945C12EB30889001602E6 /* SwiftTimeZoneLookup */,
@@ -1742,7 +1747,7 @@
 			repositoryURL = "https://github.com/RISCfuture/SwiftDOF.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 2.0.0;
 			};
 		};
 		0112FFA82F209508009CFBBA /* XCRemoteSwiftPackageReference "SwiftCIFP" */ = {
@@ -1750,7 +1755,7 @@
 			repositoryURL = "https://github.com/RISCfuture/SwiftCIFP.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 2.0.0;
 			};
 		};
 		0116B3A72E331916001FC453 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
@@ -1758,15 +1763,15 @@
 			repositoryURL = "https://github.com/apple/swift-numerics.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.3;
+				minimumVersion = 1.1.1;
 			};
 		};
 		01591FEE2FCA2ACB007FB6BB /* XCRemoteSwiftPackageReference "XCUITestKit" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/XCUITestKit";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
 			};
 		};
 		0163BCA72DDEF40D008FEE8F /* XCRemoteSwiftPackageReference "SwiftNASR" */ = {
@@ -1774,7 +1779,7 @@
 			repositoryURL = "https://github.com/RISCfuture/SwiftNASR";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 4.0.0;
+				minimumVersion = 4.3.0;
 			};
 		};
 		01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
@@ -1798,7 +1803,7 @@
 			repositoryURL = "https://github.com/RISCfuture/StreamingLZMA";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
+				minimumVersion = 2.0.1;
 			};
 		};
 		01758ED52F2A9D13001D218C /* XCRemoteSwiftPackageReference "tiff-ios" */ = {
@@ -1814,15 +1819,15 @@
 			repositoryURL = "https://github.com/sindresorhus/Defaults.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 9.0.2;
+				minimumVersion = 9.0.9;
 			};
 		};
 		018ED7932F340BFD00D084B4 /* XCRemoteSwiftPackageReference "SwiftMETAR" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/RISCfuture/SwiftMETAR";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.1.0;
 			};
 		};
 		01A1014D2E93BF240032AB29 /* XCRemoteSwiftPackageReference "GzipSwift" */ = {
@@ -1838,7 +1843,7 @@
 			repositoryURL = "https://github.com/patrick-zippenfenig/SwiftTimeZoneLookup.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.7;
+				minimumVersion = 1.0.8;
 			};
 		};
 		01AA52302F2DDF110085F4C6 /* XCRemoteSwiftPackageReference "swiftr2" */ = {
@@ -1846,7 +1851,7 @@
 			repositoryURL = "https://github.com/riscfuture/swiftr2";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.2.1;
 			};
 		};
 		01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */ = {
@@ -1854,7 +1859,7 @@
 			repositoryURL = "https://github.com/RISCfuture/MeasurementKit";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.1.0;
 			};
 		};
 		01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */ = {
@@ -1870,7 +1875,7 @@
 			repositoryURL = "https://github.com/apple/swift-log.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.6.3;
+				minimumVersion = 1.15.1;
 			};
 		};
 		2B974702697D0A548EC62991 /* XCRemoteSwiftPackageReference "NavData" */ = {
@@ -1878,7 +1883,7 @@
 			repositoryURL = "https://github.com/SF50-TOLD/NavData";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.0.1;
 			};
 		};
 		A0265BD12B874F4A917707F3 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
@@ -1886,7 +1891,7 @@
 			repositoryURL = "https://github.com/getsentry/sentry-cocoa/";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 9.0.0;
+				minimumVersion = 9.28.0;
 			};
 			traits = (
 			);
@@ -1896,7 +1901,7 @@
 			repositoryURL = "https://github.com/SF50-TOLD/NavDataDistribution";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
+				minimumVersion = 1.4.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -1962,11 +1967,6 @@
 			package = 01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */;
 			productName = Algorithms;
 		};
-		02BD3D6AFE77DA2CAC646D3B /* Algorithms */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */;
-			productName = Algorithms;
-		};
 		01714CB42F24587D003DADCF /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 01714CB32F24587D003DADCF /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
@@ -2012,11 +2012,6 @@
 			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
 			productName = MeasurementKitLocation;
 		};
-		01AC00182FE0000000000018 /* MeasurementKitLocation */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
-			productName = MeasurementKitLocation;
-		};
 		01AC00122FE0000000000012 /* MeasurementKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
@@ -2047,6 +2042,16 @@
 			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
 			productName = MeasurementKit;
 		};
+		01AC00182FE0000000000018 /* MeasurementKitLocation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKitLocation;
+		};
+		01AC00312FE0000000000031 /* MeasurementKitLocation */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */;
+			productName = MeasurementKitLocation;
+		};
 		01BEBCB72E8A401100631DE6 /* SwiftHtml */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */;
@@ -2066,6 +2071,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 01591FEE2FCA2ACB007FB6BB /* XCRemoteSwiftPackageReference "XCUITestKit" */;
 			productName = XCUITestKit;
+		};
+		02BD3D6AFE77DA2CAC646D3B /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
 		};
 		0968DA50D02C96F6AF47A0CC /* NavDataGeneration */ = {
 			isa = XCSwiftPackageProductDependency;
