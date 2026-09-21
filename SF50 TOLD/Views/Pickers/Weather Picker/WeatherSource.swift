@@ -21,7 +21,7 @@ struct WeatherSource: View {
 
       formatted.append([])
       for word in words {
-        if word.starts(with: "FM") || word == "BECMG" {
+        if word.hasPrefix("FM") || word == "BECMG" {
           formatted.append([])
         }
         formatted[formatted.count - 1].append(String(word))
