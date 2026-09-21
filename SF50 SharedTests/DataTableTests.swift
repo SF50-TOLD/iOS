@@ -134,6 +134,50 @@ struct DataTableTests {
     )
   }
 
+  @Test
+  func `a ragged 2D table names the side the input ran off`() {
+    // The coldest temperature is tabulated at sea level only, so the rows bracketing 1500 ft carry
+    // nothing below 0 °C even though the table as a whole reaches -20 °C.
+    let table = DataTable(data: [
+      [0.0, -20.0, 100.0],
+      [0.0, 0.0, 120.0],
+      [1000.0, 0.0, 200.0],
+      [1000.0, 20.0, 220.0],
+      [2000.0, 0.0, 300.0],
+      [2000.0, 20.0, 320.0]
+    ])
+
+    #expect(table.value(for: [1500.0, -10.0]) == .offscaleLow(clamped: nil))
+    #expect(table.value(for: [1500.0, 10.0]) == .value(260.0))
+  }
+
+  @Test
+  func `a hole in a 2D table reports no figure rather than an edge`() {
+    // Every candidate bracket around 5 °C is missing a corner, but 5 °C is inside the range the
+    // table covers on both axes — so neither edge is the honest answer.
+    let table = DataTable(data: [
+      [0.0, 0.0, 10.0],
+      [0.0, 10.0, 20.0],
+      [1000.0, 10.0, 200.0],
+      [1000.0, 20.0, 300.0]
+    ])
+
+    #expect(table.value(for: [500.0, 5.0]) == .notAvailable)
+    #expect(table.value(for: [500.0, 15.0]) == .notAvailable)
+  }
+
+  @Test
+  func `a four-dimensional table reports no figure`() {
+    // Four inputs are not interpolated, which is a gap in this type rather than an edge of the
+    // chart — naming an edge would describe the inputs, and they were never looked at.
+    let table = DataTable(data: [
+      [0.0, 0.0, 0.0, 0.0, 10.0],
+      [1.0, 1.0, 1.0, 1.0, 20.0]
+    ])
+
+    #expect(table.value(for: [0.5, 0.5, 0.5, 0.5]) == .notAvailable)
+  }
+
   // MARK: - Edge Cases
 
   @Test

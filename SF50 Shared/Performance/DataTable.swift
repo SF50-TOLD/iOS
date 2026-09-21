@@ -140,8 +140,10 @@ class DataTable {
   ///
   /// - Returns: A `Value<Double>` which may be:
   ///   - `.value(_)` for successful interpolation
-  ///   - `.offscaleLow(clamped:)` if inputs are below the table's range
-  ///   - `.offscaleHigh(clamped:)` if inputs are above the table's range or interpolation fails
+  ///   - `.offscaleLow(clamped:)` if inputs are below the range the table covers
+  ///   - `.offscaleHigh(clamped:)` if inputs are above it
+  ///   - `.notAvailable` if the inputs sit within the table's range but it carries no complete
+  ///     set of corners around them — a hole in the chart rather than an edge of it
   ///
   ///   Where a clamping mode held an input at the edge of its range, the figure interpolated from
   ///   the held input is returned as the `clamped` payload of the corresponding offscale case, so
@@ -229,7 +231,7 @@ class DataTable {
       let lowerValue = cornerValue(at: [x0]),
       let upperValue = cornerValue(at: [x1])
     else {
-      return .offscaleHigh(clamped: nil)
+      return uncovered(input, amongst: sortedAxes[0])
     }
 
     if x0 == x1 {
@@ -243,7 +245,7 @@ class DataTable {
   private func interpolate2D(inputs: [Double]) -> Value<Double> {
     // Find the x bounds from the sorted x axis.
     guard let (x0, x1) = bounds(forAxis: 0, value: inputs[0]) else {
-      return .offscaleHigh(clamped: nil)
+      return uncovered(inputs[0], amongst: sortedAxes[0])
     }
 
     // Restrict the candidate y values to those present at the chosen x bounds.
@@ -281,17 +283,18 @@ class DataTable {
       }
     }
 
-    // If no valid bounds found, return offscale
-    guard foundValidBounds else { return .offscaleHigh(clamped: nil) }
+    // No complete box anywhere along y: say which way the table ran out, or that it has a hole.
+    guard foundValidBounds else { return uncovered(inputs[1], amongst: yCandidates) }
     let (y0, y1) = (bestY0, bestY1)
 
-    // Find the four corner values; if any is missing, return offscale high (no extrapolation)
+    // The search above established that all four corners exist, so a miss here would mean the
+    // corner index disagreed with itself. Report it as no figure rather than extrapolating.
     guard let v00 = cornerValue(at: [x0, y0]),
       let v01 = cornerValue(at: [x0, y1]),
       let v10 = cornerValue(at: [x1, y0]),
       let v11 = cornerValue(at: [x1, y1])
     else {
-      return .offscaleHigh(clamped: nil)
+      return .notAvailable
     }
 
     // Bilinear interpolation
@@ -307,12 +310,18 @@ class DataTable {
   private func interpolate3D(inputs: [Double]) -> Value<Double> {
     // Find the x bounds, then the y bounds restricted to the chosen x bounds.
     guard let (x0, x1) = bounds(forAxis: 0, value: inputs[0]) else {
-      return .offscaleHigh(clamped: nil)
+      return uncovered(inputs[0], amongst: sortedAxes[0])
     }
 
+    // Unlike the z search below, the y bracket is the adjacent pair and is not widened when its
+    // corners are incomplete. Where the rows at these x bounds carry no y values either side of
+    // the input, `bracket` hands back an infinite sentinel; that is a ragged edge on y, and it is
+    // reported here rather than being left to surface as an empty z candidate list.
     let yCandidates = innerCandidates(outer: [x0, x1], innerDim: 1)
-    guard let (y0, y1) = bracket(in: yCandidates, value: inputs[1]) else {
-      return .offscaleHigh(clamped: nil)
+    guard let (y0, y1) = bracket(in: yCandidates, value: inputs[1]),
+      y0.isFinite, y1.isFinite
+    else {
+      return uncovered(inputs[1], amongst: yCandidates)
     }
 
     // Restrict the candidate z values to those present at the chosen x,y bounds.
@@ -352,11 +361,11 @@ class DataTable {
       }
     }
 
-    // If no valid bounds found, return offscale
-    guard foundValidBounds else { return .offscaleHigh(clamped: nil) }
+    // No complete box anywhere along z: say which way the table ran out, or that it has a hole.
+    guard foundValidBounds else { return uncovered(inputs[2], amongst: zCandidates) }
     let (z0, z1) = (bestZ0, bestZ1)
 
-    // Find the eight corner values; if any is missing, return offscale high (no extrapolation)
+    // As in the 2D path, the search established that all eight corners exist.
     guard let c0 = cornerValue(at: [x0, y0, z0]),
       let c1 = cornerValue(at: [x1, y0, z0]),
       let c2 = cornerValue(at: [x0, y1, z0]),
@@ -366,7 +375,7 @@ class DataTable {
       let c6 = cornerValue(at: [x0, y1, z1]),
       let c7 = cornerValue(at: [x1, y1, z1])
     else {
-      return .offscaleHigh(clamped: nil)
+      return .notAvailable
     }
 
     // Trilinear interpolation
@@ -388,10 +397,12 @@ class DataTable {
     return .value(v0 + tz * (v1 - v0))
   }
 
+  /// Answers for a table of four or more input dimensions, which this type does not interpolate.
+  ///
+  /// Nothing about the inputs is offscale — the table simply holds no figure this type can read,
+  /// so it reports none rather than naming an edge it never looked for.
   private func interpolateND(inputs _: [Double]) -> Value<Double> {
-    // For higher dimensions, we don't support interpolation yet
-    // Return offscale to avoid extrapolation
-    return .offscaleHigh(clamped: nil)
+    return .notAvailable
   }
 
   /// Returns the minimum value in the specified input dimension.
@@ -435,8 +446,8 @@ class DataTable {
   /// Bisects `sortedAxes[dim]` to find the largest axis value `<= value` (lower)
   /// and the smallest axis value `>= value` (upper). When `value` lies below the
   /// smallest or above the largest axis value, the corresponding bound is the
-  /// infinite sentinel, so downstream corner lookups miss and interpolation
-  /// returns `.offscaleHigh` — matching the original behavior.
+  /// infinite sentinel; callers test for that and report which side the value
+  /// ran off rather than reading a corner that cannot exist.
   private func bounds(forAxis dim: Int, value: Double) -> (lower: Double, upper: Double)? {
     return bracket(in: sortedAxes[dim], value: value)
   }
@@ -477,6 +488,21 @@ class DataTable {
     }
 
     return (lower, upper)
+  }
+
+  /// The refusal an input earns when the table carries no complete corner box around it.
+  ///
+  /// ``value(for:clamping:)`` has already resolved every input against the table's overall range
+  /// before interpolation runs, so reaching here is never a miss on the whole table. It means the
+  /// covered region is ragged at this point: where `axisValues` — sorted ascending — carries
+  /// nothing on one side of the input, the input is offscale that way; where it carries values
+  /// both sides and the box is still incomplete, the table has a hole in it and the honest answer
+  /// is that it holds no figure. Neither case carries one, because there is none to hold.
+  private func uncovered(_ input: Double, amongst axisValues: [Double]) -> Value<Double> {
+    guard let lowest = axisValues.first, let highest = axisValues.last else { return .notAvailable }
+    if input < lowest { return .offscaleLow(clamped: nil) }
+    if input > highest { return .offscaleHigh(clamped: nil) }
+    return .notAvailable
   }
 
   /// Returns the sorted-ascending inner-axis values present at the given outer-axis bounds.
