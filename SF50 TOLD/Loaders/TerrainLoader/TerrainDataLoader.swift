@@ -393,18 +393,12 @@ final class TerrainDataLoader: ObservableObject {
   /// own. Progress does not come back through here — it arrives on the status stream, which
   /// reports system-driven downloads whether or not anyone is awaiting one.
   ///
-  /// `requireLatestVersion:` only exists from iOS 26.4; below that the single-argument form is the
-  /// whole API, and a device accepts whichever version it already holds.
   private func ensureAssetPackIsLocal(for region: TerrainRegion) async throws {
     let manager = AssetPackManager.shared
     await refreshAssetPackManifest(using: manager)
     let pack = try await manager.assetPack(withID: region.downloadIdentifier)
 
-    if #available(iOS 26.4, *) {
-      try await manager.ensureLocalAvailability(of: pack, requireLatestVersion: true)
-    } else {
-      try await manager.ensureLocalAvailability(of: pack)
-    }
+    try await manager.ensureLocalAvailability(of: pack, requireLatestVersion: true)
   }
 
   /// Reports a terrain failure to Sentry unless it is one the user caused and can fix.

@@ -44,7 +44,7 @@ struct NavDataView: View {
 
           if selectedCycleOption == .custom {
             TextField("", text: $customCycleText)
-              .textFieldStyle(.roundedBorder)
+              .textFieldStyle(.bordered)
               .help("Enter cycle in format: YYYY-MM-DD (e.g., 2024-01-25)")
               .frame(maxWidth: 100)
               .foregroundStyle(
