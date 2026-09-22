@@ -17,6 +17,8 @@ changed in the cockpit rather than what changed in the code.
 
 - The app no longer quits when the climb charts do not cover your conditions; it
   leaves those figures blank instead.
+- A figure outside the charts now says which edge it ran off, instead of always
+  reading "offscale high". Where a chart has a gap in it, it reads "N/A".
 
 ## 3.8.1
 
