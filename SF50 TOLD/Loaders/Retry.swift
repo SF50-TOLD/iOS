@@ -52,6 +52,9 @@ func withRetry<T>(
 /// instead of a session: it builds the session, and invalidates it once the download
 /// settles.
 ///
+/// A download the session refused because of the network it is on — one the configuration does not
+/// allow, such as cellular — is not retried: waiting a few seconds does not change the network.
+///
 /// The caller owns the returned file and is responsible for moving or deleting it.
 func downloadWithRetry(
   from url: URL,
@@ -74,6 +77,7 @@ func downloadWithRetry(
     initialDelaySeconds: initialDelaySeconds,
     logger: logger,
     label: label,
+    shouldRetry: { ($0 as? URLError).map { $0.networkUnavailableReason == nil } ?? false },
     onRetryableFailure: { error in
       resumeData = (error as? URLError)?.userInfo[NSURLSessionDownloadTaskResumeData] as? Data
     },

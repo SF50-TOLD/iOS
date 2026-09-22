@@ -20,6 +20,13 @@ changed in the cockpit rather than what changed in the code.
   and will not replace it with a version the aircraft cannot run. Updating
   changes nothing you have saved: your airports, scenarios, terrain and airport
   data are all still there afterwards.
+- Once the airport data expires, the app can replace it in the background while
+  the device is charging, so it is usually current when you open it. iOS decides
+  when that happens, so it isn’t guaranteed; if it hasn’t, the app still offers
+  the update when you open it. As with any update, NOTAMs you entered are cleared
+  when the data is replaced. It waits for Wi-Fi, or for 5G set to Allow More
+  Data, and holds off in Low Data Mode, unless you turn on Allow Background
+  Downloads on Metered Networks in Settings.
 
 ## 3.8.2
 
