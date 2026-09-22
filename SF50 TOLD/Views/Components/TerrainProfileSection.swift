@@ -32,8 +32,8 @@ struct TerrainProfileSection: View {
   /// Whether the path is still being computed.
   let isComputing: Bool
 
-  /// Whether the path could not be computed at all.
-  let pathFailed: Bool
+  /// Why the path could not be computed, or nil where it was computed.
+  let pathFailure: PathFailure?
 
   /// Whether the plotted climb leans on the fitted equations although the tabular model is chosen.
   ///
@@ -85,11 +85,11 @@ struct TerrainProfileSection: View {
           hasWindsAloft: hasWindsAloft,
           providers: providers
         )
-      } else if pathFailed {
+      } else if let pathFailure {
         ContentUnavailableView(
-          "Unable to Plot",
+          pathFailure.title,
           systemImage: "mountain.2",
-          description: Text("The path for this procedure could not be computed.")
+          description: pathFailure.message
         )
       } else {
         ContentUnavailableView(
@@ -177,7 +177,7 @@ struct TerrainProfileSection: View {
     fieldElevation: Measurement<UnitLength>,
     time: Date,
     isComputing: Bool,
-    pathFailed: Bool,
+    pathFailure: PathFailure?,
     plotsRegressionClimb: Bool,
     noDataDescription: LocalizedStringKey,
     initialWeatherLayer: WeatherProfileLayer = .none,
@@ -189,7 +189,7 @@ struct TerrainProfileSection: View {
     self.fieldElevation = fieldElevation
     self.time = time
     self.isComputing = isComputing
-    self.pathFailed = pathFailed
+    self.pathFailure = pathFailure
     self.plotsRegressionClimb = plotsRegressionClimb
     self.noDataDescription = noDataDescription
     _weatherLayer = .init(initialValue: initialWeatherLayer)
@@ -379,17 +379,18 @@ private struct SectionPreview: View {
   var hasWindsAloft = true
   var layer = WeatherProfileLayer.none
   var showsWindBarbs = false
+  var pathFailure: PathFailure?
 
   var body: some View {
     List {
       TerrainProfileSection(
-        terrainPath: .preview,
+        terrainPath: pathFailure == nil ? .preview : nil,
         climbProfile: .preview,
         hasWindsAloft: hasWindsAloft,
         fieldElevation: .zero,
         time: .now,
         isComputing: false,
-        pathFailed: false,
+        pathFailure: pathFailure,
         plotsRegressionClimb: false,
         noDataDescription: "Select a departure procedure to view terrain profile.",
         initialWeatherLayer: layer,
@@ -422,12 +423,12 @@ private struct SectionPreview: View {
 
 /// The go-around case: in the air with no connection. The weather layers can't be fetched and are
 /// offered as disabled, but terrain, obstacles, and the winds aloft still plot.
-#Preview("No connection") {
+///
+/// Stands for every reason the layers can be missing. `.offline` and `.unavailable` are distinct
+/// failures, but `fieldLayersAvailable` reads only `atmosphereState.hasFailed`, so the section
+/// draws them identically — a second preview for the other case showed the same picture.
+#Preview("Weather layers unavailable") {
   SectionPreview(outcome: .offline, showsWindBarbs: true)
-}
-
-#Preview("Service unavailable") {
-  SectionPreview(outcome: .unavailable)
 }
 
 /// No forecast reached this flight, so there is nothing for the barbs to draw.
@@ -439,4 +440,22 @@ private struct SectionPreview: View {
 /// the dead weather pill.
 #Preview("Nothing reported") {
   SectionPreview(outcome: .loaded(.init(columns: [], providers: [])))
+}
+
+// MARK: - Failure states
+
+#Preview("Ran off the charts") {
+  SectionPreview(
+    pathFailure: .outsideCharts(altitude: .init(value: 24000, unit: .feet))
+  )
+}
+
+#Preview("Gap in the charts") {
+  SectionPreview(
+    pathFailure: .chartGap(altitude: .init(value: 12500, unit: .feet))
+  )
+}
+
+#Preview("Procedure could not be plotted") {
+  SectionPreview(pathFailure: .procedure)
 }

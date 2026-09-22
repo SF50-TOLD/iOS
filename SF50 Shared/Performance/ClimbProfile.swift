@@ -100,6 +100,35 @@ public struct ClimbProfile: Sendable {
     }.nominal
   }
 
+  /// The lowest altitude in a band where the model has no gradient, and the refusal saying why.
+  ///
+  /// ``gradient(at:profile:)`` answers `nil` for every kind of no-answer, which is all an
+  /// integration needs — it has to stop either way. A reader deserves better: this reports the
+  /// altitude that stopped the climb and whether the conditions there sit outside the charts or
+  /// the charts simply carry no figure for them. Returns `nil` where the model answers for the
+  /// whole band, which means a climb that failed did so for some reason other than the charts.
+  ///
+  /// Walked at the same step the altitude integration uses, so it stops where the integration
+  /// stopped rather than at some coarser altitude that happens to be covered.
+  public func firstGradientGap(
+    from startAltitudeFt: Double,
+    to endAltitudeFt: Double,
+    profile: ProfileType
+  ) -> (altitudeFt: Double, reason: Value<Double>)? {
+    guard endAltitudeFt > startAltitudeFt else { return nil }
+
+    var altitudeFt = startAltitudeFt
+    while altitudeFt <= endAltitudeFt {
+      let reading = interpolateFigure(at: altitudeFt) {
+        $0.climbData(for: profile).gradientFtPerNM
+      }
+      if reading.nominal == nil { return (altitudeFt, reading) }
+      altitudeFt += Self.altitudeStepFt
+    }
+
+    return nil
+  }
+
   /// Interpolated wind direction (true, FROM) at a given altitude.
   public func windDirection(at altitudeFt: Double) -> Double? {
     interpolate(at: altitudeFt) { $0.windDirectionDeg }

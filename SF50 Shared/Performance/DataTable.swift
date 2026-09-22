@@ -308,64 +308,24 @@ class DataTable {
   }
 
   private func interpolate3D(inputs: [Double]) -> Value<Double> {
-    // Find the x bounds, then the y bounds restricted to the chosen x bounds.
     guard let (x0, x1) = bounds(forAxis: 0, value: inputs[0]) else {
       return uncovered(inputs[0], amongst: sortedAxes[0])
     }
 
-    // Unlike the z search below, the y bracket is the adjacent pair and is not widened when its
-    // corners are incomplete. Where the rows at these x bounds carry no y values either side of
-    // the input, `bracket` hands back an infinite sentinel; that is a ragged edge on y, and it is
-    // reported here rather than being left to surface as an empty z candidate list.
     let yCandidates = innerCandidates(outer: [x0, x1], innerDim: 1)
-    guard let (y0, y1) = bracket(in: yCandidates, value: inputs[1]),
-      y0.isFinite, y1.isFinite
-    else {
-      return uncovered(inputs[1], amongst: yCandidates)
+    guard let box = tightestBox(around: inputs, x0: x0, x1: x1, yCandidates: yCandidates) else {
+      // No complete box anywhere. Whichever axis ran out first is the one to name; y is asked
+      // about before z because z's candidates are drawn from the y bounds and would be empty.
+      let yCoverage = uncovered(inputs[1], amongst: yCandidates)
+      if yCoverage != .notAvailable { return yCoverage }
+      return uncovered(
+        inputs[2],
+        amongst: innerCandidates(outerX: [x0, x1], outerY: yCandidates, innerDim: 2)
+      )
     }
+    let (y0, y1, z0, z1) = box
 
-    // Restrict the candidate z values to those present at the chosen x,y bounds.
-    let zCandidates = innerCandidates(outerX: [x0, x1], outerY: [y0, y1], innerDim: 2)
-
-    // Find valid z bounds where all 8 corners exist, preferring the tightest bracket.
-    var bestZ0 = -Double.infinity
-    var bestZ1 = Double.infinity
-    var bestSpan = Double.infinity
-    var foundValidBounds = false
-
-    for i in 0..<zCandidates.count {
-      for j in i..<zCandidates.count {
-        let zLower = zCandidates[i]
-        let zUpper = zCandidates[j]
-
-        // Check if input z is within these bounds
-        guard zLower <= inputs[2] && inputs[2] <= zUpper else { continue }
-
-        // Check if all 8 corners exist for these bounds
-        let allCornersExist =
-          cornerExists(at: [x0, y0, zLower]) && cornerExists(at: [x1, y0, zLower])
-          && cornerExists(at: [x0, y1, zLower]) && cornerExists(at: [x1, y1, zLower])
-          && cornerExists(at: [x0, y0, zUpper]) && cornerExists(at: [x1, y0, zUpper])
-          && cornerExists(at: [x0, y1, zUpper]) && cornerExists(at: [x1, y1, zUpper])
-
-        // If all corners exist, check if this is a better (tighter) bound
-        if allCornersExist {
-          let span = zUpper - zLower
-          if span < bestSpan {
-            bestZ0 = zLower
-            bestZ1 = zUpper
-            bestSpan = span
-            foundValidBounds = true
-          }
-        }
-      }
-    }
-
-    // No complete box anywhere along z: say which way the table ran out, or that it has a hole.
-    guard foundValidBounds else { return uncovered(inputs[2], amongst: zCandidates) }
-    let (z0, z1) = (bestZ0, bestZ1)
-
-    // As in the 2D path, the search established that all eight corners exist.
+    // The search established that all eight corners exist.
     guard let c0 = cornerValue(at: [x0, y0, z0]),
       let c1 = cornerValue(at: [x1, y0, z0]),
       let c2 = cornerValue(at: [x0, y1, z0]),
@@ -488,6 +448,73 @@ class DataTable {
     }
 
     return (lower, upper)
+  }
+
+  /// Finds the tightest y and z bounds around `inputs` whose eight corners all exist.
+  ///
+  /// Both axes widen. Taking the adjacent pair on either one and only widening the other fails on
+  /// a table that is ragged in the axis left alone: the narrower bracket has a corner missing at
+  /// every value of the other, and there is a complete box one step out that never gets tried.
+  /// The AFM tables are ragged in both — the temperature range narrows as altitude rises, and the
+  /// altitudes tabulated vary by weight — so neither axis is the safe one to fix.
+  ///
+  /// y is the outer loop because z's candidates are drawn from whichever y bounds are chosen, and
+  /// the tightest y is preferred over the tightest z: widening the axis nearer the reading changes
+  /// the answer less.
+  private func tightestBox(
+    around inputs: [Double],
+    x0: Double,
+    x1: Double,
+    yCandidates: [Double]
+  ) -> (y0: Double, y1: Double, z0: Double, z1: Double)? {
+    var best: (y0: Double, y1: Double, z0: Double, z1: Double)?
+    var bestSpans = (y: Double.infinity, z: Double.infinity)
+
+    for i in 0..<yCandidates.count {
+      for j in i..<yCandidates.count {
+        let yLower = yCandidates[i],
+          yUpper = yCandidates[j]
+        guard yLower <= inputs[1], inputs[1] <= yUpper else { continue }
+
+        let ySpan = yUpper - yLower
+        // A wider y can never beat a y already known to work, whatever its z.
+        guard ySpan <= bestSpans.y else { continue }
+
+        let zCandidates = innerCandidates(outerX: [x0, x1], outerY: [yLower, yUpper], innerDim: 2)
+        for k in 0..<zCandidates.count {
+          for l in k..<zCandidates.count {
+            let zLower = zCandidates[k],
+              zUpper = zCandidates[l]
+            guard zLower <= inputs[2], inputs[2] <= zUpper else { continue }
+
+            let zSpan = zUpper - zLower
+            guard ySpan < bestSpans.y || zSpan < bestSpans.z else { continue }
+            guard cornersExist(x0: x0, x1: x1, y0: yLower, y1: yUpper, z0: zLower, z1: zUpper)
+            else { continue }
+
+            best = (yLower, yUpper, zLower, zUpper)
+            bestSpans = (ySpan, zSpan)
+          }
+        }
+      }
+    }
+
+    return best
+  }
+
+  /// Reports whether every one of a box's eight corners has a row.
+  private func cornersExist(
+    x0: Double,
+    x1: Double,
+    y0: Double,
+    y1: Double,
+    z0: Double,
+    z1: Double
+  ) -> Bool {
+    cornerExists(at: [x0, y0, z0]) && cornerExists(at: [x1, y0, z0])
+      && cornerExists(at: [x0, y1, z0]) && cornerExists(at: [x1, y1, z0])
+      && cornerExists(at: [x0, y0, z1]) && cornerExists(at: [x1, y0, z1])
+      && cornerExists(at: [x0, y1, z1]) && cornerExists(at: [x1, y1, z1])
   }
 
   /// The refusal an input earns when the table carries no complete corner box around it.

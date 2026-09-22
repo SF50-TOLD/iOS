@@ -47,7 +47,7 @@ struct ClimbProfileView: View {
   @State private var terrainPath: ProcedureTerrainPath?
   @State private var climbProfile: ClimbProfile?
   @State private var isComputing = false
-  @State private var pathFailed = false
+  @State private var pathFailure: PathFailure?
   @State private var plotsRegressionClimb = false
   @State private var terrainRevision = 0
 
@@ -75,7 +75,7 @@ struct ClimbProfileView: View {
         fieldElevation: performance.airport?.elevation ?? .zero,
         time: weather.time,
         isComputing: isComputing,
-        pathFailed: pathFailed,
+        pathFailure: pathFailure,
         plotsRegressionClimb: plotsRegressionClimb,
         noDataDescription: "Select a departure procedure to view terrain profile."
       )
@@ -198,7 +198,7 @@ struct ClimbProfileView: View {
     else {
       terrainPath = nil
       climbProfile = nil
-      pathFailed = false
+      pathFailure = nil
       return
     }
 
@@ -280,7 +280,12 @@ struct ClimbProfileView: View {
 
     guard let procedurePath else {
       terrainPath = nil
-      pathFailed = true
+      pathFailure = .init(
+        climbProfile: climbProfile,
+        fromAltitudeFt: fieldElevationFt,
+        toAltitudeFt: targetAltitudeFt,
+        profile: .takeoff
+      )
       return
     }
 
@@ -293,7 +298,7 @@ struct ClimbProfileView: View {
 
     guard !Task.isCancelled else { return }
     terrainPath = result
-    pathFailed = false
+    pathFailure = nil
   }
 
   private func buildClimbSchedule() -> ProcedurePathGenerator.ClimbSchedule {
@@ -550,6 +555,26 @@ private struct DepartureSection: View {
     }
     .environment(TakeoffPerformanceViewModel(container: helper.container))
     .environment(WeatherViewModel(operation: .takeoff, container: helper.container))
+    .environment(\.pathAtmosphereLoader, PreviewPathAtmosphereLoader(.loaded(.preview)))
+  }
+}
+
+/// 51 °C is a degree past the takeoff climb table's hottest column, so the tabular model refuses
+/// outright and the path cannot be stepped at all. Nothing is staged here — the real performance
+/// model produces the real failure, which is the point of previewing it this way.
+#Preview("Outside the charts") {
+  PreviewView(insert: .KOAK) { helper in
+    let runway = try helper.load(airportID: "OAK", runway: "28L")!
+    helper.setTakeoff(runway: runway)
+
+    let loader = MockWeatherLoader(mockConditions: .value(helper.veryHot))
+    return NavigationStack {
+      ClimbProfileView()
+    }
+    .environment(TakeoffPerformanceViewModel(container: helper.container))
+    .environment(
+      WeatherViewModel(operation: .takeoff, container: helper.container, loader: loader)
+    )
     .environment(\.pathAtmosphereLoader, PreviewPathAtmosphereLoader(.loaded(.preview)))
   }
 }
