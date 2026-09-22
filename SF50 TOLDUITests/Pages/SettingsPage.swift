@@ -39,7 +39,7 @@ final class SettingsPage: BasePage {
 
   func setEmptyWeight(_ weight: String) {
     XCTAssertTrue(weightField.waitForExistence(timeout: 2), "Weight field should exist")
-    weightField.clearAndType(weight, app: app, replacingSelection: true, verifying: true)
+    weightField.enter(weight, app: app)
   }
 
   func setSafetyFactorDry(_ value: String) {
@@ -47,7 +47,7 @@ final class SettingsPage: BasePage {
       safetyFactorDryField.waitForExistence(timeout: 2),
       "Safety factor dry field should exist"
     )
-    safetyFactorDryField.clearAndType(value, app: app, replacingSelection: true, verifying: true)
+    safetyFactorDryField.enter(value, app: app)
   }
 
   func selectPerformanceModel(_ model: String) {

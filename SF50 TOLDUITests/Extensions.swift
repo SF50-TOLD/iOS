@@ -2,6 +2,22 @@ import XCTest
 import XCUITestKit
 
 extension XCUIElement {
+  /// The Done button MeasurementKit puts above a numeric field's keyboard
+  /// (`NumericKeypad.doneButtonIdentifier` there).
+  static let numericFieldDoneButton = "MeasurementKit.NumericField.done"
+
+  /// Replaces the field's value with `text` and leaves it through the Done button above the
+  /// keyboard, the way a pilot puts away a number pad that has no Return key.
+  func enter(_ text: String, app: XCUIApplication) {
+    clearAndType(
+      text,
+      app: app,
+      replacingSelection: true,
+      verifying: true,
+      doneButtonIdentifier: Self.numericFieldDoneButton
+    )
+  }
+
   func toggleOn() {
     guard switches["0"].exists else { return }
     let toggle = switches["0"].firstMatch
