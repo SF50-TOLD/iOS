@@ -1,4 +1,4 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 6.4
 
 import PackageDescription
 
@@ -15,7 +15,7 @@ let swiftSettings: [SwiftSetting] = [
 let package = Package(
   name: "NOTAMParsing",
   defaultLocalization: "en",
-  platforms: [.iOS(.v26), .macOS(.v26)],
+  platforms: [.iOS("27.0"), .macOS("27.0")],
   products: [
     .library(name: "NOTAMParsing", targets: ["NOTAMParsing"])
   ],
