@@ -13,6 +13,14 @@ one of the two places.
 These notes are read by pilots deciding whether to update, so they describe what
 changed in the cockpit rather than what changed in the code.
 
+## 4.0
+
+- This version requires iOS 27. If the iPad in the aircraft is still on iOS 26,
+  stay on 3.8.2 until you update it — the App Store will keep offering you 3.8.2
+  and will not replace it with a version the aircraft cannot run. Updating
+  changes nothing you have saved: your airports, scenarios, terrain and airport
+  data are all still there afterwards.
+
 ## 3.8.2
 
 - The app no longer quits when the climb charts do not cover your conditions; it
