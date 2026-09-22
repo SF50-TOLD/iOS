@@ -13,6 +13,12 @@ one of the two places.
 These notes are read by pilots deciding whether to update, so they describe what
 changed in the cockpit rather than what changed in the code.
 
+## 4.0
+
+- This version requires iOS 27. If your iPad is still on iOS 26, the App Store
+  keeps you on 3.10 until you update it. Your airports, scenarios, terrain and
+  airport data carry over.
+
 ## 3.10
 
 - Downloaded NOTAMs now include runway closures, displaced thresholds, declared

@@ -11,6 +11,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# The runner label tracks the Xcode major version, not the OS: GitHub moved the Xcode 27 image from
+# macOS 26 to macOS 27 under this same label. Nothing here should be pinned to an OS assumption.
 jobs:
   ci:
     uses: RISCfuture/XCUITestKit/.github/workflows/ios-ci.yml@1.0.0
@@ -22,12 +24,12 @@ jobs:
       test-execution-time-allowance: 900
       build-matrix: |
         {"include":[
-          {"ios-label":"latest","runner":"macos-26","device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"}
+          {"ios-label":"latest","runner":"xcode-27","device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"}
         ]}
       ui-matrix: |
         {"include":[
-          {"ios-label":"latest","runner":"macos-26","device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"},
-          {"ios-label":"latest","runner":"macos-26","device":"iPad Pro 13-inch (M5)","device-type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB","os-version":"","xcode-version":"latest-stable"}
+          {"ios-label":"latest","runner":"xcode-27","device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"},
+          {"ios-label":"latest","runner":"xcode-27","device":"iPad Pro 13-inch (M5)","device-type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB","os-version":"","xcode-version":"latest-stable"}
         ]}
       secret-file-path: "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig"
       secret-file-template: |
@@ -39,7 +41,7 @@ jobs:
 
   docs:
     name: Build Documentation
-    runs-on: macos-26
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v6
       - name: Generate NOTAM API config
@@ -85,7 +87,7 @@ jobs:
           path: |
             ${{ runner.temp }}/docs-dd
             ${{ runner.temp }}/docs-dd-nasr
-          key: derived-docs-macos-26-${{ steps.toolchain.outputs.xcode }}-${{ hashFiles('**/Package.resolved') }}
+          key: derived-docs-xcode-27-${{ steps.toolchain.outputs.xcode }}-${{ hashFiles('**/Package.resolved') }}
       # The SF50 TOLD scheme reaches every first-party target the app ships — the app, the SF50
       # Runways extension, TerrainAssets, and the SF50 Shared framework — so one docbuild covers
       # all of the catalogs that ship with the app. DocC has no strictness build setting of its

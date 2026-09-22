@@ -1,0 +1,9 @@
+# actionlint ships a fixed list of GitHub-hosted runner labels and rejects anything outside it.
+# `xcode-27` is a real hosted image — GitHub now names macOS images by their Xcode major version
+# rather than by the OS, so there will never be a `macos-27`, and the label does not rot when the
+# image's OS moves underneath it. Declaring it here is how actionlint is told about labels its
+# built-in list has not caught up with; these are not self-hosted runners.
+self-hosted-runner:
+  labels:
+    - xcode-27
+    - xcode-27-xlarge

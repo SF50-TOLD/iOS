@@ -163,9 +163,9 @@ Performance data is sourced from:
 
 #### Prerequisites
 
-- Xcode 16.0+
-- iOS 18.0+ deployment target
-- Swift 6.0
+- Xcode 27.0+
+- iOS 27.0+ deployment target (macOS 27.0+ for DownloadNASR)
+- Swift 6 language mode
 - Ruby + Bundler (for Fastlane)
 
 #### Dependencies
