@@ -122,7 +122,7 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   static func windsAloftURL(forecastHour: Int, region: WindsAloftRegion) -> URL {
     .init(
       string: "https://aviationweather.gov/api/data/windtemp?level=low"
-        + "&fcst=\(String(format: "%02d", forecastHour))&region=\(region.rawValue)&layout=on"
+        + "&fcst=\(unsafe String(format: "%02d", forecastHour))&region=\(region.rawValue)&layout=on"
     )!
   }
 

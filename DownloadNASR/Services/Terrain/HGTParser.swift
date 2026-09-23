@@ -86,18 +86,10 @@ enum HGTParser {
         )
     }
 
-    // Parse elevation data (big-endian Int16 values)
-    var raw = [Int16]()
-    raw.reserveCapacity(resolution.totalSamples)
-
-    data.withUnsafeBytes { buffer in
-      let int16Buffer = buffer.bindMemory(to: UInt16.self)
-      for i in 0..<resolution.totalSamples {
-        // Convert from big-endian to host byte order
-        let bigEndianValue = int16Buffer[i]
-        let hostValue = Int16(bitPattern: UInt16(bigEndian: bigEndianValue))
-        raw.append(hostValue)
-      }
+    // HGT samples are big-endian Int16s.
+    let bytes = data.bytes
+    let raw = (0..<resolution.totalSamples).map { index in
+      bytes.load(fromByteOffset: index * 2, as: Int16.self, .bigEndian)
     }
 
     let elevations = Elevations(storage: raw, size: resolution.samplesPerSide)
