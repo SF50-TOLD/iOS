@@ -142,13 +142,10 @@ class BasePage {
   }
 
   func clearAndType(_ element: XCUIElement, _ text: String) {
-    element.clearAndType(text, app: app, replacingSelection: true, verifying: true)
+    element.enter(text, app: app)
   }
 
   func dismissKeyboard() {
-    if app.keyboards.count > 0 {  // swiftlint:disable:this empty_count
-      let navBar = app.navigationBars.firstMatch
-      forceTap(navBar)
-    }
+    app.dismissKeyboardStable(doneButtonIdentifier: XCUIElement.numericFieldDoneButton)
   }
 }

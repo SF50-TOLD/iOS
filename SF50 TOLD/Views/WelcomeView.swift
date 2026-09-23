@@ -111,6 +111,7 @@ struct WelcomeView: View {
         }
       }
     }
+    .scrollDismissesKeyboard(.immediately)
   }
 }
 
