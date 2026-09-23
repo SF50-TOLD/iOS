@@ -396,7 +396,9 @@ final class TerrainDataLoader: ObservableObject {
   private func ensureAssetPackIsLocal(for region: TerrainRegion) async throws {
     let manager = AssetPackManager.shared
     await refreshAssetPackManifest(using: manager)
-    let pack = try await manager.assetPack(withID: region.downloadIdentifier)
+    guard let pack = try await manager.manifest.assetPack(withID: region.downloadIdentifier) else {
+      throw TerrainDataLoaderError.regionNotAvailable(region)
+    }
 
     try await manager.ensureLocalAvailability(of: pack, requireLatestVersion: true)
   }
