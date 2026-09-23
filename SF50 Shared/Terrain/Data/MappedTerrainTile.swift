@@ -1,6 +1,6 @@
-import Compression
 import Foundation
 import os
+import System
 
 /// Provides O(1) coordinate-to-elevation lookups from a terrain data file.
 ///
@@ -79,26 +79,24 @@ final class MappedTerrainTile: Sendable {
 
   /// Creates a terrain tile reader from a file URL.
   init(fileURL: URL) throws {
-    let fd = Darwin.open(fileURL.path, O_RDONLY)
-    guard fd >= 0 else {
-      let posixErrno = errno
+    let descriptor: FileDescriptor
+    do {
+      descriptor = try FileDescriptor.open(FilePath(fileURL.path), .readOnly)
+    } catch {
       Self.logger.error(
-        "Failed to open \(fileURL.lastPathComponent): errno \(posixErrno) (\(String(cString: strerror(posixErrno))))"
+        "Failed to open \(fileURL.lastPathComponent): \(error.localizedDescription, privacy: .public)"
       )
-      throw TerrainServiceError.fileReadError(
-        NSError(domain: NSPOSIXErrorDomain, code: Int(posixErrno))
-      )
+      throw TerrainServiceError.fileReadError(error)
     }
-    self.file = FileDescriptorBox(fd)
+    self.file = FileDescriptorBox(descriptor)
+    let fd = descriptor.rawValue
 
     // File size for bounds checking
-    var sb = stat()
-    guard fstat(fd, &sb) == 0 else {
-      throw TerrainServiceError.fileReadError(
-        NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
-      )
+    do {
+      self.fileSize = Int(try descriptor.seek(offset: 0, from: .end))
+    } catch {
+      throw TerrainServiceError.fileReadError(error)
     }
-    self.fileSize = Int(sb.st_size)
 
     // Read and parse header (20 bytes)
     guard let headerData = Self.preadData(fd: fd, count: 20, offset: 0) else {
@@ -192,9 +190,17 @@ final class MappedTerrainTile: Sendable {
   /// Reads `count` bytes from a file descriptor at the given offset.
   private static func preadData(fd: CInt, count: Int, offset: off_t) -> Data? {
     var buffer = [UInt8](repeating: 0, count: count)
-    let bytesRead = pread(fd, &buffer, count, offset)
+    let bytesRead = unsafe pread(fd, &buffer, count, offset)
     guard bytesRead == count else { return nil }
     return Data(buffer)
+  }
+
+  /// Decodes the little-endian sample at `byteOffset`, or `nil` for a void sample or one past the end.
+  private static func decodeSample(in data: Data, atByteOffset byteOffset: Int) -> Int16? {
+    guard byteOffset + 2 <= data.count else { return nil }
+
+    let value = data.bytes.load(fromByteOffset: byteOffset, as: Int16.self, .littleEndian)
+    return value == voidValue ? nil : value
   }
 
   // MARK: - Public API
@@ -295,13 +301,11 @@ final class MappedTerrainTile: Sendable {
     let sampleIndex = row * resolution + col,
       byteOffset = Int(entry.dataOffset) + sampleIndex * 2
 
-    guard byteOffset + 2 <= fileSize else { return nil }
+    guard byteOffset + 2 <= fileSize,
+      let sample = Self.preadData(fd: file.fd, count: 2, offset: off_t(byteOffset))
+    else { return nil }
 
-    var value: Int16 = 0
-    let bytesRead = pread(file.fd, &value, 2, off_t(byteOffset))
-    guard bytesRead == 2 else { return nil }
-
-    return value == Self.voidValue ? nil : value
+    return Self.decodeSample(in: sample, atByteOffset: 0)
   }
 
   /// Reads a single sample from compressed tile data (v3), using the LRU cache.
@@ -345,13 +349,7 @@ final class MappedTerrainTile: Sendable {
 
   /// Reads a single Int16 sample from decompressed tile data.
   private func readSample(from data: Data, row: Int, col: Int) -> Int16? {
-    let byteOffset = (row * resolution + col) * 2
-    guard byteOffset + 2 <= data.count else { return nil }
-
-    let value = data.withUnsafeBytes { buffer in
-      buffer.load(fromByteOffset: byteOffset, as: Int16.self)
-    }
-    return value == Self.voidValue ? nil : value
+    Self.decodeSample(in: data, atByteOffset: (row * resolution + col) * 2)
   }
 
   /// Decompresses an LZFSE-compressed tile from disk.
@@ -375,28 +373,18 @@ final class MappedTerrainTile: Sendable {
       return nil
     }
 
-    // Decompress with LZFSE
-    var decompressedBuffer = [UInt8](repeating: 0, count: uncompressedSize)
-    let decompressedSize = compressedData.withUnsafeBytes { srcBuffer in
-      guard let srcPointer = srcBuffer.baseAddress else { return 0 }
-      return compression_decode_buffer(
-        &decompressedBuffer,
-        uncompressedSize,
-        srcPointer.assumingMemoryBound(to: UInt8.self),
-        compressedSize,
-        nil,
-        COMPRESSION_LZFSE
-      )
-    }
+    // swiftlint:disable:next legacy_objc_type
+    let decompressed = try? (compressedData as NSData).decompressed(using: .lzfse) as Data
+    let decompressedSize = decompressed?.count ?? 0
 
-    guard decompressedSize == uncompressedSize else {
+    guard let decompressed, decompressedSize == uncompressedSize else {
       Self.logger.error(
         "LZFSE decompression failed for tile \(entry.latitude),\(entry.longitude): expected \(uncompressedSize), got \(decompressedSize)"
       )
       return nil
     }
 
-    return Data(decompressedBuffer)
+    return decompressed
   }
 
   /// Performs bilinear interpolation between four corner values.
@@ -456,9 +444,11 @@ final class MappedTerrainTile: Sendable {
   /// Wraps a POSIX file descriptor with automatic close on deallocation.
   private final class FileDescriptorBox: Sendable {
 
-    let fd: CInt
+    let descriptor: FileDescriptor
 
-    init(_ fd: CInt) { self.fd = fd }
-    deinit { Darwin.close(fd) }
+    var fd: CInt { descriptor.rawValue }
+
+    init(_ descriptor: FileDescriptor) { self.descriptor = descriptor }
+    deinit { try? descriptor.close() }
   }
 }
