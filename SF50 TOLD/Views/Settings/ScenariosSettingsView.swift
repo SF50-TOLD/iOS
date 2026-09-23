@@ -7,47 +7,28 @@ struct ScenariosSettingsView: View {
   @Environment(\.modelContext)
   private var modelContext
 
-  @Query(filter: #Predicate<Scenario> { $0._operation == "takeoff" }, sort: \Scenario.name)
-  private var takeoffScenarios: [Scenario]
-
-  @Query(filter: #Predicate<Scenario> { $0._operation == "landing" }, sort: \Scenario.name)
-  private var landingScenarios: [Scenario]
+  @Query(
+    sort: [SortDescriptor(\Scenario._operation), SortDescriptor(\Scenario.name)],
+    sectionBy: \._operation
+  )
+  private var scenarios: SectionedResults<Scenario, String>
 
   @State private var errorState = ErrorState()
 
   var body: some View {
     Form {
-      Section("Takeoff Scenarios") {
-        ForEach(takeoffScenarios) { scenario in
-          NavigationLink(destination: ScenarioDetailView(scenario: scenario)) {
-            Text(scenario.name)
-          }
-        }
-        .onDelete { indices in
-          deleteScenarios(at: indices, from: takeoffScenarios)
-        }
+      ScenarioSection(
+        title: "Takeoff Scenarios",
+        operation: .takeoff,
+        scenarios: scenarios(for: .takeoff)
+      )
+      ScenarioSection(
+        title: "Landing Scenarios",
+        operation: .landing,
+        scenarios: scenarios(for: .landing)
+      )
 
-        NavigationLink(destination: NewScenarioView(operation: .takeoff)) {
-          Label("Add Scenario", systemImage: "plus.circle.fill")
-        }
-      }
-
-      Section("Landing Scenarios") {
-        ForEach(landingScenarios) { scenario in
-          NavigationLink(destination: ScenarioDetailView(scenario: scenario)) {
-            Text(scenario.name)
-          }
-        }
-        .onDelete { indices in
-          deleteScenarios(at: indices, from: landingScenarios)
-        }
-
-        NavigationLink(destination: NewScenarioView(operation: .landing)) {
-          Label("Add Scenario", systemImage: "plus.circle.fill")
-        }
-      }
-
-      if takeoffScenarios.isEmpty && landingScenarios.isEmpty {
+      if scenarios.isEmpty {
         Section {
           Button("Restore Default Scenarios") { restoreDefaultScenarios() }
         }
@@ -57,10 +38,8 @@ struct ScenariosSettingsView: View {
     .withErrorSheet(state: errorState)
   }
 
-  private func deleteScenarios(at offsets: IndexSet, from scenarios: [Scenario]) {
-    for index in offsets {
-      modelContext.delete(scenarios[index])
-    }
+  private func scenarios(for operation: SF50_Shared.Operation) -> [Scenario] {
+    scenarios[sectionTitle: operation.rawValue].map(Array.init) ?? []
   }
 
   private func restoreDefaultScenarios() {
@@ -77,6 +56,32 @@ struct ScenariosSettingsView: View {
           scope.setFingerprint(["swiftData", "save"])
         }
         errorState.error = error
+      }
+    }
+  }
+}
+
+private struct ScenarioSection: View {
+  @Environment(\.modelContext)
+  private var modelContext
+
+  let title: LocalizedStringKey
+  let operation: SF50_Shared.Operation
+  let scenarios: [Scenario]
+
+  var body: some View {
+    Section(title) {
+      ForEach(scenarios) { scenario in
+        NavigationLink(destination: ScenarioDetailView(scenario: scenario)) {
+          Text(scenario.name)
+        }
+      }
+      .onDelete { indices in
+        for index in indices { modelContext.delete(scenarios[index]) }
+      }
+
+      NavigationLink(destination: NewScenarioView(operation: operation)) {
+        Label("Add Scenario", systemImage: "plus.circle.fill")
       }
     }
   }

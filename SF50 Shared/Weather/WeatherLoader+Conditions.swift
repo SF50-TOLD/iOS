@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import WeatherKit
+import WeatherKit
 
 extension WeatherLoader {
   /// How much of the hourly forecast one lookup asks for.
