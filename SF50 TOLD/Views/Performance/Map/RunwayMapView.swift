@@ -290,16 +290,18 @@ struct RunwayMapView: View {
   }
 }
 
-#Preview("Takeoff - Blue") {
+// OAK runway 28R is 5457 ft: a ground run within it draws blue, one beyond it red.
+#Preview(
+  "Takeoff",
+  arguments: [PreviewVariant("Blue", 2500.0), PreviewVariant("Red", 6000.0)]
+) { variant in
   PreviewView(insert: .KOAK) { helper in
-    // OAK runway 28R is 5457 ft
-    // Ground run 2500 ft <= 5457 ft → blue (within available distance)
     let runway = try helper.load(airportID: "OAK", runway: "28R")!
 
     return NavigationStack {
       RunwayMapView(
         runway: runway,
-        groundRun: .init(value: 2500, unit: .feet),
+        groundRun: .init(value: variant.value, unit: .feet),
         operation: .takeoff,
         notamOffset: .init(value: 0, unit: .feet),
         shorteningLocation: .departureEnd
@@ -308,34 +310,24 @@ struct RunwayMapView: View {
   }
 }
 
-#Preview("Takeoff - Red") {
-  PreviewView(insert: .KOAK) { helper in
-    // OAK runway 28R is 5457 ft
-    // Ground run 6000 ft > 5457 ft → red (exceeds available distance)
-    let runway = try helper.load(airportID: "OAK", runway: "28R")!
-
-    return NavigationStack {
-      RunwayMapView(
-        runway: runway,
-        groundRun: .init(value: 6000, unit: .feet),
-        operation: .takeoff,
-        notamOffset: .init(value: 0, unit: .feet),
-        shorteningLocation: .departureEnd
-      )
-    }
-  }
-}
-
-#Preview("Landing - Blue") {
+// SQL runway 30 is 2621 ft with its touchdown zone ~437 ft in, leaving ~2184 ft past it. A ground
+// run that fits after a normal touchdown draws blue, one that needs an early touchdown yellow, and
+// one longer than the runway red.
+#Preview(
+  "Landing",
+  arguments: [
+    PreviewVariant("Blue", 1500.0),
+    PreviewVariant("Yellow", 2300.0),
+    PreviewVariant("Red", 2800.0)
+  ]
+) { variant in
   PreviewView(insert: .KSQL) { helper in
-    // SQL runway 30 is 2621 ft, TDZ ~437 ft, so available from TDZ ~2184 ft
-    // Ground run 1500 ft <= 2184 ft → blue (can stop after normal touchdown)
     let runway = try helper.load(airportID: "SQL", runway: "30")!
 
     return NavigationStack {
       RunwayMapView(
         runway: runway,
-        groundRun: .init(value: 1500, unit: .feet),
+        groundRun: .init(value: variant.value, unit: .feet),
         operation: .landing,
         notamOffset: .init(value: 0, unit: .feet),
         shorteningLocation: .departureEnd
@@ -344,43 +336,13 @@ struct RunwayMapView: View {
   }
 }
 
-#Preview("Landing - Yellow") {
-  PreviewView(insert: .KSQL) { helper in
-    // SQL runway 30 is 2621 ft, TDZ ~437 ft, so available from TDZ ~2184 ft
-    // Ground run 2300 ft > 2184 ft but <= 2621 ft → yellow (must touch down early)
-    let runway = try helper.load(airportID: "SQL", runway: "30")!
-
-    return NavigationStack {
-      RunwayMapView(
-        runway: runway,
-        groundRun: .init(value: 2300, unit: .feet),
-        operation: .landing,
-        notamOffset: .init(value: 0, unit: .feet),
-        shorteningLocation: .departureEnd
-      )
-    }
-  }
-}
-
-#Preview("Landing - Red") {
-  PreviewView(insert: .KSQL) { helper in
-    // SQL runway 30 is 2621 ft
-    // Ground run 2800 ft > 2621 ft → red (impossible to stop)
-    let runway = try helper.load(airportID: "SQL", runway: "30")!
-
-    return NavigationStack {
-      RunwayMapView(
-        runway: runway,
-        groundRun: .init(value: 2800, unit: .feet),
-        operation: .landing,
-        notamOffset: .init(value: 0, unit: .feet),
-        shorteningLocation: .departureEnd
-      )
-    }
-  }
-}
-
-#Preview("NOTAM - DER Shortening") {
+#Preview(
+  "NOTAM Shortening",
+  arguments: [
+    PreviewVariant<ShorteningLocation>("DER", .departureEnd),
+    PreviewVariant("Threshold", .thresholdEnd)
+  ]
+) { variant in
   PreviewView(insert: .KOAK) { helper in
     let runway = try helper.load(airportID: "OAK", runway: "30")!
 
@@ -390,23 +352,7 @@ struct RunwayMapView: View {
         groundRun: .init(value: 3000, unit: .feet),
         operation: .takeoff,
         notamOffset: .init(value: 500, unit: .feet),
-        shorteningLocation: .departureEnd
-      )
-    }
-  }
-}
-
-#Preview("NOTAM - Threshold Shortening") {
-  PreviewView(insert: .KOAK) { helper in
-    let runway = try helper.load(airportID: "OAK", runway: "30")!
-
-    return NavigationStack {
-      RunwayMapView(
-        runway: runway,
-        groundRun: .init(value: 3000, unit: .feet),
-        operation: .takeoff,
-        notamOffset: .init(value: 500, unit: .feet),
-        shorteningLocation: .thresholdEnd
+        shorteningLocation: variant.value
       )
     }
   }
