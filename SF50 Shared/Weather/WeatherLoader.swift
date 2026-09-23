@@ -1,7 +1,7 @@
 import CoreLocation
 import Foundation
 import Logging
-@preconcurrency import WeatherKit
+import WeatherKit
 
 /// Protocol defining the weather loading interface.
 ///
