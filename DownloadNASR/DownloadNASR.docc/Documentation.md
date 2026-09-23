@@ -31,7 +31,6 @@ Processed data is optionally uploaded to GitHub (nav data) or CloudFlare R2
 - ``HGTParser``
 - ``GeoTIFFParser``
 - ``TileProcessing``
-- ``BinaryFileWriter``
 - ``TerrainProcessorViewModel``
 
 ### Upload Services

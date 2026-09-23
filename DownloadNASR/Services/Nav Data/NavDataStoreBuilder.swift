@@ -152,7 +152,7 @@ struct NavDataStoreBuilder {
     outputLocation: URL
   ) throws -> URL {
     let payload = try Data(contentsOf: store, options: .mappedIfSafe)
-    let digest = SHA256.hash(data: payload).map { String(format: "%02x", $0) }.joined()
+    let digest = SHA256.hash(data: payload).map { unsafe String(format: "%02x", $0) }.joined()
 
     guard let nasr = cycles.nasr else { throw Errors.cycleIsUndated }
     let manifest = NavDataStoreManifest(

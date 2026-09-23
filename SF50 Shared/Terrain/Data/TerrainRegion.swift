@@ -256,8 +256,8 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
         for lon in box.minLon..<box.maxLon {
           let latPrefix = lat >= 0 ? "N" : "S",
             lonPrefix = lon >= 0 ? "E" : "W",
-            latStr = String(format: "%02d", abs(lat)),
-            lonStr = String(format: "%03d", abs(lon))
+            latStr = unsafe String(format: "%02d", abs(lat)),
+            lonStr = unsafe String(format: "%03d", abs(lon))
           tiles.insert("\(latPrefix)\(latStr)\(lonPrefix)\(lonStr)")
         }
       }

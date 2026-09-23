@@ -100,7 +100,9 @@ extension WeatherLoader {
         do {
           xmlData = try data.gunzipped()
         } catch {
-          let prefix = data.prefix(20).map { String(format: "%02x", $0) }.joined(separator: " ")
+          let prefix = data.prefix(20).map { unsafe String(format: "%02x", $0) }.joined(
+            separator: " "
+          )
           Self.logger.error(
             "Failed to decompress METAR data",
             metadata: [
@@ -178,7 +180,9 @@ extension WeatherLoader {
         do {
           xmlData = try data.gunzipped()
         } catch {
-          let prefix = data.prefix(20).map { String(format: "%02x", $0) }.joined(separator: " ")
+          let prefix = data.prefix(20).map { unsafe String(format: "%02x", $0) }.joined(
+            separator: " "
+          )
           Self.logger.error(
             "Failed to decompress TAF data",
             metadata: [

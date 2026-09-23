@@ -1,10 +1,11 @@
 import Foundation
+import SF50_Shared
 
 /// A row-major grid of `Int16` elevation samples.
 ///
 /// `Elevations` provides structured access to a flat array of elevation data
-/// organized as a 2D grid. All access goes through subscript or
-/// ``withUnsafeBufferPointer(_:)`` — the underlying storage is private.
+/// organized as a 2D grid. All access goes through the subscript, or ``littleEndianData`` for
+/// serialization — the underlying storage is private.
 ///
 /// Width and height are stored separately to support non-square GeoTIFF tiles,
 /// with convenience initializers for the common square SRTM case.
@@ -162,19 +163,24 @@ struct Elevations: Sendable {
     return result
   }
 
-  // MARK: - Serialization
-
-  /// Provides read-only access to the underlying buffer for serialization.
-  func withUnsafeBufferPointer<R>(
-    _ body: (UnsafeBufferPointer<Int16>) throws -> R
-  ) rethrows -> R {
-    try storage.withUnsafeBufferPointer(body)
-  }
-
   // MARK: - Subscripts
 
   subscript(row: Int, col: Int) -> Int16 {
     get { storage[index(row: row, col: col)] }
     set { storage[index(row: row, col: col)] = newValue }
+  }
+}
+
+// MARK: - Serialization
+
+extension Elevations {
+  /// Whether every sample is void, as for a tile that is all ocean.
+  var isAllVoid: Bool { storage.allSatisfy { $0 == Self.voidValue } }
+
+  /// The samples in row-major order as little-endian `Int16`s, the layout a terrain file stores.
+  var littleEndianData: Data {
+    var data = Data()
+    data.append(contentsOf: storage, .littleEndian)
+    return data
   }
 }

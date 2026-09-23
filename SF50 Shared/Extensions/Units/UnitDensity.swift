@@ -19,6 +19,8 @@ public import Foundation
 /// ```
 @preconcurrency
 public class UnitDensity: Dimension, @unchecked Sendable {
+  // `@unchecked` because `Dimension` is an Objective-C class the SDK does not declare Sendable. Units
+  // are immutable once created, as with Foundation's own `Dimension` subclasses.
 
   /// Kilograms per liter (kg/L)
   public static let kilogramsPerLiter: UnitDensity = unit(
