@@ -83,6 +83,6 @@ func validateRegressionPredictions<Model: BasePerformanceModel>(
   }
   #expect(
     failureRate <= 0.20,
-    "\(testName): Failure rate \(String(format: "%.1f%%", failureRate * 100)) exceeds 20% threshold (\(missedRows.count)/\(totalPoints) points outside 95% CI)"
+    "\(testName): Failure rate \(unsafe String(format: "%.1f%%", failureRate * 100)) exceeds 20% threshold (\(missedRows.count)/\(totalPoints) points outside 95% CI)"
   )
 }

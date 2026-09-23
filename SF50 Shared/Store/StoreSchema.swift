@@ -62,7 +62,7 @@ extension Schema {
   /// the store's shape changes and not when an unrelated detail of SwiftData's own encoding does.
   var shapeFingerprint: String {
     let digest = SHA256.hash(data: Data(canonicalShapeDescription.utf8))
-    return digest.map { String(format: "%02x", $0) }.joined()
+    return digest.map { unsafe String(format: "%02x", $0) }.joined()
   }
 
   private var canonicalShapeDescription: String {

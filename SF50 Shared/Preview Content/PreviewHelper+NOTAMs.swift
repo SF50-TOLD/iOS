@@ -36,7 +36,7 @@ extension PreviewHelper {
 
     return (0..<count).map { index in
       let letter = String(UnicodeScalar(65 + index % 26)!)
-      let notamId = "\(letter)\(String(format: "%04d", 8000 + index))/2025"
+      let notamId = "\(letter)\(unsafe String(format: "%04d", 8000 + index))/2025"
 
       // Vary the effective times for different statuses
       let hourOffset: TimeInterval =

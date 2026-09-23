@@ -124,17 +124,15 @@ struct BinaryDataReader {
   // MARK: - Generic Integer Reading
 
   /// Reads a fixed-width integer in little-endian byte order.
-  private mutating func readInteger<T: FixedWidthInteger>() throws -> T {
+  private mutating func readInteger<T: FixedWidthInteger & ConvertibleFromBytes>() throws -> T {
     let size = MemoryLayout<T>.size
     guard offset + size <= data.count else {
       throw BinaryDataReaderError.endOfData(needed: size, available: bytesRemaining)
     }
 
-    let value = data.withUnsafeBytes { buffer in
-      buffer.loadUnaligned(fromByteOffset: offset, as: T.self)
-    }
+    let value = data.bytes.load(fromByteOffset: offset, as: T.self, .littleEndian)
     offset += size
-    return T(littleEndian: value)
+    return value
   }
 }
 
