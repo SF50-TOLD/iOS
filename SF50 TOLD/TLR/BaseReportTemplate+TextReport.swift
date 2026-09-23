@@ -128,7 +128,7 @@ extension BaseReportTemplate {
     guard let direction = input.conditions.windDirection else {
       return "VRB/\(whole(speed.converted(to: speedUnit).value))"
     }
-    let heading = String(format: "%03d", Int(direction.asHeading.value.rounded()))
+    let heading = unsafe String(format: "%03d", Int(direction.asHeading.value.rounded()))
     return "\(heading)/\(whole(speed.converted(to: speedUnit).value))"
   }
 
@@ -220,7 +220,7 @@ extension BaseReportTemplate {
 
   /// A fixed number of decimal places with a full stop, whatever the reader's locale uses.
   func decimal(_ value: Double, places: Int) -> String {
-    String(format: "%.\(places)f", value)
+    unsafe String(format: "%.\(places)f", value)
   }
 
   /// The aircraft model as a fixed code. The app's own name is translated, and this is not.
@@ -272,7 +272,7 @@ extension BaseReportTemplate {
   }
 
   func signed(_ value: Double) -> String {
-    String(format: "%+d", Int(value.rounded()))
+    unsafe String(format: "%+d", Int(value.rounded()))
   }
 
   // MARK: - Teletype

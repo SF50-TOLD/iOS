@@ -4,7 +4,12 @@ public import SwiftData
 
 // MARK: - Defaults
 
-nonisolated(unsafe) private let groupDefaults = UserDefaults(suiteName: "group.codes.tim.TOLD")!
+// UserDefaults is documented as thread-safe, but the SDK does not declare it Sendable. The keys
+// reach this one instance through `groupDefaults`, which keeps the unsafe reference in one place.
+nonisolated(unsafe) private let sharedGroupDefaults = UserDefaults(
+  suiteName: "group.codes.tim.TOLD"
+)!
+private var groupDefaults: UserDefaults { unsafe sharedGroupDefaults }
 public let latestSchemaVersion = 8
 
 extension TerrainRegion: Defaults.Serializable {}

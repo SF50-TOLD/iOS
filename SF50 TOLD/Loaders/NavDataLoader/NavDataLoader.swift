@@ -126,7 +126,7 @@ actor NavDataLoader {
   private var stateContinuation: AsyncStream<State>.Continuation?
 
   private var dataURL: URL {
-    URL(string: String(format: Self.dataURLTemplate, "\(Cycle.effective)"))!
+    URL(string: unsafe String(format: Self.dataURLTemplate, "\(Cycle.effective)"))!
   }
 
   /// Creates a loader writing into `modelContainer`.

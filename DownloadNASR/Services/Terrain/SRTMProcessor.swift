@@ -1,4 +1,3 @@
-import Compression
 import Foundation
 import Logging
 import SF50_Shared
@@ -152,12 +151,7 @@ actor SRTMProcessor {
       )
     }
 
-    // Check for all-void tile (ocean)
-    let isAllVoid = elevations.withUnsafeBufferPointer { buffer in
-      buffer.allSatisfy { $0 == Elevations.voidValue }
-    }
-
-    if isAllVoid {
+    if elevations.isAllVoid {
       return CompressedTile(
         index: index,
         latitude: parsed.latitude,
@@ -169,14 +163,14 @@ actor SRTMProcessor {
       )
     }
 
-    // Serialize elevation data to raw bytes
-    let rawData = elevations.withUnsafeBufferPointer { buffer in
-      Data(buffer: buffer)
-    }
+    let rawData = elevations.littleEndianData
     let uncompressedLength = UInt32(rawData.count)
 
-    // Compress with LZFSE
-    guard let compressedData = compressWithLZFSE(rawData) else {
+    let compressedData: Data
+    do {
+      // swiftlint:disable:next legacy_objc_type
+      compressedData = try (rawData as NSData).compressed(using: .lzfse) as Data
+    } catch {
       return CompressedTile(
         index: index,
         latitude: parsed.latitude,
@@ -184,13 +178,7 @@ actor SRTMProcessor {
         compressedData: nil,
         uncompressedLength: 0,
         isVoid: false,
-        error: SRTMProcessorError.compressionFailed(
-          NSError(
-            domain: "LZFSE",
-            code: -1,
-            userInfo: [NSLocalizedDescriptionKey: "LZFSE compression returned 0 bytes"]
-          )
-        )
+        error: SRTMProcessorError.compressionFailed(error)
       )
     }
 
@@ -203,45 +191,6 @@ actor SRTMProcessor {
       isVoid: false,
       error: nil
     )
-  }
-
-  /// Compresses data using LZFSE.
-  private static func compressWithLZFSE(_ data: Data) -> Data? {
-    let srcSize = data.count
-    var dstBuffer = [UInt8](repeating: 0, count: srcSize)
-
-    let compressedSize = data.withUnsafeBytes { srcBuffer -> Int in
-      guard let srcPointer = srcBuffer.baseAddress else { return 0 }
-      return compression_encode_buffer(
-        &dstBuffer,
-        srcSize,
-        srcPointer.assumingMemoryBound(to: UInt8.self),
-        srcSize,
-        nil,
-        COMPRESSION_LZFSE
-      )
-    }
-
-    // If output wouldn't fit in source-sized buffer, retry with a larger one
-    if compressedSize == 0 {
-      let largerSize = srcSize * 2
-      dstBuffer = [UInt8](repeating: 0, count: largerSize)
-      let retrySize = data.withUnsafeBytes { srcBuffer -> Int in
-        guard let srcPointer = srcBuffer.baseAddress else { return 0 }
-        return compression_encode_buffer(
-          &dstBuffer,
-          largerSize,
-          srcPointer.assumingMemoryBound(to: UInt8.self),
-          srcSize,
-          nil,
-          COMPRESSION_LZFSE
-        )
-      }
-      guard retrySize > 0 else { return nil }
-      return Data(dstBuffer.prefix(retrySize))
-    }
-
-    return Data(dstBuffer.prefix(compressedSize))
   }
 
   // MARK: - Methods
@@ -536,8 +485,8 @@ actor SRTMProcessor {
   private func buildCopernicusURL(for coords: HGTParser.Coordinates) -> URL {
     let ns = coords.latitude >= 0 ? "N" : "S",
       ew = coords.longitude >= 0 ? "E" : "W",
-      lat = String(format: "%02d", abs(coords.latitude)),
-      lon = String(format: "%03d", abs(coords.longitude))
+      lat = unsafe String(format: "%02d", abs(coords.latitude)),
+      lon = unsafe String(format: "%03d", abs(coords.longitude))
     let tileName = "Copernicus_DSM_COG_10_\(ns)\(lat)_00_\(ew)\(lon)_00_DEM"
     guard let url = URL(string: "\(Self.copernicusBaseURL)/\(tileName)/\(tileName).tif") else {
       fatalError("Failed to construct Copernicus URL for coordinates \(coords)")
@@ -565,15 +514,12 @@ actor SRTMProcessor {
     let outputResolution = HGTParser.Resolution.srtm3
 
     // Build header: magic (4) + version (2) + resolution (2) + tileCount (4) + boundingBox (8)
-    let headerData = try BinaryFileWriter.buildData { writer in
-      writer.writeBytes(Self.magic)
-      writer.writeUInt16(Self.formatVersion)
-      writer.writeUInt16(UInt16(outputResolution.samplesPerSide))  // Resolution
-      writer.writeUInt32(UInt32(tiles.count))  // Tile count
-      writer.writeInt16(Int16(boundingBox.minLat))  // Bounding box
-      writer.writeInt16(Int16(boundingBox.maxLat))
-      writer.writeInt16(Int16(boundingBox.minLon))
-      writer.writeInt16(Int16(boundingBox.maxLon))
+    var headerData = Data(Self.magic)
+    headerData.append(Self.formatVersion, .littleEndian)
+    headerData.append(UInt16(outputResolution.samplesPerSide), .littleEndian)  // Resolution
+    headerData.append(UInt32(tiles.count), .littleEndian)  // Tile count
+    for bound in [boundingBox.minLat, boundingBox.maxLat, boundingBox.minLon, boundingBox.maxLon] {
+      headerData.append(Int16(bound), .littleEndian)  // Bounding box
     }
 
     // Version 3 format: lat(2) + lon(2) + offset(8) + compressedLength(4) + uncompressedLength(4) = 20 bytes
@@ -605,14 +551,13 @@ actor SRTMProcessor {
 
     // Seek back and write the actual tile index
     try fileHandle.seek(toOffset: UInt64(headerData.count))
-    let tileIndex = try BinaryFileWriter.buildData { writer in
-      for entry in result.indexEntries {
-        writer.writeInt16(Int16(entry.latitude))
-        writer.writeInt16(Int16(entry.longitude))
-        writer.writeUInt64(entry.dataOffset)
-        writer.writeUInt32(entry.compressedLength)
-        writer.writeUInt32(entry.uncompressedLength)
-      }
+    var tileIndex = Data()
+    for entry in result.indexEntries {
+      tileIndex.append(Int16(entry.latitude), .littleEndian)
+      tileIndex.append(Int16(entry.longitude), .littleEndian)
+      tileIndex.append(entry.dataOffset, .littleEndian)
+      tileIndex.append(entry.compressedLength, .littleEndian)
+      tileIndex.append(entry.uncompressedLength, .littleEndian)
     }
     try fileHandle.write(contentsOf: tileIndex)
 
@@ -630,7 +575,7 @@ actor SRTMProcessor {
         LZFSE compression for \(region.displayName): \(stats.voidTiles) void tiles, \
         \(byteCountFormatter.string(fromByteCount: Int64(stats.totalUncompressedBytes))) → \
         \(byteCountFormatter.string(fromByteCount: Int64(stats.totalCompressedBytes))) \
-        (\(String(format: "%.1f%%", stats.compressionRatio * 100)))
+        (\(stats.compressionRatio.formatted(.percent.precision(.fractionLength(1))))))
         """
     )
 

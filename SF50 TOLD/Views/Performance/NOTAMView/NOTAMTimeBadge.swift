@@ -35,13 +35,14 @@ struct NOTAMTimeBadge: View {
       .foregroundStyle(timeRelevance.foregroundColor)
   }
 
+  @MainActor
   enum TimeRelevance {
     case expired
     case active
     case warning(timeInterval: TimeInterval)
     case future(timeInterval: TimeInterval)
 
-    nonisolated(unsafe) private static let relativeDateFormatter: RelativeDateTimeFormatter = {
+    private static let relativeDateFormatter: RelativeDateTimeFormatter = {
       let formatter = RelativeDateTimeFormatter()
       formatter.unitsStyle = .abbreviated
       formatter.formattingContext = .standalone

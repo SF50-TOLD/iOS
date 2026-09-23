@@ -85,7 +85,7 @@ actor PrebuiltNavDataStore {
   @concurrent
   nonisolated private static func digest(of payload: URL) async throws -> String {
     let data = try Data(contentsOf: payload, options: .mappedIfSafe)
-    return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    return SHA256.hash(data: data).map { unsafe String(format: "%02x", $0) }.joined()
   }
 
   /// Expands the compressed store straight onto disk, off this actor.
@@ -223,7 +223,9 @@ actor PrebuiltNavDataStore {
 
   /// The manifest for one cycle, or `nil` if it was never published.
   private func manifest(for cycle: String) async -> PublishedCycle? {
-    guard let url = URL(string: String(format: Self.manifestURLTemplate, cycle)) else { return nil }
+    guard let url = URL(string: unsafe String(format: Self.manifestURLTemplate, cycle)) else {
+      return nil
+    }
     let session = URLSession(configuration: manifestProbeConfiguration)
     defer { session.finishTasksAndInvalidate() }
 

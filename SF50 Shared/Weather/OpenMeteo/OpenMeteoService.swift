@@ -396,5 +396,5 @@ extension Double {
   ///
   /// Four decimal places locate a point to about ten metres, which is finer than a forecast model's
   /// grid, and rounding to it lets requests from the same airport share Open-Meteo's cache.
-  fileprivate var openMeteoCoordinate: String { .init(format: "%.4f", self) }
+  fileprivate var openMeteoCoordinate: String { unsafe String(format: "%.4f", self) }
 }
