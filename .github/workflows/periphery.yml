@@ -3,8 +3,8 @@ name: Periphery
 on:
   push:
     branches: [main]
+  # Any base branch: a stacked pull request targets the layer below it, not main.
   pull_request:
-    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
