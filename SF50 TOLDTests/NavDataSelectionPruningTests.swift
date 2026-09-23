@@ -12,16 +12,16 @@ import Testing
 /// every install would cost the pilot the airport chosen for the flight.
 ///
 /// The check opens the generation being installed rather than the container the views hold, so
-/// these tests hand the view model a store on disk and write the incoming dataset where production
-/// writes it. A view model given an in-memory store reads back the container it was handed, which
-/// is not the path this behavior takes on a device.
+/// these tests hand it a store on disk and write the incoming dataset where production writes it.
+/// Given an in-memory container, the check reads back that container instead, which is not the path
+/// this behavior takes on a device.
 @Suite(.serialized)
 @MainActor
 struct `Selection Pruning on Install` {
   private static let carriedAirport = "CARRIED", retiredAirport = "RETIRED",
     selectedRunway = "18"
 
-  /// The generation the view model's own container reads: the dataset being replaced.
+  /// The generation the app's container reads: the dataset being replaced.
   private static let supersededGeneration = 1
 
   private static func airport(recordID: String) -> Airport {
@@ -41,7 +41,7 @@ struct `Selection Pruning on Install` {
   }
 
   /// Selects an airport for each leg, writes a generation carrying only ``carriedAirport``, and
-  /// runs `body` against a view model whose own container reads the dataset being replaced.
+  /// runs `body` with a container reading the dataset being replaced.
   ///
   /// The generation is written into the app group, since that is where an install looks for it. A
   /// process killed before the store is removed leaves one behind, which the next launch reclaims.
@@ -54,11 +54,11 @@ struct `Selection Pruning on Install` {
   /// - Parameters:
   ///   - takeoff: The record ID selected for the takeoff leg.
   ///   - landing: The record ID selected for the landing leg.
-  ///   - body: Runs with the view model and the generation being installed.
+  ///   - body: Runs with the app's container and the generation being installed.
   private static func withInstalledGeneration(
     takeoff: String,
     landing: String,
-    _ body: (NavDataLoaderViewModel, Int) throws -> Void
+    _ body: (ModelContainer, Int) throws -> Void
   ) throws {
     let selections = LegSelections.current(),
       generation = NavDataStoreInstaller(layout: .appGroup).reserveGeneration()
@@ -73,16 +73,10 @@ struct `Selection Pruning on Install` {
     Defaults[.takeoffRunway] = selectedRunway
     Defaults[.landingRunway] = selectedRunway
 
-    let viewModel = NavDataLoaderViewModel(container: try supersededContainer())
-    try body(viewModel, generation)
+    try body(try supersededContainer(), generation)
   }
 
   /// A temporary store standing in for the dataset the install is replacing.
-  ///
-  /// It holds a dataset that reads as current, so the view model's launch-state poll settles on
-  /// its first pass rather than running for the rest of the test process. The store is left on
-  /// disk for the same reason: that poll outlives the test, and one reading a store deleted
-  /// underneath it turns into an error reported every half second.
   private static func supersededContainer() throws -> ModelContainer {
     let layout = StoreLayout(
       baseDirectory: FileManager.default.temporaryDirectory
@@ -92,9 +86,6 @@ struct `Selection Pruning on Install` {
       try AppStore.makeWritableContainer(layout: layout, generation: supersededGeneration)
     )
     context.insert(airport(recordID: carriedAirport))
-    context.insert(
-      Cycle(dataSource: .nasr, name: "TEST", effective: .distantPast, expires: .distantFuture)
-    )
     try context.save()
     return context.container
   }
@@ -112,8 +103,8 @@ struct `Selection Pruning on Install` {
     try Self.withInstalledGeneration(
       takeoff: Self.retiredAirport,
       landing: Self.carriedAirport
-    ) { viewModel, generation in
-      viewModel.clearSelectionsMissing(fromGeneration: generation)
+    ) { container, generation in
+      NavDataUpdater.clearSelectionsMissing(fromGeneration: generation, container: container)
 
       #expect(Defaults[.takeoffAirport] == nil)
       #expect(Defaults[.takeoffRunway] == nil)
@@ -127,8 +118,8 @@ struct `Selection Pruning on Install` {
     try Self.withInstalledGeneration(
       takeoff: Self.carriedAirport,
       landing: Self.retiredAirport
-    ) { viewModel, generation in
-      viewModel.clearSelectionsMissing(fromGeneration: generation)
+    ) { container, generation in
+      NavDataUpdater.clearSelectionsMissing(fromGeneration: generation, container: container)
 
       #expect(Defaults[.landingAirport] == nil)
       #expect(Defaults[.landingRunway] == nil)
@@ -142,8 +133,8 @@ struct `Selection Pruning on Install` {
     try Self.withInstalledGeneration(
       takeoff: Self.carriedAirport,
       landing: Self.carriedAirport
-    ) { viewModel, generation in
-      viewModel.clearSelectionsMissing(fromGeneration: generation)
+    ) { container, generation in
+      NavDataUpdater.clearSelectionsMissing(fromGeneration: generation, container: container)
 
       #expect(Defaults[.takeoffAirport] == Self.carriedAirport)
       #expect(Defaults[.takeoffRunway] == Self.selectedRunway)
@@ -157,10 +148,10 @@ struct `Selection Pruning on Install` {
     try Self.withInstalledGeneration(
       takeoff: Self.retiredAirport,
       landing: Self.retiredAirport
-    ) { viewModel, generation in
+    ) { container, generation in
       // What an extension's launch-time sweep does to a generation installed alongside it.
       StoreLayout.removeStore(at: StoreLayout.appGroup.navStoreURL(generation: generation))
-      viewModel.clearSelectionsMissing(fromGeneration: generation)
+      NavDataUpdater.clearSelectionsMissing(fromGeneration: generation, container: container)
 
       #expect(Defaults[.takeoffAirport] == Self.retiredAirport)
       #expect(Defaults[.takeoffRunway] == Self.selectedRunway)
