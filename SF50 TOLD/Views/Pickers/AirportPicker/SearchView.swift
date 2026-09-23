@@ -16,7 +16,7 @@ struct SearchView: View {
     SearchResults(airports: viewModel?.sortedAirports ?? [], onSelect: onSelect)
       .onChange(of: searchText, initial: true) { _, searchText in
         if viewModel == nil {
-          viewModel = SearchViewModel(container: modelContext.container)
+          viewModel = SearchViewModel(modelContext: modelContext)
         }
         viewModel?.searchText = searchText
       }
