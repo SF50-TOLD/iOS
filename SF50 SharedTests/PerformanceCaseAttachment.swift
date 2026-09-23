@@ -233,5 +233,5 @@ func csv(header: [String], rows: [[String]]) -> String {
 
 /// Renders an optional value as a CSV field, leaving it empty when absent.
 private func field<Value: CustomStringConvertible>(_ value: Value?) -> String {
-  value.map(String.init(describing:)) ?? ""
+  value?.description ?? ""
 }
