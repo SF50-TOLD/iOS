@@ -162,6 +162,16 @@ extension Defaults.Keys {
     default: false,
     suite: groupDefaults
   )
+  /// Whether a nav-data update the system starts in the background may use a network iOS treats
+  /// as metered: cellular in the Standard data mode, a personal hotspot, or Low Data Mode.
+  ///
+  /// Off by default: an update the pilot did not ask for waits for an unmetered network unless they
+  /// allow it.
+  public static let allowsBackgroundMeteredDownloads = Key<Bool>(
+    "TOLD/4/allowsBackgroundMeteredDownloads",
+    default: false,
+    suite: groupDefaults
+  )
 
   // MARK: Unit Preferences
 

@@ -28,6 +28,9 @@ struct SettingsView: View {
   @Default(.useAirportLocalTime)
   private var useAirportLocalTime
 
+  @Default(.allowsBackgroundMeteredDownloads)
+  private var allowsBackgroundMeteredDownloads
+
   @Default(.weightUnit)
   private var weightUnit
 
@@ -128,9 +131,20 @@ struct SettingsView: View {
           .accessibilityIdentifier("timeZoneDisplayPicker")
         }
 
-        Section("Data") {
+        Section {
           NavigationLink("Terrain Data…", destination: TerrainSettingsView())
             .accessibilityIdentifier("terrainNavigationLink")
+          Toggle(
+            "Allow Background Downloads on Metered Networks",
+            isOn: $allowsBackgroundMeteredDownloads
+          )
+          .accessibilityIdentifier("allowsBackgroundMeteredDownloadsToggle")
+        } header: {
+          Text("Data")
+        } footer: {
+          Text(
+            "When the airport data expires, it is replaced in the background while the device is charging. Without this, that waits for Wi-Fi, or for 5G set to Allow More Data, and skips Low Data Mode."
+          )
         }
       }.navigationTitle("Settings")
     }
