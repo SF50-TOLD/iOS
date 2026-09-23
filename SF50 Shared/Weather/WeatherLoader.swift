@@ -159,8 +159,8 @@ public actor WeatherLoader: WeatherLoaderProtocol {
       // Send initial value
       continuation.yield(initialConditions)
 
-      continuation.onTermination = { @Sendable _ in
-        Task { [weak self] in
+      continuation.onTermination = { @Sendable [weak self] _ in
+        Task {
           await self?.removeConditionsSubscriber(id: id)
         }
       }
@@ -177,8 +177,8 @@ public actor WeatherLoader: WeatherLoaderProtocol {
       // Send initial value
       continuation.yield(initialRaw)
 
-      continuation.onTermination = { @Sendable _ in
-        Task { [weak self] in
+      continuation.onTermination = { @Sendable [weak self] _ in
+        Task {
           await self?.removeMetarSubscriber(id: id)
         }
       }
@@ -195,8 +195,8 @@ public actor WeatherLoader: WeatherLoaderProtocol {
       // Send initial value
       continuation.yield(initialRaw)
 
-      continuation.onTermination = { @Sendable _ in
-        Task { [weak self] in
+      continuation.onTermination = { @Sendable [weak self] _ in
+        Task {
           await self?.removeTafSubscriber(id: id)
         }
       }
@@ -213,8 +213,8 @@ public actor WeatherLoader: WeatherLoaderProtocol {
       // Send initial value
       continuation.yield(initialData)
 
-      continuation.onTermination = { @Sendable _ in
-        Task { [weak self] in
+      continuation.onTermination = { @Sendable [weak self] _ in
+        Task {
           await self?.removeWindsAloftSubscriber(id: id)
         }
       }
