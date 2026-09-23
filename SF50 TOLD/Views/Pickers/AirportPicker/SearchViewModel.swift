@@ -1,3 +1,4 @@
+import Foundation
 import SF50_Shared
 import Sentry
 import SwiftData
@@ -5,67 +6,49 @@ import SwiftData
 @Observable
 @MainActor
 final class SearchViewModel: WithIdentifiableError {
+  private static let debounceInterval = Duration.milliseconds(250)
+  private static let minimumSearchLength = 3
+  private static let matchesNothing = #Predicate<Airport> { _ in false }
+
   // Inputs
-  var searchText: String = "" {
+  var searchText = "" {
     didSet { debouncedSearch() }
   }
 
-  // Outputs
-  private(set) var sortedAirports: [Airport] = []
-  private(set) var isLoading = false
   var error: (any Error)?
 
-  private let container: ModelContainer
+  private let matches: ResultsObserver<Airport, Never>?
+  private var appliedSearchText = ""
   private var searchTask: Task<Void, Never>?
 
-  init(container: ModelContainer) {
-    self.container = container
+  // Outputs
+  var sortedAirports: [Airport] {
+    guard let matches, !appliedSearchText.isEmpty else { return [] }
+    return Airport.ranked(Array(matches.results), matching: appliedSearchText)
+  }
+
+  init(modelContext: ModelContext) {
+    do {
+      matches = try ResultsObserver(filterBy: Self.matchesNothing, modelContext: modelContext)
+    } catch {
+      SentrySDK.capture(error: error)
+      matches = nil
+      self.error = error
+    }
   }
 
   private func debouncedSearch() {
     searchTask?.cancel()
     searchTask = Task {
-      // Wait 250ms before executing the search
-      try? await Task.sleep(nanoseconds: 250_000_000)
-      if !Task.isCancelled { performSearch() }
+      try? await Task.sleep(for: Self.debounceInterval)
+      if !Task.isCancelled { applySearchText() }
     }
   }
 
-  private func performSearch() {
-    guard searchText.count > 2 else {
-      sortedAirports = []
-      return
-    }
-
-    isLoading = true
-    let searchTextCopy = searchText
-
-    Task { [weak self] in
-      guard let self else { return }
-      do {
-        let topResults = try await searchAirports(matching: searchTextCopy)
-        // Only update if search text hasn't changed
-        guard searchTextCopy == searchText else { return }
-        sortedAirports = topResults
-        isLoading = false
-        error = nil
-      } catch {
-        SentrySDK.capture(error: error)
-        sortedAirports = []
-        isLoading = false
-        self.error = error
-      }
-    }
-  }
-
-  /// Fetches and relevance-ranks airports matching the query on a background
-  /// context.
-  @concurrent
-  private func searchAirports(matching searchText: String) async throws
-    -> sending [Airport]
-  {
-    let context = ModelContext(container)
-    let descriptor = FetchDescriptor(predicate: Airport.searchPredicate(matching: searchText))
-    return Airport.ranked(try context.fetch(descriptor), matching: searchText)
+  private func applySearchText() {
+    appliedSearchText = searchText.count >= Self.minimumSearchLength ? searchText : ""
+    matches?.filterBy =
+      appliedSearchText.isEmpty
+      ? Self.matchesNothing : Airport.searchPredicate(matching: appliedSearchText)
   }
 }

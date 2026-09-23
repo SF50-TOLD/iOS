@@ -66,7 +66,7 @@ struct LegacyStoreMigration {
 
   private func userContainer() throws -> ModelContainer {
     let configuration = ModelConfiguration(
-      "userData",
+      AppStore.userConfigurationName,
       schema: UserDataSchema.schema,
       url: layout.userStoreURL
     )

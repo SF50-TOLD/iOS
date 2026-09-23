@@ -17,8 +17,8 @@ import os
 /// be migrated. An unnamed second configuration was also historically the difference between a
 /// container that opened both stores and one that silently opened only the first.
 public enum AppStore {
-  private static let navConfigurationName = "navData"
-  private static let userConfigurationName = "userData"
+  static let navConfigurationName = "navData",
+    userConfigurationName = "userData"
 
   private static let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",

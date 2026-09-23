@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import RegexBuilder
+import RegexBuilder
 import TIFF
 
 /// Errors that can occur during GeoTIFF parsing.
