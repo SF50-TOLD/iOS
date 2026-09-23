@@ -613,20 +613,8 @@ private struct ChartPreview: View {
   }
 }
 
-#Preview("No weather") {
-  ChartPreview(layer: .none)
-}
-
-#Preview("Temperature") {
-  ChartPreview(layer: .temperature)
-}
-
-#Preview("Clouds") {
-  ChartPreview(layer: .clouds)
-}
-
-#Preview("Icing") {
-  ChartPreview(layer: .icing)
+#Preview("Weather layers", arguments: WeatherProfileLayer.allCases) { layer in
+  ChartPreview(layer: layer)
 }
 
 /// Barbs over a field, the two layers the picker and the toggle can show at once. Drawn from the

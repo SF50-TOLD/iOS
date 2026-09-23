@@ -77,13 +77,22 @@ struct WeatherCredits: View {
   }
 }
 
-#Preview("Open-Meteo only") {
+// The WeatherKit variant covers the path the app reaches only when Open-Meteo can’t answer; its
+// mark and legal link are fetched live, so it needs a network. NWS data is public domain, so the
+// NWS-only variant should show nothing below the form.
+#Preview(
+  arguments: [
+    PreviewVariant<WeatherProviders>("Open-Meteo only", [.NWS, .openMeteo]),
+    PreviewVariant("Apple Weather", [.NWS, .weatherKit]),
+    PreviewVariant("Every service", [.NWS, .openMeteo, .weatherKit]),
+    PreviewVariant("No credit required", .NWS)
+  ]
+) { variant in
   // Shown the way it sits in `WeatherSource`: as the section's footer, outside its box.
-  let providers: WeatherProviders = [.NWS, .openMeteo]
-  return Form {
+  Form {
     Section {
       HStack {
-        Text("Using downloaded weather from \(providers.localizedDescription)")
+        Text("Using downloaded weather from \(variant.value.localizedDescription)")
           .font(.subheadline)
         Spacer()
         Text("Update Weather").foregroundStyle(Color.accentColor).bold()
@@ -91,67 +100,7 @@ struct WeatherCredits: View {
     } header: {
       Text("Source")
     } footer: {
-      WeatherCredits(providers: providers)
-    }
-  }
-}
-
-/// Covers the WeatherKit path, which the app itself reaches only when Open-Meteo can’t
-/// answer. The mark and its legal link are fetched live, so this needs a network.
-#Preview("Apple Weather") {
-  // Shown the way it sits in `WeatherSource`: as the section's footer, outside its box.
-  let providers: WeatherProviders = [.NWS, .weatherKit]
-  return Form {
-    Section {
-      HStack {
-        Text("Using downloaded weather from \(providers.localizedDescription)")
-          .font(.subheadline)
-        Spacer()
-        Text("Update Weather").foregroundStyle(Color.accentColor).bold()
-      }
-    } header: {
-      Text("Source")
-    } footer: {
-      WeatherCredits(providers: providers)
-    }
-  }
-}
-
-#Preview("Every service") {
-  // Shown the way it sits in `WeatherSource`: as the section's footer, outside its box.
-  let providers: WeatherProviders = [.NWS, .openMeteo, .weatherKit]
-  return Form {
-    Section {
-      HStack {
-        Text("Using downloaded weather from \(providers.localizedDescription)")
-          .font(.subheadline)
-        Spacer()
-        Text("Update Weather").foregroundStyle(Color.accentColor).bold()
-      }
-    } header: {
-      Text("Source")
-    } footer: {
-      WeatherCredits(providers: providers)
-    }
-  }
-}
-
-/// NWS data is public domain, so nothing should appear below the form.
-#Preview("No credit required") {
-  // Shown the way it sits in `WeatherSource`: as the section's footer, outside its box.
-  let providers: WeatherProviders = .NWS
-  return Form {
-    Section {
-      HStack {
-        Text("Using downloaded weather from \(providers.localizedDescription)")
-          .font(.subheadline)
-        Spacer()
-        Text("Update Weather").foregroundStyle(Color.accentColor).bold()
-      }
-    } header: {
-      Text("Source")
-    } footer: {
-      WeatherCredits(providers: providers)
+      WeatherCredits(providers: variant.value)
     }
   }
 }

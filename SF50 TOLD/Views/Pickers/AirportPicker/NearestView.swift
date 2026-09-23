@@ -131,26 +131,16 @@ private struct NearestAirportList: View {
   }
 }
 
-#Preview("No Airports") {
+#Preview(
+  "No Airports",
+  arguments: [
+    PreviewVariant<LocationAvailability>("Location Available", .available),
+    PreviewVariant("Awaiting Permission", .requestingAuthorization),
+    PreviewVariant("Denied", .authorizationDenied)
+  ]
+) { variant in
   PreviewView { _ in
-    return NearestView { _ in }
-      .environment(\.locationStreamer, MockLocationStreamer())
-  }
-}
-
-#Preview("Awaiting Permission") {
-  PreviewView { _ in
-    return NearestView { _ in }
-      .environment(
-        \.locationStreamer,
-        MockLocationStreamer(availability: .requestingAuthorization)
-      )
-  }
-}
-
-#Preview("Denied") {
-  PreviewView { _ in
-    return NearestView { _ in }
-      .environment(\.locationStreamer, MockLocationStreamer(availability: .authorizationDenied))
+    NearestView { _ in }
+      .environment(\.locationStreamer, MockLocationStreamer(availability: variant.value))
   }
 }
