@@ -39,28 +39,37 @@ actor PrebuiltNavDataStore {
   /// How much of the compressed store to feed the decompressor at a time.
   private static let expandChunkSizeBytes = 1 << 20
 
-  /// The configuration the manifest probes run on.
-  private static var manifestProbeConfiguration: URLSessionConfiguration {
-    let configuration = URLSessionConfiguration.ephemeral
-    configuration.timeoutIntervalForRequest = manifestTimeoutSeconds
-    configuration.timeoutIntervalForResource = manifestTimeoutSeconds
-    return configuration
-  }
-
   private let logger = Logger(
     subsystem: "codes.tim.SF50-TOLD",
     category: "PrebuiltNavDataStore"
   )
 
+  /// The networks every request here may use.
+  private let networkAccess: NavDataNetworkAccess
+
+  /// The configuration the manifest probes run on.
+  private var manifestProbeConfiguration: URLSessionConfiguration {
+    let configuration = networkAccess.sessionConfiguration
+    configuration.timeoutIntervalForRequest = Self.manifestTimeoutSeconds
+    configuration.timeoutIntervalForResource = Self.manifestTimeoutSeconds
+    return configuration
+  }
+
+  /// Creates a store fetcher whose requests use only the networks `networkAccess` allows.
+  init(networkAccess: NavDataNetworkAccess) {
+    self.networkAccess = networkAccess
+  }
+
   nonisolated private static func fetch(
     from url: URL,
+    networkAccess: NavDataNetworkAccess,
     logger: Logger,
     reportingTo continuation: AsyncStream<Float>.Continuation
   ) async throws -> URL {
     defer { continuation.finish() }
     let (fileURL, response) = try await downloadWithRetry(
       from: url,
-      configuration: .ephemeral,
+      configuration: networkAccess.sessionConfiguration,
       logger: logger,
       label: "prebuilt nav data",
       reportingTo: continuation
@@ -215,7 +224,7 @@ actor PrebuiltNavDataStore {
   /// The manifest for one cycle, or `nil` if it was never published.
   private func manifest(for cycle: String) async -> PublishedCycle? {
     guard let url = URL(string: String(format: Self.manifestURLTemplate, cycle)) else { return nil }
-    let session = URLSession(configuration: Self.manifestProbeConfiguration)
+    let session = URLSession(configuration: manifestProbeConfiguration)
     defer { session.finishTasksAndInvalidate() }
 
     do {
@@ -247,7 +256,12 @@ actor PrebuiltNavDataStore {
       of: Float.self,
       bufferingPolicy: .bufferingNewest(1)
     )
-    async let downloaded = Self.fetch(from: url, logger: logger, reportingTo: progress)
+    async let downloaded = Self.fetch(
+      from: url,
+      networkAccess: networkAccess,
+      logger: logger,
+      reportingTo: progress
+    )
     for await completed in progressUpdates { continuation.yield(.downloading(progress: completed)) }
 
     let payload = try await downloaded

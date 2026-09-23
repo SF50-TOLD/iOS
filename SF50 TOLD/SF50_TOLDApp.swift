@@ -68,10 +68,15 @@ struct SF50_TOLDApp: App {
     .backgroundTask(.appRefresh(BackgroundRefreshScheduler.appRefreshIdentifier)) {
       await BackgroundRefreshScheduler.shared.handleAppRefresh()
     }
+    .backgroundTask(.processingTask(BackgroundRefreshScheduler.navDataRefreshIdentifier)) {
+      await BackgroundRefreshScheduler.shared.handleNavDataRefresh()
+    }
     .onChange(of: scenePhase) { _, newPhase in
       switch newPhase {
-        case .background: BackgroundRefreshScheduler.shared.scheduleAppRefresh()
-        case .active: TerrainDataLoader.shared.refreshAvailableRegions()
+        case .background: scheduleBackgroundWork()
+        case .active:
+          TerrainDataLoader.shared.refreshAvailableRegions()
+          scheduleBackgroundWork()
         default: break
       }
     }
@@ -139,6 +144,18 @@ struct SF50_TOLDApp: App {
     }
     do { return try AppStore.makeInMemoryContainer() } catch {
       fatalError("Could not create ModelContainer: \(error)")
+    }
+  }
+
+  /// Submits the app's background work to the system.
+  ///
+  /// Submission is asynchronous, and a request made only as the app leaves the screen can be cut
+  /// short when the app is suspended. Submitting on becoming active too, when there is time to
+  /// finish, keeps a request in place; leaving the screen then renews it.
+  private func scheduleBackgroundWork() {
+    Task {
+      await BackgroundRefreshScheduler.shared.scheduleAppRefresh()
+      await BackgroundRefreshScheduler.shared.scheduleNavDataRefresh()
     }
   }
 

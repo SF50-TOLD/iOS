@@ -122,6 +122,7 @@ actor NavDataLoader {
   )
 
   private let writer: NavDataStoreWriter
+  private let networkAccess: NavDataNetworkAccess
   private var stateContinuation: AsyncStream<State>.Continuation?
 
   private var dataURL: URL {
@@ -130,10 +131,13 @@ actor NavDataLoader {
 
   /// Creates a loader writing into `modelContainer`.
   ///
-  /// - Parameter modelContainer: A container whose nav-data store accepts writes, holding the
-  ///   generation this import is producing.
-  init(modelContainer: ModelContainer) {
+  /// - Parameters:
+  ///   - modelContainer: A container whose nav-data store accepts writes, holding the generation
+  ///     this import is producing.
+  ///   - networkAccess: The networks the download may use.
+  init(modelContainer: ModelContainer, networkAccess: NavDataNetworkAccess) {
     writer = .init(modelContainer: modelContainer)
+    self.networkAccess = networkAccess
   }
 
   /// Inflates the LZMA payload and decodes it, off this actor's executor.
@@ -157,6 +161,7 @@ actor NavDataLoader {
   /// anything enqueueing onto this actor would wait on the network.
   nonisolated private static func fetch(
     from url: URL,
+    networkAccess: NavDataNetworkAccess,
     logger: Logger,
     reportingTo continuation: AsyncStream<Float>.Continuation
   ) async throws -> URL {
@@ -164,7 +169,7 @@ actor NavDataLoader {
 
     let (fileURL, response) = try await downloadWithRetry(
       from: url,
-      configuration: .ephemeral,
+      configuration: networkAccess.sessionConfiguration,
       logger: logger,
       label: "nav data",
       reportingTo: continuation
@@ -278,7 +283,12 @@ actor NavDataLoader {
       bufferingPolicy: .bufferingNewest(1)
     )
 
-    async let downloaded = Self.fetch(from: dataURL, logger: logger, reportingTo: continuation)
+    async let downloaded = Self.fetch(
+      from: dataURL,
+      networkAccess: networkAccess,
+      logger: logger,
+      reportingTo: continuation
+    )
     for await completed in progressUpdates { progress(completed) }
 
     return try await downloaded

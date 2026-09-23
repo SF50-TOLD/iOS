@@ -18,6 +18,10 @@ changed in the cockpit rather than what changed in the code.
 - This version requires iOS 27. If your iPad is still on iOS 26, the App Store
   keeps you on 3.9 until you update it. Your airports, scenarios, terrain and
   airport data carry over.
+- Expired airport data can now update in the background while the device is
+  charging, so it’s usually current when you open the app. It waits for Wi-Fi
+  unless you allow metered networks in Settings. As with any airport data
+  update, NOTAMs you entered are cleared.
 
 ## 3.9
 
