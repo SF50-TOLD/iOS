@@ -35,7 +35,7 @@ final class TabBarPage: BasePage {
     // A keyboard left up by the previous screen (e.g. the airport-picker search)
     // covers the tab bar, so every tap on the tab is swallowed; dismiss it first.
     if app.keyboards.firstMatch.exists {
-      app.dismissKeyboardStable()
+      app.dismissKeyboardStable(doneButtonIdentifier: XCUIElement.numericFieldDoneButton)
     }
     tapUntilSelected(app.tabButton(name))
   }
