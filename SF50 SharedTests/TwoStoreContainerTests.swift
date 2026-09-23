@@ -48,7 +48,7 @@ struct `Two Store Container` {
   private static func writeUserStore(scenarioNames: [String], to layout: StoreLayout) throws {
     try layout.createDirectories()
     let configuration = ModelConfiguration(
-      "userData",
+      AppStore.userConfigurationName,
       schema: UserDataSchema.schema,
       url: layout.userStoreURL
     )
@@ -64,8 +64,11 @@ struct `Two Store Container` {
     let layout = Self.temporaryLayout()
     defer { try? FileManager.default.removeItem(at: layout.baseDirectory) }
 
-    let context = ModelContext(try AppStore.makeContainer(layout: layout, generation: 0))
+    let container = try AppStore.makeContainer(layout: layout, generation: 0)
+    let context = ModelContext(container)
 
+    #expect(container.storeIdentifier(forConfigurationNamed: AppStore.navConfigurationName) != nil)
+    #expect(container.storeIdentifier(forConfigurationNamed: AppStore.userConfigurationName) != nil)
     #expect(throws: Never.self) { try context.fetchCount(FetchDescriptor<Airport>()) }
     #expect(throws: Never.self) { try context.fetchCount(FetchDescriptor<Scenario>()) }
   }

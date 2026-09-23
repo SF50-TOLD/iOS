@@ -22,7 +22,7 @@ struct SearchView: View {
       .onChange(of: searchText) { _, searchText in viewModel?.searchText = searchText }
       .onAppear {
         if viewModel == nil {
-          viewModel = SearchViewModel(container: modelContext.container)
+          viewModel = SearchViewModel(modelContext: modelContext)
         }
       }
   }
