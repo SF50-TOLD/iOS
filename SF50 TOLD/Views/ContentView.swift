@@ -67,7 +67,7 @@ struct ContentView: View {
         }
         .tag(5)
       }
-      .tapToDismissKeyboard()
+      .scrollDismissesKeyboard(.immediately)
       .accessibilityIdentifier("mainTabView")
     }
   }

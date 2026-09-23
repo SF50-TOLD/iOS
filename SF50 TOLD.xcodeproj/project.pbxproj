@@ -1873,7 +1873,7 @@
 			repositoryURL = "https://github.com/RISCfuture/MeasurementKit";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.1.0;
+				minimumVersion = 1.2.0;
 			};
 		};
 		01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */ = {
