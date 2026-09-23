@@ -401,20 +401,8 @@ private struct SectionPreview: View {
   }
 }
 
-#Preview("No layer") {
-  SectionPreview()
-}
-
-#Preview("Temperature") {
-  SectionPreview(layer: .temperature)
-}
-
-#Preview("Clouds") {
-  SectionPreview(layer: .clouds)
-}
-
-#Preview("Icing") {
-  SectionPreview(layer: .icing)
+#Preview("Weather layers", arguments: WeatherProfileLayer.allCases) { layer in
+  SectionPreview(layer: layer)
 }
 
 #Preview("Wind barbs") {
@@ -444,18 +432,16 @@ private struct SectionPreview: View {
 
 // MARK: - Failure states
 
-#Preview("Ran off the charts") {
-  SectionPreview(
-    pathFailure: .outsideCharts(altitude: .init(value: 24000, unit: .feet))
-  )
-}
-
-#Preview("Gap in the charts") {
-  SectionPreview(
-    pathFailure: .chartGap(altitude: .init(value: 12500, unit: .feet))
-  )
-}
-
-#Preview("Procedure could not be plotted") {
-  SectionPreview(pathFailure: .procedure)
+#Preview(
+  "Path failures",
+  arguments: [
+    PreviewVariant<PathFailure>(
+      "Ran off the charts",
+      .outsideCharts(altitude: .init(value: 24000, unit: .feet))
+    ),
+    PreviewVariant("Gap in the charts", .chartGap(altitude: .init(value: 12500, unit: .feet))),
+    PreviewVariant("Procedure could not be plotted", .procedure)
+  ]
+) { variant in
+  SectionPreview(pathFailure: variant.value)
 }
