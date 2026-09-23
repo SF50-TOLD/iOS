@@ -23,7 +23,7 @@ final class NavDataDownloadTask {
   /// One fixed string, advertised verbatim in `BGTaskSchedulerPermittedIdentifiers`. A handler has
   /// to be registered while launching, so the identifier it answers for has to be known then —
   /// which rules out naming each submission after the import it belongs to.
-  static let identifier = "codes.tim.SF50-TOLD.navdata-download"
+  nonisolated static let identifier = "codes.tim.SF50-TOLD.navdata-download"
 
   /// The shared task broker.
   static let shared = NavDataDownloadTask()
@@ -35,8 +35,9 @@ final class NavDataDownloadTask {
 
   private var isRegistered = false
 
-  /// Resumed when the system hands over a task, carrying nothing: `BGContinuedProcessingTask` is
-  /// not `Sendable`, and it never has to leave this actor to be handed back.
+  /// Resumed when the system hands over a task or the request is refused, carrying nothing:
+  /// `BGContinuedProcessingTask` is not `Sendable`, and it never has to leave this actor to be
+  /// handed back.
   private var pendingStart: CheckedContinuation<Void, Never>?
   private var startedTask: BGContinuedProcessingTask?
 
@@ -89,6 +90,19 @@ final class NavDataDownloadTask {
   func begin(title: String, subtitle: String) async -> BGContinuedProcessingTask? {
     guard isEnabled, isRegistered else { return nil }
 
+    // The launch handler can run as soon as the request is in, so the continuation it resumes has
+    // to be parked before submission starts, not after it returns.
+    await withCheckedContinuation { continuation in
+      pendingStart = continuation
+      Task { await submitRequest(title: title, subtitle: subtitle) }
+    }
+    defer { startedTask = nil }
+    return startedTask
+  }
+
+  /// Submits the request off the main actor, which the scheduler asks of its callers.
+  @concurrent
+  nonisolated private func submitRequest(title: String, subtitle: String) async {
     let request = BGContinuedProcessingTaskRequest(
       identifier: Self.identifier,
       title: title,
@@ -99,17 +113,16 @@ final class NavDataDownloadTask {
     request.strategy = .fail
 
     do {
-      try BGTaskScheduler.shared.submit(request)
+      try await BGTaskScheduler.shared.submitTaskRequest(request)
     } catch {
-      logger.notice("Running the import unprotected: \(error.localizedDescription)")
-      return nil
+      await submissionFailed(error)
     }
+  }
 
-    await withCheckedContinuation { continuation in
-      pendingStart = continuation
-    }
-    defer { startedTask = nil }
-    return startedTask
+  private func submissionFailed(_ error: any Error) {
+    logger.notice("Running the import unprotected: \(error.localizedDescription)")
+    pendingStart?.resume()
+    pendingStart = nil
   }
 
   private func start(_ task: BGContinuedProcessingTask) {
