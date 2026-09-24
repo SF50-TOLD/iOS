@@ -27,6 +27,8 @@ changed in the cockpit rather than what changed in the code.
   when the data is replaced. It waits for Wi-Fi, or for 5G set to Allow More
   Data, and holds off in Low Data Mode, unless you turn on Allow Background
   Downloads on Metered Networks in Settings.
+- A terrain region you download in Settings shows how far along it is again,
+  instead of a spinner for the whole download.
 
 ## 3.8.2
 
