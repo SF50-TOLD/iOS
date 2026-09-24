@@ -29,6 +29,12 @@ changed in the cockpit rather than what changed in the code.
   Downloads on Metered Networks in Settings.
 - A terrain region you download in Settings shows how far along it is again,
   instead of a spinner for the whole download.
+- Terrain profiles over the sea and large lakes now follow the water’s surface.
+  They used to follow the seafloor beneath it. Each terrain region you have
+  downloaded is replaced once, in the background, and the one you have keeps
+  working until its replacement arrives.
+- Downloaded terrain is checked for damage before it is used. A damaged region
+  shows as corrupted, with a button to download it again.
 
 ## 3.8.2
 

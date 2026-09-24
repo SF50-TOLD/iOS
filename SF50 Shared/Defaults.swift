@@ -14,6 +14,11 @@ public let latestSchemaVersion = 8
 
 extension TerrainRegion: Defaults.Serializable {}
 
+extension TerrainRegion {
+  /// Regions the pilot has asked for, as the app and its extensions share them.
+  public static var requested: Set<Self> { Defaults[.requestedTerrainRegions] }
+}
+
 extension Defaults.Keys {
   /// Which generation of the nav-data store the app is reading.
   ///
