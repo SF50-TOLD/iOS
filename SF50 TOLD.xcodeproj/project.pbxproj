@@ -54,6 +54,7 @@
 		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
 		01D0DEBE2F27504500856DB4 /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01D0DEBF2F27504600856DB4 /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		01E0B4A83065CC2C00E8EF8C /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01EA44382EB327D7008FEB64 /* Security.framework */; };
 		01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01EB070A2FCA2D22007C3D1E /* XCUITestKit */; };
 		0DFF3139357E79F8F862DECF /* NavDataGeneration in Frameworks */ = {isa = PBXBuildFile; productRef = 0968DA50D02C96F6AF47A0CC /* NavDataGeneration */; };
@@ -126,6 +127,13 @@
 			remoteGlobalIDString = 0163BC692DDEE9D3008FEE8F;
 			remoteInfo = "SF50 TOLD";
 		};
+		01E0B4A93065CC2C00E8EF8C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0163BC622DDEE9D3008FEE8F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 012B1E3A2DE2F272000D9ADC;
+			remoteInfo = "SF50 Shared";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -184,6 +192,7 @@
 		01714CA52F2451D9003DADCF /* TerrainAssets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = TerrainAssets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Generate Screenshots.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		01BABAE92F3B12E5000EA5E1 /* Charts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Charts.framework; path = System/Library/Frameworks/Charts.framework; sourceTree = SDKROOT; };
+		01E0B4A13065CC2C00E8EF8C /* NOTAMExtractionEvaluation.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NOTAMExtractionEvaluation.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		01EA44382EB327D7008FEB64 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		01NOTAM01NOTAM01NOTAM /* NOTAMAPIConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = NOTAMAPIConfig.xcconfig; path = "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig"; sourceTree = SOURCE_ROOT; };
 		01R2CFG01R2CFG01R2CFG /* Credentials.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Credentials.xcconfig; path = DownloadNASR/Credentials.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -300,6 +309,11 @@
 			path = "Generate Screenshots";
 			sourceTree = "<group>";
 		};
+		01E0B4A23065CC2C00E8EF8C /* NOTAMExtractionEvaluation */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NOTAMExtractionEvaluation;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -394,6 +408,12 @@
 				01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */,
 			);
 		};
+		01E0B49E3065CC2C00E8EF8C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				01E0B4A83065CC2C00E8EF8C /* SF50_Shared.framework in Frameworks */,
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -418,6 +438,7 @@
 				0191DC0D2E9322C20099FB0E /* Generate Screenshots */,
 				0169459A2EB30848001602E6 /* DownloadNASR */,
 				01714CA62F2451D9003DADCF /* TerrainAssets */,
+				01E0B4A23065CC2C00E8EF8C /* NOTAMExtractionEvaluation */,
 				01D1E30E2DDF865100C1CAC8 /* Frameworks */,
 				0163BC6B2DDEE9D3008FEE8F /* Products */,
 				012B12E62EDEB740005DAF4A /* Recovered References */,
@@ -436,6 +457,7 @@
 				0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */,
 				016945992EB30848001602E6 /* DownloadNASR.app */,
 				01714CA52F2451D9003DADCF /* TerrainAssets.appex */,
+				01E0B4A13065CC2C00E8EF8C /* NOTAMExtractionEvaluation.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -705,6 +727,27 @@
 			productReference = 0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		01E0B4A03065CC2C00E8EF8C /* NOTAMExtractionEvaluation */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 01E0B4A73065CC2C00E8EF8C /* Build configuration list for PBXNativeTarget "NOTAMExtractionEvaluation" */;
+			buildPhases = (
+				01E0B49D3065CC2C00E8EF8C /* Sources */,
+				01E0B49E3065CC2C00E8EF8C /* Frameworks */,
+				01E0B49F3065CC2C00E8EF8C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				01E0B4AA3065CC2C00E8EF8C /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				01E0B4A23065CC2C00E8EF8C /* NOTAMExtractionEvaluation */,
+			);
+			name = NOTAMExtractionEvaluation;
+			productName = NOTAMExtractionEvaluation;
+			productReference = 01E0B4A13065CC2C00E8EF8C /* NOTAMExtractionEvaluation.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -746,6 +789,9 @@
 					0191DC0B2E9322C20099FB0E = {
 						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = 0163BC692DDEE9D3008FEE8F;
+					};
+					01E0B4A03065CC2C00E8EF8C = {
+						CreatedOnToolsVersion = 27.0;
 					};
 				};
 			};
@@ -793,6 +839,7 @@
 				012B1E442DE2F272000D9ADC /* SF50 SharedTests */,
 				0163BC822DDEE9D4008FEE8F /* SF50 TOLDUITests */,
 				0191DC0B2E9322C20099FB0E /* Generate Screenshots */,
+				01E0B4A03065CC2C00E8EF8C /* NOTAMExtractionEvaluation */,
 			);
 		};
 /* End PBXProject section */
@@ -839,6 +886,11 @@
 			);
 		};
 		0191DC0A2E9322C20099FB0E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		01E0B49F3065CC2C00E8EF8C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -940,6 +992,11 @@
 			files = (
 			);
 		};
+		01E0B49D3065CC2C00E8EF8C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -987,6 +1044,11 @@
 			isa = PBXTargetDependency;
 			target = 0163BC692DDEE9D3008FEE8F /* SF50 TOLD */;
 			targetProxy = 0191DC122E9322C20099FB0E /* PBXContainerItemProxy */;
+		};
+		01E0B4AA3065CC2C00E8EF8C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 012B1E3A2DE2F272000D9ADC /* SF50 Shared */;
+			targetProxy = 01E0B4A93065CC2C00E8EF8C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1651,6 +1713,50 @@
 			};
 			name = Release;
 		};
+		01E0B4A53065CC2C00E8EF8C /* Debug configuration for PBXNativeTarget "NOTAMExtractionEvaluation" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.NOTAMExtractionEvaluation;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		01E0B4A63065CC2C00E8EF8C /* Release configuration for PBXNativeTarget "NOTAMExtractionEvaluation" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.NOTAMExtractionEvaluation;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1731,6 +1837,14 @@
 			buildConfigurations = (
 				0191DC142E9322C20099FB0E /* Debug configuration for PBXNativeTarget "Generate Screenshots" */,
 				0191DC152E9322C20099FB0E /* Release configuration for PBXNativeTarget "Generate Screenshots" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		01E0B4A73065CC2C00E8EF8C /* Build configuration list for PBXNativeTarget "NOTAMExtractionEvaluation" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				01E0B4A53065CC2C00E8EF8C /* Debug configuration for PBXNativeTarget "NOTAMExtractionEvaluation" */,
+				01E0B4A63065CC2C00E8EF8C /* Release configuration for PBXNativeTarget "NOTAMExtractionEvaluation" */,
 			);
 			defaultConfigurationName = Release;
 		};
