@@ -28,8 +28,9 @@ Processed data is optionally uploaded to GitHub (nav data) or CloudFlare R2
 
 - <doc:TerrainProcessingPipeline>
 - ``SRTMProcessor``
-- ``HGTParser``
+- ``CopernicusTileCatalog``
 - ``GeoTIFFParser``
+- ``AssetPackPublisher``
 - ``TileProcessing``
 - ``TerrainProcessorViewModel``
 
