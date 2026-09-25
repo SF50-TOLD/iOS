@@ -144,6 +144,14 @@ This enables:
 - File sizes for accurate progress reporting
 - Version information
 
+``TerrainManifest/bundled`` describes the payloads published now. ``TerrainManifest/legacyContainer`` describes the ones builds before 3.8 downloaded into the shared container, and is what a payload found there is measured against.
+
+### Updates and Integrity
+
+Each region is a Background Assets asset pack, and publishing a rebuilt region raises its pack's version; the system then updates every installed copy on its own schedule. The app also asks for updates when it comes to the foreground, at most once a day, and reloads a region as soon as its new version is installed.
+
+Background Assets verifies nothing about a pack's contents, so each pack carries its payload's SHA-256 beside it. The app checks a payload against it with ``TerrainPayloadDigest`` before reading any terrain from it, and treats a mismatch like a payload that fails to load: the region reads as corrupted and is offered for re-download.
+
 ## Usage Examples
 
 ### Point Elevation Query
