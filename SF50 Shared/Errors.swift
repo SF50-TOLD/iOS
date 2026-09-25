@@ -151,27 +151,17 @@ extension NOTAMExtractor.Failure: LocalizedError {
     switch self {
       case .modelUnavailable:
         String(
-          localized: "Apple Intelligence isn’t available on this device.",
+          localized: "The NOTAM reader isn’t installed on this device yet.",
           bundle: .sharedFramework
         )
       case .cancelled:
         String(localized: "Reading the NOTAM was cancelled.", bundle: .sharedFramework)
       case .unreadable(.tooLong):
         String(localized: "The NOTAM is too long to read on this device.", bundle: .sharedFramework)
-      case .unreadable(.declined), .unreadable(.unsupportedLanguage), .unreadable(.unknown):
+      case .unreadable(.unrecognized):
         String(localized: "The NOTAM’s text couldn’t be interpreted.", bundle: .sharedFramework)
-      case .unreadable(.timedOut):
-        String(localized: "Reading the NOTAM took too long.", bundle: .sharedFramework)
-      case .unreadable(.busy):
-        String(
-          localized: "Apple Intelligence is busy with other requests.",
-          bundle: .sharedFramework
-        )
-      case .unreadable(.misconfigured):
-        String(
-          localized: "Apple Intelligence couldn’t run the NOTAM reader.",
-          bundle: .sharedFramework
-        )
+      case .unreadable(.modelFailed):
+        String(localized: "The NOTAM reader couldn’t run.", bundle: .sharedFramework)
     }
   }
 

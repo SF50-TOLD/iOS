@@ -16,7 +16,7 @@ fi
 exported_version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["schemaVersion"])' \
   "$training_root/schema/notam_extraction.schema.json")"
 mirrored_version="$(sed -n 's/.*static let schemaVersion = "\(.*\)".*/\1/p' \
-  "$repo_root/SF50 Shared/NOTAM/Extraction/NOTAMExtraction.swift")"
+  "$repo_root/NOTAMModel/Sources/NOTAMModel/Extraction/NOTAMExtraction.swift")"
 
 if [[ "$exported_version" != "$mirrored_version" ]]; then
   echo "Gold set is schema $exported_version; NOTAMExtraction mirrors $mirrored_version. Update the mirror first." >&2

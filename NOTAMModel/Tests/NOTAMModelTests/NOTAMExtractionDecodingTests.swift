@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import SF50_Shared
+import NOTAMModel
 
 struct NOTAMExtractionDecodingTests {
   private static let exportedLabel = Data(

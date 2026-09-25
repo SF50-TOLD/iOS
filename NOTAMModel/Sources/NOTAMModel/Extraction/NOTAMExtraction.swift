@@ -31,6 +31,12 @@ public struct NOTAMExtraction: Codable, Sendable, Equatable {
     .maximumCount(12)
   )
   public var effects: [RunwayEffect]
+
+  /// Creates an extraction.
+  public init(isCanceled: Bool, effects: [RunwayEffect]) {
+    self.isCanceled = isCanceled
+    self.effects = effects
+  }
 }
 
 extension NOTAMExtraction {
@@ -78,6 +84,27 @@ extension NOTAMExtraction {
 
     /// An obstacle in the runway environment.
     public var obstacle: Obstacle?
+
+    /// Creates an effect.
+    public init(
+      runway: String?,
+      closure: Closure,
+      closedLength: Length? = nil,
+      closedEnd: String? = nil,
+      thresholdDisplacement: Length? = nil,
+      declaredDistances: DeclaredDistances? = nil,
+      surfaceCondition: SurfaceCondition? = nil,
+      obstacle: Obstacle? = nil
+    ) {
+      self.runway = runway
+      self.closure = closure
+      self.closedLength = closedLength
+      self.closedEnd = closedEnd
+      self.thresholdDisplacement = thresholdDisplacement
+      self.declaredDistances = declaredDistances
+      self.surfaceCondition = surfaceCondition
+      self.obstacle = obstacle
+    }
   }
 
   /// What an effect states about runway closure.
@@ -98,6 +125,12 @@ extension NOTAMExtraction {
     public var value: Double
     /// The unit written on the value or in its table header.
     public var unit: LengthUnit
+
+    /// Creates a measurement.
+    public init(value: Double, unit: LengthUnit) {
+      self.value = value
+      self.unit = unit
+    }
   }
 
   /// Units a runway length is stated in.
@@ -116,6 +149,12 @@ extension NOTAMExtraction {
     public var value: Double
     /// The stated unit.
     public var unit: DepthUnit
+
+    /// Creates a measurement.
+    public init(value: Double, unit: DepthUnit) {
+      self.value = value
+      self.unit = unit
+    }
   }
 
   /// Units a contaminant depth is stated in.
@@ -134,6 +173,12 @@ extension NOTAMExtraction {
     public var value: Double
     /// The stated unit.
     public var unit: DistanceUnit
+
+    /// Creates a measurement.
+    public init(value: Double, unit: DistanceUnit) {
+      self.value = value
+      self.unit = unit
+    }
   }
 
   /// Units an obstacle distance is stated in.
@@ -160,6 +205,14 @@ extension NOTAMExtraction {
     /// Landing distance available.
     public var LDA: Length?
     // swiftlint:enable identifier_name
+
+    /// Creates declared distances.
+    public init(TORA: Length?, TODA: Length?, ASDA: Length?, LDA: Length?) {
+      self.TORA = TORA
+      self.TODA = TODA
+      self.ASDA = ASDA
+      self.LDA = LDA
+    }
   }
 
   /// A runway condition report.
@@ -182,6 +235,12 @@ extension NOTAMExtraction {
       .maximumCount(9)
     )
     public var contaminants: [Contaminant]
+
+    /// Creates a runway condition report.
+    public init(rwyCC: [Int]?, contaminants: [Contaminant]) {
+      self.rwyCC = rwyCC
+      self.contaminants = contaminants
+    }
   }
 
   /// One reported contaminant.
@@ -207,13 +266,21 @@ extension NOTAMExtraction {
 
     /// The stated depth of the (top layer of the) contaminant.
     public var depth: Depth?
+
+    /// Creates a contaminant.
+    public init(type: ContaminantType, runwayThird: Int?, coveragePercent: Int?, depth: Depth?) {
+      self.type = type
+      self.runwayThird = runwayThird
+      self.coveragePercent = coveragePercent
+      self.depth = depth
+    }
   }
 
   // The schema's own values are camelCase, so each case name is its wire value.
   // swiftlint:disable raw_value_for_camel_cased_codable_enum
   /// FAA AC 150/5200-30D contaminants as written in FICON NOTAMs.
   @Generable
-  public enum ContaminantType: String, Codable, Sendable {
+  public enum ContaminantType: String, Codable, Sendable, CaseIterable {
     /// `WET`
     case wet
     /// `WATER`, `STANDING WATER`
@@ -287,5 +354,24 @@ extension NOTAMExtraction {
       .range(-180...180)
     )
     public var longitude: Double?
+
+    /// Creates an obstacle.
+    public init(
+      heightAGL: Length? = nil,
+      heightMSL: Length? = nil,
+      distance: Distance? = nil,
+      distanceReference: String? = nil,
+      bearingDegrees: Double? = nil,
+      latitude: Double? = nil,
+      longitude: Double? = nil
+    ) {
+      self.heightAGL = heightAGL
+      self.heightMSL = heightMSL
+      self.distance = distance
+      self.distanceReference = distanceReference
+      self.bearingDegrees = bearingDegrees
+      self.latitude = latitude
+      self.longitude = longitude
+    }
   }
 }
