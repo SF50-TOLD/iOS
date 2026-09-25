@@ -103,20 +103,14 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
       }
       .store(in: &cancellables)
 
-    loader.$unfinishedRegions
-      .sink { [weak self] _ in
-        self?.objectWillChange.send()
-      }
-      .store(in: &cancellables)
-
     loader.$packDownloadProgress
       .sink { [weak self] _ in
         self?.objectWillChange.send()
       }
       .store(in: &cancellables)
 
-    // A region reaches this set only after a full-length payload fails to load, so every arrival
-    // here is a payload the user has to re-download.
+    // A region reaches this set only when its payload fails to load or doesn't match its pack's
+    // digest, so every arrival here is a payload the user has to re-download.
     loader.$corruptedRegions
       .removeDuplicates()
       .dropFirst()
@@ -137,12 +131,11 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     loader.isRegionAvailable(region)
   }
 
-  /// Checks if a region is currently being downloaded (directly, or by the system on the app's
-  /// behalf), or holds a payload that a download left unfinished.
+  /// Checks if a region is currently being downloaded, directly or by the system on the app's
+  /// behalf.
   func isDownloading(_ region: TerrainRegion) -> Bool {
     loader.downloadingRegions.contains(region)
       || loader.backgroundDownloadingRegions.contains(region)
-      || loader.unfinishedRegions.contains(region)
   }
 
   /// Returns the status of a region.

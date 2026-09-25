@@ -10,8 +10,8 @@ enum TerrainPayloadSource: Equatable, Sendable {
 
   /// The shared container, written before the app moved terrain onto managed asset packs.
   ///
-  /// Devices that already hold a region keep reading it from here, so nobody re-downloads
-  /// gigabytes to gain nothing.
+  /// A device that holds a region here keeps reading it until the region's pack is installed, so
+  /// it is never left without terrain while the pack downloads.
   case legacyContainer
 
   /// An asset pack the system downloaded and manages.
@@ -47,9 +47,9 @@ enum TerrainPayloadState: Equatable, Sendable {
 
 /// Says where a terrain region's payload is, across both stores the app reads.
 ///
-/// Terrain arrives as an asset pack the system manages, but a device upgrading from an earlier
-/// build already holds its regions in the shared container. Both are valid sources, so every
-/// reader goes through here rather than assuming one location.
+/// Terrain arrives as an asset pack the system manages, but a device upgrading from a build that
+/// predates asset packs may still hold regions in the shared container. Every reader goes through
+/// here rather than assuming one location.
 struct TerrainPayloadLocator: Sendable {
 
   // MARK: - Instance Properties
@@ -88,14 +88,13 @@ struct TerrainPayloadLocator: Sendable {
 
   /// Where the system keeps `region`'s payload, if its pack is installed.
   ///
-  /// `url(for:)` answers with a path whether or not anything is behind it, so the file has to be
-  /// checked for separately. Taking the URL as proof of installation reports every region as
-  /// present, and each one then fails to load and is branded corrupt.
-  ///
-  /// `assetPackIsAvailableLocally(withID:)` would say this directly, but it needs iOS 26.4 and the
-  /// app supports 26.0.
+  /// `url(for:)` answers with a path whether or not anything is behind it, so installation is
+  /// asked of the manager and the file is checked for as well: a pack the manager reports as
+  /// local has been seen with its files missing.
   private static func systemAssetPackURL(for region: TerrainRegion) -> URL? {
-    guard let url = try? AssetPackManager.shared.url(for: FilePath(region.remoteFilename)),
+    let manager = AssetPackManager.shared
+    guard manager.assetPackIsAvailableLocally(withID: region.downloadIdentifier),
+      let url = try? manager.url(for: FilePath(region.remoteFilename)),
       FileManager.default.fileExists(atPath: url.path)
     else { return nil }
     return url
@@ -105,14 +104,14 @@ struct TerrainPayloadLocator: Sendable {
 
   /// Reports what `region`'s payload amounts to.
   ///
-  /// The shared container wins when it holds a complete payload: it is the copy the device
-  /// already paid for, and preferring it is what keeps an upgrade from re-downloading a region.
+  /// An installed pack wins: it is kept current by the system, while a copy in the shared
+  /// container is whatever was published before the app adopted asset packs.
   func state(of region: TerrainRegion) -> TerrainPayloadState {
-    if inventory?.state(of: region) == .complete, let inventory {
-      return .installed(inventory.localURL(for: region), source: .legacyContainer)
-    }
     if let url = assetPackURL(region) {
       return .installed(url, source: .assetPack)
+    }
+    if inventory?.state(of: region) == .complete, let inventory {
+      return .installed(inventory.localURL(for: region), source: .legacyContainer)
     }
     return requestedRegions.contains(region) ? .purged : .absent
   }

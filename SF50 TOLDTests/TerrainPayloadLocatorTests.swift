@@ -32,8 +32,8 @@ struct TerrainPayloadLocatorTests {
 
   // MARK: - Methods
 
-  /// A device upgrading from an earlier build already holds its regions. Reading them where they
-  /// sit is the whole reason nobody re-downloads up to 9 GB.
+  /// A device upgrading from a build that predates asset packs holds its regions in the shared
+  /// container, and keeps reading them there until each region's pack arrives.
   @Test
   func `a complete payload in the shared container is installed`() throws {
     let directory = try makeDirectory()
@@ -46,10 +46,10 @@ struct TerrainPayloadLocatorTests {
     )
   }
 
-  /// The container wins when both hold the region, so an upgrade keeps reading the copy the device
-  /// already paid for rather than the pack it would have to fetch.
+  /// The pack wins when both hold the region: the system keeps it current, while the shared
+  /// container holds whatever was published before the app adopted asset packs.
   @Test
-  func `the shared container outranks an asset pack`() throws {
+  func `an asset pack outranks the shared container`() throws {
     let directory = try makeDirectory()
     try write(byteCount: Self.expectedBytes, to: directory, named: "ma.srtm")
     let packURL = URL(filePath: "/packs/terrain-ma.srtm")
@@ -59,7 +59,7 @@ struct TerrainPayloadLocatorTests {
       assetPacks: [.midAtlantic: packURL]
     )
 
-    #expect(locator.state(of: .midAtlantic).url == directory.appendingPathComponent("ma.srtm"))
+    #expect(locator.state(of: .midAtlantic) == .installed(packURL, source: .assetPack))
   }
 
   /// With nothing in the container, the pack is the payload.
