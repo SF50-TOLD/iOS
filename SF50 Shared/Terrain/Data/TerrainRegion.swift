@@ -25,13 +25,6 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   /// Distinguishes this app's Background Assets downloads from any other client's.
   private static let downloadIdentifierPrefix = "terrain-"
 
-  // MARK: - Progress Weight Constants
-
-  /// Each processing phase's share of region processing time, scaled to 10 000.
-  /// Values derived from measured per-tile processing times: download 38.8%, parse 61.2%.
-  public static let downloadPhaseRatio: Int64 = 3876,
-    parsePhaseRatio: Int64 = 6124
-
   /// Returns the terrain region to prefetch based on the device's locale.
   ///
   /// Uses `Locale.current.region?.continent` (UN M49 codes) as a proxy for the
@@ -67,24 +60,6 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   }
 
   // MARK: - Instance Properties
-
-  /// Actual number of successfully downloaded tiles (based on measured data).
-  /// This differs from hgtTileNames.count as not all requested tiles exist.
-  private var numTiles: Int {
-    switch self {
-      case .indianOcean: 123
-      case .midAtlantic: 68
-      case .antarctica: 7042
-      case .oceania: 1581
-      case .middleEast: 996
-      case .australia: 1914
-      case .southAmerica: 3062
-      case .europe: 3513
-      case .africa: 5110
-      case .asia: 10509
-      case .northAmerica: 6704
-    }
-  }
 
   public var id: String { rawValue }
 
@@ -123,7 +98,7 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   /// A published region reports what it actually measures. Anything else can only be bounded by
   /// the tiles it covers at full width, which overstates a payload whose tiles are compressed.
   public var estimatedFileSize: Int {
-    publishedSizeBytes ?? hgtTileNames.count * Self.estimatedTileSize
+    publishedSizeBytes ?? tileNames.count * Self.estimatedTileSize
   }
 
   /// Bounding boxes for the region. Multiple boxes allow precise coverage of non-contiguous areas.
@@ -238,17 +213,19 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   /// Name this region's payload is published under, and the name the manifest refers to it by.
   public var remoteFilename: String { "terrain-\(rawValue).srtm" }
 
+  /// Name of the file an asset pack carries beside this region's payload, holding the payload's
+  /// ``TerrainPayloadDigest``.
+  public var digestFilename: String { "\(remoteFilename).sha256" }
+
   /// Name this region's payload is stored under in the shared container.
   public var localFilename: String { "\(rawValue).srtm" }
 
   /// Identifies this region's download to Background Assets, in the app and its extension alike.
   public var downloadIdentifier: String { Self.downloadIdentifierPrefix + rawValue }
 
-  /// Returns all HGT tile names that fall within this region's bounding boxes.
-  ///
-  /// HGT tiles are named by their southwest corner coordinate, e.g., "N45W123.hgt"
-  /// This method generates all tile names for SRTM3 (1x1 degree tiles).
-  public var hgtTileNames: [String] {
+  /// Names of every 1×1 degree tile within this region's bounding boxes, each named for its
+  /// southwest corner, e.g. "N45W123". The region's payload holds one tile for each.
+  public var tileNames: [String] {
     var tiles = Set<String>()
 
     for box in boundingBoxes {
@@ -282,9 +259,9 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
     allCases.filter { $0.contains(latitude: latitude, longitude: longitude) }
   }
 
-  /// Sum of numTiles for a collection of regions.
+  /// Number of tiles in a collection of regions' payloads.
   public static func totalTiles(for regions: [Self]) -> Int {
-    regions.reduce(0) { $0 + $1.numTiles }
+    regions.reduce(0) { $0 + $1.tileNames.count }
   }
 
   /// The region a Background Assets download identifier refers to, if it is one of this app's.
@@ -306,9 +283,9 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
   /// relative to the total. Used as `Progress.pendingUnitCount` when adding a
   /// per-region child to a processing parent.
   public func totalPhaseWeight(totalTiles: Int) -> Int64 {
-    // numTiles / totalTiles gives the region's share; multiply by 10 000 to stay in integer space.
-    // The result is the number of units this region should occupy out of the parent's totalUnitCount.
-    Int64(round(Double(numTiles) / Double(totalTiles) * 10000))
+    // The region's share of the tiles, times 10 000 to stay in integer space: the number of units
+    // this region should occupy out of the parent's totalUnitCount.
+    Int64(round(Double(tileNames.count) / Double(totalTiles) * 10000))
   }
 }
 

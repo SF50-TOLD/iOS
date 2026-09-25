@@ -31,29 +31,9 @@ struct Elevations: Sendable {
     self.storage = [Int16](repeating: fill, count: width * height)
   }
 
-  /// Creates a grid backed by an existing array.
-  ///
-  /// - Precondition: `storage.count` must equal `width * height`.
-  init(storage: [Int16], width: Int, height: Int) {
-    precondition(
-      storage.count == width * height,
-      "Storage count (\(storage.count)) must equal width * height (\(width * height))"
-    )
-    self.width = width
-    self.height = height
-    self.storage = storage
-  }
-
   /// Creates a square grid filled with a constant value.
   init(size: Int, fill: Int16 = voidValue) {
     self.init(width: size, height: size, fill: fill)
-  }
-
-  /// Creates a square grid backed by an existing array.
-  ///
-  /// - Precondition: `storage.count` must equal `size * size`.
-  init(storage: [Int16], size: Int) {
-    self.init(storage: storage, width: size, height: size)
   }
 
   // MARK: - Void Helpers
@@ -71,60 +51,25 @@ struct Elevations: Sendable {
 
   // MARK: - Resampling
 
-  /// Returns a new grid downsampled by averaging non-overlapping blocks.
+  /// Resamples a Copernicus tile onto a square grid spanning the tile edge to edge, by bilinear
+  /// interpolation.
   ///
-  /// Each output sample is the mean of a `blockSize × blockSize` region in `self`,
-  /// skipping void values. If an entire block is void the output sample is void.
-  ///
-  /// - Parameters:
-  ///   - targetSize: Side length of the (square) output grid.
-  ///   - blockSize: Number of source samples per block in each dimension.
-  func downsampled(toSize targetSize: Int, blockSize: Int) -> Self {
-    var result = Self(size: targetSize)
-
-    for targetRow in 0..<targetSize {
-      for targetCol in 0..<targetSize {
-        let startRow = targetRow * blockSize,
-          startCol = targetCol * blockSize
-        var sum: Int32 = 0
-        var count = 0
-
-        for row in startRow..<(startRow + blockSize) {
-          guard row < height else { continue }
-          for col in startCol..<(startCol + blockSize) {
-            guard col < width else { continue }
-            let value = self[row, col]
-            if !Self.isVoid(value) {
-              sum += Int32(value)
-              count += 1
-            }
-          }
-        }
-
-        result[targetRow, targetCol] =
-          count > 0
-          ? Int16(sum / Int32(count))
-          : Self.voidValue
-      }
-    }
-
-    return result
-  }
-
-  /// Resamples to a square grid using bilinear interpolation.
-  ///
-  /// Used for Copernicus GLO-30 data which may have non-square tiles at high
-  /// latitudes (e.g., 1200×3600 at polar regions).
+  /// Copernicus tiles are point-registered: column `i` of `width` lies `i / width` of a degree
+  /// east of the tile's west edge, row `j` likewise south of its north edge, and the east and
+  /// south edges belong to the neighbouring tiles. Tiles narrow at high latitudes (e.g. 1200×3600
+  /// at 70°N). The output repeats both edges, so output sample `k` of `targetSize` sits at source
+  /// position `k × width / (targetSize − 1)`; the last row and column fall past the tile's own
+  /// samples and take its outermost ones.
   func resampled(toSquareOfSize targetSize: Int) -> Self {
     var result = Self(size: targetSize)
 
-    let ratioX = Double(width - 1) / Double(targetSize - 1),
-      ratioY = Double(height - 1) / Double(targetSize - 1)
+    let ratioX = Double(width) / Double(targetSize - 1),
+      ratioY = Double(height) / Double(targetSize - 1)
 
     for targetRow in 0..<targetSize {
       for targetCol in 0..<targetSize {
-        let sourceX = Double(targetCol) * ratioX,
-          sourceY = Double(targetRow) * ratioY
+        let sourceX = min(Double(targetCol) * ratioX, Double(width - 1)),
+          sourceY = min(Double(targetRow) * ratioY, Double(height - 1))
 
         let x0 = Int(sourceX),
           y0 = Int(sourceY),

@@ -7,56 +7,32 @@ import Foundation
 /// but these static functions can run concurrently on the cooperative thread pool.
 enum TileProcessing {
 
-  /// Parses a single tile from disk. Returns parsed elevations or error.
+  /// Reads a tile's elevations onto the output grid. Returns parsed elevations or error.
   static func parseTile(
     _ tileRef: TileReference,
     index: Int,
-    outputResolution: HGTParser.Resolution
+    samplesPerSide: Int
   ) -> ParsedTile {
     do {
-      let elevations: Elevations
-
-      switch tileRef.format {
-        case .geoTIFF:
-          // Parse GeoTIFF (Copernicus GLO-30)
-          let geoTile = try GeoTIFFParser.parse(contentsOf: tileRef.fileURL)
-
-          // Resample to output resolution (handles both downsampling and non-square tiles)
-          let targetSize = outputResolution.samplesPerSide
-          if geoTile.elevations.width != targetSize || geoTile.elevations.height != targetSize {
-            elevations = geoTile.elevations.resampled(toSquareOfSize: targetSize)
-          } else {
-            elevations = geoTile.elevations
-          }
-        case .hgt:
-          // Parse HGT (SRTM)
-          let tile = try HGTParser.parse(contentsOf: tileRef.fileURL)
-
-          // Downsample if needed (SRTM1 -> SRTM3)
-          if tile.resolution == .srtm1 && outputResolution == .srtm3 {
-            elevations = tile.elevations.downsampled(
-              toSize: outputResolution.samplesPerSide,
-              blockSize: 3
-            )
-          } else {
-            elevations = tile.elevations
-          }
-      }
-
+      let elevations =
+        switch tileRef.content {
+          case .geoTIFF(let fileURL):
+            try GeoTIFFParser.parse(contentsOf: fileURL).resampled(toSquareOfSize: samplesPerSide)
+          case .seaLevel:
+            Elevations(size: samplesPerSide, fill: 0)
+        }
       return ParsedTile(
         index: index,
         elevations: elevations,
         error: nil,
-        latitude: tileRef.latitude,
-        longitude: tileRef.longitude
+        coordinates: tileRef.coordinates
       )
     } catch {
       return ParsedTile(
         index: index,
         elevations: nil,
         error: error,
-        latitude: tileRef.latitude,
-        longitude: tileRef.longitude
+        coordinates: tileRef.coordinates
       )
     }
   }

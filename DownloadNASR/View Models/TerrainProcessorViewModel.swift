@@ -287,30 +287,14 @@ final class TerrainProcessorViewModel {
       case .pending:
         statusMessage = String(localized: "Starting…")
 
-      case .downloading(let region, let completed, let total):
-        let completedUnits = Int64(
-          Double(completed) / Double(max(1, total))
-            * Double(TerrainRegion.downloadPhaseRatio)
-        )
-        regionProgress[region]?.completedUnitCount = completedUnits
+      case .building(let region, let completed, let total):
+        if let progress = regionProgress[region] {
+          progress.completedUnitCount =
+            progress.totalUnitCount * Int64(completed) / Int64(max(1, total))
+        }
         statusMessage = String(
           localized:
-            "Downloading \(region.displayName): \(completed, format: .number) of \(total, format: .number)",
-          comment: "Status message showing download progress for a terrain region"
-        )
-
-      case .parsing(let region, let completed, let total):
-        let completedUnits =
-          TerrainRegion.downloadPhaseRatio
-          + Int64(
-            Double(completed) / Double(max(1, total))
-              * Double(TerrainRegion.parsePhaseRatio)
-          )
-        regionProgress[region]?.completedUnitCount = completedUnits
-        statusMessage = String(
-          localized:
-            "Processing \(region.displayName): \(completed, format: .number) of \(total, format: .number)",
-          comment: "Status message showing parsing progress for a terrain region"
+            "Building \(region.displayName): \(completed, format: .number) of \(total, format: .number) tiles"
         )
 
       case .generatingManifest:
