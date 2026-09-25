@@ -22,6 +22,8 @@ changed in the cockpit rather than what changed in the code.
   charging, so it’s usually current when you open the app. It waits for Wi-Fi
   unless you allow metered networks in Settings. As with any airport data
   update, NOTAMs you entered are cleared.
+- Terrain over the sea and large lakes follows the water’s surface rather than
+  the seafloor. Downloaded regions update once, in the background.
 
 ## 3.9
 

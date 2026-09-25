@@ -76,6 +76,7 @@ struct SF50_TOLDApp: App {
         case .background: scheduleBackgroundWork()
         case .active:
           TerrainDataLoader.shared.refreshAvailableRegions()
+          TerrainDataLoader.shared.checkForPackUpdatesIfDue()
           scheduleBackgroundWork()
         default: break
       }
