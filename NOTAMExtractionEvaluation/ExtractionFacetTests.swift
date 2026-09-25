@@ -1,3 +1,4 @@
+import NOTAMModel
 import Testing
 
 @testable import SF50_Shared

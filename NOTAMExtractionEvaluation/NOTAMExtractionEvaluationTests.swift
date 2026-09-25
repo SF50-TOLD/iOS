@@ -1,20 +1,24 @@
 import Evaluations
 import Foundation
-import FoundationModels
+import NOTAMModel
 import TabularData
 import Testing
 
 @testable import SF50_Shared
 
-@Suite(.enabled(if: SystemLanguageModel(useCase: .general).isAvailable, "needs Apple Intelligence"))
+@Suite(
+  .enabled(
+    if: NOTAMExtractionEvaluation.modelFolder != nil,
+    "set NOTAM_MODEL_FOLDER (TEST_RUNNER_NOTAM_MODEL_FOLDER for xcodebuild) to a model folder"
+  )
+)
 struct NOTAMExtractionEvaluationTests {
-  private static let contextBudgetTokens = 4000
   private static let resultsDirectory = URL(filePath: #filePath).deletingLastPathComponent()
     .appending(path: "Results")
 
   private static var runInfo: [String: String] {
     [
-      "variant": SystemLanguageModel.default.variant.displayName,
+      "variant": NOTAMExtractionEvaluation.modelFolder?.lastPathComponent ?? "unknown",
       "schema": NOTAMExtraction.schemaVersion
     ]
   }
@@ -77,18 +81,6 @@ struct NOTAMExtractionEvaluationTests {
     #expect(ExtractionGate.cancellationPasses(result))
     #expect(ExtractionGate.negativesPass(result))
     #expect(ExtractionGate.readabilityPasses(result))
-  }
-
-  @Test
-  func `instructions and schema leave room for a long NOTAM`() async throws {
-    let model = SystemLanguageModel(useCase: .general)
-    let tokens =
-      try await model.tokenCount(for: Instructions(NOTAMExtractionInstructions.text))
-      + model.tokenCount(for: NOTAMExtraction.generationSchema)
-    #expect(
-      tokens <= Self.contextBudgetTokens,
-      "instructions + schema use \(tokens) of \(model.contextSize) tokens"
-    )
   }
 
   @Test

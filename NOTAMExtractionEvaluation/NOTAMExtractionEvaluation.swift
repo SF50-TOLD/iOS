@@ -1,6 +1,7 @@
 import Evaluations
 import Foundation
-import FoundationModels
+import NOTAMModel
+import NOTAMModelRuntime
 
 @testable import SF50_Shared
 
@@ -25,9 +26,22 @@ struct NOTAMReading: EvaluationSubject, Sendable {
 /// the pilot — and counts against ``NOTAMEvaluator/readable``. A failure of the model or the app rather
 /// than the NOTAM stops the run, so it can never pass for a safe reading.
 struct NOTAMExtractionEvaluation: Evaluation {
-  typealias Extract = @Sendable (Prompt) async throws(NOTAMExtractor.Failure) -> NOTAMExtraction
+  /// Reads one NOTAM from its prompt text, `Location: <location>`, a blank line, then the NOTAM.
+  typealias Extract = @Sendable (String) async throws(NOTAMExtractor.Failure) -> NOTAMExtraction
 
   private static let proposingNothing = NOTAMExtraction(isCanceled: false, effects: [])
+  private static let locationPrefix = "Location: "
+
+  /// The model folder under evaluation, from the `NOTAM_MODEL_FOLDER` environment variable.
+  static var modelFolder: URL? {
+    ProcessInfo.processInfo.environment["NOTAM_MODEL_FOLDER"].map { URL(filePath: $0) }
+  }
+
+  /// The on-device model, loaded once for the whole run.
+  private static let reader = Task<NOTAMModelReader?, Never> {
+    guard let modelFolder else { return nil }
+    return try? await NOTAMModelReader(folder: modelFolder)
+  }
 
   let datasetName: Dataset
   private let extract: Extract
@@ -52,15 +66,23 @@ struct NOTAMExtractionEvaluation: Evaluation {
     self.extract = extract
   }
 
-  private static func onDeviceExtraction(_ prompt: Prompt) async throws(NOTAMExtractor.Failure)
+  private static func onDeviceExtraction(_ prompt: String) async throws(NOTAMExtractor.Failure)
     -> NOTAMExtraction
   {
-    try await NOTAMExtractor().extract(prompt: prompt)
+    guard prompt.hasPrefix(locationPrefix), let blankLine = prompt.range(of: "\n\n") else {
+      preconditionFailure(
+        "A gold prompt isn’t “\(locationPrefix)<location>”, a blank line, then the NOTAM"
+      )
+    }
+    return try await NOTAMExtractor(reader: await reader.value).extract(
+      notamText: String(prompt[blankLine.upperBound...]),
+      location: String(prompt[..<blankLine.lowerBound].dropFirst(locationPrefix.count))
+    )
   }
 
   func subject(from sample: NOTAMSample) async throws -> NOTAMReading {
     do {
-      return NOTAMReading(value: try await extract(sample.input.prompt), unreadable: nil)
+      return NOTAMReading(value: try await extract(sample.promptDescription), unreadable: nil)
     } catch .unreadable(let reason) where reason.concernsThisNOTAM {
       return NOTAMReading(value: Self.proposingNothing, unreadable: reason)
     }

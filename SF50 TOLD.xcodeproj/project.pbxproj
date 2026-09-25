@@ -58,6 +58,9 @@
 		01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01EA44382EB327D7008FEB64 /* Security.framework */; };
 		01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01EB070A2FCA2D22007C3D1E /* XCUITestKit */; };
 		0DFF3139357E79F8F862DECF /* NavDataGeneration in Frameworks */ = {isa = PBXBuildFile; productRef = 0968DA50D02C96F6AF47A0CC /* NavDataGeneration */; };
+		4E07A3D10000000000000003 /* NOTAMModel in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000002 /* NOTAMModel */; };
+		4E07A3D10000000000000005 /* NOTAMModel in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000004 /* NOTAMModel */; };
+		4E07A3D10000000000000007 /* NOTAMModelRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000006 /* NOTAMModelRuntime */; };
 		94CC1E014886B23174174CD9 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 02BD3D6AFE77DA2CAC646D3B /* Algorithms */; };
 		AB352BDD14B44A2CA78F9D44 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 		C56FF4A70BD4DDF42C6DCBAA /* NavData in Frameworks */ = {isa = PBXBuildFile; productRef = EEB6B6DD4229EEB6363A2AA1 /* NavData */; };
@@ -332,6 +335,7 @@
 				01AC00212FE0000000000021 /* MeasurementKitLocation in Frameworks */,
 				01AC00202FE0000000000020 /* MeasurementKit in Frameworks */,
 				018ED7A62F345C2000D084B4 /* SwiftMETAR in Frameworks */,
+				4E07A3D10000000000000003 /* NOTAMModel in Frameworks */,
 				01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */,
 				C56FF4A70BD4DDF42C6DCBAA /* NavData in Frameworks */,
 				012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */,
@@ -412,6 +416,8 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				01E0B4A83065CC2C00E8EF8C /* SF50_Shared.framework in Frameworks */,
+				4E07A3D10000000000000005 /* NOTAMModel in Frameworks */,
+				4E07A3D10000000000000007 /* NOTAMModelRuntime in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -533,6 +539,7 @@
 				018B8F0B2E331989003A0DAF /* RealModule */,
 				01A1014E2E93C12E0032AB29 /* Gzip */,
 				018ED7A52F345C2000D084B4 /* SwiftMETAR */,
+				4E07A3D10000000000000002 /* NOTAMModel */,
 				EEB6B6DD4229EEB6363A2AA1 /* NavData */,
 				02BD3D6AFE77DA2CAC646D3B /* Algorithms */,
 			);
@@ -744,6 +751,10 @@
 				01E0B4A23065CC2C00E8EF8C /* NOTAMExtractionEvaluation */,
 			);
 			name = NOTAMExtractionEvaluation;
+			packageProductDependencies = (
+				4E07A3D10000000000000004 /* NOTAMModel */,
+				4E07A3D10000000000000006 /* NOTAMModelRuntime */,
+			);
 			productName = NOTAMExtractionEvaluation;
 			productReference = 01E0B4A13065CC2C00E8EF8C /* NOTAMExtractionEvaluation.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -824,6 +835,7 @@
 				01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */,
 				2B974702697D0A548EC62991 /* XCRemoteSwiftPackageReference "NavData" */,
 				C9DFF1CEEDEBFDC2A78EDDB0 /* XCRemoteSwiftPackageReference "NavDataDistribution" */,
+				4E07A3D10000000000000001 /* XCLocalSwiftPackageReference "NOTAMModel" */,
 			);
 			preferredProjectObjectVersion = 100;
 			productRefGroup = 0163BC6B2DDEE9D3008FEE8F /* Products */;
@@ -1850,6 +1862,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		4E07A3D10000000000000001 /* XCLocalSwiftPackageReference "NOTAMModel" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = NOTAMModel;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		0112FFA52F2094E3009CFBBA /* XCRemoteSwiftPackageReference "SwiftDOF" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -2172,6 +2191,18 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C9DFF1CEEDEBFDC2A78EDDB0 /* XCRemoteSwiftPackageReference "NavDataDistribution" */;
 			productName = NavDataGeneration;
+		};
+		4E07A3D10000000000000002 /* NOTAMModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModel;
+		};
+		4E07A3D10000000000000004 /* NOTAMModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModel;
+		};
+		4E07A3D10000000000000006 /* NOTAMModelRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModelRuntime;
 		};
 		602F51ECCC3348DE83D26B3E /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;

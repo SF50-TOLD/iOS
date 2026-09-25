@@ -1,3 +1,5 @@
+import NOTAMModel
+
 @testable import SF50_Shared
 
 /// How one field of one NOTAM's extraction compares with its gold label.

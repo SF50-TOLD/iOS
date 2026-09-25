@@ -1,5 +1,5 @@
 import Evaluations
-import FoundationModels
+import NOTAMModel
 import Testing
 
 @testable import SF50_Shared
@@ -30,8 +30,7 @@ struct NOTAMEvaluatorTests {
     expected: declaredTORA
   )
   private static let failuresOfTheModel: [NOTAMExtractor.Failure] = [
-    .modelUnavailable, .cancelled, .unreadable(.misconfigured), .unreadable(.busy),
-    .unreadable(.unknown)
+    .modelUnavailable, .cancelled, .unreadable(.modelFailed)
   ]
 
   private static func metrics(reading extract: @escaping NOTAMExtractionEvaluation.Extract)

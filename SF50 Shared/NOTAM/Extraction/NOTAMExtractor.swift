@@ -1,22 +1,26 @@
-public import FoundationModels
+public import NOTAMModel
 
-/// Reads raw NOTAM text into a proposed ``NOTAMExtraction`` using the on-device language model.
+/// Reads raw NOTAM text into a proposed ``NOTAMExtraction``.
+///
+/// A NOTAM in a fixed report format (FICON, RSC, SNOWTAM, FAA obstacle) is read exactly by
+/// ``FormattedReportParser``; any other NOTAM goes to the fine-tuned on-device model, when it's
+/// installed.
 ///
 /// The extraction is a *proposal* for the pilot to confirm, never a value a calculation uses directly.
-/// Every model failure surfaces as ``Failure/unreadable(_:)`` — a NOTAM the extractor couldn't read,
-/// never a guess. Each call uses a fresh session with greedy sampling, so a NOTAM always reads the same
-/// way and one NOTAM can't colour the next.
+/// Every model failure surfaces as ``Failure`` — a NOTAM the extractor couldn't read, never a guess.
+/// The model decodes greedily, so a NOTAM always reads the same way.
 public struct NOTAMExtractor: Sendable {
-  private static let options = GenerationOptions(samplingMode: .greedy)
+  private let reader: (any NOTAMReader)?
 
-  private let model: SystemLanguageModel
+  /// Whether NOTAMs outside the fixed report formats can be read on this device right now.
+  public var isModelAvailable: Bool { reader != nil }
 
-  /// Whether the on-device model can run on this device right now.
-  public var isAvailable: Bool { model.isAvailable }
-
-  /// Creates an extractor using the given on-device model.
-  public init(model: SystemLanguageModel = .init(useCase: .general)) {
-    self.model = model
+  /// Creates an extractor.
+  ///
+  /// - Parameter reader: The on-device model (`NOTAMModelRuntime`'s `NOTAMModelReader`), or `nil` when
+  ///   it isn't installed; formatted reports are read either way.
+  public init(reader: (any NOTAMReader)?) {
+    self.reader = reader
   }
 
   /// Proposes the runway-performance facts one NOTAM states.
@@ -27,24 +31,14 @@ public struct NOTAMExtractor: Sendable {
   /// - Throws: ``Failure`` when the model is unavailable or couldn't read the NOTAM.
   public func extract(notamText: String, location: String) async throws(Failure) -> NOTAMExtraction
   {
-    try await extract(prompt: Prompt("Location: \(location)\n\n\(notamText)"))
-  }
-
-  func extract(prompt: Prompt) async throws(Failure) -> NOTAMExtraction {
-    guard isAvailable else { throw .modelUnavailable }
-    let session = LanguageModelSession(model: model, instructions: NOTAMExtractionInstructions.text)
+    if let reading = FormattedReportParser.parse(notamText: notamText) { return reading }
+    guard let reader else { throw .modelUnavailable }
     do {
-      return try await session.respond(
-        to: prompt,
-        generating: NOTAMExtraction.self,
-        options: Self.options
-      ).content
-    } catch let error as LanguageModelError {
-      throw .unreadable(Reason(error))
-    } catch is CancellationError {
+      return try await reader.read(notamText: notamText, location: location)
+    } catch .cancelled {
       throw .cancelled
     } catch {
-      throw .unreadable(.unknown)
+      throw .unreadable(Reason(error))
     }
   }
 }
@@ -52,7 +46,7 @@ public struct NOTAMExtractor: Sendable {
 extension NOTAMExtractor {
   /// Why a NOTAM couldn't be read.
   public enum Failure: Error, Sendable {
-    /// The on-device model isn't available on this device.
+    /// The on-device model isn't installed on this device.
     case modelUnavailable
     /// The reading was cancelled before it finished.
     case cancelled
@@ -64,38 +58,24 @@ extension NOTAMExtractor {
   public enum Reason: Sendable {
     /// The NOTAM is too long for the model's context.
     case tooLong
-    /// The model declined the text.
-    case declined
-    /// The model didn't answer in time.
-    case timedOut
-    /// The NOTAM is in a language or locale the model doesn't support.
-    case unsupportedLanguage
-    /// The model is busy with other requests.
-    case busy
-    /// The model can't run the extraction as the app configures it: a guide, capability or
-    /// transcript it rejects. This never depends on the NOTAM, and should never happen.
-    case misconfigured
-    /// An error the extractor doesn't classify.
-    case unknown
+    /// The model's reading didn't finish or didn't hold together.
+    case unrecognized
+    /// The model failed to run. This never depends on the NOTAM, and should never happen.
+    case modelFailed
 
     /// Whether the failure comes from this NOTAM's text rather than from the model or the app.
     var concernsThisNOTAM: Bool {
       switch self {
-        case .tooLong, .declined, .timedOut, .unsupportedLanguage: true
-        case .busy, .misconfigured, .unknown: false
+        case .tooLong, .unrecognized: true
+        case .modelFailed: false
       }
     }
 
-    init(_ error: LanguageModelError) {
-      switch error {
-        case .contextSizeExceeded: self = .tooLong
-        case .guardrailViolation, .refusal: self = .declined
-        case .timeout: self = .timedOut
-        case .unsupportedLanguageOrLocale: self = .unsupportedLanguage
-        case .unsupportedCapability, .unsupportedGenerationGuide, .unsupportedTranscriptContent:
-          self = .misconfigured
-        case .rateLimited: self = .busy
-        @unknown default: self = .unknown
+    init(_ failure: NOTAMReadFailure) {
+      switch failure {
+        case .tooLong: self = .tooLong
+        case .malformed: self = .unrecognized
+        case .modelFailed, .cancelled: self = .modelFailed
       }
     }
   }
