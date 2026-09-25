@@ -109,7 +109,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
       }
       .store(in: &cancellables)
 
-    loader.$backgroundDownloadProgress
+    loader.$packDownloadProgress
       .sink { [weak self] _ in
         self?.objectWillChange.send()
       }
@@ -165,14 +165,12 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     return .notDownloaded
   }
 
-  /// How far along `region`'s download is, from whichever mechanism is fetching it.
+  /// How far along `region`'s download is.
+  ///
+  /// The system reports every asset-pack download on its status stream, whether the app asked for
+  /// it or the system started it, so that is the one source of progress.
   func downloadProgress(for region: TerrainRegion) -> Float? {
-    if case .downloading(let downloadingRegion, let progress) = downloadState,
-      downloadingRegion == region
-    {
-      return progress
-    }
-    return loader.backgroundDownloadProgress[region].map(Float.init)
+    loader.packDownloadProgress[region].map(Float.init)
   }
 
   /// Downloads terrain data for a region.
@@ -232,8 +230,8 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
     switch state {
       case .idle:
         downloadState = .idle
-      case .downloading(let region, let progress):
-        downloadState = .downloading(region: region, progress: progress)
+      case .downloading(let region):
+        downloadState = .downloading(region: region)
       case .completed:
         downloadState = .idle
       case .failed(_, let message):
@@ -247,7 +245,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
   /// Download state for UI display.
   enum DownloadState: Equatable {
     case idle
-    case downloading(region: TerrainRegion, progress: Float?)
+    case downloading(region: TerrainRegion)
   }
 
   /// Status of a single region.
