@@ -8,11 +8,8 @@ import SF50_Shared
 enum TerrainProgress: Sendable {
   case pending
 
-  /// Downloading tiles for a region.
-  case downloading(region: TerrainRegion, completed: Int, total: Int)
-
-  /// Parsing/combining downloaded tiles.
-  case parsing(region: TerrainRegion, completed: Int, total: Int)
+  /// Fetching, reading and compressing a region's tiles into its payload.
+  case building(region: TerrainRegion, completed: Int, total: Int)
 
   /// Writing manifest file.
   case generatingManifest

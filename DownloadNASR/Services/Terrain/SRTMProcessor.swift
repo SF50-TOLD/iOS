@@ -4,8 +4,9 @@ import SF50_Shared
 
 /// Errors that can occur during SRTM processing.
 enum SRTMProcessorError: LocalizedError {
-  case noTilesFound(region: String)
   case downloadFailed(tile: String, error: any Error)
+  case unexpectedStatus(tile: String, statusCode: Int?)
+  case tilesFailed(region: String, count: Int)
   case compressionFailed(any Error)
   case missingRegions([TerrainRegion])
 
@@ -15,10 +16,18 @@ enum SRTMProcessorError: LocalizedError {
 
   var failureReason: String? {
     switch self {
-      case .noTilesFound(let region):
-        return String(localized: "No SRTM tiles were found for region \(region).")
       case .downloadFailed(let tile, let error):
         return String(localized: "Failed to download tile “\(tile)”: \(error.localizedDescription)")
+      case .unexpectedStatus(let tile, let statusCode?):
+        return String(
+          localized: "Tile “\(tile)” returned HTTP status \(statusCode, format: .number)."
+        )
+      case .unexpectedStatus(let tile, nil):
+        return String(localized: "Tile “\(tile)” returned no HTTP response.")
+      case .tilesFailed(let region, let count):
+        return String(
+          localized: "\(count, format: .number) tiles in \(region) could not be read."
+        )
       case .compressionFailed(let error):
         return String(localized: "Failed to compress terrain data: \(error.localizedDescription)")
       case .missingRegions(let regions):
@@ -33,19 +42,19 @@ enum SRTMProcessorError: LocalizedError {
 
 /// Orchestrates the complete SRTM terrain data processing pipeline.
 ///
-/// ``SRTMProcessor`` coordinates the downloading, parsing, and output of SRTM data:
+/// ``SRTMProcessor`` coordinates the downloading, parsing, and output of terrain data in the
+/// SRTM-derived binary format the app reads:
 ///
-/// 1. Download HGT tiles for selected regions
-/// 2. Parse elevation data from HGT files
-/// 3. Combine into optimized binary format per continent
-/// 4. Generate terrain manifest
-/// 5. Package each region as a Background Assets asset pack
-/// 6. Upload to CloudFlare R2 (if configured)
+/// 1. Download each tile of the selected regions, and resample it onto the SRTM3 grid
+/// 2. Combine the tiles into one binary payload per region
+/// 3. Generate terrain manifest
+/// 4. Package each region as a Background Assets asset pack
+/// 5. Upload to CloudFlare R2 (if configured)
 ///
 /// ## Data Source
 ///
-/// Uses AWS Terrain Tiles (elevation-tiles-prod.s3.amazonaws.com) which provides
-/// public access to SRTM1 data (1 arc-second / ~30m resolution).
+/// Every tile comes from the Copernicus DEM, as ``CopernicusTileCatalog`` describes: a surface
+/// model, so terrain over water is the water's surface.
 ///
 /// ## Progress Tracking
 ///
@@ -57,17 +66,26 @@ actor SRTMProcessor {
 
   // MARK: - Type Properties
 
-  /// Maximum concurrent downloads (AWS S3 handles high concurrency well).
-  private static let maxConcurrentDownloads = 20
+  /// Maximum tiles in flight at once, each being downloaded, parsed or compressed.
+  ///
+  /// A parsed Copernicus tile briefly holds several hundred megabytes, which bounds this more
+  /// tightly than the bucket's appetite for concurrent requests does.
+  private static let maxConcurrentTiles = 8
 
-  /// Maximum concurrent parsing tasks (limits memory usage).
-  private static let maxConcurrentParsing = 8
+  /// Attempts at downloading one tile before the region fails.
+  private static let maxDownloadAttempts = 4
 
-  /// Base URL for AWS Terrain Tiles (SRTM1 data).
-  private static let awsBaseURL = "https://elevation-tiles-prod.s3.amazonaws.com/skadi"
+  /// Pause after a failed download attempt, multiplied by the attempt number.
+  private static let downloadRetryDelay = Duration.seconds(5)
 
-  /// Base URL for Copernicus GLO-30 DEM data.
-  private static let copernicusBaseURL = "https://copernicus-dem-30m.s3.amazonaws.com"
+  /// Samples along each side of an output tile: the SRTM3 grid, both edges included.
+  private static let samplesPerSide = 1201
+
+  /// How a run's release stamp is written, e.g. `20260924T031500Z`.
+  private static let releaseStampFormat = Date.ISO8601FormatStyle(
+    dateSeparator: .omitted,
+    timeSeparator: .omitted
+  )
 
   /// Magic bytes identifying the SRTM binary format: "SRTM" in ASCII.
   private static let magic: [UInt8] = [0x53, 0x52, 0x54, 0x4D]
@@ -119,6 +137,12 @@ actor SRTMProcessor {
     return URLSession(configuration: config)
   }()
 
+  /// Public URL of the bucket everything is published to.
+  private var publicRoot: String {
+    R2Uploader.Config.fromBundle()?.publicURL
+      ?? TerrainManifest.defaultBaseURL.deletingLastPathComponent().absoluteString
+  }
+
   // MARK: - Initializers
 
   init(regions: [TerrainRegion], outputLocation: URL, logger: Logger) {
@@ -129,68 +153,115 @@ actor SRTMProcessor {
 
   // MARK: - Type Methods
 
-  /// Parses a tile and compresses its elevation data with LZFSE.
+  /// Fetches one tile, reads it onto the output grid and compresses it with LZFSE.
   ///
   /// This is a static (non-isolated) function to enable true parallelism in TaskGroup.
-  private static func parseAndCompressTile(
-    _ tileRef: TileReference,
+  ///
+  /// - Throws: ``SRTMProcessorError`` if the tile cannot be downloaded. A tile that downloads but
+  ///   cannot be read comes back carrying its error instead, so the region reports every such
+  ///   tile before it fails.
+  private static func fetchAndCompressTile(
+    _ tile: TileCoordinates,
+    from source: TileSource,
     index: Int,
-    outputResolution: HGTParser.Resolution
-  ) -> CompressedTile {
-    let parsed = TileProcessing.parseTile(tileRef, index: index, outputResolution: outputResolution)
+    into directory: URL,
+    using session: URLSession
+  ) async throws -> CompressedTile {
+    let content: TileContent
+    switch source {
+      case .copernicus(let url):
+        content = .geoTIFF(try await download(url, into: directory, using: session))
+      case .openSea:
+        content = .seaLevel
+    }
+    defer {
+      if case .geoTIFF(let fileURL) = content {
+        try? FileManager.default.removeItem(at: fileURL)
+      }
+    }
 
+    let parsed = TileProcessing.parseTile(
+      TileReference(content: content, coordinates: tile),
+      index: index,
+      samplesPerSide: samplesPerSide
+    )
+    return compress(parsed, isSeaLevel: source.isOpenSea)
+  }
+
+  /// Downloads `url` into `directory`, retrying failures before giving up on the region.
+  private static func download(
+    _ url: URL,
+    into directory: URL,
+    using session: URLSession
+  ) async throws -> URL {
+    let tileName = url.lastPathComponent
+    var lastError: any Error = SRTMProcessorError.unexpectedStatus(tile: tileName, statusCode: nil)
+
+    for attempt in 1...maxDownloadAttempts {
+      do {
+        let (downloadedURL, response) = try await session.download(from: url)
+        let statusCode = (response as? HTTPURLResponse)?.statusCode
+        guard statusCode == 200 else {
+          try? FileManager.default.removeItem(at: downloadedURL)
+          throw SRTMProcessorError.unexpectedStatus(tile: tileName, statusCode: statusCode)
+        }
+        let destination = directory.appending(component: tileName)
+        try FileManager.default.moveItem(at: downloadedURL, to: destination)
+        return destination
+      } catch {
+        lastError = error
+        try Task.checkCancellation()
+        if attempt < maxDownloadAttempts {
+          try await Task.sleep(for: downloadRetryDelay * attempt)
+        }
+      }
+    }
+
+    throw SRTMProcessorError.downloadFailed(tile: tileName, error: lastError)
+  }
+
+  /// Compresses a parsed tile's elevations with LZFSE, or carries its parse error forward.
+  private static func compress(_ parsed: ParsedTile, isSeaLevel: Bool) -> CompressedTile {
     guard let elevations = parsed.elevations else {
       return CompressedTile(
-        index: index,
-        latitude: parsed.latitude,
-        longitude: parsed.longitude,
-        compressedData: nil,
-        uncompressedLength: 0,
-        isVoid: false,
+        index: parsed.index,
+        coordinates: parsed.coordinates,
+        payload: .failed,
         error: parsed.error
       )
     }
 
     if elevations.isAllVoid {
       return CompressedTile(
-        index: index,
-        latitude: parsed.latitude,
-        longitude: parsed.longitude,
-        compressedData: nil,
-        uncompressedLength: 0,
-        isVoid: true,
+        index: parsed.index,
+        coordinates: parsed.coordinates,
+        payload: .void,
         error: nil
       )
     }
 
     let rawData = elevations.littleEndianData
-    let uncompressedLength = UInt32(rawData.count)
-
-    let compressedData: Data
     do {
       // swiftlint:disable:next legacy_objc_type
-      compressedData = try (rawData as NSData).compressed(using: .lzfse) as Data
+      let compressedData = try (rawData as NSData).compressed(using: .lzfse) as Data
+      return CompressedTile(
+        index: parsed.index,
+        coordinates: parsed.coordinates,
+        payload: .data(
+          compressedData,
+          uncompressedLength: UInt32(rawData.count),
+          isSeaLevel: isSeaLevel
+        ),
+        error: nil
+      )
     } catch {
       return CompressedTile(
-        index: index,
-        latitude: parsed.latitude,
-        longitude: parsed.longitude,
-        compressedData: nil,
-        uncompressedLength: 0,
-        isVoid: false,
+        index: parsed.index,
+        coordinates: parsed.coordinates,
+        payload: .failed,
         error: SRTMProcessorError.compressionFailed(error)
       )
     }
-
-    return CompressedTile(
-      index: index,
-      latitude: parsed.latitude,
-      longitude: parsed.longitude,
-      compressedData: compressedData,
-      uncompressedLength: uncompressedLength,
-      isVoid: false,
-      error: nil
-    )
   }
 
   // MARK: - Methods
@@ -244,13 +315,12 @@ actor SRTMProcessor {
     )
     await reportProgress(.pending)
 
-    var processedRegions: [ProcessedRegion] = []
-
-    for region in regions {
-      try Task.checkCancellation()
-
-      let regionResult = try await processRegion(region)
-      processedRegions.append(regionResult)
+    if !regions.isEmpty {
+      let catalog = try await CopernicusTileCatalog.load(using: urlSession)
+      for region in regions {
+        try Task.checkCancellation()
+        try await processRegion(region, catalog: catalog)
+      }
     }
 
     try Task.checkCancellation()
@@ -258,7 +328,7 @@ actor SRTMProcessor {
     // Generate manifest
     await reportProgress(.generatingManifest)
     await reportLog(level: .notice, message: "Generating manifest…")
-    try await generateManifest(for: processedRegions)
+    try await generateManifest()
 
     try Task.checkCancellation()
 
@@ -266,8 +336,7 @@ actor SRTMProcessor {
 
     try Task.checkCancellation()
 
-    // Upload to R2
-    await uploadToR2Storage(processedRegions: processedRegions, assetPacks: assetPacks)
+    try await uploadToR2Storage(assetPacks: assetPacks)
 
     await reportProgress(.completed)
     await reportLog(
@@ -284,8 +353,8 @@ actor SRTMProcessor {
 
   // MARK: - Region Processing
 
-  /// Processes a single terrain region.
-  private func processRegion(_ region: TerrainRegion) async throws -> ProcessedRegion {
+  /// Processes a single terrain region into its payload in the output directory.
+  private func processRegion(_ region: TerrainRegion, catalog: CopernicusTileCatalog) async throws {
     await reportLog(level: .notice, message: "Processing \(region.displayName)…")
 
     let tempDir = FileManager.default.temporaryDirectory
@@ -296,235 +365,42 @@ actor SRTMProcessor {
       try? FileManager.default.removeItem(at: tempDir)
     }
 
-    // Download tiles
-    let tiles = try await downloadTiles(for: region, to: tempDir)
-
-    try Task.checkCancellation()
-
-    // Combine and compress
-    let outputFile = try await combineAndCompress(tiles: tiles, region: region)
-
-    return ProcessedRegion(
-      region: region,
-      outputFile: outputFile,
-      tileCount: tiles.count
+    try await buildPayload(
+      for: region,
+      tiles: region.tileCoordinates,
+      catalog: catalog,
+      scratchDirectory: tempDir
     )
   }
 
-  /// Downloads all SRTM tiles for a region using parallel downloads.
+  /// Writes the region's payload: a header, a tile index, then each tile LZFSE-compressed.
   ///
-  /// Uses a throttled `TaskGroup` to download up to ``maxConcurrentDownloads`` tiles simultaneously,
-  /// providing 4-5x speedup over sequential downloads while respecting server rate limits.
-  /// Returns tile references (not parsed data) to minimize memory usage.
-  private func downloadTiles(
+  /// Every tile in the region's bounding boxes is written, open sea included, so the payload has
+  /// an answer for every point it covers.
+  private func buildPayload(
     for region: TerrainRegion,
-    to directory: URL
-  ) async throws -> [TileReference] {
-    let tileNames = region.hgtTileNames,
-      total = tileNames.count
-    await reportLog(level: .notice, message: "Downloading \(total) tiles for \(region.displayName)")
-    await reportProgress(.downloading(region: region, completed: 0, total: total))
-
-    return try await withThrowingTaskGroup(of: TileReference?.self) { group in
-      var tiles: [TileReference] = []
-      var index = 0
-      var completed = 0
-      var skipped = 0
-
-      // Seed initial batch of concurrent downloads
-      while index < min(Self.maxConcurrentDownloads, tileNames.count) {
-        let tileName = tileNames[index]
-        group.addTask {
-          // Download tile, return nil on failure (don't log inside task)
-          try? await self.downloadTile(name: tileName, to: directory)
-        }
-        index += 1
-      }
-
-      // Process results as they complete and add new tasks
-      for try await result in group {
-        completed += 1
-
-        if let tile = result {
-          tiles.append(tile)
-        } else {
-          skipped += 1
-        }
-
-        // Report progress
-        await reportProgress(.downloading(region: region, completed: completed, total: total))
-        try Task.checkCancellation()
-
-        // Add next task if more tiles remain
-        if index < tileNames.count {
-          let tileName = tileNames[index]
-          group.addTask {
-            // Download tile, return nil on failure (don't log inside task)
-            try? await self.downloadTile(name: tileName, to: directory)
-          }
-          index += 1
-        }
-      }
-
-      await reportLog(
-        level: .info,
-        message: "Downloaded \(tiles.count) tiles, skipped \(skipped) for \(region.displayName)"
-      )
-
-      return tiles
-    }
-  }
-
-  /// Downloads a single terrain tile and returns a reference (not parsed data).
-  /// Supports both SRTM HGT files and Copernicus GeoTIFF files.
-  /// - Returns: Tile reference, or nil if the tile doesn't exist (water/void)
-  private func downloadTile(name: String, to directory: URL) async throws -> TileReference? {
-    // Try multiple sources
-    let sources = buildDownloadURLs(for: name)
-
-    for sourceURL in sources {
-      do {
-        let (data, response) = try await urlSession.data(from: sourceURL)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-          continue
-        }
-
-        guard httpResponse.statusCode == 200 else {
-          if httpResponse.statusCode != 404 {
-            logger.error("Source returned \(httpResponse.statusCode) for \(name)")
-          }
-          continue
-        }
-
-        // Determine file format and filename from URL
-        let format: TileFormat = sourceURL.pathExtension == "tif" ? .geoTIFF : .hgt
-        let filename =
-          switch format {
-            case .geoTIFF:
-              // Use original Copernicus filename (needed for coordinate parsing)
-              sourceURL.lastPathComponent
-            case .hgt:
-              sourceURL.pathExtension == "gz" ? "\(name).hgt.gz" : "\(name).hgt.zip"
-          }
-
-        let localURL = directory.appendingPathComponent(filename)
-        try data.write(to: localURL)
-
-        // Extract coordinates from tile name (e.g., "N45W123")
-        let coords = try HGTParser.parseCoordinates(from: name)
-
-        return TileReference(
-          fileURL: localURL,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          format: format
-        )
-      } catch {
-        // Try next source
-        continue
-      }
-    }
-
-    // No source had this tile - it's likely a water/void area
-    return nil
-  }
-
-  /// Builds download URLs for a tile from available sources.
-  ///
-  /// Uses a hybrid source strategy:
-  /// - SRTM (60°N to 56°S): AWS Terrain Tiles (primary source)
-  /// - Copernicus GLO-30 (84°N to 85°S): Fallback for extreme latitudes
-  private func buildDownloadURLs(for tileName: String) -> [URL] {
-    var urls: [URL] = []
-
-    // Parse tile coordinates
-    guard let coords = try? HGTParser.parseCoordinates(from: tileName) else {
-      return []
-    }
-
-    let uppercased = tileName.uppercased()
-
-    // Extract latitude folder for AWS path (e.g., "N45" or "S35")
-    var latNumEndIndex = uppercased.index(uppercased.startIndex, offsetBy: 1)
-    for char in uppercased.dropFirst() {
-      if char == "E" || char == "W" {
-        break
-      }
-      latNumEndIndex = uppercased.index(after: latNumEndIndex)
-    }
-    let latFolder = String(uppercased[..<latNumEndIndex])  // e.g., "N45" or "S35"
-
-    // SRTM coverage: 60°N to 56°S
-    let inSRTMCoverage = coords.latitude >= -56 && coords.latitude < 60
-
-    if inSRTMCoverage {
-      // AWS Terrain Tiles (public, SRTM1 resolution) - primary source
-      // Format: https://elevation-tiles-prod.s3.amazonaws.com/skadi/{lat_folder}/{tileName}.hgt.gz
-      guard let url = URL(string: "\(Self.awsBaseURL)/\(latFolder)/\(uppercased).hgt.gz") else {
-        fatalError("Failed to construct AWS URL for tile \(tileName)")
-      }
-      urls.append(url)
-    }
-
-    // Copernicus GLO-30 (fallback, or primary for extreme latitudes)
-    // Coverage: 84°N to 85°S (essentially all airports)
-    urls.append(buildCopernicusURL(for: coords))
-
-    return urls
-  }
-
-  /// Builds a Copernicus GLO-30 download URL for the given coordinates.
-  ///
-  /// Copernicus GLO-30 data is available via AWS S3 (no authentication required):
-  /// - Bucket: `s3://copernicus-dem-30m/`
-  /// - HTTP: `https://copernicus-dem-30m.s3.amazonaws.com/`
-  ///
-  /// Tile naming convention:
-  /// `Copernicus_DSM_COG_10_{N|S}{lat:02d}_00_{E|W}{lon:03d}_00_DEM/Copernicus_DSM_COG_10_{N|S}{lat:02d}_00_{E|W}{lon:03d}_00_DEM.tif`
-  private func buildCopernicusURL(for coords: HGTParser.Coordinates) -> URL {
-    let ns = coords.latitude >= 0 ? "N" : "S",
-      ew = coords.longitude >= 0 ? "E" : "W",
-      lat = unsafe String(format: "%02d", abs(coords.latitude)),
-      lon = unsafe String(format: "%03d", abs(coords.longitude))
-    let tileName = "Copernicus_DSM_COG_10_\(ns)\(lat)_00_\(ew)\(lon)_00_DEM"
-    guard let url = URL(string: "\(Self.copernicusBaseURL)/\(tileName)/\(tileName).tif") else {
-      fatalError("Failed to construct Copernicus URL for coordinates \(coords)")
-    }
-    return url
-  }
-
-  /// Combines tiles into a single v3 binary file with per-tile LZFSE compression.
-  private func combineAndCompress(
-    tiles: [TileReference],
-    region: TerrainRegion
-  ) async throws -> URL {
+    tiles: [TileCoordinates],
+    catalog: CopernicusTileCatalog,
+    scratchDirectory: URL
+  ) async throws {
     let total = tiles.count
-    await reportLog(level: .notice, message: "Combining \(total) tiles for \(region.displayName)…")
-    await reportProgress(.parsing(region: region, completed: 0, total: total))
-
-    guard !tiles.isEmpty else {
-      throw SRTMProcessorError.noTilesFound(region: region.displayName)
-    }
+    await reportLog(level: .notice, message: "Building \(total) tiles for \(region.displayName)…")
+    await reportProgress(.building(region: region, completed: 0, total: total))
 
     let boundingBox = region.overallBoundingBox
-
-    // Always output SRTM3 resolution for manageable file sizes
-    // SRTM1 (~30m) tiles will be downsampled to SRTM3 (~90m)
-    let outputResolution = HGTParser.Resolution.srtm3
 
     // Build header: magic (4) + version (2) + resolution (2) + tileCount (4) + boundingBox (8)
     var headerData = Data(Self.magic)
     headerData.append(Self.formatVersion, .littleEndian)
-    headerData.append(UInt16(outputResolution.samplesPerSide), .littleEndian)  // Resolution
-    headerData.append(UInt32(tiles.count), .littleEndian)  // Tile count
+    headerData.append(UInt16(Self.samplesPerSide), .littleEndian)  // Resolution
+    headerData.append(UInt32(total), .littleEndian)  // Tile count
     for bound in [boundingBox.minLat, boundingBox.maxLat, boundingBox.minLon, boundingBox.maxLon] {
       headerData.append(Int16(bound), .littleEndian)  // Bounding box
     }
 
     // Version 3 format: lat(2) + lon(2) + offset(8) + compressedLength(4) + uncompressedLength(4) = 20 bytes
     let tileIndexEntrySize = 20
-    let tileIndexSize = tiles.count * tileIndexEntrySize
+    let tileIndexSize = total * tileIndexEntrySize
     let dataStartOffset = UInt64(headerData.count + tileIndexSize)
 
     // Write to a temporary file to avoid holding everything in memory
@@ -540,11 +416,11 @@ actor SRTMProcessor {
     try fileHandle.write(contentsOf: headerData)
     try fileHandle.write(contentsOf: Data(count: tileIndexSize))
 
-    // Parse, compress, and write tiles; returns actual index entries and stats
-    let result = try await parseCompressAndWriteTiles(
-      tiles: tiles,
+    let result = try await fetchCompressAndWriteTiles(
+      tiles,
       region: region,
-      outputResolution: outputResolution,
+      catalog: catalog,
+      scratchDirectory: scratchDirectory,
       dataStartOffset: dataStartOffset,
       fileHandle: fileHandle
     )
@@ -553,8 +429,8 @@ actor SRTMProcessor {
     try fileHandle.seek(toOffset: UInt64(headerData.count))
     var tileIndex = Data()
     for entry in result.indexEntries {
-      tileIndex.append(Int16(entry.latitude), .littleEndian)
-      tileIndex.append(Int16(entry.longitude), .littleEndian)
+      tileIndex.append(Int16(entry.coordinates.latitude), .littleEndian)
+      tileIndex.append(Int16(entry.coordinates.longitude), .littleEndian)
       tileIndex.append(entry.dataOffset, .littleEndian)
       tileIndex.append(entry.compressedLength, .littleEndian)
       tileIndex.append(entry.uncompressedLength, .littleEndian)
@@ -562,17 +438,11 @@ actor SRTMProcessor {
     try fileHandle.write(contentsOf: tileIndex)
 
     let stats = result.stats
-    if stats.failedTiles > 0 {
-      await reportLog(
-        level: .warning,
-        message: "Skipped \(stats.failedTiles) tiles due to parsing errors"
-      )
-    }
-
     await reportLog(
       level: .info,
       message: """
-        LZFSE compression for \(region.displayName): \(stats.voidTiles) void tiles, \
+        LZFSE compression for \(region.displayName): \(stats.seaLevelTiles) open-sea tiles, \
+        \(stats.voidTiles) void tiles, \
         \(byteCountFormatter.string(fromByteCount: Int64(stats.totalUncompressedBytes))) → \
         \(byteCountFormatter.string(fromByteCount: Int64(stats.totalCompressedBytes))) \
         (\(stats.compressionRatio.formatted(.percent.precision(.fractionLength(1))))))
@@ -598,151 +468,81 @@ actor SRTMProcessor {
         Wrote \(region.displayName): \(byteCountFormatter.string(fromByteCount: Int64(payloadSize)))
         """
     )
-
-    return payloadFile
   }
 
-  /// Parses and LZFSE-compresses tiles in parallel, writes sequentially in order.
+  /// Fetches, parses and LZFSE-compresses tiles in parallel, and writes them sequentially in
+  /// order.
   ///
-  /// This approach parallelizes both CPU-bound parsing and compression while maintaining
-  /// sequential writes to the output file. Returns the actual tile index entries (with
-  /// compressed sizes) and compression statistics.
-  private func parseCompressAndWriteTiles(
-    tiles: [TileReference],
+  /// Each tile's GeoTIFF is deleted as soon as it is compressed, so the scratch directory never
+  /// holds more than the tiles in flight. Returns the tile index entries (with compressed sizes)
+  /// and compression statistics.
+  ///
+  /// - Throws: ``SRTMProcessorError/tilesFailed(region:count:)`` if any tile could not be read.
+  ///   A region with a hole in it is not published.
+  private func fetchCompressAndWriteTiles(
+    _ tiles: [TileCoordinates],
     region: TerrainRegion,
-    outputResolution: HGTParser.Resolution,
+    catalog: CopernicusTileCatalog,
+    scratchDirectory: URL,
     dataStartOffset: UInt64,
     fileHandle: FileHandle
   ) async throws -> CompressedWriteResult {
-    let total = tiles.count
-
-    var indexEntries: [TileIndexInfo] = []
-    indexEntries.reserveCapacity(total)
-
-    var stats = CompressionStats()
+    var writer = TileWriter(fileHandle: fileHandle, dataOffset: dataStartOffset)
     var buffer: [Int: CompressedTile] = [:]
-    var nextToWrite = 0
-    var currentDataOffset = dataStartOffset
+    let session = urlSession
 
     try await withThrowingTaskGroup(of: CompressedTile.self) { group in
-      var index = 0
+      var nextToStart = 0
 
-      // Seed initial batch of concurrent parsing + compression tasks
-      while index < min(Self.maxConcurrentParsing, tiles.count) {
-        let i = index
-        let tile = tiles[i]
+      func startNextTile() {
+        guard nextToStart < tiles.count else { return }
+        let index = nextToStart,
+          tile = tiles[index],
+          source = catalog.source(for: tile)
         group.addTask {
-          Self.parseAndCompressTile(tile, index: i, outputResolution: outputResolution)
+          try await Self.fetchAndCompressTile(
+            tile,
+            from: source,
+            index: index,
+            into: scratchDirectory,
+            using: session
+          )
         }
-        index += 1
+        nextToStart += 1
       }
 
-      // Process results as they complete
+      for _ in 0..<Self.maxConcurrentTiles { startNextTile() }
+
       for try await result in group {
         buffer[result.index] = result
 
         // Write any consecutive ready tiles to maintain file order
-        while let tile = buffer.removeValue(forKey: nextToWrite) {
-          let entry: TileIndexInfo
-
-          if tile.isVoid {
-            // Void tile: no data written, lengths are zero
-            entry = TileIndexInfo(
-              latitude: tile.latitude,
-              longitude: tile.longitude,
-              dataOffset: currentDataOffset,
-              compressedLength: 0,
-              uncompressedLength: 0
+        while let tile = buffer.removeValue(forKey: writer.indexEntries.count) {
+          if let error = tile.error {
+            await reportLog(
+              level: .error,
+              message:
+                "Failed to read tile \(tile.coordinates.copernicusName): \(error.localizedDescription)"
             )
-            stats.voidTiles += 1
-          } else if let compressedData = tile.compressedData {
-            // Successfully compressed tile
-            try fileHandle.write(contentsOf: compressedData)
-            entry = TileIndexInfo(
-              latitude: tile.latitude,
-              longitude: tile.longitude,
-              dataOffset: currentDataOffset,
-              compressedLength: UInt32(compressedData.count),
-              uncompressedLength: tile.uncompressedLength
-            )
-            currentDataOffset += UInt64(compressedData.count)
-            stats.totalCompressedBytes += compressedData.count
-            stats.totalUncompressedBytes += Int(tile.uncompressedLength)
-          } else {
-            // Failed tile: treat as void
-            if let error = tile.error {
-              await reportLog(
-                level: .warning,
-                message:
-                  "Failed to parse tile at \(tile.latitude),\(tile.longitude): \(error.localizedDescription)"
-              )
-            }
-            entry = TileIndexInfo(
-              latitude: tile.latitude,
-              longitude: tile.longitude,
-              dataOffset: currentDataOffset,
-              compressedLength: 0,
-              uncompressedLength: 0
-            )
-            stats.failedTiles += 1
           }
-
-          indexEntries.append(entry)
-          nextToWrite += 1
+          try writer.write(tile)
         }
 
-        // Update progress (tiles written to file)
-        await reportProgress(.parsing(region: region, completed: nextToWrite, total: total))
+        await reportProgress(
+          .building(region: region, completed: writer.indexEntries.count, total: tiles.count)
+        )
         try Task.checkCancellation()
-
-        // Add next task if more tiles remain
-        if index < tiles.count {
-          let i = index
-          let tile = tiles[i]
-          group.addTask {
-            Self.parseAndCompressTile(tile, index: i, outputResolution: outputResolution)
-          }
-          index += 1
-        }
-      }
-
-      // Write any remaining buffered tiles
-      while nextToWrite < total {
-        if let tile = buffer.removeValue(forKey: nextToWrite) {
-          let entry: TileIndexInfo
-
-          if tile.isVoid || tile.compressedData == nil {
-            entry = TileIndexInfo(
-              latitude: tile.latitude,
-              longitude: tile.longitude,
-              dataOffset: currentDataOffset,
-              compressedLength: 0,
-              uncompressedLength: 0
-            )
-            if !tile.isVoid { stats.failedTiles += 1 } else { stats.voidTiles += 1 }
-          } else {
-            let compressedData = tile.compressedData!
-            try fileHandle.write(contentsOf: compressedData)
-            entry = TileIndexInfo(
-              latitude: tile.latitude,
-              longitude: tile.longitude,
-              dataOffset: currentDataOffset,
-              compressedLength: UInt32(compressedData.count),
-              uncompressedLength: tile.uncompressedLength
-            )
-            currentDataOffset += UInt64(compressedData.count)
-            stats.totalCompressedBytes += compressedData.count
-            stats.totalUncompressedBytes += Int(tile.uncompressedLength)
-          }
-
-          indexEntries.append(entry)
-        }
-        nextToWrite += 1
-        await reportProgress(.parsing(region: region, completed: nextToWrite, total: total))
+        startNextTile()
       }
     }
 
-    return CompressedWriteResult(indexEntries: indexEntries, stats: stats)
+    guard writer.stats.failedTiles == 0 else {
+      throw SRTMProcessorError.tilesFailed(
+        region: region.displayName,
+        count: writer.stats.failedTiles
+      )
+    }
+    return CompressedWriteResult(indexEntries: writer.indexEntries, stats: writer.stats)
   }
 
   // MARK: - Manifest Generation
@@ -752,7 +552,7 @@ actor SRTMProcessor {
   /// Validates that ALL regions have payloads in the output directory (not just the regions
   /// processed in this run). This allows partial processing when pre-existing `.srtm` files are
   /// copied to the output directory before running.
-  private func generateManifest(for _: [ProcessedRegion]) async throws {
+  private func generateManifest() async throws {
     // Validate that all regions have payloads in the output directory
     var missingRegions: [TerrainRegion] = []
     var allRegionData: [(region: TerrainRegion, fileURL: URL, sizeBytes: Int)] = []
@@ -841,7 +641,12 @@ actor SRTMProcessor {
   /// reason ``generateManifest(for:)`` does: the download manifest names every pack a device may
   /// ask for, so a partial run must still publish a complete index.
   private func packageAssetPacks() async throws -> AssetPacks {
-    let publisher = AssetPackPublisher(outputLocation: outputLocation, logger: logger)
+    let publisher = AssetPackPublisher(
+      outputLocation: outputLocation,
+      logger: logger,
+      publicRoot: publicRoot,
+      releaseStamp: Date.now.formatted(Self.releaseStampFormat)
+    )
 
     var packaged: [AssetPackPublisher.PackagedRegion] = []
     for region in TerrainRegion.allCases {
@@ -850,36 +655,27 @@ actor SRTMProcessor {
       packaged.append(try await publisher.packageRegion(region))
     }
 
-    let downloadBaseURL = assetPackDownloadBaseURL()
-    let manifestURL = try await publisher.writeDownloadManifest(
-      for: packaged,
-      downloadBaseURL: downloadBaseURL
-    )
+    let manifestURL = try await publisher.writeDownloadManifest(for: packaged)
     let rebuiltCount = packaged.count(where: \.isRebuilt)
     await reportLog(
       level: .notice,
-      message:
-        "Packaged \(packaged.count) asset packs (\(rebuiltCount) rebuilt) against \(downloadBaseURL)"
+      message: """
+        Packaged \(packaged.count) asset packs (\(rebuiltCount) rebuilt) against \
+        \(publisher.downloadBaseURL)
+        """
     )
 
     return .init(publisher: publisher, packaged: packaged, downloadManifest: manifestURL)
   }
 
-  /// Base URL `ba-package` builds each pack's download URL from.
-  private func assetPackDownloadBaseURL() -> String {
-    let root =
-      R2Uploader.Config.fromBundle()?.publicURL
-      ?? TerrainManifest.defaultBaseURL
-      .deletingLastPathComponent().absoluteString
-    let trimmed = root.hasSuffix("/") ? String(root.dropLast()) : root
-    return "\(trimmed)/\(AssetPackPublisher.packKeyPrefix)"
-  }
-
   // MARK: - R2 Upload
 
-  /// Uploads processed files to CloudFlare R2.
-  private func uploadToR2Storage(processedRegions: [ProcessedRegion], assetPacks: AssetPacks) async
-  {
+  /// Uploads the payloads, the asset packs and the manifests indexing them to CloudFlare R2.
+  ///
+  /// Each manifest goes up only after everything it names is in place, and a failed upload stops
+  /// the run before any manifest does, so no device is ever pointed at a file the bucket cannot
+  /// serve. The download manifest goes last: publishing it is what releases the packs to devices.
+  private func uploadToR2Storage(assetPacks: AssetPacks) async throws {
     if skipUpload {
       await reportLog(level: .info, message: "Skipping R2 upload (skipUpload=true)")
       return
@@ -891,90 +687,92 @@ actor SRTMProcessor {
     }
 
     await reportLog(level: .notice, message: "Uploading to R2…")
-
     let uploader = R2Uploader(config: config, logger: logger)
 
-    // Upload each region file
-    for processed in processedRegions {
-      await reportProgress(.uploading(region: processed.region, fraction: 0.0))
-
-      do {
-        let region = processed.region
-        try await uploader.uploadFile(
-          at: processed.outputFile,
-          key: "terrain/\(region.remoteFilename)",
-          onProgress: { fraction in
-            await self.reportProgress(.uploading(region: region, fraction: fraction))
-          }
-        )
-      } catch {
-        await reportLog(level: .error, message: "R2 upload failed: \(error.localizedDescription)")
-        if let onUploadError {
-          await onUploadError(error)
-        }
-      }
-    }
-
-    await uploadAssetPacks(assetPacks, using: uploader)
-
-    // Upload manifest
-    await reportProgress(.uploadingManifest)
-    let manifestFile = outputLocation.appendingPathComponent(Self.manifestFilename)
     do {
-      try await uploader.uploadFile(at: manifestFile, key: "terrain/" + Self.manifestFilename)
+      try await uploadPayloads(using: uploader)
+      try await uploadFile(
+        outputLocation.appendingPathComponent(Self.manifestFilename),
+        key: "terrain/" + Self.manifestFilename,
+        using: uploader
+      )
+      try await uploadAssetPacks(assetPacks, publicRoot: config.publicURL, using: uploader)
       await reportLog(level: .notice, message: "Successfully uploaded terrain data to R2")
     } catch {
-      await reportLog(
-        level: .error,
-        message: "R2 manifest upload failed: \(error.localizedDescription)"
-      )
+      await reportLog(level: .error, message: "R2 upload failed: \(error.localizedDescription)")
       if let onUploadError {
         await onUploadError(error)
       }
+      throw error
     }
   }
 
-  /// Uploads each asset-pack archive under its download URL's key, then the download manifest.
-  ///
-  /// The archives go up before the manifest that indexes them, so a device reading the manifest
-  /// never finds it naming a pack the bucket cannot serve yet.
-  private func uploadAssetPacks(_ assetPacks: AssetPacks, using uploader: R2Uploader) async {
-    for pack in assetPacks.packaged {
-      let region = pack.region
-      await reportProgress(.uploading(region: region, fraction: 0.0))
-      do {
-        try await uploader.uploadFile(
-          at: pack.archiveURL,
-          key: assetPacks.publisher.publishedKey(for: region),
-          onProgress: { fraction in
-            await self.reportProgress(.uploading(region: region, fraction: fraction))
-          }
-        )
-      } catch {
-        await reportLog(
-          level: .error,
-          message: "R2 asset-pack upload failed: \(error.localizedDescription)"
-        )
-        if let onUploadError {
-          await onUploadError(error)
-        }
+  /// Uploads each region's payload for the builds that download payloads directly, skipping any
+  /// the bucket already holds at the same size.
+  private func uploadPayloads(using uploader: R2Uploader) async throws {
+    for region in TerrainRegion.allCases {
+      let payloadURL = outputLocation.appendingPathComponent(region.remoteFilename),
+        key = "terrain/\(region.remoteFilename)"
+      let localSize =
+        try FileManager.default.attributesOfItem(atPath: payloadURL.path)[.size]
+        as? Int64
+      guard try await uploader.publishedSize(ofObjectAt: key) != localSize else {
+        await reportLog(level: .info, message: "\(key) is already published")
+        continue
       }
+      try await uploadFile(payloadURL, key: key, region: region, using: uploader)
+    }
+  }
+
+  /// Uploads each asset-pack archive under the key its download-manifest URL names, then the
+  /// download manifest.
+  ///
+  /// A published archive is never overwritten: a device may be part-way through downloading it.
+  /// An archive whose key is already occupied is the one published there before.
+  private func uploadAssetPacks(
+    _ assetPacks: AssetPacks,
+    publicRoot: String,
+    using uploader: R2Uploader
+  ) async throws {
+    let keys = try assetPacks.publisher.publishedKeys(
+      inManifestAt: assetPacks.downloadManifest,
+      publicRoot: publicRoot
+    )
+
+    for pack in assetPacks.packaged {
+      guard let key = keys[pack.region] else {
+        throw AssetPackPublisherError.packMissingFromManifest(region: pack.region)
+      }
+      guard try await uploader.publishedSize(ofObjectAt: key) == nil else {
+        await reportLog(level: .info, message: "\(key) is already published")
+        continue
+      }
+      try await uploadFile(pack.archiveURL, key: key, region: pack.region, using: uploader)
     }
 
     await reportProgress(.uploadingManifest)
-    do {
-      try await uploader.uploadFile(
-        at: assetPacks.downloadManifest,
-        key: AssetPackPublisher.downloadManifestFilename
-      )
-    } catch {
-      await reportLog(
-        level: .error,
-        message: "R2 asset-pack manifest upload failed: \(error.localizedDescription)"
-      )
-      if let onUploadError {
-        await onUploadError(error)
-      }
+    try await uploadFile(
+      assetPacks.downloadManifest,
+      key: AssetPackPublisher.downloadManifestFilename,
+      using: uploader
+    )
+  }
+
+  /// Uploads one file, reporting progress against `region` when it belongs to one.
+  private func uploadFile(
+    _ fileURL: URL,
+    key: String,
+    region: TerrainRegion? = nil,
+    using uploader: R2Uploader
+  ) async throws {
+    guard let region else {
+      await reportProgress(.uploadingManifest)
+      try await uploader.uploadFile(at: fileURL, key: key)
+      return
+    }
+    await reportProgress(.uploading(region: region, fraction: 0.0))
+    try await uploader.uploadFile(at: fileURL, key: key) { fraction in
+      await self.reportProgress(.uploading(region: region, fraction: fraction))
     }
   }
 
@@ -987,33 +785,73 @@ actor SRTMProcessor {
     let downloadManifest: URL
   }
 
-  /// Result of processing a single region.
-  private struct ProcessedRegion {
-    let region: TerrainRegion
-    let outputFile: URL
-    let tileCount: Int
-  }
-
-  /// Result of a single tile's parse-and-compress operation.
+  /// Result of a single tile's fetch-parse-compress operation.
   private struct CompressedTile: Sendable {
     let index: Int
-    let latitude: Int
-    let longitude: Int
-    /// LZFSE-compressed tile data, or nil if parsing/compression failed.
-    let compressedData: Data?
-    /// Uncompressed size in bytes (0 for void tiles).
-    let uncompressedLength: UInt32
-    let isVoid: Bool
+    let coordinates: TileCoordinates
+    let payload: Payload
     let error: (any Error)?
+
+    enum Payload: Sendable {
+      /// LZFSE-compressed elevations.
+      case data(Data, uncompressedLength: UInt32, isSeaLevel: Bool)
+      /// Every sample is void; stored with no data.
+      case void
+      /// The tile could not be read or compressed.
+      case failed
+    }
   }
 
   /// Tile index information for a single compressed tile.
   private struct TileIndexInfo {
-    let latitude: Int
-    let longitude: Int
+    let coordinates: TileCoordinates
     let dataOffset: UInt64
     let compressedLength: UInt32
     let uncompressedLength: UInt32
+  }
+
+  /// Appends tiles to a payload in order, recording each one's index entry.
+  private struct TileWriter {
+    let fileHandle: FileHandle
+    var dataOffset: UInt64
+    private(set) var indexEntries: [TileIndexInfo] = []
+    private(set) var stats = CompressionStats()
+
+    init(fileHandle: FileHandle, dataOffset: UInt64) {
+      self.fileHandle = fileHandle
+      self.dataOffset = dataOffset
+    }
+
+    /// Writes `tile`'s data, if any, and records where it landed. A void or failed tile is
+    /// indexed with zero lengths.
+    mutating func write(_ tile: CompressedTile) throws {
+      var compressedLength: UInt32 = 0,
+        uncompressedLength: UInt32 = 0
+
+      switch tile.payload {
+        case let .data(data, length, isSeaLevel):
+          try fileHandle.write(contentsOf: data)
+          compressedLength = UInt32(data.count)
+          uncompressedLength = length
+          stats.totalCompressedBytes += data.count
+          stats.totalUncompressedBytes += Int(length)
+          if isSeaLevel { stats.seaLevelTiles += 1 }
+        case .void:
+          stats.voidTiles += 1
+        case .failed:
+          stats.failedTiles += 1
+      }
+
+      indexEntries.append(
+        TileIndexInfo(
+          coordinates: tile.coordinates,
+          dataOffset: dataOffset,
+          compressedLength: compressedLength,
+          uncompressedLength: uncompressedLength
+        )
+      )
+      dataOffset += UInt64(compressedLength)
+    }
   }
 
   /// Result of the parse-compress-write pipeline for all tiles in a region.
@@ -1024,6 +862,7 @@ actor SRTMProcessor {
 
   /// Statistics about per-tile LZFSE compression for a region.
   private struct CompressionStats {
+    var seaLevelTiles: Int = 0
     var voidTiles: Int = 0
     var failedTiles: Int = 0
     var totalUncompressedBytes: Int = 0

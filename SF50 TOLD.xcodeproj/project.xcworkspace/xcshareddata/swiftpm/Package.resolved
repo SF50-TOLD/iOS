@@ -214,7 +214,7 @@
       "location" : "https://github.com/riscfuture/swiftr2",
       "state" : {
         "branch" : "main",
-        "revision" : "e457782d0f618d4afbdfeacd3b7919e86fabaf02"
+        "revision" : "6595082e5aca345c029ef8cfcc1e8edb100a884b"
       }
     },
     {
@@ -224,15 +224,6 @@
       "state" : {
         "revision" : "e4db6c3ad57b58d472a05b73cf8ea78352957500",
         "version" : "1.0.8"
-      }
-    },
-    {
-      "identity" : "tiff-ios",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ngageoint/tiff-ios.git",
-      "state" : {
-        "revision" : "2e019be5231352eef1854492bd25f80174b0f902",
-        "version" : "5.0.0"
       }
     },
     {
