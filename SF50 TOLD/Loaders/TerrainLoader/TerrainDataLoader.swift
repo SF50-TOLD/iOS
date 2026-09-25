@@ -54,8 +54,9 @@ final class TerrainDataLoader: ObservableObject {
   /// Regions whose payload is on disk but shorter than the manifest says it should be.
   @Published private(set) var unfinishedRegions: Set<TerrainRegion> = []
 
-  /// Fraction complete for each region the system is currently downloading.
-  @Published private(set) var backgroundDownloadProgress: [TerrainRegion: Double] = [:]
+  /// Fraction complete for each region whose asset pack is downloading, whether the app asked for
+  /// it or the system started it.
+  @Published private(set) var packDownloadProgress: [TerrainRegion: Double] = [:]
 
   /// Regions whose files exist on disk but failed to load (corrupt or unreadable).
   @Published private(set) var corruptedRegions: Set<TerrainRegion> = []
@@ -182,13 +183,13 @@ final class TerrainDataLoader: ObservableObject {
   /// Records how far along the system's download of `region` is.
   func backgroundDownloadDidProgress(region: TerrainRegion, fraction: Double) {
     backgroundDownloadingRegions.insert(region)
-    backgroundDownloadProgress[region] = fraction
+    packDownloadProgress[region] = fraction
   }
 
   /// Takes up a payload the system finished downloading.
   func backgroundDownloadDidFinish(region: TerrainRegion) {
     backgroundDownloadingRegions.remove(region)
-    backgroundDownloadProgress[region] = nil
+    packDownloadProgress[region] = nil
     corruptedRegions.remove(region)
     refreshAvailableRegions()
   }
@@ -196,7 +197,7 @@ final class TerrainDataLoader: ObservableObject {
   /// Clears the download's state so the region stops reading as in progress.
   func backgroundDownloadDidFail(region: TerrainRegion, error: any Error) {
     backgroundDownloadingRegions.remove(region)
-    backgroundDownloadProgress[region] = nil
+    packDownloadProgress[region] = nil
     report(error, for: region, operation: "backgroundDownload")
     refreshAvailableRegions()
   }
@@ -296,7 +297,7 @@ final class TerrainDataLoader: ObservableObject {
 
     Defaults[.requestedTerrainRegions].insert(region)
     downloadingRegions.insert(region)
-    state = .downloading(region: region, progress: nil)
+    state = .downloading(region: region)
 
     let transaction = SentrySDK.startTransaction(
       name: "Terrain Download",
@@ -459,24 +460,9 @@ final class TerrainDataLoader: ObservableObject {
   /// Current download state.
   enum State: Equatable {
     case idle
-    case downloading(region: TerrainRegion, progress: Float?)
+    case downloading(region: TerrainRegion)
     case completed(region: TerrainRegion)
     case failed(region: TerrainRegion, message: String)
-
-    static func == (lhs: Self, rhs: Self) -> Bool {
-      switch (lhs, rhs) {
-        case (.idle, .idle):
-          return true
-        case (.downloading(let r1, let p1), .downloading(let r2, let p2)):
-          return r1 == r2 && p1 == p2
-        case (.completed(let r1), .completed(let r2)):
-          return r1 == r2
-        case (.failed(let r1, let m1), .failed(let r2, let m2)):
-          return r1 == r2 && m1 == m2
-        default:
-          return false
-      }
-    }
   }
 }
 
