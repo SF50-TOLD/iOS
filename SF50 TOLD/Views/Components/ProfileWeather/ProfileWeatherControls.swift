@@ -63,11 +63,6 @@ private struct LayerPill: View {
     } label: {
       PillLabel(title: title)
     }
-    // The bordered background is measured once for the label it was built with and is not
-    // re-measured when the title changes width, leaving the capsule at its old size — centred in
-    // the new frame, with the title spilling out both ends until some unrelated change forces the
-    // button to redraw. Re-identifying it on the layer builds a button that measures the new title.
-    .id(layer)
     .accessibilityIdentifier("weatherLayerPicker")
     .accessibilityLabel(Text("Weather"))
     .accessibilityValue(Text(layer.label))
