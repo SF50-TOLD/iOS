@@ -124,6 +124,15 @@ actor R2Uploader {
     }
   }
 
+  /// Size of the object the bucket holds at `key`, or `nil` if it holds none.
+  func publishedSize(ofObjectAt key: String) async throws -> Int64? {
+    do {
+      return try await client.headObject(bucket: config.bucketName, key: key).size
+    } catch SwiftR2.R2Error.notFound {
+      return nil
+    }
+  }
+
   // MARK: - Nested Types
 
   /// Configuration for R2 uploads.

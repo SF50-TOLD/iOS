@@ -4,11 +4,13 @@ Terrain elevation data for departure obstacle clearance analysis.
 
 ## Overview
 
-SF50 TOLD uses SRTM (Shuttle Radar Topography Mission) elevation data to analyze terrain along departure paths. This enables pilots to verify obstacle clearance when climbing out from airports in mountainous terrain.
+SF50 TOLD uses elevation data from the Copernicus DEM, stored in a binary format derived from SRTM's (Shuttle Radar Topography Mission), to analyze terrain along departure paths. This enables pilots to verify obstacle clearance when climbing out from airports in mountainous terrain.
+
+Terrain is the surface an aircraft can hit: the water surface over the sea and lakes, and the ground everywhere else, including ground below sea level. The Copernicus DEM is a surface model with that property, so open sea reads as sea level and the Dead Sea as its surface, about 430 m below it.
 
 The terrain system consists of:
 
-- **Downloadable region files** - LZMA-compressed binary files containing elevation data
+- **Downloadable region files** - binary files of per-tile LZFSE-compressed elevation data, delivered as Background Assets asset packs
 - **On-demand file access** - Efficient O(1) coordinate lookups via `pread` without loading entire files into memory
 - **Route profiling** - Generate elevation profiles along flight paths
 
@@ -75,9 +77,9 @@ For SRTM3 resolution (1201×1201 samples), each uncompressed tile contains 1,442
 
 ### Void Tile Optimization (v3)
 
-The void/no-data sentinel value is **-32768**. This indicates ocean, lakes, or areas where radar data was unavailable.
+The void/no-data sentinel value is **-32768**. It marks samples the source has no elevation for; open sea is not void, but sea level (0 m).
 
-In v3 files, tiles where all samples are void (pure ocean) are stored with `compressedLength = 0` and `uncompressedLength = 0`, with no data written to the file. On read, any coordinate in such a tile returns the void value. This eliminates ~40-50% of tile data for regions with significant ocean coverage.
+In v3 files, tiles where all samples are void are stored with `compressedLength = 0` and `uncompressedLength = 0`, with no data written to the file. On read, any coordinate in such a tile returns the void value. A tile of open sea is stored like any other; being uniform, it compresses to a few kilobytes.
 
 ## Regions
 

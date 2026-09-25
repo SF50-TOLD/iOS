@@ -6,7 +6,8 @@ import SF50_Shared
 ///
 /// Environment variables:
 /// - `TERRAIN_HEADLESS`: Set to "1" to enable terrain headless mode
-/// - `TERRAIN_REGIONS`: Regions to process ("na,eu,as" or "all", default: all)
+/// - `TERRAIN_REGIONS`: Regions to process ("na,eu,as" or "all", default: all), or "none" to
+///   package and publish the payloads already in the output directory without rebuilding any
 /// - `TERRAIN_SKIP_UPLOAD`: Set to "1" to skip R2 upload
 ///
 /// Output is written to the app's Documents directory.
@@ -46,7 +47,9 @@ enum TerrainHeadlessProcessor {
 
     // Parse regions
     let regions: [TerrainRegion]
-    if let regionString = env["TERRAIN_REGIONS"], regionString.lowercased() != "all" {
+    if env["TERRAIN_REGIONS"]?.lowercased() == "none" {
+      regions = []
+    } else if let regionString = env["TERRAIN_REGIONS"], regionString.lowercased() != "all" {
       let codes = regionString.split(separator: ",").map {
         String($0).trimmingCharacters(in: .whitespaces)
       }
@@ -94,7 +97,8 @@ enum TerrainHeadlessProcessor {
       logger.notice("Terrain processing complete")
       return 0
     } catch {
-      logger.error("Processing failed: \(error.localizedDescription)")
+      let reason = (error as? any LocalizedError)?.failureReason.map { " \($0)" } ?? ""
+      logger.error("Processing failed: \(error.localizedDescription)\(reason)")
       return 1
     }
   }
@@ -104,10 +108,8 @@ enum TerrainHeadlessProcessor {
     switch state {
       case .pending:
         break
-      case .downloading(let region, let completed, let total):
-        logger.notice("Downloading \(region.displayName): \(completed) of \(total)")
-      case .parsing(let region, let completed, let total):
-        logger.notice("Parsing \(region.displayName): \(completed) of \(total)")
+      case .building(let region, let completed, let total):
+        logger.notice("Building \(region.displayName): \(completed) of \(total)")
       case .generatingManifest:
         logger.notice("Generating manifest…")
       case .packaging(let region):
