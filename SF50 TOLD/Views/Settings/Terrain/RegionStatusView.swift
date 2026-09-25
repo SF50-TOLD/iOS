@@ -25,19 +25,8 @@ struct RegionStatusView: View {
         .foregroundStyle(.red)
         .font(.subheadline)
 
-      case .purged:
-        HStack {
-          Text("Removed for space")
-          Button("Download") { onDownload() }
-            .buttonStyle(.bordered)
-            .foregroundStyle(.primary)
-            .controlSize(.small)
-            .accessibilityIdentifier("terrainDownload-\(regionCode)")
-        }
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
-
-      case .notDownloaded:
+      // A purged region was announced when it went, so here it reads like any other.
+      case .purged, .notDownloaded:
         Button("Download") { onDownload() }
           .buttonStyle(.bordered)
           .foregroundStyle(.primary)
@@ -64,10 +53,6 @@ struct RegionStatusView: View {
 
     LabeledContent("Corrupted") {
       RegionStatusView(status: .corrupted, regionCode: "na", onDownload: {}, onRedownload: {})
-    }
-
-    LabeledContent("Removed for Space") {
-      RegionStatusView(status: .purged, regionCode: "na", onDownload: {}, onRedownload: {})
     }
 
     LabeledContent("Not Downloaded") {

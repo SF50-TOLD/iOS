@@ -9,21 +9,14 @@ public struct TerrainManifest: Decodable, Sendable {
 
   // MARK: - Type Properties
 
-  /// The bundled terrain manifest, loaded once at app startup.
-  public static let bundled: Self = {
-    guard let url = Bundle.main.url(forResource: "terrain-manifest", withExtension: "json") else {
-      fatalError("terrain-manifest.json missing from bundle")
-    }
+  /// The bundled terrain manifest, describing the payloads published now.
+  public static let bundled = loadFromBundle(named: "terrain-manifest")
 
-    do {
-      let data = try Data(contentsOf: url)
-      let decoder = JSONDecoder()
-      decoder.dateDecodingStrategy = .iso8601
-      return try decoder.decode(Self.self, from: data)
-    } catch {
-      fatalError("Failed to decode terrain-manifest.json: \(error)")
-    }
-  }()
+  /// The manifest the builds before 3.8 downloaded regions into the shared container against.
+  ///
+  /// A payload in the shared container is complete only if it measures what this says. Nothing
+  /// has written there since, so a newer manifest's sizes say nothing about those files.
+  public static let legacyContainer = loadFromBundle(named: "terrain-manifest-legacy")
 
   public static let defaultBaseURL = URL(
     string: "https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain/"
@@ -46,6 +39,22 @@ public struct TerrainManifest: Decodable, Sendable {
   public let generatedAt: Date
   public let version: Int
   public let regions: [Region]
+
+  // MARK: - Type Methods
+
+  private static func loadFromBundle(named name: String) -> Self {
+    guard let url = Bundle.main.url(forResource: name, withExtension: "json") else {
+      fatalError("\(name).json missing from bundle")
+    }
+
+    do {
+      let decoder = JSONDecoder()
+      decoder.dateDecodingStrategy = .iso8601
+      return try decoder.decode(Self.self, from: Data(contentsOf: url))
+    } catch {
+      fatalError("Failed to decode \(name).json: \(error)")
+    }
+  }
 
   // MARK: - Instance Methods
 
