@@ -48,6 +48,12 @@ struct DownloadNASRApp: App {
         exit(exitCode)
       }
       RunLoop.main.run()
+    } else if NOTAMModelHeadlessProcessor.shouldRunHeadless() {
+      Task {
+        let exitCode = await NOTAMModelHeadlessProcessor.run()
+        exit(exitCode)
+      }
+      RunLoop.main.run()
     }
   }
 }
