@@ -37,6 +37,8 @@ struct SettingsView: View {
   @Default(.fuelDensityUnit)
   private var fuelDensityUnit
 
+  private let notamModel = NOTAMModelLoader.shared
+
   private var hasDefaultFactors: Bool {
     safetyFactorDry == Self.defaultSafetyFactorDry
       && safetyFactorWet == Self.defaultSafetyFactorWet
@@ -144,6 +146,19 @@ struct SettingsView: View {
         } footer: {
           Text(
             "When the airport data expires, it is replaced in the background while the device is charging. Without this, that waits for Wi-Fi, or for 5G set to Allow More Data, and skips Low Data Mode."
+          )
+        }
+
+        Section {
+          NOTAMReaderRow(
+            state: notamModel.state,
+            downloadSize: notamModel.downloadSize,
+            onDownload: { Task { await notamModel.download() } },
+            onDelete: { Task { await notamModel.delete() } }
+          )
+        } footer: {
+          Text(
+            "The NOTAM reader downloads on its own when there’s room for it. Runway condition reports are read without it."
           )
         }
       }.navigationTitle("Settings")

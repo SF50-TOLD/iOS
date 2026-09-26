@@ -1,6 +1,13 @@
 /// Something that reads the runway-performance facts a NOTAM states: the on-device model
 /// (`NOTAMModelRuntime`'s `NOTAMModelReader`), or a stand-in in tests.
 public protocol NOTAMReader: Sendable {
+  /// The fields whose readings may be proposed to the pilot: those the model cleared its held-out
+  /// gate on.
+  nonisolated var proposableFields: Set<ProposableField> { get }
+
+  /// Identifies the model, so readings kept from one model aren't mistaken for another's.
+  nonisolated var modelVersion: String { get }
+
   /// Reads one NOTAM.
   ///
   /// - Parameters:
