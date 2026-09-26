@@ -43,13 +43,18 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   private static let logger = Logger(label: "codes.tim.SF50-TOLD.BasePerformanceViewModel")
 
+  /// How long after a NOTAM expires it's still treated as current, as the NOTAM list does.
+  private static let expiryWindowSeconds: TimeInterval = 3600
+
   private let container: ModelContainer
 
   private var notamStore: NOTAMStore { .init(context: container.mainContext) }
   private let notamLoader: any NOTAMLoaderProtocol
+  private let notamProposer: NOTAMProposer
   internal var model: (any PerformanceModel)?
   private var cancellables: Set<Task<Void, Never>> = []
   private var notamObservationTask: Task<Void, Never>?
+  private var notamReadingTask: Task<Void, Never>?
   internal let calculationService: any PerformanceCalculationService
 
   // MARK: - Inputs (to be overridden or used by subclasses)
@@ -73,6 +78,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   public private(set) var runway: Runway? {
     didSet {
       notam = runway.flatMap { notamStore.upsert(for: $0) }
+      notamProposal = nil
       model = initializeModel()
       Task { recalculate() }
 
@@ -111,6 +117,12 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   /// Whether we have attempted to fetch NOTAMs for the current airport
   public private(set) var hasAttemptedNOTAMFetch = false
 
+  /// What the downloaded NOTAMs propose for the selected runway, once they've been read.
+  public private(set) var notamProposal: NOTAMProposal?
+
+  /// Whether the downloaded NOTAMs are being read for proposals.
+  public private(set) var isReadingNOTAMs = false
+
   // MARK: - Computed Properties
 
   internal var configuration: Configuration {
@@ -141,11 +153,13 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     calculationService: any PerformanceCalculationService = DefaultPerformanceCalculationService
       .shared,
     notamLoader: (any NOTAMLoaderProtocol)? = nil,
+    notamProposer: NOTAMProposer? = nil,
     defaultFlapSetting: FlapSetting
   ) {
     self.container = container
     self.calculationService = calculationService
     self.notamLoader = notamLoader ?? NOTAMLoader.shared
+    self.notamProposer = notamProposer ?? NOTAMProposer { nil }
 
     // temporary values, overwritten by recalculate()
     model = nil
@@ -327,6 +341,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     if let cached = await NOTAMCache.shared.get(for: primaryIdentifier) {
       downloadedNOTAMs = filterNOTAMs(cached, relativeTo: plannedTime)
       hasAttemptedNOTAMFetch = true
+      readNOTAMs(plannedTime: plannedTime)
       return
     }
 
@@ -365,6 +380,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
       // Mark that we've attempted to fetch NOTAMs
       hasAttemptedNOTAMFetch = true
+      readNOTAMs(plannedTime: plannedTime)
     } catch {
       // Log error but don't show to user - NOTAMs are supplementary
       Self.logger.error("Failed to fetch NOTAMs: \(error)")
@@ -373,6 +389,32 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     }
 
     isLoadingNOTAMs = false
+  }
+
+  /// Reads the downloaded NOTAMs for what they propose for the selected runway, replacing any
+  /// reading already under way.
+  ///
+  /// NOTAMs that have expired by the planned time are skipped: the model takes up to seconds for
+  /// each, and nothing they say applies to the flight.
+  private func readNOTAMs(plannedTime: Date) {
+    notamReadingTask?.cancel()
+    guard let runway else {
+      notamProposal = nil
+      return
+    }
+    let
+      notams = downloadedNOTAMs.filter {
+        !$0.hasExpired(before: plannedTime, windowInterval: Self.expiryWindowSeconds)
+      },
+      proposalRunway = ProposalRunway(runway),
+      proposer = notamProposer
+    isReadingNOTAMs = true
+    notamReadingTask = Task { [weak self] in
+      let proposals = await proposer.proposals(for: notams, runways: [proposalRunway])
+      guard !Task.isCancelled, let self else { return }
+      notamProposal = proposals.byRunway[proposalRunway.name]
+      isReadingNOTAMs = false
+    }
   }
 
   /// Filters NOTAMs to show only currently active or upcoming ones
@@ -500,6 +542,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   isolated deinit {
     notamObservationTask?.cancel()
+    notamReadingTask?.cancel()
     for task in cancellables { task.cancel() }
   }
 }

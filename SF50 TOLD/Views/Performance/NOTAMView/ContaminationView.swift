@@ -118,12 +118,10 @@ struct ContaminationView: View {
         RwyCCWarningView()
       }
     }
-    .onAppear {
-      contaminationType = .init(from: contamination)
-      contaminationDepth = contamination?.depthInches ?? Self.defaultDepth.value
-      if case .rwyCC(let code) = contamination {
-        rwyCC = code
-      }
+    .onAppear { show(contamination) }
+    .onChange(of: contamination) { _, newValue in
+      // Filled in from a NOTAM rather than through these controls.
+      if newValue != makeContamination() { show(newValue) }
     }
     .onChange(of: contaminationType) {
       contamination = makeContamination()
@@ -133,6 +131,14 @@ struct ContaminationView: View {
     }
     .onChange(of: rwyCC) {
       contamination = makeContamination()
+    }
+  }
+
+  private func show(_ contamination: Contamination?) {
+    contaminationType = .init(from: contamination)
+    contaminationDepth = contamination?.depthInches ?? Self.defaultDepth.value
+    if case .rwyCC(let code) = contamination {
+      rwyCC = code
     }
   }
 

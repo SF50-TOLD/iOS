@@ -8,6 +8,10 @@ import SwiftUI
 /// - Orange: Available NOTAMs not configured
 /// - Green: All available NOTAMs configured
 struct NOTAMBadge: View {
+  /// The gap between the badge's items, wider than the gap within one so each count stays with its
+  /// icon.
+  private static let itemSpacing: CGFloat = 12
+
   /// Number of NOTAMs configured/applied in the app
   let localCount: Int
 
@@ -20,30 +24,46 @@ struct NOTAMBadge: View {
   /// Whether a NOTAM fetch has been attempted (to distinguish "not fetched" from "fetched with 0")
   let hasAttemptedFetch: Bool
 
+  /// Whether a downloaded NOTAM can fill in the NOTAM editor.
+  let canFill: Bool
+
   var body: some View {
-    HStack {
+    HStack(spacing: Self.itemSpacing) {
       if isLoading {
-        ProgressView()
-          .controlSize(.mini)
-        Text("Loading…")
+        HStack {
+          ProgressView()
+            .controlSize(.mini)
+          Text("Loading…")
+        }
       } else {
-        Image(systemName: "pencil")
-          .accessibilityLabel("Configured NOTAMs")
-        Text("\(localCount, format: .number)")
-          .contentTransition(.numericText())
-          .animation(.default, value: localCount)
+        if canFill {
+          Image(systemName: "wand.and.sparkles")
+            .foregroundStyle(IntelligenceGradient.linear)
+            .accessibilityLabel("Can fill in from downloaded NOTAMs")
+        }
+        Label {
+          Text("\(localCount, format: .number)")
+            .contentTransition(.numericText())
+            .animation(.default, value: localCount)
+        } icon: {
+          Image(systemName: "pencil")
+            .accessibilityLabel("Configured NOTAMs")
+        }
 
         // Only show download count if we've attempted to fetch
         if hasAttemptedFetch {
-          Image(systemName: "network")
-            .accessibilityLabel("Downloaded NOTAMs")
-            .padding(.leading, 6)
-          Text("\(downloadedCount, format: .number)")
-            .contentTransition(.numericText())
-            .animation(.default, value: downloadedCount)
+          Label {
+            Text("\(downloadedCount, format: .number)")
+              .contentTransition(.numericText())
+              .animation(.default, value: downloadedCount)
+          } icon: {
+            Image(systemName: "network")
+              .accessibilityLabel("Downloaded NOTAMs")
+          }
         }
       }
     }
+    .labelStyle(CountLabelStyle())
     .font(.caption2)
     .fontWeight(.medium)
     .foregroundStyle(textColor)
@@ -68,6 +88,11 @@ struct NOTAMBadge: View {
   }
 
   private var accessibilityLabel: String {
+    guard canFill else { return countsAccessibilityLabel }
+    return String(localized: "\(countsAccessibilityLabel), can fill in from downloaded NOTAMs")
+  }
+
+  private var countsAccessibilityLabel: String {
     if isLoading {
       if localCount > 0 {
         return String(
@@ -89,12 +114,27 @@ struct NOTAMBadge: View {
     configuredCount: Int,
     availableCount: Int,
     isLoading: Bool = false,
-    hasAttemptedFetch: Bool = false
+    hasAttemptedFetch: Bool = false,
+    canFill: Bool = false
   ) {
     self.localCount = configuredCount
     self.downloadedCount = availableCount
     self.isLoading = isLoading
     self.hasAttemptedFetch = hasAttemptedFetch
+    self.canFill = canFill
+  }
+}
+
+/// A count with its icon, set close together so the pair reads as one item among the badge's
+/// others.
+private struct CountLabelStyle: LabelStyle {
+  private static let spacing: CGFloat = 2
+
+  func makeBody(configuration: LabelStyleConfiguration) -> some View {
+    HStack(spacing: Self.spacing) {
+      configuration.icon
+      configuration.title
+    }
   }
 }
 
@@ -108,6 +148,9 @@ struct NOTAMBadge: View {
     }
     LabeledContent("Some") {
       NOTAMBadge(configuredCount: 2, availableCount: 5)
+    }
+    LabeledContent("Can Fill") {
+      NOTAMBadge(configuredCount: 0, availableCount: 5, hasAttemptedFetch: true, canFill: true)
     }
   }
 }

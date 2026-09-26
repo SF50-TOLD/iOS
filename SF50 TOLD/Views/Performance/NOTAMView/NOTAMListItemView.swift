@@ -2,8 +2,14 @@ import SF50_Shared
 import SwiftUI
 
 struct NOTAMListItemView: View {
+  /// Room above and below the effective times, which set them apart from the text and the button.
+  private static let datesPadding: CGFloat = 4
+
   let notam: NOTAMResponse
   let plannedTime: Date
+
+  /// Fills the NOTAM editor in from this NOTAM; `nil` when the app read nothing it can fill in.
+  var onFill: (() -> Void)?
 
   var body: some View {
     VStack(alignment: .leading) {
@@ -35,6 +41,16 @@ struct NOTAMListItemView: View {
             .foregroundStyle(.secondary)
         }
       }
+      .padding(.vertical, Self.datesPadding)
+
+      if let onFill {
+        Button(action: onFill) {
+          Label("Auto-Fill", systemImage: "wand.and.sparkles")
+        }
+        .buttonStyle(.intelligence)
+        .accessibilityHint("Fills in this runway’s NOTAM entries from this NOTAM")
+        .accessibilityIdentifier("fillFromNOTAMButton")
+      }
     }
   }
 }
@@ -48,7 +64,8 @@ struct NOTAMListItemView: View {
       ForEach(notams) { notam in
         NOTAMListItemView(
           notam: notam,
-          plannedTime: now
+          plannedTime: now,
+          onFill: notam.id.isMultiple(of: 2) ? {} : nil
         )
       }
     }
