@@ -724,7 +724,7 @@ extension Error {
   /// library's own domain and the `errno` one level down, so recognizing the
   /// condition means walking the chain rather than inspecting only the error in
   /// hand.
-  fileprivate var isOutOfDiskSpace: Bool { (self as NSError).isOutOfDiskSpace }
+  var isOutOfDiskSpace: Bool { (self as NSError).isOutOfDiskSpace }
 }
 
 extension NSError {
@@ -733,7 +733,7 @@ extension NSError {
   /// `Foundation`'s file APIs report the condition in `NSCocoaErrorDomain`
   /// while the C-level writes `StreamingLZMA` performs report it as POSIX
   /// `ENOSPC`, and either can appear at any depth of the chain.
-  fileprivate var isOutOfDiskSpace: Bool {
+  var isOutOfDiskSpace: Bool {
     if domain == NSPOSIXErrorDomain, code == Int(ENOSPC) { return true }
     if domain == NSCocoaErrorDomain, code == NSFileWriteOutOfSpaceError { return true }
     guard let underlying = userInfo[NSUnderlyingErrorKey] as? NSError else { return false }

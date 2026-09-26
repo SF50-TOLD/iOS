@@ -15,6 +15,11 @@ internal import Tokenizers
 public actor NOTAMModelReader: NOTAMReader {
   private static let manifestName = "notam-model.json"
 
+  /// The fields this model may propose, from its manifest; empty until the model clears its gate.
+  nonisolated public let proposableFields: Set<ProposableField>
+  /// The model's version, from its manifest; changes whenever the model does.
+  nonisolated public let modelVersion: String
+
   private let manifest: Manifest
   private let tokenizer: any Tokenizer
   private let runner: ModelRunner
@@ -50,6 +55,10 @@ public actor NOTAMModelReader: NOTAMReader {
     }
     self.manifest = manifest
     self.tokenizer = tokenizer
+    proposableFields = Set(
+      manifest.proposableFields?.compactMap(ProposableField.init(rawValue:)) ?? []
+    )
+    modelVersion = manifest.modelVersion ?? manifest.model
     constraint = GrammarConstraint(
       pattern: ReadingGrammar.pattern,
       vocabulary: ByteLevelVocabulary.bytes(of: tokenizer, count: manifest.vocabularySize),
@@ -135,6 +144,8 @@ extension NOTAMModelReader {
   struct Manifest: Decodable {
     /// The Core AI model's file name within the folder.
     let model: String
+    /// The model's version (older manifests have none).
+    let modelVersion: String?
     /// The Model Training schema version the model was trained on.
     let schemaVersion: String
     /// The prompt, with `{prompt}` where `Location: <location>`, a blank line and the NOTAM go.
@@ -147,6 +158,9 @@ extension NOTAMModelReader {
     let contextLength: Int
     /// The longest reading the model may write.
     let maximumOutputTokens: Int
+    /// The ``ProposableField`` names the model cleared its gate on; names this build doesn't know are
+    /// ignored, and older manifests have none.
+    let proposableFields: [String]?
   }
 
   /// Why the on-device model couldn't be loaded.

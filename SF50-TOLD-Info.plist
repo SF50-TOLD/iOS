@@ -11,7 +11,7 @@
 	<key>BAInitialDownloadRestrictions</key>
 	<dict>
 		<key>BADownloadAllowance</key>
-		<integer>9300000000</integer>
+		<integer>10000000000</integer>
 		<key>BADownloadDomainAllowList</key>
 		<array>
 			<string>pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev</string>
@@ -22,7 +22,7 @@
 	<key>BAManifestURL</key>
 	<string>https://pub-becd30c7b4e24860bee04cbbab788fb3.r2.dev/terrain-asset-packs-ios.json</string>
 	<key>BAMaxInstallSize</key>
-	<integer>9300000000</integer>
+	<integer>10000000000</integer>
 	<key>BAUsesAppleHosting</key>
 	<false/>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>

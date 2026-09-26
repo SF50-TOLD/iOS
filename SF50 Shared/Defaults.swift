@@ -45,6 +45,15 @@ extension Defaults.Keys {
     default: [],
     suite: groupDefaults
   )
+
+  /// Whether the pilot deleted the NOTAM model; see ``NOTAMModelPack/isDeclined``.
+  ///
+  /// Lives in the group suite because the downloader extension reads it.
+  public static let notamModelDeclined = Key<Bool>(
+    "SF50/3/notamModelDeclined",
+    default: false,
+    suite: groupDefaults
+  )
   public static let emptyWeight = Key<Measurement<UnitMass>>(
     "SF50/3/emptyWeight",
     default: .init(value: 3550, unit: .pounds),
