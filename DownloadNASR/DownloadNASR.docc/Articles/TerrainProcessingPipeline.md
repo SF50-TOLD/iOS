@@ -128,8 +128,9 @@ replaced: a device part-way through downloading one keeps getting the same
 bytes.
 
 The publisher runs `download-manifest update` against the currently published
-manifest — fetching it first if this machine has no local copy — and falls back
-to `download-manifest create` only when there is no prior manifest to carry
+manifest — adopting the published copy first, since the NOTAM model pack shares
+it and a stale local copy would drop that pack — and falls back to
+`download-manifest create` only when there is no prior manifest to carry
 versions forward from. `update` accepts only asset-pack paths ending in `.json`,
 so each archive is passed through a `.json`-named hard link (the tool takes the
 pack's download size from the path, so a symbolic link would report its own few
@@ -151,6 +152,18 @@ so a device never reads a manifest naming a file the bucket cannot serve.
 To publish payloads already built, for example after checking a run made with
 `TERRAIN_SKIP_UPLOAD=1`, run headless with `TERRAIN_REGIONS=none`: it packages
 and uploads what the output directory holds without rebuilding anything.
+
+### The NOTAM model pack
+
+The on-device NOTAM model is published in the same download manifest, since the
+app's `BAManifestURL` names only one. Copy the converted model folder to the
+app's `Documents/NOTAMModel/notam-model` (the app is sandboxed), then run
+headless with `NOTAM_MODEL_HEADLESS=1`. ``NOTAMModelPackPublisher`` writes the
+folder's digest beside its files, packages the folder as the `notam-model` pack,
+and updates only that pack's entry under `notam-model-packs/<release stamp>/`,
+leaving the terrain packs' entries as published. A model whose digest the
+published entry already carries is left alone. `NOTAM_MODEL_SKIP_UPLOAD=1`
+packages and updates the local manifest without uploading.
 
 ## Output Format
 
