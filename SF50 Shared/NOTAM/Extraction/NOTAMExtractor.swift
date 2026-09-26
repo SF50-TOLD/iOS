@@ -1,9 +1,9 @@
 public import NOTAMModel
 
-/// Reads raw NOTAM text into a proposed ``NOTAMExtraction``.
+/// Reads raw NOTAM text into a proposed `NOTAMExtraction`.
 ///
 /// A NOTAM in a fixed report format (FICON, RSC, SNOWTAM, FAA obstacle) is read exactly by
-/// ``FormattedReportParser``; any other NOTAM goes to the fine-tuned on-device model, when it's
+/// `FormattedReportParser`; any other NOTAM goes to the fine-tuned on-device model, when it's
 /// installed.
 ///
 /// The extraction is a *proposal* for the pilot to confirm, never a value a calculation uses directly.
@@ -11,9 +11,6 @@ public import NOTAMModel
 /// The model decodes greedily, so a NOTAM always reads the same way.
 public struct NOTAMExtractor: Sendable {
   private let reader: (any NOTAMReader)?
-
-  /// Whether NOTAMs outside the fixed report formats can be read on this device right now.
-  public var isModelAvailable: Bool { reader != nil }
 
   /// Creates an extractor.
   ///
@@ -23,23 +20,69 @@ public struct NOTAMExtractor: Sendable {
     self.reader = reader
   }
 
-  /// Proposes the runway-performance facts one NOTAM states.
+  /// Reads one NOTAM, and says which of its fields may be proposed to the pilot.
   ///
   /// - Parameters:
   ///   - notamText: The NOTAM text as the NOTAM API returns it.
   ///   - location: The NOTAM's ICAO location.
   /// - Throws: ``Failure`` when the model is unavailable or couldn't read the NOTAM.
-  public func extract(notamText: String, location: String) async throws(Failure) -> NOTAMExtraction
-  {
-    if let reading = FormattedReportParser.parse(notamText: notamText) { return reading }
+  public func read(notamText: String, location: String) async throws(Failure) -> Reading {
+    if let extraction = FormattedReportParser.parse(notamText: notamText) {
+      return Reading(extraction: extraction, source: .parser)
+    }
     guard let reader else { throw .modelUnavailable }
     do {
-      return try await reader.read(notamText: notamText, location: location)
+      let extraction = try await reader.read(notamText: notamText, location: location)
+      return Reading(extraction: extraction, source: .model(version: reader.modelVersion))
+        .limited(to: reader.proposableFields)
     } catch .cancelled {
       throw .cancelled
     } catch {
       throw .unreadable(Reason(error))
     }
+  }
+}
+
+extension NOTAMExtractor {
+  /// One NOTAM's reading, and which of its fields may be proposed.
+  public struct Reading: Sendable, Equatable {
+
+    // MARK: - Instance Properties
+
+    /// What the NOTAM states.
+    public let extraction: NOTAMExtraction
+
+    /// What read it.
+    public let source: Source
+
+    /// The fields whose values may be proposed to the pilot: every field of a formatted report,
+    /// and of a model reading only those the model cleared its gate on.
+    public private(set) var proposableFields = Set(ProposableField.allCases)
+
+    // MARK: - Initializers
+
+    /// Creates a reading whose every field may be proposed.
+    public init(extraction: NOTAMExtraction, source: Source) {
+      self.extraction = extraction
+      self.source = source
+    }
+
+    // MARK: - Instance Methods
+
+    /// This reading, with only `fields` proposable.
+    public func limited(to fields: Set<ProposableField>) -> Self {
+      var reading = self
+      reading.proposableFields = fields
+      return reading
+    }
+  }
+
+  /// What read a NOTAM.
+  public enum Source: Sendable, Equatable, Hashable {
+    /// A deterministic parser for a formatted report (FICON, RSC, SNOWTAM, FAA obstacle).
+    case parser
+    /// The on-device model, of the given version.
+    case model(version: String)
   }
 }
 
@@ -63,6 +106,7 @@ extension NOTAMExtractor {
     /// The model failed to run. This never depends on the NOTAM, and should never happen.
     case modelFailed
 
+    // periphery:ignore - read only by the NOTAMExtractionEvaluation harness, which Periphery doesn't scan
     /// Whether the failure comes from this NOTAM's text rather than from the model or the app.
     var concernsThisNOTAM: Bool {
       switch self {

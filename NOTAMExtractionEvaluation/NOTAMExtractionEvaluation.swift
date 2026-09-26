@@ -74,10 +74,10 @@ struct NOTAMExtractionEvaluation: Evaluation {
         "A gold prompt isn’t “\(locationPrefix)<location>”, a blank line, then the NOTAM"
       )
     }
-    return try await NOTAMExtractor(reader: await reader.value).extract(
+    return try await NOTAMExtractor(reader: await reader.value).read(
       notamText: String(prompt[blankLine.upperBound...]),
       location: String(prompt[..<blankLine.lowerBound].dropFirst(locationPrefix.count))
-    )
+    ).extraction
   }
 
   func subject(from sample: NOTAMSample) async throws -> NOTAMReading {

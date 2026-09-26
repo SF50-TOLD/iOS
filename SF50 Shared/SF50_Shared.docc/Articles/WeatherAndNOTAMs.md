@@ -30,6 +30,22 @@ Weather observation loading, atmospheric condition modeling, and NOTAM-based run
 - ``NOTAMLoader``
 - ``NOTAMCache``
 
+### Reading NOTAMs
+
+Downloaded NOTAMs are read into proposals for the pilot to confirm: formatted
+reports by deterministic parsers, everything else by the on-device model when
+its asset pack is installed.
+
+- ``NOTAMProposer``
+- ``NOTAMProposal``
+- ``NOTAMProposalMapper``
+- ``ProposalRunway``
+- ``Candidate``
+- ``ProposalSource``
+- ``NOTAMExtractor``
+- ``NOTAMModelPack``
+- ``NOTAMModelDigest``
+
 ### NOTAM API Types
 
 - ``NOTAMListResponse``
