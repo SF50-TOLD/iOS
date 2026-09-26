@@ -28,6 +28,9 @@ struct SettingsView: View {
   @Default(.useAirportLocalTime)
   private var useAirportLocalTime
 
+  @Default(.intelligenceCardStyle)
+  private var intelligenceCardStyle
+
   @Default(.allowsBackgroundMeteredDownloads)
   private var allowsBackgroundMeteredDownloads
 
@@ -156,6 +159,13 @@ struct SettingsView: View {
             onDownload: { Task { await notamModel.download() } },
             onDelete: { Task { await notamModel.delete() } }
           )
+          #if DEBUG
+            Picker("Fill-In Card Style", selection: $intelligenceCardStyle) {
+              ForEach(IntelligenceCardStyle.allCases) { style in
+                Text(style.title).tag(style)
+              }
+            }
+          #endif
         } footer: {
           Text(
             "The NOTAM reader downloads on its own when there’s room for it. Runway condition reports are read without it."

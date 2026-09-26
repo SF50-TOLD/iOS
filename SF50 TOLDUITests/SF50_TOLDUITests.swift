@@ -581,6 +581,31 @@ extension SF50_TOLDUITests {
     )
   }
 
+  // MARK: - NOTAM Fill-In Tests
+
+  func testNOTAMFillFromProposal() throws {
+    let tabBar = AppLauncher(readableNOTAMs: true).launchAndCompleteSetup(emptyWeight: "4050")
+    let landing = tabBar.goToLanding()
+
+    landing.setupCalculation(runway: "30")
+    _ = landing.waitForLabel(of: landing.NOTAMSelector, toContain: "can fill in")
+
+    let notams = landing.openNOTAMs()
+    notams.fillFromFirstProposal()
+    XCTAssertTrue(
+      notams.fillBanner.waitForExistence(timeout: 2),
+      "The banner should say the editor was filled in"
+    )
+    XCTAssertTrue(notams.rwyCCSlider.exists, "The FICON report's RwyCC should be filled in")
+    notams.goBack()
+
+    let badgeLabel = landing.waitForLabel(of: landing.NOTAMSelector, toContain: "1 configured")
+    XCTAssertTrue(
+      badgeLabel.contains("1 configured"),
+      "NOTAM button should show 1 configured after filling in, got: \"\(badgeLabel)\""
+    )
+  }
+
   // MARK: - NOTAM Obstacle Tests
 
   func testNOTAMObstacleTakeoff() throws {

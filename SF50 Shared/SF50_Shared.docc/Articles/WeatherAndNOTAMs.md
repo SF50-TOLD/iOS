@@ -34,10 +34,12 @@ Weather observation loading, atmospheric condition modeling, and NOTAM-based run
 
 Downloaded NOTAMs are read into proposals for the pilot to confirm: formatted
 reports by deterministic parsers, everything else by the on-device model when
-its asset pack is installed.
+its asset pack is installed. Confirming one NOTAM's proposal fills the NOTAM
+editor in with ``NOTAMProposal/fill(_:for:)``, which can be undone.
 
 - ``NOTAMProposer``
 - ``NOTAMProposal``
+- ``NOTAMRestoration``
 - ``NOTAMProposalMapper``
 - ``ProposalRunway``
 - ``Candidate``

@@ -31,7 +31,8 @@ struct TakeoffView: View {
       if performance == nil {
         performance = .init(
           container: modelContext.container,
-          notamLoader: UITestingHelper.notamLoader
+          notamLoader: UITestingHelper.notamLoader,
+          notamProposer: .app
         )
       }
       if weather == nil {
