@@ -35,6 +35,15 @@ changed in the cockpit rather than what changed in the code.
   working until its replacement arrives.
 - Downloaded terrain is checked for damage before it is used. A damaged region
   shows as corrupted, with a button to download it again.
+- Downloaded NOTAMs now include runway closures, displaced thresholds, declared
+  distances and runway condition reports. Most of these were missing before,
+  and at busy airports the list stopped after the first 100 NOTAMs.
+- A downloaded runway condition report, or an obstacle NOTAM that names your
+  runway, can fill in the runway’s NOTAM entries for you. Its card is outlined
+  in color and has an Auto-Fill button; after you tap it, check each value
+  against the NOTAM’s text. Undo puts back what you had entered.
+- The app downloads a NOTAM reader for this in the background when the device
+  has room for it. You can delete it, or download it again, in Settings.
 
 ## 3.8.2
 
