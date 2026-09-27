@@ -7,6 +7,12 @@ struct DownloadedNOTAMsSection: View {
   /// Room around each card for its shadow or glow, which the carousel would otherwise clip.
   private static let cardMargin: CGFloat = 20
 
+  /// Space between the section header and the reading indicator.
+  private static let readingTopSpacing: CGFloat = 8
+
+  /// Space between the reading indicator's spinner and its text.
+  private static let readingIconSpacing: CGFloat = 4
+
   /// The NOTAMs, in the order to show them.
   let notams: [NOTAMResponse]
   let plannedTime: Date
@@ -28,7 +34,23 @@ struct DownloadedNOTAMsSection: View {
 
   var body: some View {
     Section {
-      VStack {
+      VStack(spacing: 0) {
+        if isReading {
+          Label {
+            Text("Reading…")
+          } icon: {
+            ProgressView().controlSize(.mini)
+          }
+          .labelIconToTitleSpacing(Self.readingIconSpacing)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.horizontal, Self.cardMargin)
+          .padding(.top, Self.readingTopSpacing)
+          // The first card's margin is room for its shadow, not space to keep from the indicator.
+          .padding(.bottom, -Self.cardMargin + Self.readingTopSpacing)
+        }
+
         CarouselView(
           data: notams,
           id: \.id,
@@ -53,16 +75,9 @@ struct DownloadedNOTAMsSection: View {
       // The margin around each card stands in for the row’s own insets.
       .listRowInsets(.init())
     } header: {
-      HStack {
-        Text(
-          "Downloaded NOTAMs (\(currentIndex + 1, format: .number) of \(notams.count, format: .number))"
-        )
-        if isReading {
-          Spacer()
-          ProgressView().controlSize(.mini)
-          Text("Reading…")
-        }
-      }
+      Text(
+        "Downloaded NOTAMs (\(currentIndex + 1, format: .number) of \(notams.count, format: .number))"
+      )
     }
   }
 }
