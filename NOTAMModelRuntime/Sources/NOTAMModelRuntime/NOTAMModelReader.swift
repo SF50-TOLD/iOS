@@ -1,5 +1,7 @@
 public import Foundation
-public import NOTAMModel
+// swift-format keeps an import's attributes on its line.
+// swiftlint:disable:next attributes
+@_spi(NOTAMModelRuntime) public import NOTAMModel
 internal import Tokenizers
 
 /**

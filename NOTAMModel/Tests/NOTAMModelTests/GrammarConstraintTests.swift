@@ -1,7 +1,9 @@
 import Foundation
 import Testing
 
-@testable import NOTAMModel
+// swift-format keeps an import's attributes on its line.
+// swiftlint:disable:next attributes
+@_spi(NOTAMModelRuntime) @testable import NOTAMModel
 
 struct `Grammar constraint` {
   /// A toy vocabulary: single characters plus a few multi-character tokens, like a BPE vocabulary.

@@ -10,28 +10,29 @@
 
  It caches as it goes, so it's confined to one decoding task.
  */
-package final class GrammarConstraint {
+@_spi(NOTAMModelRuntime)
+public final class GrammarConstraint {
   private let automaton: ByteAutomaton
   private let trie: TokenTrie
   private let endOfSequence: Int
   private var allowedByState: [Int: [Int]] = [:]
 
   /// The automaton state before the model's first token.
-  package var start: Int { automaton.start }
+  public var start: Int { automaton.start }
 
   /// - Parameters:
   ///   - pattern: The grammar the output must match.
   ///   - vocabulary: Each token's bytes, indexed by token ID. Tokens with no bytes (special tokens)
   ///     are never allowed.
   ///   - endOfSequence: The token that ends the output.
-  package init(pattern: BytePattern, vocabulary: [[UInt8]], endOfSequence: Int) {
+  public init(pattern: BytePattern, vocabulary: [[UInt8]], endOfSequence: Int) {
     automaton = ByteAutomaton(pattern)
     trie = TokenTrie(vocabulary)
     self.endOfSequence = endOfSequence
   }
 
   /// Every token that may follow in `state`, including end-of-sequence where the output may end.
-  package func allowedTokens(in state: Int) -> [Int] {
+  public func allowedTokens(in state: Int) -> [Int] {
     if let known = allowedByState[state] { return known }
     var allowed: [Int] = []
     collect(node: trie.root, state: state, into: &allowed)
@@ -41,13 +42,13 @@ package final class GrammarConstraint {
   }
 
   /// The state after `token`, or `nil` if `token` isn't allowed in `state`.
-  package func advance(_ state: Int, by token: Int) -> Int? {
+  public func advance(_ state: Int, by token: Int) -> Int? {
     guard token != endOfSequence else { return nil }
     return trie.bytes(of: token).flatMap { automaton.step(state, $0) }
   }
 
   /// The bytes `token` adds to the output; none for a special token.
-  package func bytes(of token: Int) -> [UInt8] { trie.bytes(of: token) ?? [] }
+  public func bytes(of token: Int) -> [UInt8] { trie.bytes(of: token) ?? [] }
 
   private func collect(node: Int, state: Int, into allowed: inout [Int]) {
     for (byte, child) in trie.children(of: node) {

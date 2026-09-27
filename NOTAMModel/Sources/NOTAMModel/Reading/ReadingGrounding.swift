@@ -8,7 +8,8 @@ internal import RegexBuilder
 /// invented, so the reading is refused rather than proposed. So is a closed end the text doesn't
 /// name: `thresholdEnd` needs FIRST (or FST), `departureEnd` needs LAST, and a compass point or
 /// runway end must be written.
-package enum ReadingGrounding {
+@_spi(NOTAMModelRuntime)
+public enum ReadingGrounding {
   private static let positionTolerance = 1e-6
   private static let compassWords = [
     "N": "NORTH", "S": "SOUTH", "E": "EAST", "W": "WEST", "NE": "NORTHEAST", "NW": "NORTHWEST",
@@ -24,7 +25,7 @@ package enum ReadingGrounding {
   }
 
   /// Whether `extraction` states only numbers `text` does.
-  package static func isGrounded(_ extraction: NOTAMExtraction, in text: String) -> Bool {
+  public static func isGrounded(_ extraction: NOTAMExtraction, in text: String) -> Bool {
     let stated = statedNumbers(in: text), positions = statedPositions(in: text)
     return extraction.effects.allSatisfy { effect in
       values(of: effect).allSatisfy(stated.contains)
