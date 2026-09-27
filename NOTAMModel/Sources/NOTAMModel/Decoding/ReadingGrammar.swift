@@ -3,7 +3,8 @@
 /// It constrains form and ranges: designators `01`–`36` with an optional side, codes `0`–`6`, thirds
 /// `1`–`3`, coverage `0`–`100`, the schema's units and contaminant types, and the counts the schema caps
 /// (12 effects, 3 codes, 9 contaminants). Whether a fact is stated at all is the model's call.
-package enum ReadingGrammar {
+@_spi(NOTAMModelRuntime)
+public enum ReadingGrammar {
   private static let maximumEffects = 12, maximumCodes = 3, maximumContaminants = 9
   private static let maximumIntegerDigits = 6, maximumFractionDigits = 6
   private static let maximumReferenceLength = 80
@@ -13,7 +14,7 @@ package enum ReadingGrammar {
   ]
 
   /// The whole output: a cancellation, nothing, or up to 12 effect lines.
-  package static let pattern: BytePattern = .either([
+  public static let pattern: BytePattern = .either([
     .literal(ReadingFormat.canceled),
     .literal(ReadingFormat.nothing),
     effect + .repeated(.literal("\n") + effect, minimum: 0, maximum: maximumEffects - 1)

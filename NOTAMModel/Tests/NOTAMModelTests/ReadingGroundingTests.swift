@@ -1,7 +1,9 @@
 import Foundation
 import Testing
 
-@testable import NOTAMModel
+// swift-format keeps an import's attributes on its line.
+// swiftlint:disable:next attributes
+@_spi(NOTAMModelRuntime) @testable import NOTAMModel
 
 struct `Reading grounding` {
   private static let workedExamples: [WorkedExample] = {

@@ -2,7 +2,8 @@
 ///
 /// It's how the grammar of the model's output is written: small enough to read, and compiled to an
 /// automaton that decides, byte by byte, whether text can still grow into a whole match.
-package indirect enum BytePattern: Sendable {
+@_spi(NOTAMModelRuntime)
+public indirect enum BytePattern: Sendable {
   /// Any one byte in the set.
   case byte(ByteSet)
   /// Each pattern in turn.
@@ -34,14 +35,15 @@ package indirect enum BytePattern: Sendable {
 }
 
 /// A set of byte values.
-package struct ByteSet: Sendable, Hashable {
+@_spi(NOTAMModelRuntime)
+public struct ByteSet: Sendable, Hashable {
   private var words: (UInt64, UInt64, UInt64, UInt64) = (0, 0, 0, 0)
 
   init(_ bytes: some Sequence<UInt8>) {
     for byte in bytes { insert(byte) }
   }
 
-  package static func == (lhs: Self, rhs: Self) -> Bool { lhs.words == rhs.words }
+  public static func == (lhs: Self, rhs: Self) -> Bool { lhs.words == rhs.words }
 
   func contains(_ byte: UInt8) -> Bool {
     let bit = UInt64(1) << UInt64(byte & 63)
@@ -53,7 +55,7 @@ package struct ByteSet: Sendable, Hashable {
     }
   }
 
-  package func hash(into hasher: inout Hasher) {
+  public func hash(into hasher: inout Hasher) {
     hasher.combine(words.0)
     hasher.combine(words.1)
     hasher.combine(words.2)

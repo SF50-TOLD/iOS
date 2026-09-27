@@ -845,6 +845,7 @@
 				2B974702697D0A548EC62991 /* XCRemoteSwiftPackageReference "NavData" */,
 				C9DFF1CEEDEBFDC2A78EDDB0 /* XCRemoteSwiftPackageReference "NavDataDistribution" */,
 				4E07A3D10000000000000001 /* XCLocalSwiftPackageReference "NOTAMModel" */,
+				4E07A3D1000000000000000E /* XCLocalSwiftPackageReference "NOTAMModelRuntime" */,
 			);
 			preferredProjectObjectVersion = 100;
 			productRefGroup = 0163BC6B2DDEE9D3008FEE8F /* Products */;
@@ -1877,6 +1878,10 @@
 		4E07A3D10000000000000001 /* XCLocalSwiftPackageReference "NOTAMModel" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = NOTAMModel;
+		};
+		4E07A3D1000000000000000E /* XCLocalSwiftPackageReference "NOTAMModelRuntime" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = NOTAMModelRuntime;
 		};
 /* End XCLocalSwiftPackageReference section */
 
