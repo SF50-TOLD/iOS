@@ -27,7 +27,7 @@ final class NOTAMModelLoader {
 
   static let shared = NOTAMModelLoader()
 
-  private static let developmentFolderVariable = "NOTAM_MODEL_FOLDER"
+  nonisolated private static let developmentFolderVariable = "NOTAM_MODEL_FOLDER"
 
   // MARK: - Instance Properties
 
@@ -72,17 +72,11 @@ final class NOTAMModelLoader {
 
   /// Brings ``state`` up to date with what's installed, as on every return to the foreground.
   func refresh() {
-    guard !isDownloading else { return }
-    if NOTAMModelPack.isDeclined {
-      state = .declined
-    } else if installedFolder() == nil {
-      state = .absent
-    } else if case .unavailable(.damaged) = state {
-      return
-    } else {
-      state = loadedReader == nil ? .installed : .ready
+    Task {
+      let isInstalled = await installedFolder() != nil
+      updateState(isInstalled: isInstalled)
+      await updateDownloadSize()
     }
-    Task { await updateDownloadSize() }
   }
 
   /// Downloads the model now, as the pilot asked from Settings.
@@ -130,6 +124,19 @@ final class NOTAMModelLoader {
     state = .declined
   }
 
+  private func updateState(isInstalled: Bool) {
+    guard !isDownloading else { return }
+    if NOTAMModelPack.isDeclined {
+      state = .declined
+    } else if !isInstalled {
+      state = .absent
+    } else if case .unavailable(.damaged) = state {
+      return
+    } else {
+      state = loadedReader == nil ? .installed : .ready
+    }
+  }
+
   private func updateDownloadSize() async {
     downloadSize = try? await AssetPackManager.shared.manifest.assetPack(withID: NOTAMModelPack.id)?
       .downloadSize
@@ -166,8 +173,10 @@ final class NOTAMModelLoader {
   /// Where the installed model folder is, or `nil` when there isn't one.
   ///
   /// `url(for:)` answers with a path whether or not anything is behind it, so installation is asked
-  /// of the manager and the model's manifest is checked for as well.
-  private func installedFolder() -> URL? {
+  /// of the manager and the model's manifest is checked for as well. The manager can block while it
+  /// answers, so this runs off the main actor.
+  @concurrent
+  nonisolated private func installedFolder() async -> URL? {
     #if DEBUG
       if let path = ProcessInfo.processInfo.environment[Self.developmentFolderVariable] {
         return URL(filePath: path)
@@ -182,7 +191,7 @@ final class NOTAMModelLoader {
   }
 
   private func loadReader() async -> NOTAMModelReader? {
-    guard !NOTAMModelPack.isDeclined, let folder = installedFolder() else { return nil }
+    guard !NOTAMModelPack.isDeclined, let folder = await installedFolder() else { return nil }
     state = .verifying
     guard await isIntact(folder) else {
       state = .unavailable(.damaged)
