@@ -13,6 +13,8 @@ struct AppLauncher {
   var skipScenarioSeeding: Bool = false
   var staleNavData: Bool = false
   var favoriteAirportIDs: [String] = []
+  /// Serves NOTAMs the formatted-report parsers read, so the NOTAM editor can be filled in.
+  var readableNOTAMs: Bool = false
 
   func launch() -> WelcomePage {
     let app = XCUIApplication()
@@ -30,6 +32,9 @@ struct AppLauncher {
     }
     if staleNavData {
       args.append("STALE-NAV-DATA")
+    }
+    if readableNOTAMs {
+      args.append("READABLE-NOTAMS")
     }
     if !favoriteAirportIDs.isEmpty {
       args.append("FAVORITE-AIRPORTS=\(favoriteAirportIDs.joined(separator: ","))")

@@ -24,6 +24,14 @@ changed in the cockpit rather than what changed in the code.
   update, NOTAMs you entered are cleared.
 - Terrain over the sea and large lakes follows the water’s surface rather than
   the seafloor. Downloaded regions update once, in the background.
+- Downloaded NOTAMs now include runway closures, displaced thresholds, declared
+  distances and runway condition reports, and busy airports are no longer cut
+  off after 100 NOTAMs.
+- A runway condition report, or an obstacle NOTAM for your runway, can fill in
+  the runway’s NOTAM entries: tap Auto-Fill on its card, then check each value
+  against the NOTAM. Undo restores what you had entered.
+- The app also downloads a NOTAM reader (about 620 MB) in the background when
+  the device has room. You can delete it in Settings.
 
 ## 3.9
 

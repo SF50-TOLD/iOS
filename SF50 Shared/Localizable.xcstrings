@@ -85,6 +85,9 @@
     "Couldn’t open the navigation data." : {
 
     },
+    "Couldn’t read this NOTAM" : {
+
+    },
     "Couldn’t use the navigation data that was downloaded." : {
 
     },
@@ -118,6 +121,9 @@
     },
     "Dry Snow" : {
       "comment" : "A runway condition."
+    },
+    "Enter the NOTAM’s effects by hand." : {
+
     },
     "Equation type mismatch: expected %@, got %@." : {
       "localizations" : {
@@ -275,6 +281,9 @@
     "Preview Failed" : {
 
     },
+    "Reading the NOTAM was cancelled." : {
+
+    },
     "Received HTTP response %lld." : {
 
     },
@@ -390,6 +399,18 @@
 
     },
     "The JSON schema is invalid: %@" : {
+
+    },
+    "The NOTAM is too long to read on this device." : {
+
+    },
+    "The NOTAM reader couldn’t run." : {
+
+    },
+    "The NOTAM reader isn’t installed on this device yet." : {
+
+    },
+    "The NOTAM’s text couldn’t be interpreted." : {
 
     },
     "The terrain file “%@” is invalid or corrupted." : {

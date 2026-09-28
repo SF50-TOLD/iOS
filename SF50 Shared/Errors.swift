@@ -141,3 +141,31 @@ extension PerformanceLookupError: CustomLocalizedStringResourceConvertible {
     return .init("\(sentences.joined(separator: " "))", bundle: .sharedFramework)
   }
 }
+
+extension NOTAMExtractor.Failure: LocalizedError {
+  public var errorDescription: String? {
+    String(localized: "Couldn’t read this NOTAM", bundle: .sharedFramework)
+  }
+
+  public var failureReason: String? {
+    switch self {
+      case .modelUnavailable:
+        String(
+          localized: "The NOTAM reader isn’t installed on this device yet.",
+          bundle: .sharedFramework
+        )
+      case .cancelled:
+        String(localized: "Reading the NOTAM was cancelled.", bundle: .sharedFramework)
+      case .unreadable(.tooLong):
+        String(localized: "The NOTAM is too long to read on this device.", bundle: .sharedFramework)
+      case .unreadable(.unrecognized):
+        String(localized: "The NOTAM’s text couldn’t be interpreted.", bundle: .sharedFramework)
+      case .unreadable(.modelFailed):
+        String(localized: "The NOTAM reader couldn’t run.", bundle: .sharedFramework)
+    }
+  }
+
+  public var recoverySuggestion: String? {
+    String(localized: "Enter the NOTAM’s effects by hand.", bundle: .sharedFramework)
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "configurations" : [
+    {
+      "id" : "5E2B1C0A-7A51-4E0B-9E0C-2F0F2C1B9A01",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : false
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:SF50 TOLD.xcodeproj",
+        "identifier" : "01E0B4A03065CC2C00E8EF8C",
+        "name" : "NOTAMExtractionEvaluation"
+      }
+    }
+  ],
+  "version" : 1
+}

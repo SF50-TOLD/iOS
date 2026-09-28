@@ -62,6 +62,7 @@ struct SF50_TOLDApp: App {
         .task {
           await ScenarioSeeder(container: sharedModelContainer).seedDefaultScenariosIfNeeded()
           _ = TerrainDataLoader.shared
+          _ = NOTAMModelLoader.shared
         }
         .task { await adoptNewNavDataGenerations() }
     }
@@ -77,6 +78,7 @@ struct SF50_TOLDApp: App {
         case .active:
           TerrainDataLoader.shared.refreshAvailableRegions()
           TerrainDataLoader.shared.checkForPackUpdatesIfDue()
+          NOTAMModelLoader.shared.refresh()
           scheduleBackgroundWork()
         default: break
       }

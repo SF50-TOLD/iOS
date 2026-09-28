@@ -43,13 +43,18 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   private static let logger = Logger(label: "codes.tim.SF50-TOLD.BasePerformanceViewModel")
 
+  /// How long after a NOTAM expires it's still treated as current, as the NOTAM list does.
+  private static let expiryWindowSeconds: TimeInterval = 3600
+
   private let container: ModelContainer
 
   private var notamStore: NOTAMStore { .init(context: container.mainContext) }
   private let notamLoader: any NOTAMLoaderProtocol
+  private let notamProposer: NOTAMProposer
   internal var model: (any PerformanceModel)?
   private var cancellables: Set<Task<Void, Never>> = []
   private var notamObservationTask: Task<Void, Never>?
+  private var notamReadingTask: Task<Void, Never>?
   internal let calculationService: any PerformanceCalculationService
 
   // MARK: - Inputs (to be overridden or used by subclasses)
@@ -73,6 +78,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   public private(set) var runway: Runway? {
     didSet {
       notam = runway.flatMap { notamStore.upsert(for: $0) }
+      notamProposal = nil
       model = initializeModel()
       Task { recalculate() }
 
@@ -111,6 +117,12 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   /// Whether we have attempted to fetch NOTAMs for the current airport
   public private(set) var hasAttemptedNOTAMFetch = false
 
+  /// What the downloaded NOTAMs propose for the selected runway, once they've been read.
+  public private(set) var notamProposal: NOTAMProposal?
+
+  /// Whether the downloaded NOTAMs are being read for proposals.
+  public private(set) var isReadingNOTAMs = false
+
   // MARK: - Computed Properties
 
   internal var configuration: Configuration {
@@ -141,11 +153,13 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     calculationService: any PerformanceCalculationService = DefaultPerformanceCalculationService
       .shared,
     notamLoader: (any NOTAMLoaderProtocol)? = nil,
+    notamProposer: NOTAMProposer? = nil,
     defaultFlapSetting: FlapSetting
   ) {
     self.container = container
     self.calculationService = calculationService
     self.notamLoader = notamLoader ?? NOTAMLoader.shared
+    self.notamProposer = notamProposer ?? NOTAMProposer { nil }
 
     // temporary values, overwritten by recalculate()
     model = nil
@@ -158,6 +172,50 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     Task { recalculate() }
 
     setupObservation()
+  }
+
+  // MARK: - NOTAM Identifiers
+
+  /// Every identifier the NOTAM service may file an airport's NOTAMs under.
+  ///
+  /// The service keeps FAA-format NOTAMs — obstacles, procedures — under the FAA identifier (`DEN`)
+  /// and ICAO-format ones — runway closures, declared distances, condition reports — under the ICAO
+  /// identifier (`KDEN`), with none in common, so an airport's NOTAMs are the two sets together.
+  private static func NOTAMIdentifiers(of airport: Airport) -> [String] {
+    [airport.locationID, airport.ICAO_ID].compactMap(\.self).reduce(into: []) { identifiers, id in
+      if !identifiers.contains(id) { identifiers.append(id) }
+    }
+  }
+
+  /// Downloads the NOTAMs filed under each of `identifiers` at once and combines them.
+  ///
+  /// - Throws: Only when every download fails; one that succeeds is enough to show.
+  static func downloadNOTAMs(
+    for identifiers: [String],
+    from startDate: Date?,
+    to endDate: Date?,
+    using loader: any NOTAMLoaderProtocol
+  ) async throws -> [NOTAMResponse] {
+    let results = await withTaskGroup(of: Result<[NOTAMResponse], any Error>.self) { group in
+      for identifier in identifiers {
+        group.addTask {
+          do {
+            return .success(
+              try await loader.fetchNOTAMs(for: identifier, startDate: startDate, endDate: endDate)
+            )
+          } catch {
+            return .failure(error)
+          }
+        }
+      }
+      var results: [Result<[NOTAMResponse], any Error>] = []
+      for await result in group { results.append(result) }
+      return results
+    }
+    let downloaded = results.compactMap { try? $0.get() }
+    if downloaded.isEmpty, let failure = results.first { _ = try failure.get() }
+    var seen = Set<Int>()
+    return downloaded.flatMap(\.self).filter { seen.insert($0.id).inserted }
   }
 
   // MARK: - Observation Setup
@@ -319,15 +377,13 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       return
     }
 
-    // NOTAM API uses 3-letter identifiers (e.g., FAI) not ICAO codes (e.g., PAFA)
-    // Try locationID first, fallback to ICAO_ID if locationID unavailable
     let primaryIdentifier = airport.locationID
-    let fallbackIdentifier = airport.ICAO_ID
 
     // Check cache first
     if let cached = await NOTAMCache.shared.get(for: primaryIdentifier) {
       downloadedNOTAMs = filterNOTAMs(cached, relativeTo: plannedTime)
       hasAttemptedNOTAMFetch = true
+      readNOTAMs(plannedTime: plannedTime)
       return
     }
 
@@ -339,21 +395,12 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       let startDate = Calendar.current.date(byAdding: .day, value: -7, to: plannedTime)
       let endDate = Calendar.current.date(byAdding: .day, value: 30, to: plannedTime)
 
-      // Try primary identifier first
-      var notams = try await notamLoader.fetchNOTAMs(
-        for: primaryIdentifier,
-        startDate: startDate,
-        endDate: endDate
+      let notams = try await Self.downloadNOTAMs(
+        for: Self.NOTAMIdentifiers(of: airport),
+        from: startDate,
+        to: endDate,
+        using: notamLoader
       )
-
-      // If no results and we have a fallback identifier, try that
-      if notams.isEmpty, let fallbackIdentifier, fallbackIdentifier != primaryIdentifier {
-        notams = try await notamLoader.fetchNOTAMs(
-          for: fallbackIdentifier,
-          startDate: startDate,
-          endDate: endDate
-        )
-      }
 
       // Invalidate old cache only after successfully downloading new NOTAMs
       await NOTAMCache.shared.invalidate(for: primaryIdentifier)
@@ -366,6 +413,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
       // Mark that we've attempted to fetch NOTAMs
       hasAttemptedNOTAMFetch = true
+      readNOTAMs(plannedTime: plannedTime)
     } catch {
       // Log error but don't show to user - NOTAMs are supplementary
       Self.logger.error("Failed to fetch NOTAMs: \(error)")
@@ -374,6 +422,32 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     }
 
     isLoadingNOTAMs = false
+  }
+
+  /// Reads the downloaded NOTAMs for what they propose for the selected runway, replacing any
+  /// reading already under way.
+  ///
+  /// NOTAMs that have expired by the planned time are skipped: the model takes up to seconds for
+  /// each, and nothing they say applies to the flight.
+  private func readNOTAMs(plannedTime: Date) {
+    notamReadingTask?.cancel()
+    guard let runway else {
+      notamProposal = nil
+      return
+    }
+    let
+      notams = downloadedNOTAMs.filter {
+        !$0.hasExpired(before: plannedTime, windowInterval: Self.expiryWindowSeconds)
+      },
+      proposalRunway = ProposalRunway(runway),
+      proposer = notamProposer
+    isReadingNOTAMs = true
+    notamReadingTask = Task { [weak self] in
+      let proposals = await proposer.proposals(for: notams, runways: [proposalRunway])
+      guard !Task.isCancelled, let self else { return }
+      notamProposal = proposals.byRunway[proposalRunway.name]
+      isReadingNOTAMs = false
+    }
   }
 
   /// Filters NOTAMs to show only currently active or upcoming ones
@@ -512,6 +586,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   isolated deinit {
     notamObservationTask?.cancel()
+    notamReadingTask?.cancel()
     for task in cancellables { task.cancel() }
   }
 }
