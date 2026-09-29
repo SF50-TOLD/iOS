@@ -21,6 +21,9 @@ changed in the cockpit rather than what changed in the code.
 - A runway condition report, or an obstacle NOTAM for your runway, can fill in
   the runway’s NOTAM entries: tap Auto-Fill on its card, then check each value
   against the NOTAM. Undo restores what you had entered.
+- The airport search field is there as soon as you open the airport picker, so
+  searching takes one tap instead of two. Your search results replace the
+  favorite, recent and nearby airports until you clear the search.
 
 ## 3.9
 

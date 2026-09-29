@@ -88,7 +88,6 @@ extension SF50_TOLDUITests {
     let takeoff = tabBar.goToTakeoff()
 
     let picker = takeoff.openAirportPicker()
-    picker.switchToSearch()
     picker.search(for: "SQL")
     picker.dismissKeyboard()
 
@@ -98,9 +97,9 @@ extension SF50_TOLDUITests {
     )
 
     // Check if already favorited
+    picker.clearSearch()
     picker.switchToFavorites()
     let alreadyFavorited = picker.isAirportVisible("SQL")
-    picker.switchToSearch()
     picker.search(for: "SQL")
     picker.dismissKeyboard()
     _ = picker.app.buttons["airportRow-SQL"].firstMatch.waitForExistence(timeout: 2)
@@ -111,12 +110,13 @@ extension SF50_TOLDUITests {
 
     picker.toggleFavorite(for: "SQL")
 
+    picker.clearSearch()
     picker.switchToFavorites()
     XCTAssertTrue(picker.isAirportVisible("SQL"), "SQL should appear in favorites")
 
     picker.toggleFavorite(for: "SQL")
 
-    picker.switchToSearch()
+    picker.switchToRecents()
     picker.switchToFavorites()
 
     XCTAssertFalse(picker.isAirportVisible("SQL"), "SQL should be removed from favorites")
@@ -368,7 +368,6 @@ extension SF50_TOLDUITests {
     takeoff.setFuel("0")
 
     let picker = takeoff.openAirportPicker()
-    picker.switchToSearch()
     picker.search(for: "ASE")
 
     if takeoff.app.buttons["airportRow-ASE"].firstMatch.waitForExistence(timeout: 3) {
@@ -681,7 +680,6 @@ extension SF50_TOLDUITests {
     let takeoff = tabBar.goToTakeoff()
 
     let picker = takeoff.openAirportPicker()
-    picker.switchToSearch()
     picker.search(for: "1C9")
 
     XCTAssertTrue(

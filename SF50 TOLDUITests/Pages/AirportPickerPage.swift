@@ -15,10 +15,6 @@ final class AirportPickerPage: BasePage {
     selectSegment("Recents")
   }
 
-  func switchToSearch() {
-    selectSegment("Search")
-  }
-
   /// Select an airport-picker segment, retrying until it reports selected. On
   /// iOS 26 the first tap into a freshly presented sheet is absorbed by the
   /// dismissing overlay, so a single `forceTap` can silently leave the previous
@@ -70,6 +66,16 @@ final class AirportPickerPage: BasePage {
     }
   }
 
+  /// Empties the search field, which brings the airport lists back in place of the results.
+  func clearSearch() {
+    let clearButton = app.searchFields.firstMatch.buttons["Clear text"]
+    if clearButton.exists { forceTap(clearButton) }
+    XCTAssertTrue(
+      segmentedControl.waitForExistence(timeout: 5),
+      "Airport lists should return once the search is cleared"
+    )
+  }
+
   func selectAirport(_ identifier: String) {
     let row = app.buttons["airportRow-\(identifier)"].firstMatch
     XCTAssertTrue(
@@ -80,7 +86,6 @@ final class AirportPickerPage: BasePage {
   }
 
   func searchAndSelect(_ identifier: String) {
-    switchToSearch()
     search(for: identifier)
     selectAirport(identifier)
   }
