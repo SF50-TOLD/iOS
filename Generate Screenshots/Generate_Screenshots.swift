@@ -12,8 +12,8 @@ import XCUITestKit
 nonisolated final class Generate_Screenshots: XCTestCase {
 
   /// KASE's NASR record ID (its FAA site number). Seeding it as a favorite lets
-  /// the flow select Aspen from the Favorites tab instead of the airport search
-  /// field, whose keyboard and search bar orphan themselves over the popped-to
+  /// the flow select Aspen from the Favorites tab instead of searching for it:
+  /// the search keyboard and search bar orphan themselves over the popped-to
   /// form on iOS 26 under a fresh run's load and block the runway picker.
   private static let aspenRecordID = "02517.*A"
 
@@ -135,10 +135,10 @@ extension Generate_Screenshots {
     )
 
     // Select KASE from the Favorites tab (the picker's default), where it is
-    // seeded via the FAVORITE-AIRPORTS launch argument. The Favorites list has
-    // no `.searchable` field, so selecting from it avoids the orphaned search
-    // keyboard that otherwise floats over the popped-to form and swallows the
-    // tap that opens the runway picker.
+    // seeded via the FAVORITE-AIRPORTS launch argument. Selecting from it leaves
+    // the search field untouched, avoiding the orphaned search keyboard that
+    // otherwise floats over the popped-to form and swallows the tap that opens
+    // the runway picker.
     let takeoffAirportRow = app.buttons["airportRow-ASE"].firstMatch
     XCTAssertTrue(
       takeoffAirportRow.waitForExistence(timeout: 10),

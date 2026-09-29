@@ -6,13 +6,13 @@ private enum AirportPickerTabs {
   case favorites
   case recents
   case nearest
-  case search
 }
 
 struct AirportPicker: View {
   var onSelect: (Airport) -> Void
 
   @State private var tabIndex: AirportPickerTabs = .favorites
+  @State private var searchText = ""
 
   @Environment(\.presentationMode)
   private var mode
@@ -21,24 +21,32 @@ struct AirportPicker: View {
   private var recentAirports
 
   var body: some View {
-    VStack(alignment: .leading) {
-      Picker("Tab", selection: $tabIndex) {
-        Text("Favorites").tag(AirportPickerTabs.favorites)
-        Text("Recents").tag(AirportPickerTabs.recents)
-        Text("Nearest").tag(AirportPickerTabs.nearest)
-        Text("Search").tag(AirportPickerTabs.search)
-      }
-      .pickerStyle(SegmentedPickerStyle())
-      .padding(.horizontal)
-      .accessibilityIdentifier("airportListPicker")
+    // The search field attaches to the navigation stack that presented the
+    // picker; a nested stack here would outlive the pop and strand the field
+    // onscreen.
+    Group {
+      if searchText.isEmpty {
+        VStack(alignment: .leading) {
+          Picker("Tab", selection: $tabIndex) {
+            Text("Favorites").tag(AirportPickerTabs.favorites)
+            Text("Recents").tag(AirportPickerTabs.recents)
+            Text("Nearest").tag(AirportPickerTabs.nearest)
+          }
+          .pickerStyle(SegmentedPickerStyle())
+          .padding(.horizontal)
+          .accessibilityIdentifier("airportListPicker")
 
-      switch tabIndex {
-        case .favorites: FavoritesView(onSelect: selectAndDismiss)
-        case .recents: RecentsView(onSelect: selectAndDismiss)
-        case .nearest: NearestView(onSelect: selectAndDismiss)
-        case .search: SearchView(onSelect: selectAndDismiss)
+          switch tabIndex {
+            case .favorites: FavoritesView(onSelect: selectAndDismiss)
+            case .recents: RecentsView(onSelect: selectAndDismiss)
+            case .nearest: NearestView(onSelect: selectAndDismiss)
+          }
+        }
+      } else {
+        SearchView(searchText: searchText, onSelect: selectAndDismiss)
       }
     }
+    .searchable(text: $searchText)
   }
 
   private func selectAndDismiss(airport: Airport) {

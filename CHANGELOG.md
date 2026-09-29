@@ -32,6 +32,9 @@ changed in the cockpit rather than what changed in the code.
   against the NOTAM. Undo restores what you had entered.
 - The app also downloads a NOTAM reader (about 620 MB) in the background when
   the device has room. You can delete it in Settings.
+- The airport search field is there as soon as you open the airport picker, so
+  searching takes one tap instead of two. Your search results replace the
+  favorite, recent and nearby airports until you clear the search.
 
 ## 3.9
 
