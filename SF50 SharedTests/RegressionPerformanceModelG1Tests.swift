@@ -107,7 +107,7 @@ struct RegressionPerformanceModelG1Tests {
   // MARK: - VREF Tests
 
   @Test
-  func `VREF within tolerance`() throws {
+  func `VREF gives every tabulated speed`() throws {
     // Test VREF values for different flap settings against DataTable values
     let baseURL = Bundle(for: BasePerformanceModel.self).resourceURL!
       .appending(component: "Data/g1/vref")
@@ -147,15 +147,17 @@ struct RegressionPerformanceModelG1Tests {
 
         let result = model.VrefKts
 
-        // Vref is a simple linear formula, not a regression model, so it must return a plain value
+        // VREF runs through the AFM's own points rather than a fit, so it has no uncertainty
         guard case .value(let value) = result else {
           PerformanceCase(for: model, aircraftType: .g1)
             .fail("Vref should return a plain value, got \(result)", computing: "Vref")
           continue
         }
 
-        // Check that the value is within 2% tolerance of expected
-        #expect(value.isApproximatelyEqual(to: expected, relativeTolerance: 0.02))
+        #expect(
+          value.isApproximatelyEqual(to: expected, absoluteTolerance: 1e-9),
+          "\(config.flapSetting) at \(weight) lb"
+        )
       }
     }
   }

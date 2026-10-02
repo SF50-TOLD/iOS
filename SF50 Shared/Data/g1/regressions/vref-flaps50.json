@@ -2,10 +2,73 @@
   "version": "1.0",
   "name": "vref-flaps50",
   "description": "Reference speed for flaps 50 configuration",
-  "type": "linear",
-  "variables": ["weight"],
+  "type": "piecewise",
+  "variables": [
+    "weight"
+  ],
+  "uncertainty_key": null,
   "equation": {
-    "slope": 0.009,
-    "intercept": 46.0
+    "breakpoints": [
+      {
+        "condition": {
+          "variable": "weight",
+          "operator": "<=",
+          "value": 4500.0
+        },
+        "result": {
+          "type": "linear",
+          "slope": 0.01,
+          "intercept": 42.0
+        }
+      },
+      {
+        "condition": {
+          "variable": "weight",
+          "operator": "<=",
+          "value": 5000.0
+        },
+        "result": {
+          "type": "linear",
+          "slope": 0.008,
+          "intercept": 51.0
+        }
+      },
+      {
+        "condition": {
+          "variable": "weight",
+          "operator": "<=",
+          "value": 5500.0
+        },
+        "result": {
+          "type": "linear",
+          "slope": 0.01,
+          "intercept": 41.0
+        }
+      },
+      {
+        "condition": {
+          "variable": "weight",
+          "operator": "<=",
+          "value": 6000.0
+        },
+        "result": {
+          "type": "linear",
+          "slope": 0.008,
+          "intercept": 52.0
+        }
+      },
+      {
+        "condition": {
+          "variable": "weight",
+          "operator": ">",
+          "value": 6000.0
+        },
+        "result": {
+          "type": "linear",
+          "slope": 0.008,
+          "intercept": 52.0
+        }
+      }
+    ]
   }
 }
