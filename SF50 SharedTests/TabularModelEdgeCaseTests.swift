@@ -157,26 +157,39 @@ struct TabularModelEdgeCaseTests {
     #expect(substituted == atMinimumWeight)
   }
 
-  @Test
-  func `offscale high altitude`() {
-    // Test altitude above maximum should return offscale high
-    let conditions = Helper.createTestConditions(temperature: 20)
-    let config = Helper.createTestConfiguration(weight: 5500)
-    let runway = Helper.createTestRunway(elevation: 12000)  // Above maximum
-
+  @Test(arguments: [-1500.0, 10_500, 12_000])
+  func `an airport outside the AFM’s elevation limits is not authorized`(elevation: Double) {
+    let runway = Helper.createTestRunway(elevation: elevation)
     let model = TabularPerformanceModel(
-      conditions: conditions,
-      configuration: config,
+      conditions: Helper.createTestConditions(temperature: 20),
+      configuration: Helper.createTestConfiguration(weight: 5500),
       runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
       notam: nil,
       aircraftType: .g1
     )
 
-    let result = model.takeoffRunFt
-    #expect(
-      result == .offscaleHigh(clamped: nil),
-      "Altitude above maximum should return offscale high"
-    )
+    #expect(model.takeoffRunFt == .notAuthorized)
+    #expect(model.takeoffClimbGradientFtNM == .notAuthorized)
+    #expect(model.landingDistanceFt == .notAuthorized)
+  }
+
+  @Test
+  func `an airport below sea level reads the sea-level figures`() {
+    func model(elevation: Double) -> TabularPerformanceModel {
+      let runway = Helper.createTestRunway(elevation: elevation)
+      return TabularPerformanceModel(
+        conditions: Helper.createTestConditions(temperature: 20),
+        configuration: Helper.createTestConfiguration(weight: 5500),
+        runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
+        notam: nil,
+        aircraftType: .g1
+      )
+    }
+
+    let seaLevel = model(elevation: 0), belowSeaLevel = model(elevation: -500)
+    #expect(belowSeaLevel.takeoffRunFt == seaLevel.takeoffRunFt)
+    #expect(belowSeaLevel.landingDistanceFt == seaLevel.landingDistanceFt)
+    #expect(belowSeaLevel.takeoffRunFt.nominal != nil)
   }
 
   @Test

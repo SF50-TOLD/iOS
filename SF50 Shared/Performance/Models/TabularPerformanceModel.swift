@@ -9,6 +9,9 @@ final class TabularPerformanceModel: BasePerformanceModel {
 
   // MARK: - Properties
 
+  private static let seaLevelFt = 0.0
+
+  private let limitations: any Limitations.Type
   private let takeoffRunData: DataTable
   private let takeoffDistanceData: DataTable
   private let takeoffClimbGradientData: DataTable
@@ -43,11 +46,11 @@ final class TabularPerformanceModel: BasePerformanceModel {
   // MARK: - Non-Distance Outputs
 
   override var takeoffClimbGradientFtNM: Value<Double> {
-    takeoffClimbGradientData.value(for: [weight, altitude, temperature])
+    atApprovedAirport { takeoffClimbGradientData.value(for: [weight, chartElevation, temperature]) }
   }
 
   override var takeoffClimbRateFtMin: Value<Double> {
-    takeoffClimbRateData.value(for: [weight, altitude, temperature])
+    atApprovedAirport { takeoffClimbRateData.value(for: [weight, chartElevation, temperature]) }
   }
 
   override var VrefKts: Value<Double> {
@@ -106,6 +109,8 @@ final class TabularPerformanceModel: BasePerformanceModel {
     let loader = DataTableLoader(aircraftType: aircraftType)
     let landingPrefix = loader.landingPrefix(for: configuration.flapSetting)
 
+    limitations = aircraftType.limitations
+
     takeoffRunData = loader.loadTakeoffRunData()
     takeoffDistanceData = loader.loadTakeoffDistanceData()
     takeoffClimbGradientData = loader.loadTakeoffClimbGradientData()
@@ -163,29 +168,31 @@ final class TabularPerformanceModel: BasePerformanceModel {
   /// so that the readout can say the AFM never covered the conditions asked for. Above the range,
   /// where holding the input would understate the distance, no figure is offered at all.
   override func baseValue(for target: DistanceTarget) -> Value<Double> {
-    switch target {
-      case .takeoffRun:
-        takeoffRunData.value(
-          for: [weight, altitude, temperature],
-          clamping: [.clampLow, .clampLow, .clampLow]
-        )
-      case .takeoffDistance:
-        takeoffDistanceData.value(
-          for: [weight, altitude, temperature],
-          clamping: [.clampLow, .clampLow, .clampLow]
-        )
-      case .landingRun:
-        configuration.flapSetting.hasLandingGroundRun
-          ? landingRunData.value(
-            for: [weight, altitude, temperature],
+    atApprovedAirport {
+      switch target {
+        case .takeoffRun:
+          takeoffRunData.value(
+            for: [weight, chartElevation, temperature],
             clamping: [.clampLow, .clampLow, .clampLow]
           )
-          : .notAvailable
-      case .landingDistance:
-        landingDistanceData.value(
-          for: [weight, altitude, temperature],
-          clamping: [.clampLow, .clampLow, .clampLow]
-        ) * (configuration.flapSetting.flapsUpLandingDistanceFactor ?? 1)
+        case .takeoffDistance:
+          takeoffDistanceData.value(
+            for: [weight, chartElevation, temperature],
+            clamping: [.clampLow, .clampLow, .clampLow]
+          )
+        case .landingRun:
+          configuration.flapSetting.hasLandingGroundRun
+            ? landingRunData.value(
+              for: [weight, chartElevation, temperature],
+              clamping: [.clampLow, .clampLow, .clampLow]
+            )
+            : .notAvailable
+        case .landingDistance:
+          landingDistanceData.value(
+            for: [weight, chartElevation, temperature],
+            clamping: [.clampLow, .clampLow, .clampLow]
+          ) * (configuration.flapSetting.flapsUpLandingDistanceFactor ?? 1)
+      }
     }
   }
 
@@ -284,5 +291,30 @@ final class TabularPerformanceModel: BasePerformanceModel {
   /// tabulated one would have its penalty understated, so it comes back offscale instead.
   private func lookupFactor(_ data: DataTable) -> Value<Double> {
     data.value(for: [weight], clamping: [.clampLow])
+  }
+}
+
+// MARK: - Airport Elevation
+
+extension TabularPerformanceModel {
+  /// Whether the airport lies within the elevations the AFM approves for takeoff and landing.
+  ///
+  /// The tables answer only there; the regression model is free to extrapolate past them.
+  private var isAirportElevationApproved: Bool {
+    (limitations.minAirportElevation...limitations.maxAirportElevation).contains(runway.elevation)
+  }
+
+  /// The elevation the takeoff and landing tables are read at.
+  ///
+  /// Below sea level the AFM has its sea-level figures used, so those are what the tables give,
+  /// as an answer the AFM stands behind rather than an offscale one.
+  private var chartElevation: Double {
+    Swift.max(altitude, Self.seaLevelFt)
+  }
+
+  /// Reads a takeoff or landing figure, which the AFM does not authorize at an airport outside its
+  /// approved elevations.
+  private func atApprovedAirport(_ figure: () -> Value<Double>) -> Value<Double> {
+    isAirportElevationApproved ? figure() : .notAuthorized
   }
 }

@@ -454,6 +454,17 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       }
     }
 
+    // Airport elevation, which bounds only the tables; the regression may extrapolate past it
+    if !Defaults[.useRegressionModel], let runway {
+      let elevation = runway.elevationOrAirportElevation,
+        approvedElevations = limits.minAirportElevation...limits.maxAirportElevation
+      if !approvedElevations.contains(elevation) {
+        notes.append(
+          .airportElevationOutsideLimits(elevation: elevation, limits: approvedElevations)
+        )
+      }
+    }
+
     // Weight exceedances
     let maxWeight =
       operation == .takeoff

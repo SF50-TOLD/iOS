@@ -22,7 +22,7 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
   // MARK: - Template Method Overrides
 
   override func maxWeight() -> Measurement<UnitMass> {
-    LimitationsG2Plus.maxLandingWeight
+    input.aircraftType.limitations.maxLandingWeight
   }
 
   override func createScenario(name: String, runways: [RunwayInput: LandingRunwayPerformance])

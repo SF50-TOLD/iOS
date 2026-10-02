@@ -39,6 +39,16 @@
     "Airport" : {
 
     },
+    "Airport elevation of %@ is outside the AFM’s %@ to %@ limits." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Airport elevation of %1$@ is outside the AFM’s %2$@ to %3$@ limits."
+          }
+        }
+      }
+    },
     "Antarctica" : {
 
     },

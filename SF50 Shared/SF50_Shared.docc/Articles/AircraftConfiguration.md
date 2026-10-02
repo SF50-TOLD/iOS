@@ -15,7 +15,6 @@ Aircraft type, weight and flap settings, operational limits, and user-defined wh
 - ``Limitations``
 - ``LimitationsG1``
 - ``LimitationsG2``
-- ``LimitationsG2Plus``
 
 ### Scenarios
 

@@ -21,7 +21,7 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
   // MARK: - Template Method Overrides
 
   override func maxWeight() -> Measurement<UnitMass> {
-    LimitationsG2Plus.maxTakeoffWeight
+    input.aircraftType.limitations.maxTakeoffWeight
   }
 
   override func createScenario(name: String, runways: [RunwayInput: TakeoffRunwayPerformance])

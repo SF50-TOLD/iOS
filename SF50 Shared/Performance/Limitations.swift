@@ -18,6 +18,14 @@ public protocol Limitations {
   /// Maximum pressure altitude for enroute flight.
   static var maxEnrouteAltitude: Measurement<UnitLength> { get }
 
+  /// Highest airport elevation approved for takeoff and landing.
+  static var maxAirportElevation: Measurement<UnitLength> { get }
+
+  /// Lowest airport elevation approved for takeoff and landing.
+  ///
+  /// Performance below sea level is read from the sea-level figures.
+  static var minAirportElevation: Measurement<UnitLength> { get }
+
   /// Maximum tailwind component for takeoff and landing.
   static var maxTailwind: Measurement<UnitSpeed> { get }
 
@@ -44,6 +52,8 @@ public struct LimitationsG1: Limitations {
   public static let maxZeroFuelWeight = Measurement(value: 4900, unit: UnitMass.pounds)
   public static let maxEnrouteAltitude = Measurement(value: 28_000, unit: UnitLength.feet)
   // takeoff and landing
+  public static let maxAirportElevation = Measurement(value: 10_000, unit: UnitLength.feet)
+  public static let minAirportElevation = Measurement(value: -1000, unit: UnitLength.feet)
   public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps50 = Measurement(value: 18, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps100 = Measurement(value: 16, unit: UnitSpeed.knots)
@@ -61,29 +71,12 @@ public struct LimitationsG2: Limitations {
   public static let maxZeroFuelWeight = Measurement(value: 4900, unit: UnitMass.pounds)
   public static let maxEnrouteAltitude = Measurement(value: 31_000, unit: UnitLength.feet)
   // takeoff and landing
+  public static let maxAirportElevation = Measurement(value: 10_000, unit: UnitLength.feet)
+  public static let minAirportElevation = Measurement(value: -1000, unit: UnitLength.feet)
   public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps50 = Measurement(value: 18, unit: UnitSpeed.knots)
   public static let maxCrosswind_flaps100 = Measurement(value: 16, unit: UnitSpeed.knots)
   public static let maxFuel = Measurement(value: 296, unit: UnitVolume.gallons)
-  public static let minTemperature = Measurement(value: -40, unit: UnitTemperature.celsius)
-  public static let maxTemperature = Measurement(value: 50, unit: UnitTemperature.celsius)
-
-  private init() {}
-}
-
-/// Operational limitations for second-generation plus SF50 Vision Jet (G2+).
-public struct LimitationsG2Plus: Limitations {
-  public static let maxTakeoffWeight = Measurement(value: 6000, unit: UnitMass.pounds)
-  public static let maxLandingWeight = Measurement(value: 5550, unit: UnitMass.pounds)
-  public static let maxZeroFuelWeight = Measurement(value: 4900, unit: UnitMass.pounds)
-  public static let maxTakeoffAltitude = Measurement(value: 10_000, unit: UnitLength.feet)
-  public static let maxEnrouteAltitude = Measurement(value: 31_000, unit: UnitLength.feet)
-  // takeoff and landing
-  public static let maxTailwind = Measurement(value: 10, unit: UnitSpeed.knots)
-  public static let maxCrosswind_flaps50 = Measurement(value: 18, unit: UnitSpeed.knots)
-  public static let maxCrosswind_flaps100 = Measurement(value: 16, unit: UnitSpeed.knots)
-  public static let maxFuel = Measurement(value: 296, unit: UnitVolume.gallons)
-  public static let minRunwayLength = Measurement(value: 1400, unit: UnitLength.feet)
   public static let minTemperature = Measurement(value: -40, unit: UnitTemperature.celsius)
   public static let maxTemperature = Measurement(value: 50, unit: UnitTemperature.celsius)
 

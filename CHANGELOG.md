@@ -25,6 +25,10 @@ changed in the cockpit rather than what changed in the code.
 - Corrected climb figures: the ice-contaminated climb profile showed climbs
   where the AFM shows none. Obstacle climb now comes from the AFM tables, and
   the en route climb tables run to FL310.
+- Airports above 10,000 feet or below −1,000 feet are outside the AFM’s limits,
+  and the app no longer gives takeoff and landing figures for them; it says why
+  instead. Below sea level it uses the AFM’s sea-level figures. The experimental
+  regression model still gives figures everywhere.
 
 ## 3.8.2
 

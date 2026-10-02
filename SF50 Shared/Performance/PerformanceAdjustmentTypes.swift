@@ -145,6 +145,10 @@ public enum PerformanceNote: Sendable {
   case weightAboveMax(weight: Measurement<UnitMass>, limit: Measurement<UnitMass>)
   case zeroFuelWeightExceeded(weight: Measurement<UnitMass>, limit: Measurement<UnitMass>)
   case fuelExceedsCapacity(fuel: Measurement<UnitVolume>, limit: Measurement<UnitVolume>)
+  case airportElevationOutsideLimits(
+    elevation: Measurement<UnitLength>,
+    limits: ClosedRange<Measurement<UnitLength>>
+  )
   case takeoffDistanceExceedsAvailable(
     required: Measurement<UnitLength>,
     available: Measurement<UnitLength>
@@ -174,6 +178,7 @@ public enum PerformanceNote: Sendable {
         .info
       case .crosswindExceedance, .tailwindExceedance,
         .weightAboveMax, .zeroFuelWeightExceeded, .fuelExceedsCapacity,
+        .airportElevationOutsideLimits,
         .takeoffDistanceExceedsAvailable,
         .takeoffRunExceedsAvailable,
         .landingDistanceExceedsAvailable,
@@ -243,6 +248,12 @@ public enum PerformanceNote: Sendable {
         return String(
           localized:
             "Fuel quantity of \(fuel.asFuel, format: .fuel) exceeds the \(limit.asFuel, format: .fuel) usable capacity.",
+          bundle: .sharedFramework
+        )
+      case .airportElevationOutsideLimits(let elevation, let limits):
+        return String(
+          localized:
+            "Airport elevation of \(elevation.asHeight, format: .height) is outside the AFM’s \(limits.lowerBound.asHeight, format: .height) to \(limits.upperBound.asHeight, format: .height) limits.",
           bundle: .sharedFramework
         )
       case .takeoffDistanceExceedsAvailable(let required, let available):
