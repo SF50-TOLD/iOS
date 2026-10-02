@@ -31,6 +31,8 @@ changed in the cockpit rather than what changed in the code.
   and the app no longer gives takeoff and landing figures for them; it says why
   instead. Below sea level it uses the AFM’s sea-level figures. The experimental
   regression model still gives figures everywhere.
+- The experimental regression model no longer says a flaps 100 landing meets
+  the go-around climb gradient where the AFM says it doesn’t.
 
 ## 3.8.2
 

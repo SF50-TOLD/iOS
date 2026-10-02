@@ -42,7 +42,7 @@ final class RegressionPerformanceModel: BasePerformanceModel {
   private let landingDistanceFlaps50IceEquation: RegressionEquation
 
   // Go-Around
-  private let goAroundEquation: RegressionEquation
+  private let goAroundEquation: RegressionEquation?
 
   // VREF
   private let vrefEquation: RegressionEquation
@@ -145,8 +145,15 @@ final class RegressionPerformanceModel: BasePerformanceModel {
 
   // MARK: - Go-Around Climb Gradient
 
+  /// Whether the go-around climb gradient is met, from the classifier fit to this configuration's
+  /// landing table.
+  ///
+  /// The AFM's ice-contaminated landing table prints every cell, so in icing the gradient is met
+  /// wherever that table reaches. Past its hot or high edge the AFM says nothing, and the model
+  /// answers as the tabular one does, that the gradient is not met.
   override var meetsGoAroundClimbGradient: Value<Bool> {
-    evaluateBool(goAroundEquation)
+    guard let goAroundEquation else { return .value(!landingInputsOffscaleHigh) }
+    return evaluateBool(goAroundEquation)
   }
 
   // MARK: - Landing Base Values
@@ -210,7 +217,9 @@ final class RegressionPerformanceModel: BasePerformanceModel {
       flapSetting: .flaps50Ice
     )
 
-    goAroundEquation = loader.loadGoAroundClimbGradientEquation()
+    goAroundEquation = loader.loadGoAroundClimbGradientEquation(
+      flapSetting: configuration.flapSetting
+    )
     vrefEquation = loader.loadVrefEquation(flapSetting: configuration.flapSetting)
 
     takeoffRunHeadwindFactorEquation = loader.loadTakeoffRunHeadwindFactorEquation()

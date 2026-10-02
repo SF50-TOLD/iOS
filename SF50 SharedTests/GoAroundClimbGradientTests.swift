@@ -5,105 +5,93 @@ import Testing
 
 struct GoAroundClimbGradientTests {
 
-  // MARK: - Helper
+  // MARK: - Helpers
 
-  private func buildModel(
-    weight: Double = 6000,
-    elevation: Double = 0,
-    temperature: Double = 15
+  private static let configurations: [(FlapSetting, landingTable: String)] = [
+    (.flaps100, "100"), (.flaps50, "50"), (.flapsUp, "50")
+  ]
+
+  private static let aircraft: [AircraftType] = [
+    .g1, .g2(updatedThrustSchedule: false), .g2Plus
+  ]
+
+  private func model(
+    _ aircraftType: AircraftType,
+    flapSetting: FlapSetting,
+    weight: Double,
+    elevation: Double,
+    temperature: Double
   ) -> RegressionPerformanceModel {
-    let conditions = Helper.createTestConditions(temperature: temperature)
-    let configuration = Helper.createTestConfiguration(weight: weight)
-    let runway = Helper.createTestRunwayInput(elevation: elevation)
-    return RegressionPerformanceModel(
-      conditions: conditions,
-      configuration: configuration,
-      runway: runway,
+    RegressionPerformanceModel(
+      conditions: Helper.createTestConditions(temperature: temperature),
+      configuration: Helper.createTestConfiguration(weight: weight, flapSetting: flapSetting),
+      runway: Helper.createTestRunwayInput(elevation: elevation),
       notam: nil,
-      aircraftType: .g2(updatedThrustSchedule: false)
+      aircraftType: aircraftType
     )
   }
 
-  private func meetsGradient(
-    weight: Double = 6000,
-    elevation: Double = 0,
-    temperature: Double = 15
-  ) -> Bool? {
-    let model = buildModel(weight: weight, elevation: elevation, temperature: temperature)
-    if case .value(let meets) = model.meetsGoAroundClimbGradient {
-      return meets
+  /// Every cell of a landing table's grid, and whether the AFM prints a distance there.
+  private func afmCells(
+    _ aircraftType: AircraftType,
+    landingTable: String
+  ) throws -> [(weight: Double, altitude: Double, temperature: Double, printed: Bool)] {
+    let table = try DataTable(
+      fileURL: Bundle(for: BasePerformanceModel.self).resourceURL!
+        .appending(component: "Data/\(aircraftType.dataDirectoryName)/landing/\(landingTable)")
+        .appending(component: "total distance.csv")
+    )
+    let printed = Set(table.rows.map { table.inputs(from: $0) })
+    func axis(_ dimension: Int) -> [Double] {
+      Set(printed.map { $0[dimension] }).sorted()
     }
-    return nil
+
+    return axis(0).flatMap { weight in
+      axis(1).flatMap { altitude in
+        axis(2).map { temperature in
+          (weight, altitude, temperature, printed.contains([weight, altitude, temperature]))
+        }
+      }
+    }
   }
 
-  // MARK: - Standard Conditions
+  // MARK: - Tests
 
-  @Test
-  func `standard conditions pass`() {
-    let meets = meetsGradient(weight: 5000, elevation: 0, temperature: 15)
-    #expect(meets == true)
+  @Test(arguments: aircraft, configurations)
+  func `the regression meets the gradient exactly where the AFM prints a landing distance`(
+    aircraftType: AircraftType,
+    configuration: (FlapSetting, landingTable: String)
+  ) throws {
+    for cell in try afmCells(aircraftType, landingTable: configuration.landingTable) {
+      let meets = model(
+        aircraftType,
+        flapSetting: configuration.0,
+        weight: cell.weight,
+        elevation: cell.altitude,
+        temperature: cell.temperature
+      ).meetsGoAroundClimbGradient
+      #expect(
+        meets == .value(cell.printed),
+        "\(configuration.0) at \(cell.weight) lb, \(cell.altitude) ft, \(cell.temperature) °C"
+      )
+    }
   }
 
-  // MARK: - Extreme Conditions
+  @Test(arguments: [FlapSetting.flaps50Ice, .flapsUpIce])
+  func `in icing the gradient is met within the AFM's table and not past its hot edge`(
+    flapSetting: FlapSetting
+  ) {
+    func meets(temperature: Double) -> Value<Bool> {
+      model(
+        .g2Plus,
+        flapSetting: flapSetting,
+        weight: 5550,
+        elevation: 0,
+        temperature: temperature
+      ).meetsGoAroundClimbGradient
+    }
 
-  @Test
-  func `extreme hot high heavy fails`() {
-    let meets = meetsGradient(weight: 6000, elevation: 8000, temperature: 40)
-    #expect(meets == false)
-  }
-
-  // MARK: - Boundary Behavior
-
-  @Test
-  func `boundary behavior`() {
-    // Near the decision boundary: barely passes (probability ~0.56)
-    let barelyPasses = meetsGradient(weight: 5800, elevation: 7000, temperature: 35)
-    #expect(barelyPasses == true)
-
-    // Slightly worse conditions push below the threshold (probability ~0.48)
-    let barelyFails = meetsGradient(weight: 5800, elevation: 7500, temperature: 35)
-    #expect(barelyFails == false)
-  }
-
-  // MARK: - Weight Sensitivity
-
-  @Test
-  func `light weight passes at high altitude`() {
-    let meets = meetsGradient(weight: 4500, elevation: 6000, temperature: 30)
-    #expect(meets == true)
-  }
-
-  @Test
-  func `heavy weight fails at high altitude`() {
-    let meets = meetsGradient(weight: 6000, elevation: 6000, temperature: 40)
-    #expect(meets == false)
-  }
-
-  // MARK: - Temperature Sensitivity
-
-  @Test
-  func `cool temperature passes`() {
-    let meets = meetsGradient(weight: 5500, elevation: 5000, temperature: 0)
-    #expect(meets == true)
-  }
-
-  @Test
-  func `very hot temperature fails`() {
-    let meets = meetsGradient(weight: 5500, elevation: 7000, temperature: 45)
-    #expect(meets == false)
-  }
-
-  // MARK: - Altitude Sensitivity
-
-  @Test
-  func `low altitude passes`() {
-    let meets = meetsGradient(weight: 5500, elevation: 0, temperature: 30)
-    #expect(meets == true)
-  }
-
-  @Test
-  func `high altitude fails`() {
-    let meets = meetsGradient(weight: 5500, elevation: 9000, temperature: 30)
-    #expect(meets == false)
+    #expect(meets(temperature: 0) == .value(true))
+    #expect(meets(temperature: 15) == .value(false))
   }
 }

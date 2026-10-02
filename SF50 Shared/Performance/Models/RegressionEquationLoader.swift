@@ -101,8 +101,17 @@ struct RegressionEquationLoader {
     return loadEquation(filename: filename)
   }
 
-  func loadGoAroundClimbGradientEquation() -> RegressionEquation {
-    loadEquation(filename: "go-around-climb-gradient.json")
+  /// Loads the go-around climb gradient classifier for a landing configuration.
+  ///
+  /// Each is fit to its own configuration's landing table, where a blank cell marks a condition
+  /// that cannot meet the balked landing gradient. The ice-contaminated table has no blank cells,
+  /// so it has no classifier, and this returns `nil` for it.
+  func loadGoAroundClimbGradientEquation(flapSetting: FlapSetting) -> RegressionEquation? {
+    switch flapSetting {
+      case .flaps100: loadEquation(filename: "go-around-climb-gradient-flaps100.json")
+      case .flaps50, .flapsUp: loadEquation(filename: "go-around-climb-gradient-flaps50.json")
+      case .flaps50Ice, .flapsUpIce: nil
+    }
   }
 
   // MARK: - Landing Adjustment Factor Equations
