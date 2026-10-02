@@ -43,9 +43,18 @@ final class BoundsChecker {
   private let landingRunData_flaps50Ice: DataTable
   private let enrouteClimbData_normal: [EnrouteClimbQuantity: DataTable]
   private let enrouteClimbData_iceContaminated: [EnrouteClimbQuantity: DataTable]
+  private let loader: DataTableLoader
+
+  // Only a climb profile asks about these, so they load on first use.
+  private lazy var takeoffClimbGradientData = loader.loadTakeoffClimbGradientData()
+  private lazy var obstacleClimbGradientData_normal =
+    loader.loadEnrouteObstacleClimbGradientData(iceContaminated: false)
+  private lazy var obstacleClimbGradientData_iceContaminated =
+    loader.loadEnrouteObstacleClimbGradientData(iceContaminated: true)
 
   init(aircraftType: AircraftType) {
     let loader = DataTableLoader(aircraftType: aircraftType)
+    self.loader = loader
 
     // Load takeoff data for bounds
     self.takeoffRunData = loader.loadTakeoffRunData()
@@ -146,6 +155,44 @@ final class BoundsChecker {
       altitude: altitude,
       temperature: temperature,
       dataTable: dataTable,
+      axes: .enrouteClimb
+    )
+  }
+
+  /// Returns the bounds status for takeoff climb parameters.
+  ///
+  /// The takeoff climb tables stop at 10,000 ft. A climb profile asks for the takeoff gradient
+  /// wherever the takeoff segment reaches, and past the tables the fitted gradient grows without
+  /// bound, so callers use this to refuse rather than to warn.
+  func takeoffClimbBoundsStatus(
+    weight: Double,
+    altitude: Double,
+    temperature: Double
+  ) -> BoundsStatus {
+    checkBoundsStatus(
+      weight: weight,
+      altitude: altitude,
+      temperature: temperature,
+      dataTable: takeoffClimbGradientData
+    )
+  }
+
+  /// Returns the bounds status for en route obstacle climb parameters.
+  ///
+  /// Past the obstacle climb tables the fitted gradient turns and climbs again with altitude, so
+  /// callers use this to refuse rather than to warn.
+  func obstacleClimbBoundsStatus(
+    weight: Double,
+    altitude: Double,
+    temperature: Double,
+    iceContaminated: Bool
+  ) -> BoundsStatus {
+    checkBoundsStatus(
+      weight: weight,
+      altitude: altitude,
+      temperature: temperature,
+      dataTable: iceContaminated
+        ? obstacleClimbGradientData_iceContaminated : obstacleClimbGradientData_normal,
       axes: .enrouteClimb
     )
   }

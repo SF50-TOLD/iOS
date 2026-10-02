@@ -48,7 +48,6 @@ struct ClimbProfileView: View {
   @State private var climbProfile: ClimbProfile?
   @State private var isComputing = false
   @State private var pathFailure: PathFailure?
-  @State private var plotsRegressionClimb = false
   @State private var terrainRevision = 0
 
   var body: some View {
@@ -76,7 +75,6 @@ struct ClimbProfileView: View {
         time: weather.time,
         isComputing: isComputing,
         pathFailure: pathFailure,
-        plotsRegressionClimb: plotsRegressionClimb,
         noDataDescription: "Select a departure procedure to view terrain profile."
       )
     }
@@ -230,8 +228,6 @@ struct ClimbProfileView: View {
     self.climbProfile = climbProfile
 
     let schedule = buildClimbSchedule()
-    plotsRegressionClimb =
-      !useRegressionModel && schedule.segments.contains(where: \.profile.answeredFromRegressionOnly)
     let pathGenerator = ProcedurePathGenerator(
       climbProfile: climbProfile,
       schedule: schedule,

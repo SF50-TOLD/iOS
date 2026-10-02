@@ -11,10 +11,10 @@
   "uncertainty_key": "g2/enroute obstacle climb/ice/gradient",
   "base_equation": "enroute-obstacle-climb-gradient-normal",
   "equation": {
-    "intercept": -130.70469608155864,
+    "intercept": -123.96129880906861,
     "terms": [
       {
-        "coefficient": 6.981655069729001e-07,
+        "coefficient": 8.044340392102456e-07,
         "powers": [
           1,
           0,
@@ -22,7 +22,7 @@
         ]
       },
       {
-        "coefficient": 3.15143671305596e-05,
+        "coefficient": 3.2295522548343146e-05,
         "powers": [
           0,
           1,
@@ -30,7 +30,7 @@
         ]
       },
       {
-        "coefficient": -5.729697795839494e-07,
+        "coefficient": -5.358320196808595e-07,
         "powers": [
           0,
           0,
@@ -38,7 +38,7 @@
         ]
       },
       {
-        "coefficient": 7.673984165422191e-06,
+        "coefficient": 7.111278740429024e-06,
         "powers": [
           2,
           0,
@@ -46,7 +46,7 @@
         ]
       },
       {
-        "coefficient": -6.306525696369145e-07,
+        "coefficient": -8.270215679094121e-07,
         "powers": [
           1,
           1,
@@ -54,7 +54,7 @@
         ]
       },
       {
-        "coefficient": -0.001979245423148302,
+        "coefficient": -0.0019346898374211208,
         "powers": [
           1,
           0,
@@ -62,7 +62,7 @@
         ]
       },
       {
-        "coefficient": 1.2751443393472588e-06,
+        "coefficient": 1.3340524564527071e-06,
         "powers": [
           0,
           2,
@@ -70,7 +70,7 @@
         ]
       },
       {
-        "coefficient": 0.00048798172931081743,
+        "coefficient": 0.0004642641192178704,
         "powers": [
           0,
           1,
@@ -78,7 +78,7 @@
         ]
       },
       {
-        "coefficient": 0.00010857307025963275,
+        "coefficient": 0.00011848309540109585,
         "powers": [
           0,
           0,
@@ -86,7 +86,7 @@
         ]
       },
       {
-        "coefficient": -8.546356623715125e-10,
+        "coefficient": -7.905088465487989e-10,
         "powers": [
           3,
           0,
@@ -94,7 +94,7 @@
         ]
       },
       {
-        "coefficient": 9.125405879562726e-11,
+        "coefficient": 1.130306073968511e-10,
         "powers": [
           2,
           1,
@@ -102,7 +102,7 @@
         ]
       },
       {
-        "coefficient": 3.12633324854302e-07,
+        "coefficient": 3.0816305363723e-07,
         "powers": [
           2,
           0,
@@ -110,7 +110,7 @@
         ]
       },
       {
-        "coefficient": -6.297766654298299e-11,
+        "coefficient": -6.388244359144807e-11,
         "powers": [
           1,
           2,
@@ -118,7 +118,7 @@
         ]
       },
       {
-        "coefficient": -9.79210940429638e-09,
+        "coefficient": -8.287336573105488e-09,
         "powers": [
           1,
           1,
@@ -126,7 +126,7 @@
         ]
       },
       {
-        "coefficient": 2.2835929216415917e-05,
+        "coefficient": 2.3234247327513272e-05,
         "powers": [
           1,
           0,
@@ -134,7 +134,7 @@
         ]
       },
       {
-        "coefficient": -4.451164282006101e-11,
+        "coefficient": -4.488304175092461e-11,
         "powers": [
           0,
           3,
@@ -142,7 +142,7 @@
         ]
       },
       {
-        "coefficient": 6.06279995136516e-10,
+        "coefficient": 1.6260755673404137e-09,
         "powers": [
           0,
           2,
@@ -150,7 +150,7 @@
         ]
       },
       {
-        "coefficient": 7.405206996371353e-06,
+        "coefficient": 7.194541511987023e-06,
         "powers": [
           0,
           1,
@@ -158,7 +158,7 @@
         ]
       },
       {
-        "coefficient": 0.0026784223858251676,
+        "coefficient": 0.0026785888362413114,
         "powers": [
           0,
           0,

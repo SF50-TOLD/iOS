@@ -116,8 +116,8 @@ struct AboutView: View {
               .bold()
           }
 
-          LabeledContent("Reissue") {
-            Text("A (03 Mar 2025)")
+          LabeledContent("Revision") {
+            Text("A1 (29 Oct 2025)")
               .bold()
           }
         }

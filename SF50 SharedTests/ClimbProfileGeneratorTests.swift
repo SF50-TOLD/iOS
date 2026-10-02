@@ -56,7 +56,8 @@ struct ClimbProfileGeneratorTests {
 
   @Test
   func `regression gradients are positive`() throws {
-    let winds = makeWindsAloft()
+    // The ice-contaminated charts stop at 10 °C, short of a standard day at sea level.
+    let winds = makeWindsAloft(altitudes: [5000, 10000, 15000, 20000])
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
       weightLb: 5500,
@@ -100,7 +101,8 @@ struct ClimbProfileGeneratorTests {
 
   @Test
   func `anti-ice reduces gradient`() throws {
-    let winds = makeWindsAloft()
+    // The ice-contaminated charts stop at 10 °C, short of a standard day at sea level.
+    let winds = makeWindsAloft(altitudes: [5000, 10000, 15000, 20000])
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
       weightLb: 6000,
@@ -121,7 +123,8 @@ struct ClimbProfileGeneratorTests {
 
   @Test
   func `obstacle gradient differs between normal and anti-ice`() throws {
-    let winds = makeWindsAloft()
+    // The ice-contaminated charts stop at 10 °C, short of a standard day at sea level.
+    let winds = makeWindsAloft(altitudes: [5000, 10000, 15000, 20000])
     let profile = ClimbProfileGenerator.generate(
       windsAloft: winds,
       weightLb: 6000,
@@ -224,6 +227,40 @@ struct ClimbProfileGeneratorTests {
     #expect(spd.isApproximatelyEqual(to: 25, absoluteTolerance: 0.001))
   }
 
+  @Test
+  func `regression offers no climb where the AFM shows a descent`() {
+    // AFM p. 5-63: ice contaminated, 30,000 ft, −40 °C, 6000 lb is −79 ft/NM.
+    let profile = ClimbProfileGenerator.generate(
+      windsAloft: [
+        .init(altitudeFt: 30_000, temperatureC: -40, windDirectionDeg: 0, windSpeedKts: 0)
+      ],
+      weightLb: 6000,
+      aircraftType: .g2(updatedThrustSchedule: false),
+      seaLevelPressureInHg: 29.92,
+      useRegressionModel: true
+    )
+
+    let gradient = profile.dataPoints[0].climbData(for: .enroute(antiIce: true)).gradientFtPerNM
+    #expect(gradient.nominal == nil)
+  }
+
+  @Test
+  func `regression offers no takeoff or obstacle climb above their charts`() {
+    let profile = ClimbProfileGenerator.generate(
+      windsAloft: makeWindsAloft(altitudes: [5000, 20000, 30000]),
+      weightLb: 5500,
+      aircraftType: .g2Plus,
+      seaLevelPressureInHg: 29.92,
+      useRegressionModel: true
+    )
+
+    let low = profile.dataPoints[0], high = profile.dataPoints[2]
+    #expect(low.climbData(for: .takeoff).gradientFtPerNM.nominal != nil)
+    #expect(low.climbData(for: .enrouteObstacle(antiIce: false)).gradientFtPerNM.nominal != nil)
+    #expect(high.climbData(for: .takeoff).gradientFtPerNM.nominal == nil)
+    #expect(high.climbData(for: .enrouteObstacle(antiIce: false)).gradientFtPerNM.nominal == nil)
+  }
+
   // MARK: - Tabular mode
 
   @Test
@@ -240,6 +277,22 @@ struct ClimbProfileGeneratorTests {
     #expect(profile.dataPoints.count == winds.count)
     let g = try #require(profile.gradient(at: 5000, profile: .enroute(antiIce: false)))
     #expect(g > 0)
+  }
+
+  @Test
+  func `tabular obstacle climb reads the AFM obstacle table`() {
+    // AFM p. 5-40: obstacle climb, 0 ft, 10 °C, 6000 lb is 1008 ft/NM.
+    let profile = ClimbProfileGenerator.generate(
+      windsAloft: [.init(altitudeFt: 0, temperatureC: 10, windDirectionDeg: 0, windSpeedKts: 0)],
+      weightLb: 6000,
+      aircraftType: .g2(updatedThrustSchedule: false),
+      seaLevelPressureInHg: 29.92,
+      useRegressionModel: false
+    )
+
+    let gradient = profile.dataPoints[0].climbData(for: .enrouteObstacle(antiIce: false))
+      .gradientFtPerNM
+    #expect(gradient == .value(1008))
   }
 
   // MARK: - Reasonable values

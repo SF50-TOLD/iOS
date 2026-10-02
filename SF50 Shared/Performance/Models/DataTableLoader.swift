@@ -98,6 +98,13 @@ struct DataTableLoader {
     return loadDataTable(path: "enroute climb/\(subdir)/speed.csv")
   }
 
+  // MARK: - Enroute Obstacle Climb Data Tables
+
+  func loadEnrouteObstacleClimbGradientData(iceContaminated: Bool) -> DataTable {
+    let subdir = iceContaminated ? "ice" : "normal"
+    return loadDataTable(path: "enroute obstacle climb/\(subdir)/gradient.csv")
+  }
+
   // MARK: - Adjustment Factor Data Tables
 
   func loadTakeoffRunHeadwindData() -> DataTable {

@@ -43,6 +43,18 @@ func validateRegressionPredictions<Model: BasePerformanceModel>(
     )
     let result = valueExtractor(model)
 
+    // The model offers no climb where its fit shows none: right where the AFM shows none too, and
+    // a miss where the AFM shows one.
+    if result == .notAvailable {
+      if expected > 0 {
+        totalPoints += 1
+        missedRows.append(
+          [weight, altitude, temperature, expected].map(String.init(describing:)) + ["", ""]
+        )
+      }
+      continue
+    }
+
     guard case .valueWithUncertainty(let predicted, let uncertainty) = result else {
       PerformanceCase(for: model, aircraftType: aircraftType)
         .fail(

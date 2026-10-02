@@ -170,8 +170,8 @@ public struct ClimbProfile: Sendable {
   /// Horizontal distance required to climb from one altitude to another.
   ///
   /// Uses trapezoidal integration over the gradient curve. Returns nil if the profile is empty,
-  /// `startAltitudeFt` is not below `endAltitudeFt`, or the profile has no gradient somewhere
-  /// between the two.
+  /// `startAltitudeFt` is not below `endAltitudeFt`, or the profile has no climbing gradient
+  /// somewhere between the two — an altitude the aircraft cannot climb through is never reached.
   public func distance(from startAltitudeFt: Double, to endAltitudeFt: Double, profile: ProfileType)
     -> Double?
   {
@@ -187,9 +187,8 @@ public struct ClimbProfile: Sendable {
         let g2 = gradient(at: currentAltitudeFt + step, profile: profile)
       else { return nil }
       let avgGradient = (g1 + g2) / 2.0
-      if avgGradient > 0 {
-        totalNM += step / avgGradient
-      }
+      guard avgGradient > 0 else { return nil }
+      totalNM += step / avgGradient
       currentAltitudeFt += step
       remainingFt -= step
     }
@@ -209,18 +208,6 @@ public struct ClimbProfile: Sendable {
 
     fileprivate let schedule: ClimbSchedule
     fileprivate let antiIce: Bool
-
-    /**
-     * Whether the AFM publishes no table for this schedule, so it is answered from the fitted
-     * equations however the model is set.
-     *
-     * Only the obstacle climb is served this way. Anything plotting it while the tabular model is
-     * selected is showing regression figures, and says so rather than presenting them as the
-     * book's.
-     */
-    public var answeredFromRegressionOnly: Bool {
-      schedule == .enrouteObstacle
-    }
 
     public static func enrouteObstacle(antiIce: Bool) -> Self {
       Self(schedule: .enrouteObstacle, antiIce: antiIce)

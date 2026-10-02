@@ -286,6 +286,12 @@ struct ClimbProfileTests {
   }
 
   @Test
+  func `distance through an altitude the aircraft cannot climb is nil`() {
+    let profile = makeVaryingProfile([(0, 300), (5000, 0), (10000, -100)])
+    #expect(profile.distance(from: 1000, to: 8000, profile: defaultProfile) == nil)
+  }
+
+  @Test
   func `distance round trips with altitude`() throws {
     let profile = Helper.createTestClimbProfile(gradientFtPerNM: 300)
     let startAlt = 2000.0

@@ -142,10 +142,14 @@ public final class ClimbPerformanceViewModel {
       }
     )
 
-    // Observe model type changes
+    // Observe aircraft type and model type changes
     addTask(
       Task { [weak self] in
-        for await _ in Defaults.updates(.updatedThrustSchedule, .useRegressionModel) {
+        for await _ in Defaults.updates(
+          .aircraftTypeSetting,
+          .updatedThrustSchedule,
+          .useRegressionModel
+        ) {
           if Task.isCancelled { break }
           guard let self else { return }
           recalculate()

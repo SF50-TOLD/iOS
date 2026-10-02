@@ -22,6 +22,9 @@ changed in the cockpit rather than what changed in the code.
   every model including the G1, and takes the dry safety factor rather than
   counting the increase twice. The wet safety factor is now the contaminated
   safety factor, for standing water, slush and snow.
+- Corrected climb figures: the ice-contaminated climb profile showed climbs
+  where the AFM shows none. Obstacle climb now comes from the AFM tables, and
+  the en route climb tables run to FL310.
 
 ## 3.8.2
 
