@@ -12,6 +12,8 @@ public enum AircraftTypeSetting: String, Sendable, CaseIterable {
   case g2 = "G2"
   /// Second generation plus SF50 Vision Jet
   case g2Plus = "G2+"
+  /// Third generation SF50 Vision Jet
+  case g3 = "G3"
 }
 
 // MARK: - Defaults.Serializable

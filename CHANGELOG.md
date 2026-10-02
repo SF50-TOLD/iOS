@@ -15,6 +15,8 @@ changed in the cockpit rather than what changed in the code.
 
 ## 3.9
 
+- Adds the G3 Vision Jet. Choose it in Settings; it uses the G2+ performance
+  data, including the updated thrust schedule.
 - Corrected landing figures: VREF at flaps 100 and flaps UP on a G2+ (it showed
   the flaps 50 speed), and flaps UP landing distance, now 38% over flaps 50, or
   52% in icing, as the AFM gives it.

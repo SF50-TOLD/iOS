@@ -488,11 +488,13 @@ extension SF50_TOLDUITests {
     let tabBar = AppLauncher().launchAndCompleteSetup(emptyWeight: "4550")
     let settings = tabBar.goToSettings()
 
-    settings.selectAircraftModel("G2+")
-    XCTAssertFalse(
-      settings.isThrustScheduleToggleVisible,
-      "Thrust schedule toggle should not appear for G2+"
-    )
+    for model in ["G2+", "G3"] {
+      settings.selectAircraftModel(model)
+      XCTAssertFalse(
+        settings.isThrustScheduleToggleVisible,
+        "Thrust schedule toggle should not appear for \(model)"
+      )
+    }
 
     _ = tabBar.goToTakeoff()
     XCTAssertTrue(

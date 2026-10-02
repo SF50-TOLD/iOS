@@ -6,7 +6,7 @@
 [![Platform](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](https://developer.apple.com/ios/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A comprehensive Takeoff and Landing Data (TOLD) calculator for the Cirrus SF50 Vision Jet, supporting G1 through G2+ models.
+A comprehensive Takeoff and Landing Data (TOLD) calculator for the Cirrus SF50 Vision Jet, supporting G1 through G3 models.
 
 ## ⚠️ Disclaimer
 
@@ -18,7 +18,7 @@ This app has not been approved by the FAA or by Cirrus Aircraft as an official s
 
 - **Takeoff Performance**: Calculate ground run, takeoff distance over 50ft obstacle, and Vx climb gradient
 - **Landing Performance**: Calculate landing distance, ground run, VREF, and go-around climb gradient
-- **Multi-Model Support**: G1, G2, and G2+ (with updated thrust schedule) models
+- **Multi-Model Support**: G1, G2, G2+, and G3 models
 - **Safety Factors**: Configurable safety factor for conservative performance calculations
 
 ### Airport & Weather Data
@@ -88,7 +88,7 @@ Two calculation approaches are implemented:
 Performance data is sourced from:
 
 - G1: P/N 31452-001 Rev A1
-- G2-G2+: P/N 31452-002 Rev 2
+- G2–G3: P/N 31452-002 Rev 2
 - Updated Thrust Schedule: P/N 31452-111 Rev 1
 
 #### 2. Data Layer

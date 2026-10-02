@@ -45,7 +45,7 @@ struct AboutView: View {
       Form {
         Section("Application") {
           LabeledContent("Aircraft") {
-            Text("Cirrus SF50 Vision (G1 through G2+)")
+            Text("Cirrus SF50 Vision (G1 through G3)")
               .bold()
           }
 
@@ -102,7 +102,7 @@ struct AboutView: View {
           }
         }
 
-        Section("SF50 G2–G2+ Data Source") {
+        Section("SF50 G2–G3 Data Source") {
           LabeledContent("Serials") {
             Text(
               "with Cirrus Perspective Touch+ Avionics System and FL310 Maximum Operating Altitude"

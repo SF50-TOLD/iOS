@@ -4,7 +4,8 @@ import Foundation
 ///
 /// ``DataTableLoader`` provides methods to load digitized AFM chart data for
 /// performance calculations. Each data table is stored as a CSV file in the
-/// app bundle, organized by model type (G1 or G2+) and performance category.
+/// app bundle, organized by data set (G1, G2, or the updated thrust schedule's G2+) and
+/// performance category.
 ///
 /// ## Data Organization
 ///
@@ -36,14 +37,11 @@ struct DataTableLoader {
     return bundle.resourceURL!.appending(component: directory, directoryHint: .isDirectory)
   }
 
-  /// Fallback URL for G2+ aircraft to use G2 data when G2+ data is not available.
+  /// Fallback URL for updated-thrust aircraft to use G2 data where the updated thrust schedule
+  /// changes nothing.
   private var fallbackDataURL: URL? {
-    switch aircraftType {
-      case .g2Plus, .g2(true):
-        return bundle.resourceURL!.appending(component: "Data/g2", directoryHint: .isDirectory)
-      default:
-        return nil
-    }
+    guard aircraftType.hasUpdatedThrustSchedule else { return nil }
+    return bundle.resourceURL!.appending(component: "Data/g2", directoryHint: .isDirectory)
   }
 
   init(bundle: Bundle = Bundle(for: BasePerformanceModel.self), aircraftType: AircraftType) {
@@ -181,7 +179,7 @@ struct DataTableLoader {
     loadDataTable(path: "landing/contamination/water.csv")
   }
 
-  // Alias methods for contamination data (used by TabularPerformanceModelG2+)
+  // Alias methods for contamination data
   func loadContaminationCompactSnowData() -> DataTable {
     loadCompactSnowLandingData()
   }
@@ -231,7 +229,7 @@ struct DataTableLoader {
         return try DataTable(fileURL: url)
       }
 
-      // Fall back to G2 data for G2+ aircraft if primary doesn't exist
+      // Fall back to G2 data for updated-thrust aircraft if primary doesn't exist
       if let fallbackURL = fallbackDataURL {
         let fallback = fallbackURL.appending(path: path)
         return try DataTable(fileURL: fallback)
@@ -250,13 +248,11 @@ extension AircraftType {
   ///
   /// - G1: uses g1 data
   /// - G2 without updated thrust: uses g2 data
-  /// - G2 with updated thrust: uses g2+ data
-  /// - G2+: uses g2+ data
+  /// - G2 with updated thrust, G2+ and G3: use g2+ data
   var dataDirectoryName: String {
     switch self {
       case .g1: "g1"
-      case .g2(let updated): updated ? "g2+" : "g2"
-      case .g2Plus: "g2+"
+      case .g2, .g2Plus, .g3: hasUpdatedThrustSchedule ? "g2+" : "g2"
     }
   }
 }

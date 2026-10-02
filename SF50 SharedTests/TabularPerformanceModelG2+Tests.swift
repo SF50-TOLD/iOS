@@ -247,6 +247,27 @@ struct TabularPerformanceModelG2PlusTests {
     #expect(model.VrefKts == .value(expected))
   }
 
+  @Test(arguments: [FlapSetting.flaps50, .flaps50Ice, .flaps100])
+  func `a G3 performs exactly as a G2+`(flapSetting: FlapSetting) {
+    func model(_ aircraftType: AircraftType) -> TabularPerformanceModel {
+      let runway = Helper.createTestRunway(elevation: 3000)
+      return TabularPerformanceModel(
+        conditions: Helper.createTestConditions(temperature: 10),
+        configuration: Helper.createTestConfiguration(weight: 5500, flapSetting: flapSetting),
+        runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
+        notam: nil,
+        aircraftType: aircraftType
+      )
+    }
+
+    let g2Plus = model(.g2Plus), g3 = model(.g3)
+    #expect(g3.takeoffDistanceFt == g2Plus.takeoffDistanceFt)
+    #expect(g3.takeoffClimbGradientFtNM == g2Plus.takeoffClimbGradientFtNM)
+    #expect(g3.landingDistanceFt == g2Plus.landingDistanceFt)
+    #expect(g3.VrefKts == g2Plus.VrefKts)
+    #expect(g3.takeoffDistanceFt.nominal != nil)
+  }
+
   // MARK: - Wind Adjustment Tests
 
   @Test

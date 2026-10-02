@@ -1042,7 +1042,7 @@ struct ContaminationTests {
   /// describe, so this checks them against those: were they widened without the data widening
   /// too, the regression would extrapolate exactly as far past the fit as they claim is still
   /// inside it.
-  @Test(arguments: [AircraftType.g1, .g2(updatedThrustSchedule: false), .g2Plus])
+  @Test(arguments: [AircraftType.g1, .g2(updatedThrustSchedule: false), .g2Plus, .g3])
   func `the tabulated depth range matches the AFM tables`(aircraftType: AircraftType) {
     let loader = DataTableLoader(aircraftType: aircraftType),
       shallowest = Contamination.shallowestTabulatedDepth.converted(to: .inches).value,

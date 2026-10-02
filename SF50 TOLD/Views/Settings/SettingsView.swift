@@ -47,6 +47,7 @@ struct SettingsView: View {
             Text("G1").tag(AircraftTypeSetting.g1)
             Text("G2").tag(AircraftTypeSetting.g2)
             Text("G2+").tag(AircraftTypeSetting.g2Plus)
+            Text("G3").tag(AircraftTypeSetting.g3)
           }
           .accessibilityIdentifier("aircraftTypePicker")
 
@@ -153,7 +154,7 @@ struct SettingsView: View {
         switch newValue {
           case .g1: updatedThrustSchedule = false
           case .g2: break  // Keep current updatedThrustSchedule setting
-          case .g2Plus: updatedThrustSchedule = true
+          case .g2Plus, .g3: updatedThrustSchedule = true
         }
       }
     )

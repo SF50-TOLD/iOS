@@ -32,7 +32,7 @@ struct PerformanceInput {
   /// Whether to use regression model vs tabular model.
   let useRegressionModel: Bool
 
-  /// Aircraft type (G1, G2, or G2+).
+  /// Aircraft type (G1, G2, G2+, or G3).
   let aircraftType: AircraftType
 
   /// Aircraft empty weight for max weight calculations.
@@ -109,7 +109,7 @@ enum LimitingFactor: String, Codable, Sendable {
 /// ``AircraftInfo`` provides displayable aircraft information derived from
 /// configuration settings.
 struct AircraftInfo {
-  /// The aircraft type (G1, G2, or G2+).
+  /// The aircraft type (G1, G2, G2+, or G3).
   let aircraftType: AircraftType
 
   /// Basic empty weight used for max weight calculations.

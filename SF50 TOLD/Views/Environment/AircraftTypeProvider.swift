@@ -26,15 +26,7 @@ struct AircraftTypeProvider<Content: View>: View {
   @ViewBuilder var content: () -> Content
 
   private var aircraftType: AircraftType {
-    guard let setting = aircraftTypeSetting else {
-      // Legacy migration: infer from updatedThrustSchedule
-      return updatedThrustSchedule ? .g2Plus : .g2(updatedThrustSchedule: false)
-    }
-    switch setting {
-      case .g1: return .g1
-      case .g2: return .g2(updatedThrustSchedule: updatedThrustSchedule)
-      case .g2Plus: return .g2Plus
-    }
+    .init(setting: aircraftTypeSetting, updatedThrustSchedule: updatedThrustSchedule)
   }
 
   var body: some View {

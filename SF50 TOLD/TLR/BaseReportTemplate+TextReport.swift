@@ -229,6 +229,7 @@ extension BaseReportTemplate {
       case .g1: "SF50 G1"
       case .g2: "SF50 G2"
       case .g2Plus: "SF50 G2+"
+      case .g3: "SF50 G3"
     }
   }
 

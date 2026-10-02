@@ -51,6 +51,7 @@ struct WelcomeView: View {
               Text("G1").tag(AircraftTypeSetting.g1)
               Text("G2").tag(AircraftTypeSetting.g2)
               Text("G2+").tag(AircraftTypeSetting.g2Plus)
+              Text("G3").tag(AircraftTypeSetting.g3)
             }
             .pickerStyle(.segmented)
             .accessibilityIdentifier("modelPicker")
@@ -90,7 +91,7 @@ struct WelcomeView: View {
           switch selectedType {
             case .g1: updatedThrustSchedule = false
             case .g2: updatedThrustSchedule = g2UseUpdatedThrustSchedule
-            case .g2Plus: updatedThrustSchedule = true
+            case .g2Plus, .g3: updatedThrustSchedule = true
           }
           initialSetupComplete = true
         }.opacity(formOpacity)

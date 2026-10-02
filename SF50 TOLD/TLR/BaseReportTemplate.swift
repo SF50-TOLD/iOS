@@ -502,6 +502,7 @@ extension AircraftInfo {
       case .g1: String(localized: "SF50 G1")
       case .g2: String(localized: "SF50 G2")
       case .g2Plus: String(localized: "SF50 G2+")
+      case .g3: String(localized: "SF50 G3")
     }
   }
 }
