@@ -216,7 +216,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     // Observe safety factor changes
     addTask(
       Task { [weak self] in
-        for await _ in Defaults.updates(.safetyFactorDry, .safetyFactorWet, .VREFAdditive) {
+        for await _ in Defaults.updates(.safetyFactorDry, .safetyFactorContaminated, .VREFAdditive)
+        {
           if Task.isCancelled { break }
           guard let self else { return }
           recalculate()
@@ -474,11 +475,11 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     // Contamination notes (landing only)
     if operation == .landing, let contamination = notam?.contamination {
       if case .rwyCC = contamination {
-        if Defaults[.safetyFactorDry] != 1.0 || Defaults[.safetyFactorWet] != 1.0 {
+        if Defaults[.safetyFactorDry] != 1.0 || Defaults[.safetyFactorContaminated] != 1.0 {
           notes.append(.rwyCCSafetyFactorNotApplied)
         }
       }
-      notes.append(.contaminationSupplemental)
+      if contamination != .wetRunway { notes.append(.contaminationSupplemental) }
     }
 
     // VREF additive note

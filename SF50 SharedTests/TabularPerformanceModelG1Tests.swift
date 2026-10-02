@@ -636,6 +636,31 @@ struct TabularPerformanceModelG1Tests {
     }
   }
 
+  @Test(arguments: [
+    (FlapSetting.flapsUp, FlapSetting.flaps50, 1.38),
+    (.flapsUpIce, .flaps50Ice, 1.52)
+  ])
+  func `flaps UP landing adds the AFM increment to total distance and has no ground run`(
+    flapSetting: FlapSetting,
+    tabulatedSetting: FlapSetting,
+    factor: Double
+  ) throws {
+    func model(_ flapSetting: FlapSetting) -> TabularPerformanceModel {
+      let runway = Helper.createTestRunway()
+      return TabularPerformanceModel(
+        conditions: Helper.createTestConditions(temperature: 10),
+        configuration: Helper.createTestConfiguration(weight: 5550, flapSetting: flapSetting),
+        runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
+        notam: nil,
+        aircraftType: .g1
+      )
+    }
+
+    let tabulated = try #require(model(tabulatedSetting).landingDistanceFt.nominal)
+    #expect(model(flapSetting).landingDistanceFt == .value(tabulated * factor))
+    #expect(model(flapSetting).landingRunFt == .notAvailable)
+  }
+
   // MARK: - Wind Adjustment Tests
 
   @Test

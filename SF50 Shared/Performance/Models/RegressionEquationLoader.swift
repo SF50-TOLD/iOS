@@ -213,3 +213,24 @@ extension FlapSetting {
     }
   }
 }
+
+extension FlapSetting {
+  private static let flapsUpLandingDistanceFactor = 1.38,
+    flapsUpIceLandingDistanceFactor = 1.52
+
+  /// The factor the AFM applies to the Flaps 50% (or Flaps 50% ice) total landing distance to
+  /// give the Flaps UP (or Flaps UP ice) one, or `nil` for a setting the AFM tabulates directly.
+  ///
+  /// The AFM gives a Flaps UP landing only as this increment on total distance; it publishes no
+  /// Flaps UP ground run at all.
+  var flapsUpLandingDistanceFactor: Double? {
+    switch self {
+      case .flapsUp: Self.flapsUpLandingDistanceFactor
+      case .flapsUpIce: Self.flapsUpIceLandingDistanceFactor
+      case .flaps50, .flaps50Ice, .flaps100: nil
+    }
+  }
+
+  /// Whether the AFM publishes a landing ground run for this setting.
+  var hasLandingGroundRun: Bool { flapsUpLandingDistanceFactor == nil }
+}

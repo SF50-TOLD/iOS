@@ -111,15 +111,7 @@ final class TabularPerformanceModel: BasePerformanceModel {
     takeoffClimbGradientData = loader.loadTakeoffClimbGradientData()
     takeoffClimbRateData = loader.loadTakeoffClimbRateData()
 
-    // G2+ uses unprefixed vref data; G1/G2 use flap-specific prefixed data
-    switch aircraftType {
-      case .g2Plus, .g2(updatedThrustSchedule: true):
-        vrefData = loader.loadVrefData()
-      default:
-        vrefData = loader.loadVrefData(
-          vrefPrefix: loader.vrefPrefix(for: configuration.flapSetting)
-        )
-    }
+    vrefData = loader.loadVrefData(vrefPrefix: loader.vrefPrefix(for: configuration.flapSetting))
 
     landingRunData = loader.loadLandingRunData(landingPrefix: landingPrefix)
     landingDistanceData = loader.loadLandingDistanceData(landingPrefix: landingPrefix)
@@ -158,10 +150,7 @@ final class TabularPerformanceModel: BasePerformanceModel {
     )
 
     super.init(conditions: conditions, configuration: configuration, runway: runway, notam: notam)
-    contaminationCalculator = ContaminationCalculator(
-      aircraftType: aircraftType,
-      loader: loader
-    )
+    contaminationCalculator = ContaminationCalculator(loader: loader)
   }
 
   // MARK: - Base Values
@@ -186,15 +175,17 @@ final class TabularPerformanceModel: BasePerformanceModel {
           clamping: [.clampLow, .clampLow, .clampLow]
         )
       case .landingRun:
-        landingRunData.value(
-          for: [weight, altitude, temperature],
-          clamping: [.clampLow, .clampLow, .clampLow]
-        )
+        configuration.flapSetting.hasLandingGroundRun
+          ? landingRunData.value(
+            for: [weight, altitude, temperature],
+            clamping: [.clampLow, .clampLow, .clampLow]
+          )
+          : .notAvailable
       case .landingDistance:
         landingDistanceData.value(
           for: [weight, altitude, temperature],
           clamping: [.clampLow, .clampLow, .clampLow]
-        )
+        ) * (configuration.flapSetting.flapsUpLandingDistanceFactor ?? 1)
     }
   }
 

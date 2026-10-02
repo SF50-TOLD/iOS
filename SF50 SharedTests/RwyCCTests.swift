@@ -20,7 +20,7 @@ struct RwyCCTests {
     ] as [(code: UInt8, expected: Double)]
   )
   func `RwyCC LDF values match CSV data for smooth surface`(code: UInt8, expected: Double) {
-    let calculator = ContaminationCalculator(aircraftType: .g1)
+    let calculator = ContaminationCalculator()
     let ldf = calculator.rwyCCLandingDistanceFactor(code: code, isGroovedPFC: false)
     #expect(ldf == expected)
   }
@@ -36,14 +36,14 @@ struct RwyCCTests {
     ] as [(code: UInt8, expected: Double)]
   )
   func `RwyCC LDF values match CSV data for grooved surface`(code: UInt8, expected: Double) {
-    let calculator = ContaminationCalculator(aircraftType: .g1)
+    let calculator = ContaminationCalculator()
     let ldf = calculator.rwyCCLandingDistanceFactor(code: code, isGroovedPFC: true)
     #expect(ldf == expected)
   }
 
   @Test
   func `RwyCC 5 differs between grooved (2.30) and smooth (2.60)`() {
-    let calculator = ContaminationCalculator(aircraftType: .g1)
+    let calculator = ContaminationCalculator()
     let groovedLDF = calculator.rwyCCLandingDistanceFactor(code: 5, isGroovedPFC: true)
     let smoothLDF = calculator.rwyCCLandingDistanceFactor(code: 5, isGroovedPFC: false)
     #expect(groovedLDF == 2.30)

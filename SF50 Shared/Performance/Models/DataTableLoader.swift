@@ -69,10 +69,6 @@ struct DataTableLoader {
     loadDataTable(path: "landing/\(landingPrefix)/total distance.csv")
   }
 
-  func loadVrefData() -> DataTable {
-    loadDataTable(path: "vref/50.csv")
-  }
-
   func loadVrefData(vrefPrefix: String) -> DataTable {
     loadDataTable(path: "vref/\(vrefPrefix).csv")
   }

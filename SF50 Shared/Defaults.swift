@@ -50,7 +50,8 @@ extension Defaults.Keys {
     default: 1.0,
     suite: groupDefaults
   )
-  public static let safetyFactorWet = Key<Double>(
+  /// The safety factor for a landing on standing water, slush or snow.
+  public static let safetyFactorContaminated = Key<Double>(
     "SF50/3/safetyFactorWet",
     default: 1.0,
     suite: groupDefaults
@@ -475,4 +476,22 @@ public func findAirportAndRunway(airportID: String?, runwayID: String?, in conte
   guard let runwayID else { return (airport, nil) }
   let runway = airport.runways.first(where: { $0.name == runwayID })
   return (airport, runway)
+}
+
+// MARK: - Landing Safety Factor
+
+extension Defaults.Keys {
+  /// The configured safety factor for a landing on a runway in the given condition.
+  ///
+  /// A RwyCC landing distance factor already carries the AC 91-79B margin, so it takes none. A wet
+  /// runway takes the dry factor: its distance already carries the AFM's 15% wet increase, and the
+  /// AFM's factored wet distance is that times the dry 1.67. Water, slush and snow take the
+  /// contaminated factor.
+  public static func landingSafetyFactor(for contamination: Contamination?) -> Double {
+    switch contamination {
+      case .rwyCC: 1.0
+      case .wetRunway, nil: Defaults[.safetyFactorDry]
+      case .some: Defaults[.safetyFactorContaminated]
+    }
+  }
 }

@@ -28,13 +28,10 @@ import Foundation
 ///
 /// ```swift
 /// // For tabular model
-/// let calculator = ContaminationCalculator(
-///   aircraftType: .g2Plus,
-///   loader: dataTableLoader
-/// )
+/// let calculator = ContaminationCalculator(loader: dataTableLoader)
 ///
 /// // For regression model
-/// let calculator = ContaminationCalculator(aircraftType: .g2Plus)
+/// let calculator = ContaminationCalculator()
 ///
 /// let adjustedDistance = calculator.landingRunContaminationAddition(
 ///   distance: baseDistance,
@@ -68,12 +65,11 @@ final class ContaminationCalculator {
   private static let deepestExtrapolatedDepthInches =
     deepestTabulatedDepthInches + (deepestTabulatedDepthInches - shallowestTabulatedDepthInches)
 
-  /// Wet runway landing distance factor per AFM (15% increase).
+  /// Wet runway factor per AFM: 15% on both the ground run and the total distance. The AFM's
+  /// factored wet tables are the dry ones times 1.92, that is the dry 1.67 times 1.15, for both.
   private static let wetRunwayFactor: Double = 1.15
 
   // MARK: - Properties
-
-  private let aircraftType: AircraftType
 
   // Data tables for tabular mode (nil for regression mode)
   private let compactSnowData: DataTable?
@@ -95,11 +91,8 @@ final class ContaminationCalculator {
   /// Use this initializer when the performance model uses tabular interpolation
   /// from digitized AFM data.
   ///
-  /// - Parameters:
-  ///   - aircraftType: The aircraft type
-  ///   - loader: The data table loader to load contamination tables from
-  init(aircraftType: AircraftType, loader: DataTableLoader) {
-    self.aircraftType = aircraftType
+  /// - Parameter loader: The data table loader to load contamination tables from
+  init(loader: DataTableLoader) {
     self.compactSnowData = loader.loadContaminationCompactSnowData()
     self.drySnowData = loader.loadContaminationDrySnowData()
     self.slushData = loader.loadContaminationSlushData()
@@ -112,10 +105,7 @@ final class ContaminationCalculator {
   ///
   /// Use this initializer when the performance model uses polynomial regression
   /// formulas derived from AFM data.
-  ///
-  /// - Parameter aircraftType: The aircraft type
-  init(aircraftType: AircraftType) {
-    self.aircraftType = aircraftType
+  init() {
     self.compactSnowData = nil
     self.drySnowData = nil
     self.slushData = nil
@@ -164,6 +154,8 @@ final class ContaminationCalculator {
       return distance.map { value, unc in (value * ldf, unc.map { $0 * ldf }) }
     }
 
+    if contamination == .wetRunway { return distance * Self.wetRunwayFactor }
+
     if usesTabularData {
       return tabularContamination(distance: distance, contamination: contamination)
     }
@@ -172,11 +164,12 @@ final class ContaminationCalculator {
 
   /// Calculates the contaminated landing distance from base landing distance and run.
   ///
-  /// This method encapsulates the full contamination adjustment for landing distance,
-  /// handling both RwyCC (landing distance factor) and non-RwyCC (run-increase) paths:
+  /// This method encapsulates the full contamination adjustment for landing distance:
   ///
   /// - **RwyCC**: Multiplies the base landing distance by the appropriate LDF.
-  /// - **Non-RwyCC contamination**: Computes the contaminated ground run, then adds the
+  /// - **Wet runway**: Multiplies the base landing distance by the AFM's 15% wet increase, which
+  ///   covers the whole distance.
+  /// - **Water, slush and snow**: Computes the contaminated ground run, then adds the
   ///   difference (contaminated run - base run) to the base landing distance. This reflects
   ///   the AFM approach where contamination only affects the ground run, not the air segment.
   /// - **No contamination**: Returns the base landing distance unchanged.
@@ -201,6 +194,9 @@ final class ContaminationCalculator {
     {
       return landingDistance * ldf
     }
+
+    // Wet: the AFM's increase covers the whole distance, not only the ground run
+    if contamination == .wetRunway { return landingDistance * Self.wetRunwayFactor }
 
     // Non-RwyCC: contamination only affects the ground run
     let contaminatedRun = landingRunContaminationAddition(
@@ -231,14 +227,6 @@ final class ContaminationCalculator {
     contamination: Contamination
   ) -> Value<Double> {
     switch contamination {
-      case .wetRunway:
-        // G2/G2+ AFM Reissue A: Add 15% to landing ground distance for wet runway
-        // G1: No effect (tabular data doesn't include wet runway adjustment)
-        guard aircraftType.hasWetRunwayLandingDistanceFactor else { return distance }
-        return distance.map { value, uncertainty in
-          (value * Self.wetRunwayFactor, uncertainty.map { $0 * Self.wetRunwayFactor })
-        }
-
       case .waterOrSlush(let depth):
         guard let waterData else { return distance }
         return tabularDepthContamination(distance: distance, depth: depth, in: waterData)
@@ -253,8 +241,8 @@ final class ContaminationCalculator {
       case .compactSnow:
         return tabularCompactSnowContamination(distance: distance)
 
-      case .rwyCC:
-        // RwyCC is handled at the performance model level via LDF; should not reach here
+      case .rwyCC, .wetRunway:
+        // Handled before the contaminant tables and formulas are consulted; should not reach here
         return distance
     }
   }
@@ -266,12 +254,6 @@ final class ContaminationCalculator {
     contamination: Contamination
   ) -> Value<Double> {
     switch contamination {
-      case .wetRunway:
-        // Regression model: Apply 15% increase for all aircraft types
-        return distance.map { value, uncertainty in
-          (value * Self.wetRunwayFactor, uncertainty.map { $0 * Self.wetRunwayFactor })
-        }
-
       case .waterOrSlush(let depth):
         return regressionWaterContamination(distance: distance, depth: depth)
 
@@ -284,8 +266,8 @@ final class ContaminationCalculator {
       case .compactSnow:
         return regressionCompactSnowContamination(distance: distance)
 
-      case .rwyCC:
-        // RwyCC is handled at the performance model level via LDF; should not reach here
+      case .rwyCC, .wetRunway:
+        // Handled before the contaminant tables and formulas are consulted; should not reach here
         return distance
     }
   }
@@ -481,14 +463,5 @@ extension ContaminationCalculator {
     }
 
     return factors
-  }
-}
-
-extension AircraftType {
-  var hasWetRunwayLandingDistanceFactor: Bool {
-    switch self {
-      case .g1: false
-      case .g2, .g2Plus: true
-    }
   }
 }

@@ -116,12 +116,7 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
     }
 
     do {
-      let safetyFactor: Double =
-        switch notam?.contamination {
-          case .rwyCC: 1.0  // LDF already includes safety margin per AC 91-79B
-          case .some: Defaults[.safetyFactorWet]
-          case .none: Defaults[.safetyFactorDry]
-        }
+      let safetyFactor = Defaults.Keys.landingSafetyFactor(for: notam?.contamination)
       let VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value
       let report = try calculationService.calculateLanding(
         for: model,

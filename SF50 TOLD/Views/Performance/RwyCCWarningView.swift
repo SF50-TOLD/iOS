@@ -6,11 +6,11 @@ struct RwyCCWarningView: View {
   @Default(.safetyFactorDry)
   private var safetyFactorDry
 
-  @Default(.safetyFactorWet)
-  private var safetyFactorWet
+  @Default(.safetyFactorContaminated)
+  private var safetyFactorContaminated
 
   private var safetyFactorConfigured: Bool {
-    safetyFactorDry != 1.0 || safetyFactorWet != 1.0
+    safetyFactorDry != 1.0 || safetyFactorContaminated != 1.0
   }
 
   var body: some View {

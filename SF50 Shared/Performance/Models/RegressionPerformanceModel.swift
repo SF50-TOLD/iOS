@@ -154,19 +154,22 @@ final class RegressionPerformanceModel: BasePerformanceModel {
   private var landingRunBaseFt: Value<Double> {
     switch configuration.flapSetting {
       case .flaps100: evaluate(landingRunFlaps100Equation)
-      case .flaps50, .flapsUp: evaluate(landingRunFlaps50Equation)
-      case .flaps50Ice, .flapsUpIce: evaluate(landingRunFlaps50IceEquation)
+      case .flaps50: evaluate(landingRunFlaps50Equation)
+      case .flaps50Ice: evaluate(landingRunFlaps50IceEquation)
+      case .flapsUp, .flapsUpIce: .notAvailable
     }
   }
 
   private var landingDistanceBaseFt: Value<Double> {
     switch configuration.flapSetting {
       case .flaps100: evaluate(landingDistanceFlaps100Equation)
-      case .flaps50: evaluate(landingDistanceFlaps50Equation)
-      case .flaps50Ice: evaluate(landingDistanceFlaps50IceEquation)
-      case .flapsUp: evaluate(landingDistanceFlaps50Equation) * 1.38
-      case .flapsUpIce: evaluate(landingDistanceFlaps50IceEquation) * 1.52
+      case .flaps50, .flapsUp: evaluate(landingDistanceFlaps50Equation) * flapsUpFactor
+      case .flaps50Ice, .flapsUpIce: evaluate(landingDistanceFlaps50IceEquation) * flapsUpFactor
     }
+  }
+
+  private var flapsUpFactor: Double {
+    configuration.flapSetting.flapsUpLandingDistanceFactor ?? 1
   }
 
   // MARK: - Initializer
@@ -238,7 +241,7 @@ final class RegressionPerformanceModel: BasePerformanceModel {
     landingDistanceUnpavedFactorEquation = loader.loadLandingDistanceUnpavedFactorEquation()
 
     super.init(conditions: conditions, configuration: configuration, runway: runway, notam: notam)
-    contaminationCalculator = ContaminationCalculator(aircraftType: aircraftType)
+    contaminationCalculator = ContaminationCalculator()
   }
 
   // MARK: - Base Values

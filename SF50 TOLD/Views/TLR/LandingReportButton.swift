@@ -93,13 +93,9 @@ struct LandingReportButton: View {
           VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value,
           date = weather.time
 
-        // LDF already includes safety margin per AC 91-79B; skip user safety factor
-        let safetyFactor: Double =
-          switch runwaySnapshot.notam?.contamination {
-            case .rwyCC: 1.0
-            case .some: Defaults[.safetyFactorWet]
-            case .none: Defaults[.safetyFactorDry]
-          }
+        let safetyFactor = Defaults.Keys.landingSafetyFactor(
+          for: runwaySnapshot.notam?.contamination
+        )
 
         // Now run the report generation in the background
         let input = PerformanceInput(

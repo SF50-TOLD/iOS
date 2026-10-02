@@ -5,7 +5,7 @@ import SwiftUI
 
 struct SettingsView: View {
   private static let defaultSafetyFactorDry = 1.67
-  private static let defaultSafetyFactorWet = 1.92
+  private static let defaultSafetyFactorContaminated = 1.92
 
   @Default(.aircraftTypeSetting)
   private var aircraftTypeSetting
@@ -22,8 +22,8 @@ struct SettingsView: View {
   @Default(.safetyFactorDry)
   private var safetyFactorDry
 
-  @Default(.safetyFactorWet)
-  private var safetyFactorWet
+  @Default(.safetyFactorContaminated)
+  private var safetyFactorContaminated
 
   @Default(.useAirportLocalTime)
   private var useAirportLocalTime
@@ -36,7 +36,7 @@ struct SettingsView: View {
 
   private var hasDefaultFactors: Bool {
     safetyFactorDry == Self.defaultSafetyFactorDry
-      && safetyFactorWet == Self.defaultSafetyFactorWet
+      && safetyFactorContaminated == Self.defaultSafetyFactorContaminated
   }
 
   var body: some View {
@@ -86,7 +86,10 @@ struct SettingsView: View {
 
         Section("Performance") {
           ModelToggleView()
-          LabeledContent("Safety Factor (Dry)") {
+        }
+
+        Section {
+          LabeledContent("Dry") {
             NumericField(
               "Factor",
               value: $safetyFactorDry,
@@ -95,22 +98,28 @@ struct SettingsView: View {
             )
             .accessibilityIdentifier("safetyFactorDryField")
           }
-          LabeledContent("Safety Factor (Wet)") {
+          LabeledContent("Contaminated") {
             NumericField(
               "Factor",
-              value: $safetyFactorWet,
+              value: $safetyFactorContaminated,
               format: .number.precision(.fractionLength(0...2)),
               minimum: 1.0
             )
-            .accessibilityIdentifier("safetyFactorWetField")
+            .accessibilityIdentifier("safetyFactorContaminatedField")
           }
 
           Button("Use AFM Safety Factors") {
             safetyFactorDry = Self.defaultSafetyFactorDry
-            safetyFactorWet = Self.defaultSafetyFactorWet
+            safetyFactorContaminated = Self.defaultSafetyFactorContaminated
           }
           .disabled(hasDefaultFactors)
           .accessibilityIdentifier("useDefaultFactorsButton")
+        } header: {
+          Text("Safety Factors")
+        } footer: {
+          Text(
+            "A wet runway takes the dry factor on top of the AFM’s 15% wet-runway increase. The contaminated factor applies to standing water, slush, and snow."
+          )
         }
 
         Section {

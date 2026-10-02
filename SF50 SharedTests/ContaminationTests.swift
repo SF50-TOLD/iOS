@@ -683,7 +683,7 @@ struct ContaminationTests {
       .expect(contaminatedDistance, of: 3927.85, computing: "contaminated landing distance")
   }
 
-  // MARK: - Wet Runway Tests (G2/G2+ AFM Reissue A)
+  // MARK: - Wet Runway Tests
 
   @Test
   func `wet runway contamination increases landing run by 15% - Tabular G2+`() {
@@ -800,7 +800,7 @@ struct ContaminationTests {
   }
 
   @Test
-  func `wet runway contamination has no effect on G1 - Tabular`() {
+  func `wet runway contamination increases landing run by 15% - Tabular G1`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
@@ -859,7 +859,7 @@ struct ContaminationTests {
     }
 
     PerformanceCase(for: contaminatedModel, aircraftType: .g1)
-      .expect(contaminatedRun, isWithin: 0.001, of: cleanRun, computing: "wet landing run")
+      .expect(contaminatedRun, of: cleanRun * 1.15, computing: "wet landing run")
   }
 
   @Test
@@ -914,7 +914,7 @@ struct ContaminationTests {
   }
 
   @Test
-  func `wet runway contamination increases total landing distance - G2+`() {
+  func `wet runway contamination increases total landing distance by 15% - G2+`() {
     let conditions = Helper.createTestConditions(temperature: 20)
     let config = Helper.createTestConfiguration(weight: 5550)
     let runway = Helper.createTestRunway()
@@ -974,13 +974,10 @@ struct ContaminationTests {
         return
     }
 
-    PerformanceCase.expect(
-      contaminatedDistance > cleanDistance,
-      "A wet runway's longer landing run should lengthen the total landing distance",
-      results: [
-        "clean landing distance": cleanCase.computed(cleanDistance),
-        "contaminated landing distance": contaminatedCase.computed(contaminatedDistance)
-      ]
+    contaminatedCase.expect(
+      contaminatedDistance,
+      of: cleanDistance * 1.15,
+      computing: "wet landing distance"
     )
   }
 

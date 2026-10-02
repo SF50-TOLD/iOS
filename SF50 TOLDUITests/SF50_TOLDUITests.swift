@@ -984,17 +984,17 @@ extension SF50_TOLDUITests {
     )
     defaultButton.tap()
 
-    // Verify values reset to AFM defaults (1.67 dry, 1.92 wet)
+    // Verify values reset to AFM defaults (1.67 dry, 1.92 contaminated)
     let dryValue = settings.safetyFactorDryField.value as? String ?? ""
     XCTAssertTrue(
       dryValue.contains("1.67"),
       "Safety factor dry should reset to 1.67, got: \(dryValue)"
     )
 
-    let wetValue = settings.safetyFactorWetField.value as? String ?? ""
+    let contaminatedValue = settings.safetyFactorContaminatedField.value as? String ?? ""
     XCTAssertTrue(
-      wetValue.contains("1.92"),
-      "Safety factor wet should reset to 1.92, got: \(wetValue)"
+      contaminatedValue.contains("1.92"),
+      "Safety factor contaminated should reset to 1.92, got: \(contaminatedValue)"
     )
   }
 
@@ -1056,28 +1056,19 @@ extension SF50_TOLDUITests {
       )
     }
 
-    // Flaps Up uses identical AFM data to Flaps 50% in the Tabular model,
-    // so verify values are at least equal (no regression).
+    // The AFM gives Flaps Up only as 38% over the Flaps 50% landing distance,
+    // with no ground run.
     landing.selectFlaps("Flaps Up")
-    let flapsUpGroundRun = landing.landingGroundRunValue
-    let flapsUpDistance = landing.landingDistanceValue
+    XCTAssertNil(landing.landingGroundRunValue, "Flaps Up should have no ground run")
 
-    if let flaps50GroundRun, let flapsUpGroundRun {
-      XCTAssertGreaterThanOrEqual(
-        flapsUpGroundRun,
-        flaps50GroundRun,
-        "Flaps Up should have ground run >= Flaps 50%"
-      )
-    }
+    let flapsUpDistance = landing.landingDistanceValue
     if let flaps50Distance, let flapsUpDistance {
-      XCTAssertGreaterThanOrEqual(
+      XCTAssertEqual(
         flapsUpDistance,
-        flaps50Distance,
-        "Flaps Up should have distance >= Flaps 50%"
+        flaps50Distance * 1.38,
+        accuracy: 5,
+        "Flaps Up distance should be 38% over Flaps 50%"
       )
-    }
-    if let flapsUpDistance {
-      XCTAssertEqual(flapsUpDistance, 2248.0, accuracy: 40, "Flaps Up distance")
     }
   }
 

@@ -225,6 +225,28 @@ struct TabularPerformanceModelG2PlusTests {
     }
   }
 
+  // MARK: - Vref Tests
+
+  @Test(arguments: [
+    (FlapSetting.flaps100, 85.0),
+    (.flaps50, 96),
+    (.flaps50Ice, 115),
+    (.flapsUp, 104),
+    (.flapsUpIce, 135)
+  ])
+  func `Vref follows the flap setting`(flapSetting: FlapSetting, expected: Double) {
+    let runway = Helper.createTestRunway()
+    let model = TabularPerformanceModel(
+      conditions: Helper.createTestConditions(),
+      configuration: Helper.createTestConfiguration(weight: 5550, flapSetting: flapSetting),
+      runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
+      notam: nil,
+      aircraftType: .g2Plus
+    )
+
+    #expect(model.VrefKts == .value(expected))
+  }
+
   // MARK: - Wind Adjustment Tests
 
   @Test

@@ -13,6 +13,16 @@ one of the two places.
 These notes are read by pilots deciding whether to update, so they describe what
 changed in the cockpit rather than what changed in the code.
 
+## 3.9
+
+- Corrected landing figures: VREF at flaps 100 and flaps UP on a G2+ (it showed
+  the flaps 50 speed), and flaps UP landing distance, now 38% over flaps 50, or
+  52% in icing, as the AFM gives it.
+- A wet runway now adds 15% to the whole landing distance, as the AFM does, on
+  every model including the G1, and takes the dry safety factor rather than
+  counting the increase twice. The wet safety factor is now the contaminated
+  safety factor, for standing water, slush and snow.
+
 ## 3.8.2
 
 - The app no longer quits when the climb charts do not cover your conditions; it

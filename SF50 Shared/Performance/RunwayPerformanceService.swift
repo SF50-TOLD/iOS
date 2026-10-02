@@ -112,19 +112,6 @@ extension RunwayPerformanceService {
 // MARK: - Calculation
 
 extension RunwayPerformanceService {
-  /// Mirrors `LandingPerformanceViewModel`'s choice exactly.
-  ///
-  /// A reported runway condition code is the case worth spelling out: its landing distance factor
-  /// already carries the safety margin under AC 91-79B, so applying the wet factor on top would
-  /// report a longer distance than the app does for the same runway.
-  private static func landingSafetyFactor(for contamination: Contamination?) -> Double {
-    switch contamination {
-      case .rwyCC: 1.0
-      case .some: Defaults[.safetyFactorWet]
-      case .none: Defaults[.safetyFactorDry]
-    }
-  }
-
   private func results(
     for airport: Airport,
     conditions: Conditions,
@@ -177,7 +164,7 @@ extension RunwayPerformanceService {
         case .landing:
           let report = try calculationService.calculateLanding(
             for: model,
-            safetyFactor: Self.landingSafetyFactor(for: contamination),
+            safetyFactor: Defaults.Keys.landingSafetyFactor(for: contamination),
             VREFAdditiveKts: VREFAdditiveKts
           )
           return .init(landing: report.results)

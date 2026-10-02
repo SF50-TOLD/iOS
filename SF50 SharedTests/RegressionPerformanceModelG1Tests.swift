@@ -268,6 +268,21 @@ struct RegressionPerformanceModelG1Tests {
     )
   }
 
+  @Test(arguments: [FlapSetting.flapsUp, .flapsUpIce])
+  func `flaps UP landing has a total distance but no ground run`(flapSetting: FlapSetting) {
+    let runway = Helper.createTestRunway()
+    let model = RegressionPerformanceModel(
+      conditions: Helper.createTestConditions(temperature: 20),
+      configuration: Helper.createTestConfiguration(weight: 5550, flapSetting: flapSetting),
+      runway: RunwayInput(from: runway, airport: runway.airport, notam: nil),
+      notam: nil,
+      aircraftType: .g1
+    )
+
+    #expect(model.landingDistanceFt.nominal != nil)
+    #expect(model.landingRunFt == .notAvailable)
+  }
+
   // MARK: - Enroute Climb Tests - Normal
 
   @Test

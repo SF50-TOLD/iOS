@@ -11,7 +11,9 @@ final class SettingsPage: BasePage {
   var thrustScheduleToggle: XCUIElement { app.switches["updatedThrustScheduleToggle"] }
   var weightField: XCUIElement { app.textFields["weightField"] }
   var safetyFactorDryField: XCUIElement { app.textFields["safetyFactorDryField"] }
-  var safetyFactorWetField: XCUIElement { app.textFields["safetyFactorWetField"] }
+  var safetyFactorContaminatedField: XCUIElement {
+    app.textFields["safetyFactorContaminatedField"]
+  }
   var selectModelToggle: XCUIElement { app.buttons["selectModelToggle"] }
   var timeZoneDisplayPicker: XCUIElement {
     app.descendants(matching: .any)["timeZoneDisplayPicker"].firstMatch
