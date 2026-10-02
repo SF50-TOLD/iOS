@@ -42,7 +42,7 @@ extension Defaults.Keys {
   )
   public static let fuelDensity = Key<Measurement<UnitDensity>>(
     "SF50/3/fuelDensity",
-    default: .init(value: 6.71, unit: .poundsPerGallon),
+    default: .init(value: 6.76, unit: .poundsPerGallon),
     suite: groupDefaults
   )
   public static let safetyFactorDry = Key<Double>(
