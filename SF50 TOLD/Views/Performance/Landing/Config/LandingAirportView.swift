@@ -100,7 +100,8 @@ struct LandingAirportView: View {
             runway: selectedRunway,
             downloadedNOTAMs: performance.downloadedNOTAMs,
             plannedTime: weather.time,
-            isLoadingNOTAMs: performance.isLoadingNOTAMs
+            isLoadingNOTAMs: performance.isLoadingNOTAMs,
+            proposal: performance.notamProposal
           )
         ) {
           HStack {
@@ -110,7 +111,8 @@ struct LandingAirportView: View {
               configuredCount: performance.configuredNOTAMCount,
               availableCount: performance.downloadedNOTAMCount,
               isLoading: performance.isLoadingNOTAMs,
-              hasAttemptedFetch: performance.hasAttemptedNOTAMFetch
+              hasAttemptedFetch: performance.hasAttemptedNOTAMFetch,
+              canFill: performance.notamProposal?.fields(for: .landing).isEmpty == false
             )
           }
         }.accessibilityIdentifier("NOTAMsSelector")

@@ -89,3 +89,32 @@ extension PreviewHelper {
     }
   }
 }
+
+extension NOTAMResponse {
+  /// NOTAMs for Oakland runway 30 that the formatted-report parsers read: a FICON report, which
+  /// proposes a landing runway condition code, and an FAA obstacle report off the departure end,
+  /// which proposes a takeoff obstacle's height and distance. For previews and UI tests.
+  ///
+  /// - Parameter baseTime: The time both NOTAMs are in effect around.
+  public static func readableSamples(baseTime: Date = .now) -> [Self] {
+    let texts = [
+      "OAK RWY 30 FICON 3/3/3 100 PCT 1/8IN WATER OBS AT 2609260325.",
+      "OAK OBST CRANE (ASN 2026-AWP-1234-OE) 374300N1221230W (0.4NM NW DEP END RWY 30) 185FT (170FT AGL) FLAGGED AND LGTD."
+    ]
+    return texts.enumerated().map { index, text in
+      .init(
+        id: 9000 + index,
+        notamId: "A\(9000 + index)/26",
+        icaoLocation: "KOAK",
+        effectiveStart: baseTime.addingTimeInterval(-3600),
+        effectiveEnd: baseTime.addingTimeInterval(86400),
+        schedule: nil,
+        notamText: text,
+        qLine: nil,
+        purpose: "N",
+        scope: "A",
+        trafficType: "IV"
+      )
+    }
+  }
+}

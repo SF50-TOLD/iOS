@@ -62,6 +62,9 @@ public actor NOTAMLoader: NOTAMLoaderProtocol {
   /// Shared singleton instance
   public static let shared = NOTAMLoader()
 
+  /// The most NOTAMs the service returns in one response.
+  private static let pageSize = 100
+
   /// Default base URL for the NOTAM API.
   private static let defaultBaseURL = URL(string: "https://notams.fly.dev")!
 
@@ -112,41 +115,45 @@ public actor NOTAMLoader: NOTAMLoaderProtocol {
 
   /// Private initializer to enforce singleton pattern
   private init() {
-    // Load configuration from bundle
-    if let baseURL = Bundle.main.object(forInfoDictionaryKey: "NOTAM_API_BASE_URL") as? String,
-      let token = Bundle.main.object(forInfoDictionaryKey: "NOTAM_API_TOKEN") as? String
-    {
-      self.baseURL = baseURL
-      self.apiToken = token
-    } else {
-      // Fallback for development/testing
-      self.baseURL = Self.defaultBaseURL.absoluteString
-      self.apiToken = ""
+    baseURL = Self.configuredValue(for: "NOTAM_API_BASE_URL") ?? Self.defaultBaseURL.absoluteString
+    apiToken = Self.configuredValue(for: "NOTAM_API_TOKEN") ?? ""
+    if apiToken.isEmpty {
       Self.logger.warning(
-        "NOTAM API configuration not found in bundle. Using defaults. API calls will fail."
+        "NOTAM_API_TOKEN isn’t set; NOTAMs won’t download. See NOTAMAPIConfig.xcconfig.template."
       )
     }
   }
 
-  /// Fetches NOTAMs for an airport over an effective-date range.
+  /// The Info.plist value for `key`, or `nil` when it's missing or empty — as it is when the
+  /// xcconfig that supplies it doesn't set it.
+  private static func configuredValue(for key: String) -> String? {
+    guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String, !value.isEmpty
+    else { return nil }
+    return value
+  }
+
+  /// Fetches every NOTAM for an airport over an effective-date range.
   ///
-  /// Satisfies ``NOTAMLoaderProtocol`` by forwarding to
+  /// Satisfies ``NOTAMLoaderProtocol`` by paging through
   /// ``fetchNOTAMs(for:startDate:endDate:purpose:scope:limit:offset:)`` with
-  /// default filters and returning just the NOTAM entries.
+  /// default filters until the service has returned all it holds; a busy airport has hundreds.
   public func fetchNOTAMs(
     for icao: String,
     startDate: Date?,
     endDate: Date?
   ) async throws -> [NOTAMResponse] {
-    try await fetchNOTAMs(
-      for: icao,
-      startDate: startDate,
-      endDate: endDate,
-      purpose: nil,
-      scope: nil,
-      limit: 100,
-      offset: 0
-    ).data
+    var notams: [NOTAMResponse] = []
+    while true {
+      let page = try await fetchNOTAMs(
+        for: icao,
+        startDate: startDate,
+        endDate: endDate,
+        limit: Self.pageSize,
+        offset: notams.count
+      )
+      notams += page.data
+      if page.data.isEmpty || notams.count >= page.pagination.total { return notams }
+    }
   }
 
   /// Fetches NOTAMs for a specific ICAO location.

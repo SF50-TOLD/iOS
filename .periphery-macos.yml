@@ -22,6 +22,10 @@ report_exclude:
   # framework. Shared dead code is gated by the cross-platform intersection job
   # in .github/workflows/periphery.yml, not by this pass.
   - "**/SF50 Shared/**"
+  # The NOTAMParsing package reaches the iOS app through SF50 Shared and nothing
+  # on macOS calls it, so this pass would report the whole package. The iOS pass
+  # (.periphery.yml) gates it.
+  - "**/NOTAMParsing/**"
 
 # App Intents declarations are found by the system through the metadata
 # `appintentsmetadataprocessor` extracts from each binary; nothing in this codebase ever names them, so

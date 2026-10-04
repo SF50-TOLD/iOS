@@ -10,6 +10,9 @@ final class NOTAMPage: BasePage {
   var obstacleDistanceField: XCUIElement { app.textFields["obstacleDistanceField"] }
   var contaminationTypePicker: XCUIElement { app.buttons["contaminationTypePicker"] }
   var contaminationDepthSlider: XCUIElement { app.sliders["contaminationDepthSlider"] }
+  var rwyCCSlider: XCUIElement { app.sliders["rwyCCSlider"] }
+  var fillFromNOTAMButton: XCUIElement { app.buttons["fillFromNOTAMButton"].firstMatch }
+  var fillBanner: XCUIElement { app.otherElements["fillBanner"] }
 
   // MARK: - Runway Shortening
 
@@ -61,6 +64,18 @@ final class NOTAMPage: BasePage {
     if contaminationDepthSlider.waitForExistence(timeout: 2) {
       contaminationDepthSlider.adjust(toNormalizedSliderPosition: normalizedPosition)
     }
+  }
+
+  // MARK: - Filling In
+
+  /// Fills the editor in from the first downloaded NOTAM that can fill it.
+  func fillFromFirstProposal() {
+    XCTAssertTrue(
+      fillFromNOTAMButton.waitForExistence(timeout: 5),
+      "A downloaded NOTAM should offer to fill the editor in"
+    )
+    ensureHittable(fillFromNOTAMButton)
+    forceTap(fillFromNOTAMButton)
   }
 
   // MARK: - Actions

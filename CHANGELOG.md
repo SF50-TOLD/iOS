@@ -13,6 +13,15 @@ one of the two places.
 These notes are read by pilots deciding whether to update, so they describe what
 changed in the cockpit rather than what changed in the code.
 
+## 3.10
+
+- Downloaded NOTAMs now include runway closures, displaced thresholds, declared
+  distances and runway condition reports, and busy airports are no longer cut
+  off after 100 NOTAMs.
+- A runway condition report, or an obstacle NOTAM for your runway, can fill in
+  the runway’s NOTAM entries: tap Auto-Fill on its card, then check each value
+  against the NOTAM. Undo restores what you had entered.
+
 ## 3.9
 
 - Adds the G3 Vision Jet. Choose it in Settings; it uses the G2+ performance
