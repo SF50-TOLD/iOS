@@ -141,12 +141,12 @@ obsolete and delete it.
 
 ### 9. Upload to R2
 
-The regional payloads and `terrain-manifest-v3.json` serve builds that download
-payloads directly. The asset-pack archives and the download manifest serve
-Background Assets. Uploads follow the download manifest: each archive goes to
-the key its URL names, unless an object is already there. Any failed upload
-stops the run before a manifest goes up, and the download manifest goes last,
-so a device never reads a manifest naming a file the bucket cannot serve.
+Only the asset-pack archives and the download manifest are published; devices
+read terrain through Background Assets. Uploads follow the download manifest:
+each archive goes to the key its URL names, unless an object is already there.
+Any failed upload stops the run before the manifest goes up, and the manifest
+goes last, so a device never reads a manifest naming a file the bucket cannot
+serve.
 
 To publish payloads already built, for example after checking a run made with
 `TERRAIN_SKIP_UPLOAD=1`, run headless with `TERRAIN_REGIONS=none`: it packages
