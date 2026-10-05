@@ -54,11 +54,19 @@
 		01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */ = {isa = PBXBuildFile; productRef = 012B1E672DE2F463000D9ADC /* SwiftNASR */; };
 		01D0DEBE2F27504500856DB4 /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01D0DEBF2F27504600856DB4 /* SF50_Shared.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		01E0B4A83065CC2C00E8EF8C /* SF50_Shared.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 012B1E3B2DE2F272000D9ADC /* SF50_Shared.framework */; };
 		01EA44392EB327D7008FEB64 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01EA44382EB327D7008FEB64 /* Security.framework */; };
 		01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01EB070A2FCA2D22007C3D1E /* XCUITestKit */; };
 		0DFF3139357E79F8F862DECF /* NavDataGeneration in Frameworks */ = {isa = PBXBuildFile; productRef = 0968DA50D02C96F6AF47A0CC /* NavDataGeneration */; };
 		4E07A3D10000000000000003 /* NOTAMParsing in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000002 /* NOTAMParsing */; };
+		4E07A3D10000000000000005 /* NOTAMModel in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000004 /* NOTAMModel */; };
+		4E07A3D10000000000000007 /* NOTAMModelRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000006 /* NOTAMModelRuntime */; };
+		4E07A3D10000000000000009 /* NOTAMModel in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000008 /* NOTAMModel */; };
+		4E07A3D1000000000000000B /* NOTAMModelRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D1000000000000000A /* NOTAMModelRuntime */; };
 		4E07A3D1000000000000000D /* NOTAMParsing in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D1000000000000000C /* NOTAMParsing */; };
+		4E07A3D10000000000000024 /* NOTAMParsing in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000023 /* NOTAMParsing */; };
+		4E07A3D10000000000000032 /* NOTAMModel in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000031 /* NOTAMModel */; };
+		4E07A3D10000000000000034 /* NOTAMModel in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000033 /* NOTAMModel */; };
 		94CC1E014886B23174174CD9 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 02BD3D6AFE77DA2CAC646D3B /* Algorithms */; };
 		AB352BDD14B44A2CA78F9D44 /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 602F51ECCC3348DE83D26B3E /* Sentry */; };
 		C56FF4A70BD4DDF42C6DCBAA /* NavData in Frameworks */ = {isa = PBXBuildFile; productRef = EEB6B6DD4229EEB6363A2AA1 /* NavData */; };
@@ -128,6 +136,13 @@
 			remoteGlobalIDString = 0163BC692DDEE9D3008FEE8F;
 			remoteInfo = "SF50 TOLD";
 		};
+		01E0B4A93065CC2C00E8EF8C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0163BC622DDEE9D3008FEE8F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 012B1E3A2DE2F272000D9ADC;
+			remoteInfo = "SF50 Shared";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -186,6 +201,7 @@
 		01714CA52F2451D9003DADCF /* TerrainAssets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = TerrainAssets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Generate Screenshots.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		01BABAE92F3B12E5000EA5E1 /* Charts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Charts.framework; path = System/Library/Frameworks/Charts.framework; sourceTree = SDKROOT; };
+		01E0B4A13065CC2C00E8EF8C /* NOTAMExtractionEvaluation.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NOTAMExtractionEvaluation.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		01EA44382EB327D7008FEB64 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/Security.framework; sourceTree = DEVELOPER_DIR; };
 		01NOTAM01NOTAM01NOTAM /* NOTAMAPIConfig.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = NOTAMAPIConfig.xcconfig; path = "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig"; sourceTree = SOURCE_ROOT; };
 		01R2CFG01R2CFG01R2CFG /* Credentials.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Credentials.xcconfig; path = DownloadNASR/Credentials.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -302,6 +318,11 @@
 			path = "Generate Screenshots";
 			sourceTree = "<group>";
 		};
+		01E0B4A23065CC2C00E8EF8C /* NOTAMExtractionEvaluation */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = NOTAMExtractionEvaluation;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -320,6 +341,7 @@
 				01AC00212FE0000000000021 /* MeasurementKitLocation in Frameworks */,
 				01AC00202FE0000000000020 /* MeasurementKit in Frameworks */,
 				018ED7A62F345C2000D084B4 /* SwiftMETAR in Frameworks */,
+				4E07A3D10000000000000032 /* NOTAMModel in Frameworks */,
 				4E07A3D10000000000000003 /* NOTAMParsing in Frameworks */,
 				01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */,
 				C56FF4A70BD4DDF42C6DCBAA /* NavData in Frameworks */,
@@ -336,12 +358,15 @@
 				01AC00262FE0000000000026 /* MeasurementKit in Frameworks */,
 				012B1E462DE2F272000D9ADC /* SF50_Shared.framework in Frameworks */,
 				014457DA2F3125DB003ADBCD /* RealModule in Frameworks */,
+				4E07A3D10000000000000034 /* NOTAMModel in Frameworks */,
 				4E07A3D1000000000000000D /* NOTAMParsing in Frameworks */,
 			);
 		};
 		0163BC672DDEE9D3008FEE8F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				4E07A3D10000000000000009 /* NOTAMModel in Frameworks */,
+				4E07A3D1000000000000000B /* NOTAMModelRuntime in Frameworks */,
 				01AC00232FE0000000000023 /* MeasurementKitUI in Frameworks */,
 				01AC00282FE0000000000028 /* MeasurementKitLocation in Frameworks */,
 				01AC00222FE0000000000022 /* MeasurementKit in Frameworks */,
@@ -398,6 +423,15 @@
 				01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */,
 			);
 		};
+		01E0B49E3065CC2C00E8EF8C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				01E0B4A83065CC2C00E8EF8C /* SF50_Shared.framework in Frameworks */,
+				4E07A3D10000000000000005 /* NOTAMModel in Frameworks */,
+				4E07A3D10000000000000024 /* NOTAMParsing in Frameworks */,
+				4E07A3D10000000000000007 /* NOTAMModelRuntime in Frameworks */,
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -422,6 +456,7 @@
 				0191DC0D2E9322C20099FB0E /* Generate Screenshots */,
 				0169459A2EB30848001602E6 /* DownloadNASR */,
 				01714CA62F2451D9003DADCF /* TerrainAssets */,
+				01E0B4A23065CC2C00E8EF8C /* NOTAMExtractionEvaluation */,
 				01D1E30E2DDF865100C1CAC8 /* Frameworks */,
 				0163BC6B2DDEE9D3008FEE8F /* Products */,
 				012B12E62EDEB740005DAF4A /* Recovered References */,
@@ -440,6 +475,7 @@
 				0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */,
 				016945992EB30848001602E6 /* DownloadNASR.app */,
 				01714CA52F2451D9003DADCF /* TerrainAssets.appex */,
+				01E0B4A13065CC2C00E8EF8C /* NOTAMExtractionEvaluation.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -515,6 +551,7 @@
 				018B8F0B2E331989003A0DAF /* RealModule */,
 				01A1014E2E93C12E0032AB29 /* Gzip */,
 				018ED7A52F345C2000D084B4 /* SwiftMETAR */,
+				4E07A3D10000000000000031 /* NOTAMModel */,
 				4E07A3D10000000000000002 /* NOTAMParsing */,
 				EEB6B6DD4229EEB6363A2AA1 /* NavData */,
 				02BD3D6AFE77DA2CAC646D3B /* Algorithms */,
@@ -544,6 +581,7 @@
 			packageProductDependencies = (
 				01AC00162FE0000000000016 /* MeasurementKit */,
 				014457D92F3125DB003ADBCD /* RealModule */,
+				4E07A3D10000000000000033 /* NOTAMModel */,
 				4E07A3D1000000000000000C /* NOTAMParsing */,
 			);
 			productName = "SF50 SharedTests";
@@ -582,6 +620,8 @@
 				01BEBCB72E8A401100631DE6 /* SwiftHtml */,
 				602F51ECCC3348DE83D26B3E /* Sentry */,
 				01714C7F2F234A7E003DADCF /* Algorithms */,
+				4E07A3D10000000000000008 /* NOTAMModel */,
+				4E07A3D1000000000000000A /* NOTAMModelRuntime */,
 			);
 			productName = "SF50 TOLD";
 			productReference = 0163BC6A2DDEE9D3008FEE8F /* SF50 TOLD.app */;
@@ -711,6 +751,32 @@
 			productReference = 0191DC0C2E9322C20099FB0E /* Generate Screenshots.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		01E0B4A03065CC2C00E8EF8C /* NOTAMExtractionEvaluation */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 01E0B4A73065CC2C00E8EF8C /* Build configuration list for PBXNativeTarget "NOTAMExtractionEvaluation" */;
+			buildPhases = (
+				01E0B49D3065CC2C00E8EF8C /* Sources */,
+				01E0B49E3065CC2C00E8EF8C /* Frameworks */,
+				01E0B49F3065CC2C00E8EF8C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				01E0B4AA3065CC2C00E8EF8C /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				01E0B4A23065CC2C00E8EF8C /* NOTAMExtractionEvaluation */,
+			);
+			name = NOTAMExtractionEvaluation;
+			packageProductDependencies = (
+				4E07A3D10000000000000004 /* NOTAMModel */,
+				4E07A3D10000000000000023 /* NOTAMParsing */,
+				4E07A3D10000000000000006 /* NOTAMModelRuntime */,
+			);
+			productName = NOTAMExtractionEvaluation;
+			productReference = 01E0B4A13065CC2C00E8EF8C /* NOTAMExtractionEvaluation.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -753,6 +819,9 @@
 						CreatedOnToolsVersion = 26.0.1;
 						TestTargetID = 0163BC692DDEE9D3008FEE8F;
 					};
+					01E0B4A03065CC2C00E8EF8C = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = 0163BC652DDEE9D3008FEE8F /* Build configuration list for PBXProject "SF50 TOLD" */;
@@ -784,6 +853,8 @@
 				01AC00012FE0000000000001 /* XCRemoteSwiftPackageReference "MeasurementKit" */,
 				2B974702697D0A548EC62991 /* XCRemoteSwiftPackageReference "NavData" */,
 				C9DFF1CEEDEBFDC2A78EDDB0 /* XCRemoteSwiftPackageReference "NavDataDistribution" */,
+				4E07A3D10000000000000030 /* XCLocalSwiftPackageReference "NOTAMModel" */,
+				4E07A3D1000000000000000E /* XCLocalSwiftPackageReference "NOTAMModelRuntime" */,
 				4E07A3D10000000000000001 /* XCLocalSwiftPackageReference "NOTAMParsing" */,
 			);
 			preferredProjectObjectVersion = 100;
@@ -800,6 +871,7 @@
 				012B1E442DE2F272000D9ADC /* SF50 SharedTests */,
 				0163BC822DDEE9D4008FEE8F /* SF50 TOLDUITests */,
 				0191DC0B2E9322C20099FB0E /* Generate Screenshots */,
+				01E0B4A03065CC2C00E8EF8C /* NOTAMExtractionEvaluation */,
 			);
 		};
 /* End PBXProject section */
@@ -846,6 +918,11 @@
 			);
 		};
 		0191DC0A2E9322C20099FB0E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		01E0B49F3065CC2C00E8EF8C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -947,6 +1024,11 @@
 			files = (
 			);
 		};
+		01E0B49D3065CC2C00E8EF8C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -994,6 +1076,11 @@
 			isa = PBXTargetDependency;
 			target = 0163BC692DDEE9D3008FEE8F /* SF50 TOLD */;
 			targetProxy = 0191DC122E9322C20099FB0E /* PBXContainerItemProxy */;
+		};
+		01E0B4AA3065CC2C00E8EF8C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 012B1E3A2DE2F272000D9ADC /* SF50 Shared */;
+			targetProxy = 01E0B4A93065CC2C00E8EF8C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1658,6 +1745,52 @@
 			};
 			name = Release;
 		};
+		01E0B4A53065CC2C00E8EF8C /* Debug configuration for PBXNativeTarget "NOTAMExtractionEvaluation" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.NOTAMExtractionEvaluation;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		01E0B4A63065CC2C00E8EF8C /* Release configuration for PBXNativeTarget "NOTAMExtractionEvaluation" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = codes.tim.NOTAMExtractionEvaluation;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_MEMORY_SAFETY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1741,12 +1874,28 @@
 			);
 			defaultConfigurationName = Release;
 		};
+		01E0B4A73065CC2C00E8EF8C /* Build configuration list for PBXNativeTarget "NOTAMExtractionEvaluation" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				01E0B4A53065CC2C00E8EF8C /* Debug configuration for PBXNativeTarget "NOTAMExtractionEvaluation" */,
+				01E0B4A63065CC2C00E8EF8C /* Release configuration for PBXNativeTarget "NOTAMExtractionEvaluation" */,
+			);
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
 		4E07A3D10000000000000001 /* XCLocalSwiftPackageReference "NOTAMParsing" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = NOTAMParsing;
+		};
+		4E07A3D1000000000000000E /* XCLocalSwiftPackageReference "NOTAMModelRuntime" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = NOTAMModelRuntime;
+		};
+		4E07A3D10000000000000030 /* XCLocalSwiftPackageReference "NOTAMModel" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = NOTAMModel;
 		};
 /* End XCLocalSwiftPackageReference section */
 
@@ -2077,9 +2226,37 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = NOTAMParsing;
 		};
+		4E07A3D10000000000000004 /* NOTAMModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModel;
+		};
+		4E07A3D10000000000000006 /* NOTAMModelRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModelRuntime;
+		};
+		4E07A3D10000000000000008 /* NOTAMModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModel;
+		};
+		4E07A3D1000000000000000A /* NOTAMModelRuntime */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModelRuntime;
+		};
 		4E07A3D1000000000000000C /* NOTAMParsing */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = NOTAMParsing;
+		};
+		4E07A3D10000000000000023 /* NOTAMParsing */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMParsing;
+		};
+		4E07A3D10000000000000031 /* NOTAMModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModel;
+		};
+		4E07A3D10000000000000033 /* NOTAMModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NOTAMModel;
 		};
 		602F51ECCC3348DE83D26B3E /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -4,6 +4,8 @@ parent_config: https://gist.githubusercontent.com/RISCfuture/c57d132e5e0160a768d
 # than reformatting it to satisfy our rules.
 excluded:
   - fastlane
+  - NOTAMModel/.build
+  - NOTAMModelRuntime/.build
   - NOTAMParsing/.build
   - Generate Screenshots/SnapshotHelper.swift
 

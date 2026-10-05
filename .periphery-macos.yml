@@ -13,6 +13,7 @@ exclude_targets:
   - SF50 TOLDTests
   - SF50 SharedTests
   - SF50 TOLDUITests
+  - NOTAMExtractionEvaluation
 retain_public: false
 retain_assign_only_properties: true
 report_exclude:
@@ -22,10 +23,12 @@ report_exclude:
   # framework. Shared dead code is gated by the cross-platform intersection job
   # in .github/workflows/periphery.yml, not by this pass.
   - "**/SF50 Shared/**"
-  # The NOTAMParsing package reaches the iOS app through SF50 Shared and nothing
-  # on macOS calls it, so this pass would report the whole package. The iOS pass
-  # (.periphery.yml) gates it.
+  # The NOTAMParsing, NOTAMModel and NOTAMModelRuntime packages reach the iOS app
+  # through SF50 Shared and the app itself, and nothing on macOS calls them, so
+  # this pass would report them whole. The iOS pass (.periphery.yml) gates them.
   - "**/NOTAMParsing/**"
+  - "**/NOTAMModel/**"
+  - "**/NOTAMModelRuntime/**"
 
 # App Intents declarations are found by the system through the metadata
 # `appintentsmetadataprocessor` extracts from each binary; nothing in this codebase ever names them, so

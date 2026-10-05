@@ -6,12 +6,19 @@ import Testing
 /// Filling the NOTAM editor in from one downloaded NOTAM writes only what that NOTAM proposes for
 /// the operation, leaves the pilot's other entries alone, and can be undone.
 struct `NOTAM proposal filling` {
-  /// A1 proposes RwyCC 3; A2 an obstacle 170 ft high, 0.4 NM beyond the departure end.
+  /// A1 proposes a 1,000 ft closure at the threshold end and RwyCC 3; A2 an obstacle 170 ft high,
+  /// 0.4 NM beyond the departure end.
   private static var proposal: NOTAMProposal {
     var proposal = NOTAMProposal()
-    proposal.contamination = [.init(.rwyCC(3), from: "A1")]
+    proposal.takeoffShortening = [.init(feet(1000), from: source("A1"))]
+    proposal.takeoffShorteningLocation = [.init(.thresholdEnd, from: source("A1"))]
+    proposal.landingShortening = [.init(feet(1000), from: source("A1"))]
+    proposal.contamination = [.init(.rwyCC(3), from: source("A1"))]
     proposal.obstacle = [
-      .init(.init(height: feet(170), distance: .init(value: 0.4, unit: .nauticalMiles)), from: "A2")
+      .init(
+        .init(height: feet(170), distance: .init(value: 0.4, unit: .nauticalMiles)),
+        from: source("A2")
+      )
     ]
     return proposal
   }
@@ -47,6 +54,10 @@ struct `NOTAM proposal filling` {
     .init(value: value, unit: .feet)
   }
 
+  private static func source(_ notamID: String) -> ProposalSource {
+    .init(notamID: notamID, reader: .parser)
+  }
+
   @Test
   func `fills only what the chosen NOTAM proposes for the operation`() {
     let notam = NOTAM(
@@ -56,17 +67,17 @@ struct `NOTAM proposal filling` {
     )
 
     Self.proposal.from(notamID: "A1").fill(notam, for: .takeoff)
-    #expect(notam.obstacleHeight.converted(to: .feet).value.rounded() == 50)
-    #expect(notam.contamination == nil)
 
-    let restoration = Self.proposal.from(notamID: "A2").fill(notam, for: .takeoff)
-    #expect(notam.obstacleHeight.converted(to: .feet).value.rounded() == 170)
-    #expect((notam.obstacleDistance.converted(to: .nauticalMiles).value * 10).rounded() == 4)
+    #expect(notam.takeoffDistanceShortening.converted(to: .feet).value.rounded() == 1000)
+    #expect(notam.takeoffShorteningLocation == .thresholdEnd)
+    #expect(notam.obstacleHeight.converted(to: .feet).value.rounded() == 50)
+    #expect(notam.landingDistanceShortening.value == 0)
+    #expect(notam.contamination == nil)
     #expect(Self.proposal.from(notamID: "A2").fields(for: .landing).isEmpty)
 
-    restoration.restore(notam)
-    #expect(notam.obstacleHeight.converted(to: .feet).value.rounded() == 50)
-    #expect((notam.obstacleDistance.converted(to: .nauticalMiles).value * 10).rounded() == 5)
+    Self.proposal.from(notamID: "A2").fill(notam, for: .takeoff)
+    #expect(notam.obstacleHeight.converted(to: .feet).value.rounded() == 170)
+    #expect((notam.obstacleDistance.converted(to: .nauticalMiles).value * 10).rounded() == 4)
   }
 
   @Test
@@ -75,8 +86,10 @@ struct `NOTAM proposal filling` {
 
     let restoration = Self.proposal.from(notamID: "A1").fill(notam, for: .landing)
     #expect(notam.contamination == .rwyCC(3))
+    #expect(notam.landingDistanceShortening.converted(to: .feet).value.rounded() == 1000)
 
     restoration.restore(notam)
     #expect(notam.contamination == .wetRunway)
+    #expect(notam.landingDistanceShortening.value == 0)
   }
 }

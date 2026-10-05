@@ -120,7 +120,7 @@ actor AssetPackPublisher {
   /// Synchronous by design: callers hand this to a detached task rather than blocking a
   /// cooperative thread, and keeping `Process` inside one non-isolated call avoids sending a
   /// non-`Sendable` value across an isolation boundary.
-  nonisolated private static func runBAPackage(
+  nonisolated static func runBAPackage(
     _ arguments: [String],
     workingDirectory: URL
   ) throws -> String {
@@ -147,6 +147,25 @@ actor AssetPackPublisher {
       )
     }
     return output
+  }
+
+  /// Replaces the local download manifest at `manifestURL` with the one published under
+  /// `publicRoot`, keeping the local copy when the published one can't be read.
+  static func adoptPublishedManifest(at manifestURL: URL, publicRoot: URL, logger: Logger) async {
+    let publishedURL = publicRoot.appendingPathComponent(downloadManifestFilename)
+    do {
+      let (data, response) = try await URLSession.shared.data(from: publishedURL)
+      guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+        logger.notice("No published download manifest at \(publishedURL); keeping the local copy")
+        return
+      }
+      try data.write(to: manifestURL, options: .atomic)
+      logger.notice("Adopted the published download manifest to carry pack versions forward")
+    } catch {
+      logger.warning(
+        "Couldn’t read the published download manifest (\(error.localizedDescription)); keeping the local copy"
+      )
+    }
   }
 
   // MARK: - Methods
@@ -284,32 +303,20 @@ actor AssetPackPublisher {
     }
   }
 
-  /// Fetches the currently published download manifest when this machine has no local copy.
+  /// Replaces the local download manifest with the published one, when it can be read.
   ///
-  /// Without it, a run from a fresh checkout would have nothing to update and would `create` a
-  /// manifest that resets every pack to version 0.
+  /// The terrain packs and the NOTAM model pack share this one manifest, and each publisher updates
+  /// only its own entries, so a local copy may lack what the other published since. Updating that
+  /// copy and uploading it would drop those packs, and devices delete a pack the manifest no longer
+  /// lists. Without a published manifest, a run from a fresh checkout would have nothing to update
+  /// and would `create` one that resets every pack to version 0.
   private func adoptPublishedManifest(at manifestURL: URL) async {
-    guard !FileManager.default.fileExists(atPath: manifestURL.path) else { return }
     guard
       let publishedURL = URL(string: downloadBaseURL)?
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-        .appendingPathComponent(Self.downloadManifestFilename)
     else { return }
-
-    do {
-      let (data, response) = try await URLSession.shared.data(from: publishedURL)
-      guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-        logger.notice("No published download manifest at \(publishedURL); starting fresh")
-        return
-      }
-      try data.write(to: manifestURL)
-      logger.notice("Adopted the published download manifest to carry pack versions forward")
-    } catch {
-      logger.warning(
-        "Couldn’t read the published download manifest (\(error.localizedDescription)); starting fresh"
-      )
-    }
+    await Self.adoptPublishedManifest(at: manifestURL, publicRoot: publishedURL, logger: logger)
   }
 
   /// Where the given region's archive is written.

@@ -101,7 +101,8 @@ struct TakeoffAirportView: View {
             downloadedNOTAMs: performance.downloadedNOTAMs,
             plannedTime: weather.time,
             isLoadingNOTAMs: performance.isLoadingNOTAMs,
-            proposal: performance.notamProposal
+            proposal: performance.notamProposal,
+            isReadingNOTAMs: performance.isReadingNOTAMs
           )
         ) {
           HStack {

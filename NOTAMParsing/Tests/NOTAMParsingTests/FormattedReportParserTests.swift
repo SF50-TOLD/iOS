@@ -272,13 +272,19 @@ struct `Formatted report parser` {
     #expect(obstacle.runwayEnd == runwayEnd)
   }
 
+  @Test
+  func `reads a taxiway or apron FICON as no effects`() throws {
+    let report = try #require(
+      Self.parse(notamText: "FNT APRON ALL FICON PATCHY ICE OBS AT 2511280114.")
+    )
+    #expect(report.effects.isEmpty)
+  }
+
   @Test(arguments: [
     // A cancellation.
     "ROA RWY 06 FICON 5/5/5 100 PCT WET OBS AT 2511260325.\nCANCELED",
     // A word outside the contaminant grammar.
     "RWY 16 FICON 5/5/5 SLIPPERY WHEN WET OBS AT 2511260325.",
-    // A FICON for no runway.
-    "FNT APRON ALL FICON PATCHY ICE OBS AT 2511280114.",
     // A zero depth.
     "RWY 16 FICON 5/5/5 100 PCT 0IN WATER OBS AT 2511260325.",
     // Two lists for three thirds.

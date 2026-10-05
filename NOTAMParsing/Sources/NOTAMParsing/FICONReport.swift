@@ -1,14 +1,15 @@
 internal import RegexBuilder
 
 /// FAA FICON runway condition reports (FAA JO 7930.2): `[<id>] RWY <rwy> FICON [n/n/n] <list> OBS AT
-/// <time>.`, one or more per NOTAM.
+/// <time>.`, one or more per NOTAM. A FICON for a taxiway or apron states nothing about a runway, so
+/// it reads as no effects.
 final class FICONReport: ReportFormat {
   private let runway = Reference<Substring>()
   private let body = Reference<Substring>()
   private let codes = Reference<[Int]?>()
   private let list = Reference<Substring>()
 
-  private let contaminantList: ContaminantList
+  private let scanner: ReportScanner, contaminantList: ContaminantList
 
   /// The aerodrome identifier that may open the NOTAM, before its first runway report.
   private lazy var identifier = Regex {
@@ -39,6 +40,37 @@ final class FICONReport: ReportFormat {
     Capture(as: list) { OneOrMore(.any) }
   }
 
+  private lazy var movementAreaReport = Regex {
+    Optionally {
+      Repeat(3...4) { ReportGrammar.alphanumeric }
+      " "
+    }
+    ChoiceOf {
+      "TWY"
+      "TWYS"
+      "APRON"
+      "APN"
+      "RAMP"
+    }
+    Anchor.wordBoundary
+    textWithoutRunway
+    Anchor.wordBoundary
+    "FICON"
+    Anchor.wordBoundary
+    textWithoutRunway
+  }
+
+  private lazy var textWithoutRunway = Regex {
+    ZeroOrMore {
+      NegativeLookahead {
+        Anchor.wordBoundary
+        "RWY"
+        Anchor.wordBoundary
+      }
+      CharacterClass.any
+    }
+  }
+
   private lazy var validity = Regex {
     Repeat(ReportGrammar.digit, count: 10)
     "-"
@@ -46,12 +78,21 @@ final class FICONReport: ReportFormat {
     Optionally("EST")
   }
 
-  init(contaminantList: ContaminantList) {
+  init(scanner: ReportScanner, contaminantList: ContaminantList) {
+    self.scanner = scanner
     self.contaminantList = contaminantList
   }
 
   func parse(_ report: ReportText) -> FormattedReport? {
-    var remainder = withoutValidity(report.text)
+    let text = withoutValidity(report.text)
+    if text.wholeMatch(of: movementAreaReport) != nil, !scanner.statesPerformanceFact(text) {
+      return .init(effects: [])
+    }
+    return parseRunwayReports(text)
+  }
+
+  private func parseRunwayReports(_ text: Substring) -> FormattedReport? {
+    var remainder = text
     if let match = remainder.prefixMatch(of: identifier) {
       remainder = remainder[match.range.upperBound...]
     }

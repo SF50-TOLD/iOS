@@ -15,6 +15,7 @@ exclude_targets:
   - SF50 TOLDTests
   - SF50 SharedTests
   - SF50 TOLDUITests
+  - NOTAMExtractionEvaluation
 retain_public: false
 retain_assign_only_properties: true
 report_exclude:

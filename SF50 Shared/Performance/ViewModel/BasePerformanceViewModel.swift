@@ -50,6 +50,7 @@ open class BasePerformanceViewModel: WithIdentifiableError {
 
   private var notamStore: NOTAMStore { .init(context: container.mainContext) }
   private let notamLoader: any NOTAMLoaderProtocol
+  private let notamProposer: NOTAMProposer
   internal var model: (any PerformanceModel)?
   private var cancellables: Set<Task<Void, Never>> = []
   private var notamObservationTask: Task<Void, Never>?
@@ -119,6 +120,9 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   /// What the downloaded NOTAMs propose for the selected runway, once they've been read.
   public private(set) var notamProposal: NOTAMProposal?
 
+  /// Whether the downloaded NOTAMs are being read for proposals.
+  public private(set) var isReadingNOTAMs = false
+
   // MARK: - Computed Properties
 
   internal var configuration: Configuration {
@@ -149,11 +153,13 @@ open class BasePerformanceViewModel: WithIdentifiableError {
     calculationService: any PerformanceCalculationService = DefaultPerformanceCalculationService
       .shared,
     notamLoader: (any NOTAMLoaderProtocol)? = nil,
+    notamProposer: NOTAMProposer? = nil,
     defaultFlapSetting: FlapSetting
   ) {
     self.container = container
     self.calculationService = calculationService
     self.notamLoader = notamLoader ?? NOTAMLoader.shared
+    self.notamProposer = notamProposer ?? NOTAMProposer { nil }
 
     // temporary values, overwritten by recalculate()
     model = nil
@@ -423,8 +429,8 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   /// Reads the downloaded NOTAMs for what they propose for the selected runway, replacing any
   /// reading already under way.
   ///
-  /// NOTAMs that have expired by the planned time propose nothing: nothing they say applies to the
-  /// flight.
+  /// NOTAMs that have expired by the planned time are skipped: the model takes up to seconds for
+  /// each, and nothing they say applies to the flight.
   private func readNOTAMs(plannedTime: Date) {
     notamReadingTask?.cancel()
     guard let runway else {
@@ -435,11 +441,14 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       notams = downloadedNOTAMs.filter {
         !$0.hasExpired(before: plannedTime, windowInterval: Self.expiryWindowSeconds)
       },
-      proposalRunway = ProposalRunway(runway)
+      proposalRunway = ProposalRunway(runway),
+      proposer = notamProposer
+    isReadingNOTAMs = true
     notamReadingTask = Task { [weak self] in
-      let proposal = await NOTAMProposal.reading(notams, for: proposalRunway)
+      let proposals = await proposer.proposals(for: notams, runways: [proposalRunway])
       guard !Task.isCancelled, let self else { return }
-      notamProposal = proposal
+      notamProposal = proposals.byRunway[proposalRunway.name]
+      isReadingNOTAMs = false
     }
   }
 

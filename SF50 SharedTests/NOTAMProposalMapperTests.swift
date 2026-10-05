@@ -1,51 +1,58 @@
 import Foundation
+import NOTAMModel
 import NOTAMParsing
 import Testing
 
 @testable import SF50_Shared
 
-/// The mapper decides what a formatted report proposes for a runway direction; these pin the rules
-/// that turn surface conditions and obstacles into the values the pilot is asked to confirm.
+/// The mapper decides what a NOTAM's reading proposes for a runway direction; these pin the rules
+/// that turn distances, ends and surface reports into the values the pilot is asked to confirm.
 struct `NOTAM proposal mapping` {
-  /// Runway 09/27, true headings 090° and 270°, with both ends at 500 ft.
-  private static let
-    runway09 = runway("9", reciprocal: "27", trueHeadingDegrees: 90),
-    runway27 = runway("27", reciprocal: "9", trueHeadingDegrees: 270)
+  // Runway 09/27: 6,000 ft long, both ends at 500 ft, published TORA and LDA the full length.
+  private static let runway09 = ProposalRunway(
+    name: "9",
+    reciprocalName: "27",
+    trueHeadingDegrees: 90,
+    departureEndElevation: feet(500),
+    publishedTakeoffRun: feet(6000),
+    publishedLandingDistance: feet(6000)
+  )
+  private static let runway27 = ProposalRunway(
+    name: "27",
+    reciprocalName: "9",
+    trueHeadingDegrees: 270,
+    departureEndElevation: feet(500),
+    publishedTakeoffRun: feet(6000),
+    publishedLandingDistance: feet(5800),
+    publishedDisplacement: feet(200)
+  )
 
-  private static func runway(_ name: String, reciprocal: String, trueHeadingDegrees: Double)
-    -> ProposalRunway
+  private static func feet(_ value: Double) -> Measurement<UnitLength> {
+    .init(value: value, unit: .feet)
+  }
+
+  private static func length(_ value: Double, _ unit: NOTAMExtraction.LengthUnit = .ft)
+    -> NOTAMExtraction.Length
   {
-    .init(
-      name: name,
-      reciprocalName: reciprocal,
-      trueHeadingDegrees: trueHeadingDegrees,
-      departureEndElevation: .init(value: 500, unit: .feet)
-    )
+    .init(value: value, unit: unit)
   }
 
-  private static func surface(
-    _ runway: String,
-    rwyCC: [Int]? = nil,
-    contaminants: [FormattedReport.Contaminant] = []
-  ) -> FormattedReport {
-    .init(effects: [
-      .init(runway: runway, surfaceCondition: .init(rwyCC: rwyCC, contaminants: contaminants))
-    ])
+  private static func parsed(_ effects: NOTAMExtraction.RunwayEffect...) -> NOTAMExtractor.Reading {
+    .init(extraction: .init(isCanceled: false, effects: effects), source: .parser)
   }
 
-  /// An obstacle 120 ft above ground, 1 NM from `runwayEnd` in `direction`.
-  private static func obstacle(
+  /// A parsed obstacle 120 ft above ground, 1 NM from `runwayEnd` in `direction`.
+  private static func obstacleReading(
     _ direction: FormattedReport.CompassPoint,
-    of runwayEnd: FormattedReport.RunwayEnd?,
-    heightAGL: Double? = 120,
+    of runwayEnd: FormattedReport.RunwayEnd,
     heightMSL: Double? = nil
-  ) -> FormattedReport {
-    .init(effects: [
+  ) -> NOTAMExtractor.Reading {
+    let report = FormattedReport(effects: [
       .init(
-        runway: runwayEnd?.runway,
+        runway: runwayEnd.runway,
         obstacle: .init(
-          heightAGL: heightAGL.map { .init(value: $0, unit: .feet) },
-          heightMSL: heightMSL.map { .init(value: $0, unit: .feet) },
+          heightAGL: Self.feet(120),
+          heightMSL: heightMSL.map(Self.feet),
           distance: .init(value: 1, unit: .nauticalMiles),
           distanceReference: "",
           direction: direction,
@@ -53,173 +60,275 @@ struct `NOTAM proposal mapping` {
         )
       )
     ])
+    return .init(extraction: NOTAMExtraction(report), source: .parser, report: report)
   }
 
-  /// The same contaminant on each third of a runway.
-  private static func everyThird(_ type: FormattedReport.ContaminantType, coveragePercent: Int)
-    -> [FormattedReport.Contaminant]
-  {
-    (1...3).map { .init(type: type, runwayThird: $0, coveragePercent: coveragePercent, depth: nil) }
-  }
-
-  private static func proposal(_ report: FormattedReport, for runway: ProposalRunway = runway09)
+  private static func proposal(_ reading: NOTAMExtractor.Reading, for runway: ProposalRunway)
     -> NOTAMProposal
   {
-    NOTAMProposalMapper.proposal(from: report, notamID: "A1/26", for: runway)
+    NOTAMProposalMapper.proposal(from: reading, notamID: "A1/26", for: runway)
   }
 
-  private static func notam(_ id: Int, _ text: String) -> NOTAMResponse {
-    .init(
-      id: id,
-      notamId: "A\(id)/26",
-      icaoLocation: "KAAA",
-      effectiveStart: .distantPast,
-      effectiveEnd: nil,
-      schedule: nil,
-      notamText: text,
-      qLine: nil,
-      purpose: nil,
-      scope: nil,
-      trafficType: nil
+  @Test
+  func `shortens by the difference from the published declared distances`() throws {
+    let reading = Self.parsed(
+      .init(
+        runway: "27",
+        closure: .none,
+        declaredDistances: .init(
+          TORA: Self.length(5000),
+          LDA: Self.length(1524, .m)
+        )
+      )
     )
+    let proposal = Self.proposal(reading, for: Self.runway27)
+
+    #expect(proposal.takeoffShortening.map(\.value) == [Self.feet(1000)])
+    let landing = try #require(proposal.landingShortening.first?.value)
+    #expect(abs(landing.converted(to: .feet).value - 800) < 0.1)
+    #expect(Self.proposal(reading, for: Self.runway09).isEmpty)
+  }
+
+  @Test
+  func `applies a partial closure to each direction, placing a compass end from each`() {
+    let closedPortion = NOTAMExtraction.PartialClosure(length: Self.length(1000), end: "W")
+    let reading = Self.parsed(
+      .init(runway: "09", closure: .none, partialClosure: closedPortion),
+      .init(runway: "27", closure: .none, partialClosure: closedPortion)
+    )
+    let on09 = Self.proposal(reading, for: Self.runway09),
+      on27 = Self.proposal(reading, for: Self.runway27)
+
+    #expect(on09.takeoffShortening.map(\.value) == [Self.feet(1000)])
+    #expect(on09.landingShortening.map(\.value) == [Self.feet(1000)])
+    #expect(on09.takeoffShorteningLocation.map(\.value) == [.thresholdEnd])
+    #expect(on27.takeoffShorteningLocation.map(\.value) == [.departureEnd])
+  }
+
+  @Test(arguments: [
+    ("thresholdEnd", ShorteningLocation.thresholdEnd, ShorteningLocation.departureEnd),
+    ("departureEnd", .departureEnd, .thresholdEnd),
+    ("09", .thresholdEnd, .departureEnd),
+    ("27", .departureEnd, .thresholdEnd)
+  ])
+  func `places a closed end relative to each direction`(
+    _ closedEnd: String,
+    _ on09: ShorteningLocation,
+    _ on27: ShorteningLocation
+  ) {
+    #expect(
+      NOTAMProposalMapper.location(ofClosedEnd: closedEnd, effectRunway: "09", on: Self.runway09)
+        == on09
+    )
+    #expect(
+      NOTAMProposalMapper.location(ofClosedEnd: closedEnd, effectRunway: "09", on: Self.runway27)
+        == on27
+    )
+  }
+
+  @Test
+  func `doesn't place FIRST on a pair, or a compass end across the runway`() {
+    #expect(
+      NOTAMProposalMapper.location(
+        ofClosedEnd: "thresholdEnd",
+        effectRunway: "09/27",
+        on: Self.runway09
+      ) == nil
+    )
+    #expect(
+      NOTAMProposalMapper.location(ofClosedEnd: "N", effectRunway: "09/27", on: Self.runway09)
+        == nil
+    )
+  }
+
+  @Test
+  func `shortens landing by a displacement beyond the published one`() {
+    let reading = Self.parsed(
+      .init(runway: "27", closure: .none, thresholdDisplacement: Self.length(500))
+    )
+    let proposal = Self.proposal(reading, for: Self.runway27)
+
+    #expect(proposal.landingShortening.map(\.value) == [Self.feet(300)])
+    #expect(proposal.landingShorteningLocation.map(\.value) == [.thresholdEnd])
+    #expect(proposal.takeoffShortening.isEmpty)
   }
 
   @Test
   func `proposes the lowest runway condition code reported`() {
-    let report = Self.surface("09", rwyCC: [5, 3, 4])
-    #expect(Self.proposal(report).contamination.map(\.value) == [.rwyCC(3)])
+    let reading = Self.parsed(
+      .init(
+        runway: "09",
+        closure: .none,
+        surfaceCondition: .init(rwyCC: [5, 3, 4], contaminants: [])
+      )
+    )
+    #expect(Self.proposal(reading, for: Self.runway09).contamination.map(\.value) == [.rwyCC(3)])
   }
 
   @Test
   func `proposes the worst contaminant category without condition codes`() {
-    let report = Self.surface(
-      "09",
-      contaminants: [
-        .init(type: .wet, runwayThird: nil, coveragePercent: 100, depth: nil),
-        .init(
-          type: .water,
-          runwayThird: nil,
-          coveragePercent: 50,
-          depth: .init(value: 0.25, unit: .inches)
-        ),
-        .init(
-          type: .slush,
-          runwayThird: nil,
-          coveragePercent: 25,
-          depth: .init(value: 0.125, unit: .inches)
-        )
-      ]
+    let contaminants: [NOTAMExtraction.Contaminant] = [
+      .init(type: .wet, coveragePercent: 100, depth: nil),
+      .init(
+        type: .water,
+        coveragePercent: 50,
+        depth: .init(value: 0.25, unit: .in)
+      ),
+      .init(
+        type: .slush,
+        coveragePercent: 25,
+        depth: .init(value: 0.125, unit: .in)
+      )
+    ]
+    let reading = Self.parsed(
+      .init(
+        runway: "09",
+        closure: .none,
+        surfaceCondition: .init(rwyCC: nil, contaminants: contaminants)
+      )
     )
     #expect(
-      Self.proposal(report).contamination.map(\.value)
+      Self.proposal(reading, for: Self.runway09).contamination.map(\.value)
         == [.waterOrSlush(depth: .init(value: 0.25, unit: .inches))]
     )
   }
 
   @Test(arguments: [
     // A third with nil braking.
-    surface("09", rwyCC: [1, 0, 1], contaminants: everyThird(.ice, coveragePercent: 100)),
-    // Too little contamination to earn codes.
-    surface(
-      "09",
-      contaminants: [.init(type: .wet, runwayThird: nil, coveragePercent: 10, depth: nil)]
+    NOTAMExtraction.SurfaceCondition(
+      rwyCC: [1, 0, 1],
+      contaminants: [.init(type: .ice, coveragePercent: 100, depth: nil)]
     ),
-    surface(
-      "09",
-      contaminants: [.init(type: .wet, runwayThird: 1, coveragePercent: 60, depth: nil)]
+    // Too little contamination to earn codes.
+    .init(
+      rwyCC: nil,
+      contaminants: [.init(type: .wet, coveragePercent: 10, depth: nil)]
     ),
     // A contaminant in no AFM category beside one in a category.
-    surface(
-      "09",
+    .init(
+      rwyCC: nil,
       contaminants: [
-        .init(type: .wet, runwayThird: nil, coveragePercent: 50, depth: nil),
-        .init(type: .frost, runwayThird: nil, coveragePercent: 50, depth: nil)
+        .init(type: .wet, coveragePercent: 50, depth: nil),
+        .init(type: .frost, coveragePercent: 50, depth: nil)
       ]
     )
   ])
-  func `proposes no contamination the AFM gives no figures for`(_ report: FormattedReport) {
-    #expect(Self.proposal(report).isEmpty)
+  func `proposes no contamination the AFM gives no figures for`(
+    _ condition: NOTAMExtraction.SurfaceCondition
+  ) {
+    let reading = Self.parsed(.init(runway: "09", closure: .none, surfaceCondition: condition))
+    #expect(Self.proposal(reading, for: Self.runway09).isEmpty)
   }
 
   @Test
-  func `proposes for both directions of a runway pair`() {
-    let report = Self.surface("09/27", rwyCC: [2, 2, 2])
-    #expect(Self.proposal(report, for: Self.runway27).contamination.map(\.value) == [.rwyCC(2)])
-    #expect(
-      Self.proposal(
-        report,
-        for: Self.runway("9L", reciprocal: "27R", trueHeadingDegrees: 90)
-      ).isEmpty
+  func `proposes a model reading's fields only when its manifest lists them`() {
+    let effect = NOTAMExtraction.RunwayEffect(
+      runway: "09",
+      closure: .none,
+      partialClosure: .init(length: Self.length(1000), end: nil)
     )
+    let obstacle = NOTAMExtraction.Obstacle(
+      height: .init(value: 120, unit: .ft, datum: .AGL),
+      distance: .init(value: 1, unit: .nm),
+      reference: .init(kind: .departureEnd, runway: "09"),
+      direction: .compass(.E)
+    )
+    let reading = NOTAMExtractor.Reading(
+      extraction: .init(isCanceled: false, effects: [effect], obstacles: [obstacle]),
+      source: .model(version: "test")
+    )
+
+    #expect(Self.proposal(reading.limited(to: []), for: Self.runway09).isEmpty)
+    let proposal = Self.proposal(
+      reading.limited(to: [.closedLength, .obstacleHeight]),
+      for: Self.runway09
+    )
+    #expect(proposal.takeoffShortening.map(\.value) == [Self.feet(1000)])
+    #expect(proposal.obstacle.isEmpty, "A model reading's obstacles propose nothing")
   }
 
   @Test(arguments: [
-    FormattedReport.RunwayEnd(runway: "09", end: .departure),
-    FormattedReport.RunwayEnd(runway: "27", end: .approach)
+    (FormattedReport.CompassPoint.E, FormattedReport.RunwayEnd(runway: "27", end: .approach), true),
+    (.ENE, .init(runway: "09", end: .departure), true),
+    (.NE, .init(runway: "09", end: .departure), false),
+    (.E, .init(runway: "09", end: .approach), false)
   ])
-  func `proposes an obstacle off the end a takeoff leaves from`(
-    _ runwayEnd: FormattedReport.RunwayEnd
-  ) {
-    let report = Self.obstacle(.E, of: runwayEnd)
-    #expect(
-      Self.proposal(report).obstacle.map(\.value) == [
-        .init(
-          height: .init(value: 120, unit: .feet),
-          distance: .init(value: 1, unit: .nauticalMiles)
-        )
-      ]
-    )
-    #expect(Self.proposal(report, for: Self.runway27).isEmpty)
-  }
-
-  @Test(arguments: [
-    (FormattedReport.CompassPoint.ENE, true), (.ESE, true), (.NE, false), (.SE, false), (.W, false)
-  ])
-  func `proposes an obstacle only within a compass point of the takeoff's heading`(
+  func `proposes a parsed obstacle off the end a takeoff leaves from, toward its heading`(
     _ direction: FormattedReport.CompassPoint,
+    _ runwayEnd: FormattedReport.RunwayEnd,
     _ isProposed: Bool
   ) {
-    let report = Self.obstacle(direction, of: .init(runway: "09", end: .departure))
-    #expect(Self.proposal(report).obstacle.isEmpty == !isProposed)
+    let reading = Self.obstacleReading(direction, of: runwayEnd)
+    let expected: [ProposedObstacle] =
+      isProposed
+      ? [.init(height: Self.feet(120), distance: .init(value: 1, unit: .nauticalMiles))] : []
+    #expect(Self.proposal(reading, for: Self.runway09).obstacle.map(\.value) == expected)
   }
 
-  @Test
-  func `proposes nothing for an obstacle beside the runway end, as MSP's crane by 12L is`() {
-    let runway30R = Self.runway("30R", reciprocal: "12L", trueHeadingDegrees: 298)
-    let report = Self.obstacle(.SW, of: .init(runway: "12L", end: .approach))
-    #expect(Self.proposal(report, for: runway30R).isEmpty)
-  }
-
-  @Test
-  func `measures an obstacle's height from the departure end's elevation`() {
-    let report = Self.obstacle(.E, of: .init(runway: "09", end: .departure), heightMSL: 650)
-    #expect(Self.proposal(report).obstacle.map(\.value.height) == [.init(value: 150, unit: .feet)])
-  }
-
-  @Test(arguments: [
-    obstacle(.E, of: nil),
-    obstacle(.E, of: .init(runway: "09", end: .departure), heightAGL: nil),
-    obstacle(.E, of: .init(runway: "09", end: .departure), heightMSL: 480)
-  ])
-  func `proposes nothing for an obstacle off no runway end, of unknown height, or below the runway`(
-    _ report: FormattedReport
+  @Test(arguments: [(650.0, 150.0), (480, nil)])
+  func `measures a parsed obstacle's height from the departure end's elevation`(
+    _ heightMSL: Double,
+    _ expectedHeight: Double?
   ) {
-    #expect(Self.proposal(report).isEmpty)
+    let reading = Self.obstacleReading(
+      .E,
+      of: .init(runway: "09", end: .departure),
+      heightMSL: heightMSL
+    )
+    #expect(
+      Self.proposal(reading, for: Self.runway09).obstacle.map(\.value.height)
+        == (expectedHeight.map { [Self.feet($0)] } ?? [])
+    )
   }
 
   @Test
-  func `joins NOTAMs that agree, keeps those that don't as alternatives, and skips the rest`() {
-    let proposal = NOTAMProposal(
-      notams: [
-        Self.notam(1, "AAA RWY 09 FICON 3/3/3 100 PCT 1/8IN WATER OBS AT 2609260325."),
-        Self.notam(2, "AAA RWY 09 FICON 3/3/3 100 PCT 1/8IN WATER OBS AT 2609260325."),
-        Self.notam(3, "AAA RWY 09/27 FICON 5/5/5 100 PCT WET OBS AT 2609260325."),
-        Self.notam(4, "RWY 09/27 CLSD")
-      ],
-      runway: Self.runway09
+  func `proposes nothing from a cancellation or an effect naming no runway`() {
+    let cancelled = NOTAMExtractor.Reading(
+      extraction: .init(isCanceled: true, effects: [.init(runway: "09", closure: .both)]),
+      source: .parser
     )
+    let aerodrome = Self.parsed(.init(runway: nil, closure: .both))
 
-    #expect(proposal.contamination.map(\.value) == [.rwyCC(3), .rwyCC(5)])
-    #expect(proposal.contamination.first?.notamIDs == ["A1/26", "A2/26"])
+    #expect(Self.proposal(cancelled, for: Self.runway09).isEmpty)
+    #expect(Self.proposal(aerodrome, for: Self.runway09).isEmpty)
+  }
+
+  @Test
+  func `reports a closure for the operations it closes`() {
+    let
+      takeoff = Self.proposal(
+        Self.parsed(.init(runway: "09", closure: .takeoff)),
+        for: Self.runway09
+      ),
+      both = Self.proposal(Self.parsed(.init(runway: "09", closure: .both)), for: Self.runway09)
+
+    #expect(takeoff.closedForTakeoffBy.map(\.notamID) == ["A1/26"])
+    #expect(takeoff.closedForLandingBy.isEmpty)
+    #expect(both.closedForLandingBy.map(\.notamID) == ["A1/26"])
+  }
+
+  @Test
+  func `joins NOTAMs that agree and keeps those that don't as alternatives`() {
+    let
+      first = Self.parsed(
+        .init(
+          runway: "09",
+          closure: .none,
+          declaredDistances: .init(TORA: Self.length(5000), LDA: nil)
+        )
+      ),
+      second = Self.parsed(
+        .init(
+          runway: "09",
+          closure: .none,
+          declaredDistances: .init(TORA: Self.length(5500), LDA: nil)
+        )
+      )
+    var proposal = NOTAMProposalMapper.proposal(from: first, notamID: "A1/26", for: Self.runway09)
+    proposal.merge(NOTAMProposalMapper.proposal(from: first, notamID: "A2/26", for: Self.runway09))
+    proposal.merge(NOTAMProposalMapper.proposal(from: second, notamID: "A3/26", for: Self.runway09))
+
+    #expect(proposal.takeoffShortening.map(\.value) == [Self.feet(1000), Self.feet(500)])
+    #expect(proposal.takeoffShortening.first?.sources.map(\.notamID) == ["A1/26", "A2/26"])
   }
 }

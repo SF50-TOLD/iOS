@@ -27,6 +27,9 @@ changed in the cockpit rather than what changed in the code.
 - Downloaded NOTAMs that likely affect runway performance, such as closures,
   displaced thresholds and obstacles, now come right after the ones the app can
   fill in from, outlined in red. The rest follow, and expired NOTAMs stay last.
+- The app also downloads a NOTAM reader (about 620 MB) in the background when
+  the device has room, so Auto-Fill can read NOTAMs that aren’t condition or
+  obstacle reports. You can delete it in Settings.
 
 ## 3.10
 

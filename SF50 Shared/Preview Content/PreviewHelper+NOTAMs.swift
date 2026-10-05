@@ -93,9 +93,10 @@ extension PreviewHelper {
 }
 
 extension NOTAMResponse {
-  /// NOTAMs for Oakland runway 30 that the formatted-report parsers read: a FICON report, which
-  /// proposes a landing runway condition code, and an FAA obstacle report off the departure end,
-  /// which proposes a takeoff obstacle's height and distance. For previews and UI tests.
+  /// NOTAMs for Oakland runway 30 that the formatted-report parsers read without the on-device model:
+  /// a FICON report, which proposes a landing runway condition code, and an FAA obstacle report off
+  /// the departure end, which proposes a takeoff obstacle's height and distance. For previews and UI
+  /// tests.
   ///
   /// - Parameter baseTime: The time both NOTAMs are in effect around.
   public static func readableSamples(baseTime: Date = .now) -> [Self] {

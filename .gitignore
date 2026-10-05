@@ -13,6 +13,10 @@ xcuserdata/
 .swift-format
 
 
+# Held-out NOTAM gate sets, copied in by Scripts/sync-notam-gold.sh for one run
+NOTAMExtractionEvaluation/Data/notam_test.*
+NOTAMExtractionEvaluation/Data/notam_holdout.*
+
 # NOTAM API Configuration (contains API token)
 SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig
 

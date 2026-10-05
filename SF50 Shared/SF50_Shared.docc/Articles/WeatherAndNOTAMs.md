@@ -32,16 +32,22 @@ Weather observation loading, atmospheric condition modeling, and NOTAM-based run
 
 ### Reading NOTAMs
 
-Downloaded NOTAMs in a fixed report format — runway condition reports and FAA
-obstacle reports — are read into proposals for the pilot to confirm.
-Confirming one NOTAM's proposal fills the NOTAM editor in with
-``NOTAMProposal/fill(_:for:)``, which can be undone.
+Downloaded NOTAMs are read into proposals for the pilot to confirm: formatted
+reports by deterministic parsers, everything else by the on-device model when
+its asset pack is installed. Confirming one NOTAM's proposal fills the NOTAM
+editor in with ``NOTAMProposal/fill(_:for:)``, which can be undone.
 
+- ``NOTAMProposer``
 - ``NOTAMProposal``
 - ``ProposedObstacle``
-- ``ProposalRunway``
 - ``NOTAMRestoration``
+- ``NOTAMProposalMapper``
+- ``ProposalRunway``
 - ``Candidate``
+- ``ProposalSource``
+- ``NOTAMExtractor``
+- ``NOTAMModelPack``
+- ``NOTAMModelDigest``
 
 ### NOTAM API Types
 

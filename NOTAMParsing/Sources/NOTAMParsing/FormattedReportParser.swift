@@ -21,7 +21,7 @@ public final class FormattedReportParser {
     formats = [
       SNOWTAMReport(scanner: scanner, vocabulary: vocabulary),
       RSCReport(scanner: scanner, contaminantList: contaminantList),
-      FICONReport(contaminantList: contaminantList),
+      FICONReport(scanner: scanner, contaminantList: contaminantList),
       FAAObstacleReport()
     ]
   }

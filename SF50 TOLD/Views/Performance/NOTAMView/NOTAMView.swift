@@ -13,14 +13,14 @@ extension NOTAMProposal {
   /// What the parsers read from `NOTAMResponse.readableSamples(baseTime:)` for Oakland runway 30.
   fileprivate static var previewSample: Self {
     var proposal = Self()
-    proposal.contamination = [.init(.rwyCC(3), from: "A9000/26")]
+    proposal.contamination = [.init(.rwyCC(3), from: .init(notamID: "A9000/26", reader: .parser))]
     proposal.obstacle = [
       .init(
         .init(
           height: .init(value: 170, unit: .feet),
           distance: .init(value: 0.4, unit: .nauticalMiles)
         ),
-        from: "A9001/26"
+        from: .init(notamID: "A9001/26", reader: .parser)
       )
     ]
     return proposal
@@ -106,6 +106,9 @@ struct NOTAMView: View {
   /// What the downloaded NOTAMs propose for this runway, once they've been read.
   var proposal: NOTAMProposal?
 
+  /// Whether the downloaded NOTAMs are still being read for what they propose.
+  var isReadingNOTAMs = false
+
   @State private var error: (any Error)?
   @State private var errorSheetPresented = false
 
@@ -166,6 +169,7 @@ struct NOTAMView: View {
           DownloadedNOTAMsSection(
             notams: sortedNOTAMs,
             plannedTime: plannedTime,
+            isReading: isReadingNOTAMs,
             tier: listTier(of:),
             onFill: { fillIn(from: $0, scrollingWith: scroller) }
           )
@@ -233,7 +237,8 @@ struct NOTAMView: View {
       downloadedNOTAMs: NOTAMResponse.readableSamples() + preview.generateNOTAMs(count: 4),
       plannedTime: .now,
       isLoadingNOTAMs: false,
-      proposal: .previewSample
+      proposal: .previewSample,
+      isReadingNOTAMs: true
     )
     .environment(\.operation, .landing)
   }
