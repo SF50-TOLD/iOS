@@ -49,7 +49,7 @@ enum SRTMProcessorError: LocalizedError {
 /// 2. Combine the tiles into one binary payload per region
 /// 3. Generate terrain manifest
 /// 4. Package each region as a Background Assets asset pack
-/// 5. Upload to CloudFlare R2 (if configured)
+/// 5. Upload the asset packs and their download manifest to CloudFlare R2 (if configured)
 ///
 /// ## Data Source
 ///
@@ -670,11 +670,11 @@ actor SRTMProcessor {
 
   // MARK: - R2 Upload
 
-  /// Uploads the payloads, the asset packs and the manifests indexing them to CloudFlare R2.
+  /// Uploads the asset packs and the download manifest indexing them to CloudFlare R2.
   ///
-  /// Each manifest goes up only after everything it names is in place, and a failed upload stops
-  /// the run before any manifest does, so no device is ever pointed at a file the bucket cannot
-  /// serve. The download manifest goes last: publishing it is what releases the packs to devices.
+  /// The download manifest goes up only after every pack it names is in place, and a failed upload
+  /// stops the run before it does, so no device is ever pointed at a file the bucket cannot serve.
+  /// Publishing it is what releases the packs to devices.
   private func uploadToR2Storage(assetPacks: AssetPacks) async throws {
     if skipUpload {
       await reportLog(level: .info, message: "Skipping R2 upload (skipUpload=true)")
@@ -690,12 +690,6 @@ actor SRTMProcessor {
     let uploader = R2Uploader(config: config, logger: logger)
 
     do {
-      try await uploadPayloads(using: uploader)
-      try await uploadFile(
-        outputLocation.appendingPathComponent(Self.manifestFilename),
-        key: "terrain/" + Self.manifestFilename,
-        using: uploader
-      )
       try await uploadAssetPacks(assetPacks, publicRoot: config.publicURL, using: uploader)
       await reportLog(level: .notice, message: "Successfully uploaded terrain data to R2")
     } catch {
@@ -704,23 +698,6 @@ actor SRTMProcessor {
         await onUploadError(error)
       }
       throw error
-    }
-  }
-
-  /// Uploads each region's payload for the builds that download payloads directly, skipping any
-  /// the bucket already holds at the same size.
-  private func uploadPayloads(using uploader: R2Uploader) async throws {
-    for region in TerrainRegion.allCases {
-      let payloadURL = outputLocation.appendingPathComponent(region.remoteFilename),
-        key = "terrain/\(region.remoteFilename)"
-      let localSize =
-        try FileManager.default.attributesOfItem(atPath: payloadURL.path)[.size]
-        as? Int64
-      guard try await uploader.publishedSize(ofObjectAt: key) != localSize else {
-        await reportLog(level: .info, message: "\(key) is already published")
-        continue
-      }
-      try await uploadFile(payloadURL, key: key, region: region, using: uploader)
     }
   }
 
