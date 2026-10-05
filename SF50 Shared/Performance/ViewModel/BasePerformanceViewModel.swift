@@ -389,11 +389,13 @@ open class BasePerformanceViewModel: WithIdentifiableError {
       let startDate = Calendar.current.date(byAdding: .day, value: -7, to: plannedTime)
       let endDate = Calendar.current.date(byAdding: .day, value: 30, to: plannedTime)
 
-      let notams = try await Self.downloadNOTAMs(
-        for: Self.NOTAMIdentifiers(of: airport),
-        from: startDate,
-        to: endDate,
-        using: notamLoader
+      let notams = await NOTAMRelevance.classifying(
+        try await Self.downloadNOTAMs(
+          for: Self.NOTAMIdentifiers(of: airport),
+          from: startDate,
+          to: endDate,
+          using: notamLoader
+        )
       )
 
       // Invalidate old cache only after successfully downloading new NOTAMs

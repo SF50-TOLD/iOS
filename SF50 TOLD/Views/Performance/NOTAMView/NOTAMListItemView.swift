@@ -8,8 +8,17 @@ struct NOTAMListItemView: View {
   let notam: NOTAMResponse
   let plannedTime: Date
 
+  /// Whether the NOTAM is marked as likely to affect runway performance, which VoiceOver announces.
+  var mayAffectPerformance = false
+
   /// Fills the NOTAM editor in from this NOTAM; `nil` when the app read nothing it can fill in.
   var onFill: (() -> Void)?
+
+  private var identifierAccessibilityLabel: Text {
+    mayAffectPerformance
+      ? Text("\(notam.notamId), may affect runway performance")
+      : Text(notam.notamId)
+  }
 
   var body: some View {
     VStack(alignment: .leading) {
@@ -18,6 +27,7 @@ struct NOTAMListItemView: View {
         Text(notam.notamId)
           .font(.system(.subheadline, design: .monospaced).weight(.medium))
           .multilineTextAlignment(.leading)
+          .accessibilityLabel(identifierAccessibilityLabel)
 
         Spacer()
 

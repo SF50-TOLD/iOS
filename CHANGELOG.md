@@ -24,6 +24,9 @@ changed in the cockpit rather than what changed in the code.
   update, NOTAMs you entered are cleared.
 - Terrain over the sea and large lakes follows the water’s surface rather than
   the seafloor. Downloaded regions update once, in the background.
+- Downloaded NOTAMs that likely affect runway performance, such as closures,
+  displaced thresholds and obstacles, now come right after the ones the app can
+  fill in from, outlined in red. The rest follow, and expired NOTAMs stay last.
 
 ## 3.10
 

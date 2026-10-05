@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "dimension": 262144,
+  "bias": -2.8820581436157227,
+  "threshold": 0.15,
+  "weights": "notam-relevance.weights",
+  "hash": "fnv1a64"
+}

@@ -1,18 +1,19 @@
 import SF50_Shared
 import SwiftUI
 
-/// The background of a downloaded-NOTAM card: plain, or set apart when the app can fill the NOTAM
-/// in from it.
+/// The background of a downloaded-NOTAM card, which sets apart the NOTAMs the app can fill the NOTAM
+/// in from and those that likely affect runway performance.
 ///
 /// A card that can fill in is drawn with a thick border in ``IntelligenceGradient``, the gradient
 /// washed faintly across its background, and a deeper, tinted shadow that lifts it further off the
-/// page than a plain one. With Reduce Transparency on, the wash is left out.
+/// page than a plain one. With Reduce Transparency on, the wash is left out. A card that likely
+/// affects runway performance, but can't fill in, is drawn with a thick red border.
 struct NOTAMCardBackground: ViewModifier {
 
   // MARK: - Instance Properties
 
-  /// Whether the app can fill the NOTAM in from this card.
-  let isProposing: Bool
+  /// Where the card's NOTAM sits in the downloaded-NOTAM list.
+  let tier: NOTAMResponse.ListTier
 
   @Environment(\.accessibilityReduceTransparency)
   private var reduceTransparency
@@ -21,10 +22,10 @@ struct NOTAMCardBackground: ViewModifier {
 
   func body(content: Content) -> some View {
     content.background {
-      if isProposing {
-        ProposingCardBackground(isTinted: !reduceTransparency)
-      } else {
-        PlainCardBackground()
+      switch tier {
+        case .fillable: ProposingCardBackground(isTinted: !reduceTransparency)
+        case .relevant: RelevantCardBackground()
+        case .other, .expired: PlainCardBackground()
       }
     }
   }
@@ -84,11 +85,22 @@ private struct ProposingCardBackground: View {
   }
 }
 
+/// A card that likely affects runway performance but can't fill the NOTAM in: the plain card in a
+/// thick red border.
+private struct RelevantCardBackground: View {
+  private static let borderWidth: CGFloat = 2.5
+
+  var body: some View {
+    PlainCardBackground()
+      .overlay { cardShape.strokeBorder(.red, lineWidth: Self.borderWidth) }
+  }
+}
+
 extension View {
-  /// Draws a downloaded-NOTAM card's background, set apart when the app can fill the NOTAM in from
-  /// it.
-  func notamCardBackground(isProposing: Bool) -> some View {
-    modifier(NOTAMCardBackground(isProposing: isProposing))
+  /// Draws a downloaded-NOTAM card's background, set apart according to where its NOTAM sits in the
+  /// list.
+  func notamCardBackground(for tier: NOTAMResponse.ListTier) -> some View {
+    modifier(NOTAMCardBackground(tier: tier))
   }
 }
 
@@ -98,10 +110,13 @@ extension View {
     return VStack(spacing: 24) {
       NOTAMListItemView(notam: notam, plannedTime: .now)
         .padding()
-        .notamCardBackground(isProposing: false)
+        .notamCardBackground(for: .other)
+      NOTAMListItemView(notam: notam, plannedTime: .now, mayAffectPerformance: true)
+        .padding()
+        .notamCardBackground(for: .relevant)
       NOTAMListItemView(notam: notam, plannedTime: .now, onFill: {})
         .padding()
-        .notamCardBackground(isProposing: true)
+        .notamCardBackground(for: .fillable)
     }
     .padding()
     .frame(maxHeight: .infinity)

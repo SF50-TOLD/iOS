@@ -2,7 +2,8 @@ import SF50_Shared
 import SwiftUI
 
 /// The downloaded NOTAMs, as a carousel of cards. Cards the app can fill the NOTAM editor in from
-/// are set apart and carry a button that does so.
+/// are set apart and carry a button that does so; cards that likely affect runway performance are
+/// set apart in red.
 struct DownloadedNOTAMsSection: View {
   /// Room around each card for its shadow or glow, which the carousel would otherwise clip.
   private static let cardMargin: CGFloat = 20
@@ -11,8 +12,8 @@ struct DownloadedNOTAMsSection: View {
   let notams: [NOTAMResponse]
   let plannedTime: Date
 
-  /// Whether the app can fill the NOTAM editor in from a NOTAM.
-  let canFill: (NOTAMResponse) -> Bool
+  /// Where a NOTAM sits in the list, which sets how its card is drawn.
+  let tier: (NOTAMResponse) -> NOTAMResponse.ListTier
 
   /// Fills the NOTAM editor in from a NOTAM.
   let onFill: (NOTAMResponse) -> Void
@@ -30,14 +31,15 @@ struct DownloadedNOTAMsSection: View {
           data: notams,
           id: \.id,
           content: { notam in
-            let isProposing = canFill(notam)
+            let tier = tier(notam)
             NOTAMListItemView(
               notam: notam,
               plannedTime: plannedTime,
-              onFill: isProposing ? { onFill(notam) } : nil
+              mayAffectPerformance: tier == .relevant,
+              onFill: tier == .fillable ? { onFill(notam) } : nil
             )
             .padding()
-            .notamCardBackground(isProposing: isProposing)
+            .notamCardBackground(for: tier)
             .padding(Self.cardMargin)
           },
           currentIndex: $currentIndex
@@ -64,7 +66,7 @@ struct DownloadedNOTAMsSection: View {
       DownloadedNOTAMsSection(
         notams: notams,
         plannedTime: .now,
-        canFill: { $0.notamText.contains("FICON") },
+        tier: { $0.listTier(at: .now, canFill: $0.notamText.contains("FICON")) },
         onFill: { _ in }
       )
     }
