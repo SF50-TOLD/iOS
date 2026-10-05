@@ -65,6 +65,10 @@ extension NOTAMView {
     proposal(from: downloaded)?.isEmpty == false
   }
 
+  private func listTier(of downloaded: NOTAMResponse) -> NOTAMResponse.ListTier {
+    downloaded.listTier(at: plannedTime, canFill: canFill(from: downloaded))
+  }
+
   private func fillIn(from downloaded: NOTAMResponse, scrollingWith scroller: ScrollViewProxy) {
     guard let proposal = proposal(from: downloaded) else { return }
     let restoration = proposal.fill(notam, for: operation),
@@ -108,62 +112,9 @@ struct NOTAMView: View {
   /// The NOTAM the editor was last filled in from, and how to undo it; `nil` once dismissed.
   @State private var fill: Fill?
 
-  /// NOTAMs sorted with intelligent prioritization:
-  /// 0. NOTAMs the editor can be filled in from, among those not expired
-  /// 1. Currently effective aerodrome NOTAMs
-  /// 2. Currently effective non-aerodrome NOTAMs
-  /// 3. Future aerodrome NOTAMs (soonest first)
-  /// 4. Future non-aerodrome NOTAMs (soonest first)
-  /// 5. Expired NOTAMs (most recently expired first)
+  /// The downloaded NOTAMs, in list order.
   private var sortedNOTAMs: [NOTAMResponse] {
-    guard !downloadedNOTAMs.isEmpty else { return [] }
-
-    return downloadedNOTAMs.sorted { lhs, rhs in
-      // Prioritize by relevance
-      let lhsEffectiveWindow = lhs.isEffective(within: plannedTime, windowInterval: 3600)
-      let rhsEffectiveWindow = rhs.isEffective(within: plannedTime, windowInterval: 3600)
-      let lhsExpired = lhs.hasExpired(before: plannedTime, windowInterval: 3600)
-      let rhsExpired = rhs.hasExpired(before: plannedTime, windowInterval: 3600)
-      let lhsAerodrome = lhs.isAerodromeRelated
-      let rhsAerodrome = rhs.isAerodromeRelated
-
-      // 1. Expired NOTAMs go to the back
-      if lhsExpired != rhsExpired {
-        return rhsExpired  // Non-expired comes first
-      }
-
-      // If both expired, show most recently expired first
-      if lhsExpired && rhsExpired {
-        if let lhsEnd = lhs.effectiveEnd, let rhsEnd = rhs.effectiveEnd {
-          return lhsEnd > rhsEnd
-        }
-        return false
-      }
-
-      // NOTAMs the editor can be filled in from come first
-      let lhsFills = canFill(from: lhs), rhsFills = canFill(from: rhs)
-      if lhsFills != rhsFills {
-        return lhsFills
-      }
-
-      // 2. Effective NOTAMs come before future NOTAMs
-      if lhsEffectiveWindow != rhsEffectiveWindow {
-        return lhsEffectiveWindow
-      }
-
-      // 3. Within same effectiveness category, aerodrome NOTAMs come first
-      if lhsAerodrome != rhsAerodrome {
-        return lhsAerodrome
-      }
-
-      // 4. For effective NOTAMs, show newest first (most recently started)
-      if lhsEffectiveWindow && rhsEffectiveWindow {
-        return lhs.effectiveStart > rhs.effectiveStart
-      }
-
-      // 5. For future NOTAMs, show soonest to become effective first
-      return lhs.effectiveStart < rhs.effectiveStart
-    }
+    downloadedNOTAMs.sortedForList(at: plannedTime, canFill: canFill(from:))
   }
 
   @Environment(\.operation)
@@ -215,7 +166,7 @@ struct NOTAMView: View {
           DownloadedNOTAMsSection(
             notams: sortedNOTAMs,
             plannedTime: plannedTime,
-            canFill: canFill(from:),
+            tier: listTier(of:),
             onFill: { fillIn(from: $0, scrollingWith: scroller) }
           )
         }

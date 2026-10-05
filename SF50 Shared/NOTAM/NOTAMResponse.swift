@@ -89,6 +89,10 @@ public struct NOTAMResponse: Decodable, Sendable, Identifiable {
   /// Raw AIXM XML or text NOTAM (only included in single NOTAM endpoint)
   public let rawMessage: String?
 
+  /// Whether ``NOTAMRelevance`` judges this NOTAM to affect runway performance. Set by
+  /// ``NOTAMRelevance/classifying(_:)`` when the NOTAMs are downloaded; not part of the API.
+  public internal(set) var isRelevant = false
+
   // periphery:ignore - memberwise init mirrors the API contract; used by previews/tests
   /// Public initializer for creating NOTAM responses (e.g., in previews and tests)
   public init(

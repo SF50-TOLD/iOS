@@ -6,7 +6,8 @@ extension PreviewHelper {
   ///   - count: Number of NOTAMs to generate
   ///   - icaoLocation: ICAO code for the airport (default: "KOAK")
   ///   - baseTime: Reference time for generating effective dates (default: now)
-  /// - Returns: Array of NOTAMResponse objects with varied statuses and lengths
+  /// - Returns: Array of NOTAMResponse objects with varied statuses and lengths, classified by
+  ///   ``NOTAMRelevance``
   public func generateNOTAMs(
     count: Int,
     icaoLocation: String = "KOAK",
@@ -86,6 +87,7 @@ extension PreviewHelper {
         scope: scopes[index % scopes.count],
         trafficType: trafficTypes[index % trafficTypes.count]
       )
+      .classifiedForRelevance
     }
   }
 }
@@ -102,7 +104,7 @@ extension NOTAMResponse {
       "OAK OBST CRANE (ASN 2026-AWP-1234-OE) 374300N1221230W (0.4NM NW DEP END RWY 30) 185FT (170FT AGL) FLAGGED AND LGTD."
     ]
     return texts.enumerated().map { index, text in
-      .init(
+      Self(
         id: 9000 + index,
         notamId: "A\(9000 + index)/26",
         icaoLocation: "KOAK",
@@ -115,6 +117,7 @@ extension NOTAMResponse {
         scope: "A",
         trafficType: "IV"
       )
+      .classifiedForRelevance
     }
   }
 }
