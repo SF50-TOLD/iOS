@@ -19,6 +19,31 @@ struct ProcedurePathGeneratorTests {
   /// Standard climb profile: 300 ft/NM constant
   private var climbProfile: ClimbProfile { Helper.createTestClimbProfile() }
 
+  /// A 300 ft/NM climb profile whose charts carry figures up to `ceilingFt` and none above it.
+  private static func climbProfile(withFiguresThroughFt ceilingFt: Double) -> ClimbProfile {
+    let dataPoints = stride(from: 0.0, through: 30000, by: 5000).map { altitudeFt in
+      let climbData =
+        altitudeFt <= ceilingFt
+        ? ClimbProfile.ClimbData(gradientFtPerNM: .value(300), indicatedAirspeedKts: .value(170))
+        : ClimbProfile.ClimbData(
+          gradientFtPerNM: .offscaleHigh(clamped: nil),
+          indicatedAirspeedKts: .offscaleHigh(clamped: nil)
+        )
+      return ClimbProfile.DataPoint(
+        altitudeFt: altitudeFt,
+        outsideAirTemperatureC: 15.0 - altitudeFt * 0.00198,
+        windDirectionDeg: 0,
+        windSpeedKts: 0,
+        takeoff: climbData,
+        enrouteObstacle: climbData,
+        enrouteObstacleAntiIce: climbData,
+        enroute: climbData,
+        enrouteAntiIce: climbData
+      )
+    }
+    return ClimbProfile(dataPoints: dataPoints, seaLevelPressureInHg: 29.92)
+  }
+
   // MARK: - Departure Path Tests
 
   @Test
@@ -2813,5 +2838,33 @@ struct ProcedurePathGeneratorTests {
     #expect(
       path.points.last?.altitudeFt.isApproximatelyEqual(to: 5000, absoluteTolerance: 1) == true
     )
+  }
+
+  // MARK: - Chart Edge
+
+  @Test
+  func `heading path stops where the climb charts end`() throws {
+    let generator = ProcedurePathGenerator(
+      climbProfile: Self.climbProfile(withFiguresThroughFt: 10000),
+      schedule: .init(segments: [.init(profile: .enroute(antiIce: false))]),
+      magneticVariation: magneticVariation
+    )
+    func path(toFt targetAltitudeFt: Double) -> ProcedurePath? {
+      generator.headingPath(
+        from: takeoffPoint,
+        magneticDirection: .init(value: 300, unit: .degrees),
+        isHeading: true,
+        startAltitudeFt: takeoffAltitudeFt,
+        targetAltitudeFt: targetAltitudeFt
+      )
+    }
+
+    let cutShort = try #require(path(toFt: 20000))
+    let lastAltitudeFt = try #require(cutShort.points.last?.altitudeFt)
+    #expect(abs(lastAltitudeFt - 10000) <= 50)
+
+    let inFull = try #require(path(toFt: 8000))
+    let inFullTopFt = try #require(inFull.points.last?.altitudeFt)
+    #expect(abs(inFullTopFt - 8000) <= 50)
   }
 }

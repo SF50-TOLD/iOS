@@ -129,10 +129,17 @@ public struct ProcedurePathGenerator {
     }
   }
 
+  /// The path flown until the climb charts ran out, or nil if they ran out before it left its
+  /// origin.
+  private static func chartEdgePath(_ points: [ProcedurePath.Point]) -> ProcedurePath? {
+    points.count > 1 ? ProcedurePath(points: points) : nil
+  }
+
   // MARK: - Public API
 
   /// Generates a path for a departure procedure.
-  /// Returns nil if any leg cannot be resolved to a geographic path.
+  /// Returns nil if any leg cannot be resolved to a geographic path. Where the climb charts run
+  /// out first, the path stops there.
   public func departurePath(
     from legs: [Leg],
     takeoffPoint: CLLocationCoordinate2D,
@@ -180,6 +187,7 @@ public struct ProcedurePathGenerator {
       }
 
       points.append(contentsOf: segmentResult.points)
+      if segmentResult.endsAtChartEdge { return Self.chartEdgePath(points) }
       cumulativeNM = segmentResult.cumulativeNM
       currentAltitudeFt = segmentResult.altitudeFt
       elapsedTimeSeconds = segmentResult.elapsedTimeSeconds
@@ -192,7 +200,8 @@ public struct ProcedurePathGenerator {
   }
 
   /// Generates a path for a missed approach procedure.
-  /// Returns nil if any leg cannot be resolved to a geographic path.
+  /// Returns nil if any leg cannot be resolved to a geographic path. Where the climb charts run
+  /// out first, the path stops there.
   public func missedApproachPath(
     from legs: [Leg],
     startCoordinate: CLLocationCoordinate2D,
@@ -240,6 +249,7 @@ public struct ProcedurePathGenerator {
       }
 
       points.append(contentsOf: segmentResult.points)
+      if segmentResult.endsAtChartEdge { return Self.chartEdgePath(points) }
       cumulativeNM = segmentResult.cumulativeNM
       currentAltitudeFt = segmentResult.altitudeFt
       elapsedTimeSeconds = segmentResult.elapsedTimeSeconds
@@ -251,7 +261,8 @@ public struct ProcedurePathGenerator {
     return ProcedurePath(points: points)
   }
 
-  /// Generates a straight-line climb path along a fixed heading or track.
+  /// Generates a straight-line climb path along a fixed heading or track. Where the climb charts
+  /// run out first, the path stops there.
   public func headingPath(
     from startCoordinate: CLLocationCoordinate2D,
     magneticDirection: Measurement<UnitAngle>,
@@ -298,7 +309,7 @@ public struct ProcedurePathGenerator {
     guard let result = stepper.run() else { return nil }
 
     points.append(contentsOf: result.points)
-    return ProcedurePath(points: points)
+    return result.endsAtChartEdge ? Self.chartEdgePath(points) : ProcedurePath(points: points)
   }
 
   // MARK: - Leg Processing
@@ -528,6 +539,8 @@ public struct ProcedurePathGenerator {
     let altitudeFt: Double
     let elapsedTimeSeconds: Double
     let lastCoord: CLLocationCoordinate2D
+    /// Whether the segment stopped short because the climb charts ran out.
+    var endsAtChartEdge = false
   }
 
   /// Pre-processed climb segments with resolved bounds for efficient per-step lookup.

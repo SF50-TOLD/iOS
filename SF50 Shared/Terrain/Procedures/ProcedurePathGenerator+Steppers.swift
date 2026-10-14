@@ -8,6 +8,12 @@ extension ProcedurePathGenerator {
 
   /// Shared immutable context for both step engines.
   struct StepperConfig {
+    /// The climb figures and winds at a step.
+    typealias Atmosphere = (
+      profile: ClimbProfile.ProfileType, gradient: Double,
+      TASKts: Double, windDirectionDeg: Double, windSpeedKts: Double
+    )
+
     let climbProfile: ClimbProfile
     let segments: ClimbSegments
     let altitudeCeilingFt: Double
@@ -16,12 +22,7 @@ extension ProcedurePathGenerator {
     let levelOffAltitudeFt: Double?  // soft ceiling: caps altitude but doesn't terminate stepper
 
     /// Looks up atmospheric and performance data at the current step state.
-    func lookupAtmosphere(
-      state: StepState
-    ) -> (
-      profile: ClimbProfile.ProfileType, gradient: Double,
-      TASKts: Double, windDirectionDeg: Double, windSpeedKts: Double
-    )? {
+    func lookupAtmosphere(state: StepState) -> Atmosphere? {
       let profile = segments.activeProfile(
         elapsedSeconds: state.elapsedTimeSeconds,
         altitudeFt: state.altitudeFt
@@ -86,8 +87,29 @@ extension ProcedurePathGenerator {
 
   /// Minimal protocol for step-engine dispatch.
   protocol SegmentStepper {
+    var state: StepState { get }
+    var points: [ProcedurePath.Point] { get }
+
     mutating func run() -> SegmentResult?
   }
+}
+
+extension ProcedurePathGenerator.SegmentStepper {
+
+  /// The segment flown until the climb charts ran out.
+  func chartEdgeResult() -> ProcedurePathGenerator.SegmentResult {
+    .init(
+      points: points,
+      cumulativeNM: state.cumulativeGroundNM,
+      altitudeFt: state.altitudeFt,
+      elapsedTimeSeconds: state.elapsedTimeSeconds,
+      lastCoord: state.coordinate,
+      endsAtChartEdge: true
+    )
+  }
+}
+
+extension ProcedurePathGenerator {
 
   // MARK: - Linear Stepper
 
@@ -115,7 +137,10 @@ extension ProcedurePathGenerator {
 
     mutating func run() -> SegmentResult? {
       for _ in 0..<ProcedurePathGenerator.maxSteps {
-        guard let step = computeStep() else { return nil }
+        guard let atmosphere = config.lookupAtmosphere(state: state) else {
+          return chartEdgeResult()
+        }
+        guard let step = computeStep(atmosphere) else { return nil }
         if let result = checkCeiling(step) { return result }
         if let result = checkTermination(step) { return result }
         advance(step)
@@ -167,9 +192,7 @@ extension ProcedurePathGenerator {
 
     // MARK: Step Computation
 
-    private func computeStep() -> Step? {
-      guard let atmo = config.lookupAtmosphere(state: state) else { return nil }
-
+    private func computeStep(_ atmo: StepperConfig.Atmosphere) -> Step? {
       let (groundBearing, gsRatio) = resolveGroundTrack(
         tas: atmo.TASKts,
         windDir: atmo.windDirectionDeg,
@@ -568,7 +591,12 @@ extension ProcedurePathGenerator {
       var currentAngle = startAngleDeg
 
       for i in 1...stepCount {
-        guard let step = computeArcStep(index: i, currentAngle: currentAngle) else { return nil }
+        guard let atmosphere = config.lookupAtmosphere(state: state) else {
+          return chartEdgeResult()
+        }
+        guard let step = computeArcStep(atmosphere, index: i, currentAngle: currentAngle) else {
+          return nil
+        }
         if let result = advance(step, isLast: i == stepCount) { return result }
         currentAngle = startAngleDeg + actualStepDeg * Double(i)
       }
@@ -584,9 +612,11 @@ extension ProcedurePathGenerator {
 
     // MARK: Arc Step Computation
 
-    private func computeArcStep(index: Int, currentAngle: Double) -> ArcStep? {
-      guard let atmo = config.lookupAtmosphere(state: state) else { return nil }
-
+    private func computeArcStep(
+      _ atmo: StepperConfig.Atmosphere,
+      index: Int,
+      currentAngle: Double
+    ) -> ArcStep? {
       let nextAngle = startAngleDeg + actualStepDeg * Double(index)
       let normalizedAngle = nextAngle.normalizedAngle
       let isLast = index == stepCount

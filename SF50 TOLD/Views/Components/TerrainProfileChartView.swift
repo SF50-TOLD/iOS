@@ -33,6 +33,16 @@ struct TerrainProfileChartView: View {
   /// red the violations, and purple the path.
   private static let selectionRuleOpacity = 0.7
 
+  /// How far above the top of the path the climb charts are checked for an edge.
+  ///
+  /// More than the step a climb takes, which can carry the path a little past the edge before the
+  /// charts stop answering.
+  private static let chartEdgeProbeFt = 100.0
+
+  /// How much of the plotted height is added above a path that stops at the edge of the climb
+  /// charts, so the band beyond that edge shows.
+  private static let outsideChartsHeadroomFraction = 0.15
+
   // MARK: - Inputs
 
   let terrainPath: ProcedureTerrainPath
@@ -49,6 +59,9 @@ struct TerrainProfileChartView: View {
   /// agreeing with the plotted path, including where the profile carries its lowest reported wind
   /// down to the ground.
   var climbProfile: ClimbProfile?
+
+  /// The climb chart the path finishes its climb on, whose uncovered altitudes are marked.
+  var finalSegmentProfile: ClimbProfile.ProfileType?
 
   /// The weather field drawn behind the terrain and the path.
   var weatherLayer: WeatherProfileLayer = .none
@@ -93,13 +106,16 @@ struct TerrainProfileChartView: View {
       selectionLayer
     }
     .chartBackground { proxy in
-      if let atmosphere {
-        WeatherFieldLayer(
-          proxy: proxy,
-          atmosphere: atmosphere,
-          layer: weatherLayer,
-          scale: scale
-        )
+      ZStack {
+        if let atmosphere {
+          WeatherFieldLayer(
+            proxy: proxy,
+            atmosphere: atmosphere,
+            layer: weatherLayer,
+            scale: scale
+          )
+        }
+        OutsideChartsLayer(proxy: proxy, bands: axisOutsideChartsBands)
       }
     }
     .chartXAxisLabel("Distance (\(distanceUnit.symbol))")
@@ -331,7 +347,23 @@ struct TerrainProfileChartView: View {
   }
 
   private var maxAltitude: Measurement<UnitLength> {
-    terrainPath.maxAltitude(fieldElevation: fieldElevation)
+    Self.ceiling(
+      of: terrainPath,
+      fieldElevation: fieldElevation,
+      climbProfile: climbProfile,
+      finalSegmentProfile: finalSegmentProfile
+    )
+  }
+
+  /// The bands the climb charts do not cover, in the axis's altitudes.
+  private var axisOutsideChartsBands: [ClosedRange<Double>] {
+    Self.outsideChartsBands(
+      of: terrainPath,
+      fieldElevation: fieldElevation,
+      climbProfile: climbProfile,
+      finalSegmentProfile: finalSegmentProfile
+    )
+    .map { scale.axisAltitude($0.lowerBound)...scale.axisAltitude($0.upperBound) }
   }
 
   // Everything the chart reasons about — violations, terrain impacts — is decided in the path's own
@@ -363,6 +395,55 @@ struct TerrainProfileChartView: View {
       and: maxAltitude
     )
     .map { .init(distanceNM: $0.distanceNM, altitudeFt: $0.altitude.converted(to: .feet).value) }
+  }
+
+  /// The highest altitude a chart of this path shows.
+  ///
+  /// The top of the path or the terrain under it, whichever is higher, or a margin above that where
+  /// the path stops at the edge of the climb charts, so the band beyond the edge can be seen.
+  static func ceiling(
+    of terrainPath: ProcedureTerrainPath,
+    fieldElevation: Measurement<UnitLength>,
+    climbProfile: ClimbProfile?,
+    finalSegmentProfile: ClimbProfile.ProfileType?
+  ) -> Measurement<UnitLength> {
+    let top = terrainPath.maxAltitude(fieldElevation: fieldElevation)
+    guard let climbProfile, let finalSegmentProfile else { return top }
+
+    let topFt = top.converted(to: .feet).value,
+      fieldElevationFt = fieldElevation.converted(to: .feet).value
+    let chartsEndAtTop =
+      climbProfile.gradient(at: topFt + chartEdgeProbeFt, profile: finalSegmentProfile) == nil
+    guard chartsEndAtTop else { return top }
+    return .init(
+      value: topFt + (topFt - fieldElevationFt) * outsideChartsHeadroomFraction,
+      unit: .feet
+    )
+  }
+
+  /// The altitude bands on a chart of this path that the final climb segment's chart does not
+  /// cover, lowest first.
+  static func outsideChartsBands(
+    of terrainPath: ProcedureTerrainPath,
+    fieldElevation: Measurement<UnitLength>,
+    climbProfile: ClimbProfile?,
+    finalSegmentProfile: ClimbProfile.ProfileType?
+  ) -> [ClosedRange<Measurement<UnitLength>>] {
+    guard let climbProfile, let finalSegmentProfile else { return [] }
+    let ceilingFt = ceiling(
+      of: terrainPath,
+      fieldElevation: fieldElevation,
+      climbProfile: climbProfile,
+      finalSegmentProfile: finalSegmentProfile
+    )
+    .converted(to: .feet).value
+
+    return climbProfile.bandsWithoutGradient(
+      from: fieldElevation.converted(to: .feet).value,
+      to: ceilingFt,
+      profile: finalSegmentProfile
+    )
+    .map { .init(value: $0.lowerBound, unit: .feet)...(.init(value: $0.upperBound, unit: .feet)) }
   }
 
   /// Whether the aircraft is at or below the terrain at this sample.
@@ -477,6 +558,31 @@ struct TerrainProfileChartView: View {
   }
 
   // MARK: - Subtypes
+
+  /// The bands the climb charts do not cover, striped across the plot.
+  private struct OutsideChartsLayer: View {
+    let proxy: ChartProxy
+
+    /// The bands, in the axis's altitudes.
+    let bands: [ClosedRange<Double>]
+
+    var body: some View {
+      GeometryReader { geometry in
+        if let plotFrame = proxy.plotFrame {
+          let plot = geometry[plotFrame]
+          ForEach(bands, id: \.lowerBound) { band in
+            if let top = proxy.position(forY: band.upperBound),
+              let bottom = proxy.position(forY: band.lowerBound)
+            {
+              BarberPole()
+                .frame(width: plot.width, height: bottom - top)
+                .position(x: plot.midX, y: plot.minY + (top + bottom) / 2)
+            }
+          }
+        }
+      }
+    }
+  }
 
   /// One sample of the freezing level.
   private struct FreezingLevelPoint: Identifiable {
@@ -598,13 +704,15 @@ private struct ChartPreview: View {
   var showsWindBarbs = false
   var atmosphere: PathAtmosphere? = .previewMultiColumn
   var terrainPath = ProcedureTerrainPath.preview
+  var climbProfile = ClimbProfile.preview
 
   var body: some View {
     TerrainProfileChartView(
       terrainPath: terrainPath,
       fieldElevation: .zero,
       atmosphere: atmosphere,
-      climbProfile: .preview,
+      climbProfile: climbProfile,
+      finalSegmentProfile: .enrouteObstacle(antiIce: false),
       weatherLayer: layer,
       showsWindBarbs: showsWindBarbs
     )
@@ -633,4 +741,13 @@ private struct ChartPreview: View {
 /// ground at field elevation.
 #Preview("Missing terrain") {
   ChartPreview(layer: .none, terrainPath: .previewMissingTerrain)
+}
+
+/// A climb that runs off the top of the charts partway along, striped from there up.
+#Preview("Outside published AFM data") {
+  ChartPreview(
+    layer: .none,
+    terrainPath: .previewEndsAtChartEdge,
+    climbProfile: .previewChartsEndAt4000Ft
+  )
 }

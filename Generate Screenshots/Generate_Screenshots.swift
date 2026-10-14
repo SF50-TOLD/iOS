@@ -255,7 +255,7 @@ extension Generate_Screenshots {
       if climbNavBar.waitForExistence(timeout: 20) {
         selectLINDZDeparture(in: app)
 
-        let terrainChart = app.descendants(matching: .any)["terrainProfileChart"]
+        let terrainChart = app.descendants(matching: .any)["terrainProfileChart"].firstMatch
         _ = terrainChart.waitForExistence(timeout: 30)
 
         showWeatherLayers(in: app)

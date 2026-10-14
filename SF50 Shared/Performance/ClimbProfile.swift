@@ -129,6 +129,35 @@ public struct ClimbProfile: Sendable {
     return nil
   }
 
+  /// The bands between two altitudes where the profile has no gradient, lowest first.
+  ///
+  /// Walked at the step ``firstGradientGap(from:to:profile:)`` takes, so a band starts where a
+  /// climb into it would stop.
+  public func bandsWithoutGradient(
+    from startAltitudeFt: Double,
+    to endAltitudeFt: Double,
+    profile: ProfileType
+  ) -> [ClosedRange<Double>] {
+    guard endAltitudeFt > startAltitudeFt else { return [] }
+
+    let altitudesFt =
+      Array(stride(from: startAltitudeFt, to: endAltitudeFt, by: Self.altitudeStepFt))
+      + [endAltitudeFt]
+    var bands: [ClosedRange<Double>] = [],
+      bandStartFt: Double?
+    for altitudeFt in altitudesFt {
+      let covered = gradient(at: altitudeFt, profile: profile) != nil
+      if !covered, bandStartFt == nil {
+        bandStartFt = altitudeFt
+      } else if covered, let start = bandStartFt {
+        bands.append(start...altitudeFt)
+        bandStartFt = nil
+      }
+    }
+    if let bandStartFt { bands.append(bandStartFt...endAltitudeFt) }
+    return bands
+  }
+
   /// Interpolated wind direction (true, FROM) at a given altitude.
   public func windDirection(at altitudeFt: Double) -> Double? {
     interpolate(at: altitudeFt) { $0.windDirectionDeg }

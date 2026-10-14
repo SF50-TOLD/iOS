@@ -40,6 +40,16 @@ extension ProcedureTerrainPath {
     )
   }
 
+  /// The same climb, stopping at 4,000 ft where ``ClimbProfile/previewChartsEndAt4000Ft``'s
+  /// charts end.
+  public static var previewEndsAtChartEdge: Self {
+    preview(
+      lengthNM: 12.5,
+      climbGradientFtPerNM: 320,
+      track: .init(value: 105, unit: .degrees)
+    )
+  }
+
   private static func preview(
     lengthNM: Double,
     climbGradientFtPerNM: Double,
@@ -129,5 +139,32 @@ extension ClimbProfile {
       seaLevelPressureInHg: 29.92,
       useRegressionModel: true
     )
+  }
+
+  /// ``preview`` as though the climb charts stopped at 4,000 ft, with no figure for any climb above
+  /// it.
+  public static var previewChartsEndAt4000Ft: Self {
+    let chartsTopFt = 4000.0
+    let outsideCharts = ClimbData(
+      gradientFtPerNM: .offscaleHigh(clamped: nil),
+      indicatedAirspeedKts: .offscaleHigh(clamped: nil)
+    )
+    let dataPoints = preview.dataPoints.map { point in
+      func climbData(_ profile: ProfileType) -> ClimbData {
+        point.altitudeFt <= chartsTopFt ? point.climbData(for: profile) : outsideCharts
+      }
+      return DataPoint(
+        altitudeFt: point.altitudeFt,
+        outsideAirTemperatureC: point.outsideAirTemperatureC,
+        windDirectionDeg: point.windDirectionDeg,
+        windSpeedKts: point.windSpeedKts,
+        takeoff: climbData(.takeoff),
+        enrouteObstacle: climbData(.enrouteObstacle(antiIce: false)),
+        enrouteObstacleAntiIce: climbData(.enrouteObstacle(antiIce: true)),
+        enroute: climbData(.enroute(antiIce: false)),
+        enrouteAntiIce: climbData(.enroute(antiIce: true))
+      )
+    }
+    return .init(dataPoints: dataPoints, seaLevelPressureInHg: preview.seaLevelPressureInHg)
   }
 }

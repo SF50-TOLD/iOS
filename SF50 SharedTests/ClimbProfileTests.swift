@@ -101,6 +101,26 @@ struct ClimbProfileTests {
   }
 
   @Test
+  func `every band with no gradient is reported, wherever the charts resume`() throws {
+    // A hole at 10,000 ft leaves 5,000–15,000 ft without a figure; the charts end above 20,000 ft.
+    let profile = makeProfile([
+      (altitudeFt: 0, gradient: .value(400)),
+      (altitudeFt: 5000, gradient: .value(300)),
+      (altitudeFt: 10000, gradient: .notAvailable),
+      (altitudeFt: 15000, gradient: .value(250)),
+      (altitudeFt: 20000, gradient: .value(200)),
+      (altitudeFt: 25000, gradient: .offscaleHigh(clamped: nil))
+    ])
+
+    let bands = profile.bandsWithoutGradient(from: 0, to: 25000, profile: defaultProfile)
+    try #require(bands.count == 2)
+    #expect((5000...5050).contains(bands[0].lowerBound))
+    #expect((15000...15050).contains(bands[0].upperBound))
+    #expect((20000...20050).contains(bands[1].lowerBound))
+    #expect(bands[1].upperBound == 25000)
+  }
+
+  @Test
   func `a profile that answers throughout reports no gap`() {
     let profile = makeVaryingProfile([
       (altitudeFt: 0, gradientFtPerNM: 400),

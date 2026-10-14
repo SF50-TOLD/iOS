@@ -46,6 +46,7 @@ struct ClimbProfileView: View {
 
   @State private var terrainPath: ProcedureTerrainPath?
   @State private var climbProfile: ClimbProfile?
+  @State private var finalSegmentProfile: ClimbProfile.ProfileType?
   @State private var isComputing = false
   @State private var pathFailure: PathFailure?
   @State private var terrainRevision = 0
@@ -70,6 +71,7 @@ struct ClimbProfileView: View {
       TerrainProfileSection(
         terrainPath: terrainPath,
         climbProfile: climbProfile,
+        finalSegmentProfile: finalSegmentProfile,
         hasWindsAloft: windsAloft != nil,
         fieldElevation: performance.airport?.elevation ?? .zero,
         time: weather.time,
@@ -228,6 +230,7 @@ struct ClimbProfileView: View {
     self.climbProfile = climbProfile
 
     let schedule = buildClimbSchedule()
+    finalSegmentProfile = schedule.segments.last?.profile
     let pathGenerator = ProcedurePathGenerator(
       climbProfile: climbProfile,
       schedule: schedule,

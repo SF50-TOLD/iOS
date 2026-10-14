@@ -16,6 +16,9 @@ struct TerrainProfileSection: View {
   /// The climb profile the path was flown on, which the wind barbs are read from.
   let climbProfile: ClimbProfile?
 
+  /// The climb chart the path finishes its climb on, whose uncovered altitudes are marked.
+  let finalSegmentProfile: ClimbProfile.ProfileType?
+
   /// Whether a winds aloft forecast covers this flight.
   ///
   /// Taken from the forecast itself rather than inferred from the profile's winds: without one
@@ -72,6 +75,7 @@ struct TerrainProfileSection: View {
           fieldElevation: fieldElevation,
           atmosphere: atmosphere,
           climbProfile: climbProfile,
+          finalSegmentProfile: finalSegmentProfile,
           weatherLayer: $weatherLayer,
           showsWindBarbs: $showsWindBarbs,
           fieldLayersAvailable: fieldLayersAvailable,
@@ -100,7 +104,8 @@ struct TerrainProfileSection: View {
         atmosphereState: atmosphereState,
         weatherLayer: weatherLayer,
         temperatureRange: temperatureRange,
-        showsFreezingLevel: showsFreezingLevel
+        showsFreezingLevel: showsFreezingLevel,
+        showsOutsideCharts: showsOutsideCharts
       )
     }
     .task(id: weatherRequest) { await loadAtmosphere() }
@@ -115,6 +120,17 @@ struct TerrainProfileSection: View {
   }
 
   // MARK: - Computed Properties
+
+  /// Whether the chart stripes any band the climb charts do not cover, and so wants a key for it.
+  private var showsOutsideCharts: Bool {
+    guard let terrainPath else { return false }
+    return !TerrainProfileChartView.outsideChartsBands(
+      of: terrainPath,
+      fieldElevation: fieldElevation,
+      climbProfile: climbProfile,
+      finalSegmentProfile: finalSegmentProfile
+    ).isEmpty
+  }
 
   private var temperatureRange: ClosedRange<Measurement<UnitTemperature>>? {
     guard weatherLayer == .temperature, let terrainPath, let atmosphere else { return nil }
@@ -165,6 +181,7 @@ struct TerrainProfileSection: View {
   init(
     terrainPath: ProcedureTerrainPath?,
     climbProfile: ClimbProfile?,
+    finalSegmentProfile: ClimbProfile.ProfileType?,
     hasWindsAloft: Bool,
     fieldElevation: Measurement<UnitLength>,
     time: Date,
@@ -176,6 +193,7 @@ struct TerrainProfileSection: View {
   ) {
     self.terrainPath = terrainPath
     self.climbProfile = climbProfile
+    self.finalSegmentProfile = finalSegmentProfile
     self.hasWindsAloft = hasWindsAloft
     self.fieldElevation = fieldElevation
     self.time = time
@@ -189,7 +207,12 @@ struct TerrainProfileSection: View {
   // MARK: - Loading
 
   private func visibleCeiling(of terrainPath: ProcedureTerrainPath) -> Measurement<UnitLength> {
-    terrainPath.maxAltitude(fieldElevation: fieldElevation)
+    TerrainProfileChartView.ceiling(
+      of: terrainPath,
+      fieldElevation: fieldElevation,
+      climbProfile: climbProfile,
+      finalSegmentProfile: finalSegmentProfile
+    )
   }
 
   private func loadAtmosphere() async {
@@ -273,6 +296,7 @@ private struct ProfileChart: View {
   let fieldElevation: Measurement<UnitLength>
   let atmosphere: PathAtmosphere?
   let climbProfile: ClimbProfile?
+  let finalSegmentProfile: ClimbProfile.ProfileType?
 
   @Binding var weatherLayer: WeatherProfileLayer
   @Binding var showsWindBarbs: Bool
@@ -287,6 +311,7 @@ private struct ProfileChart: View {
       fieldElevation: fieldElevation,
       atmosphere: atmosphere,
       climbProfile: climbProfile,
+      finalSegmentProfile: finalSegmentProfile,
       weatherLayer: weatherLayer,
       showsWindBarbs: showsWindBarbs
     )
@@ -324,6 +349,7 @@ private struct ProfileFooter: View {
   let weatherLayer: WeatherProfileLayer
   let temperatureRange: ClosedRange<Measurement<UnitTemperature>>?
   let showsFreezingLevel: Bool
+  let showsOutsideCharts: Bool
 
   private var atmosphere: PathAtmosphere? { atmosphereState.atmosphere }
 
@@ -353,6 +379,9 @@ private struct ProfileFooter: View {
           showsFreezingLevel: showsFreezingLevel
         )
       }
+      if showsOutsideCharts {
+        OutsideChartsKey()
+      }
     }
   }
 }
@@ -364,12 +393,15 @@ private struct SectionPreview: View {
   var layer = WeatherProfileLayer.none
   var showsWindBarbs = false
   var pathFailure: PathFailure?
+  var terrainPath = ProcedureTerrainPath.preview
+  var climbProfile = ClimbProfile.preview
 
   var body: some View {
     List {
       TerrainProfileSection(
-        terrainPath: pathFailure == nil ? .preview : nil,
-        climbProfile: .preview,
+        terrainPath: pathFailure == nil ? terrainPath : nil,
+        climbProfile: climbProfile,
+        finalSegmentProfile: .enrouteObstacle(antiIce: false),
         hasWindsAloft: hasWindsAloft,
         fieldElevation: .zero,
         time: .now,
@@ -427,4 +459,10 @@ private struct SectionPreview: View {
   ]
 ) { variant in
   SectionPreview(pathFailure: variant.value)
+}
+
+/// The climb ran off the charts partway along the procedure, so the path is drawn as far as they go
+/// and the altitudes above are striped.
+#Preview("Outside published AFM data") {
+  SectionPreview(terrainPath: .previewEndsAtChartEdge, climbProfile: .previewChartsEndAt4000Ft)
 }

@@ -37,6 +37,7 @@ struct GoAroundProfileView: View {
 
   @State private var terrainPath: ProcedureTerrainPath?
   @State private var climbProfile: ClimbProfile?
+  @State private var finalSegmentProfile: ClimbProfile.ProfileType?
   @State private var isComputing = false
   @State private var pathFailure: PathFailure?
   @State private var terrainRevision = 0
@@ -53,6 +54,7 @@ struct GoAroundProfileView: View {
       TerrainProfileSection(
         terrainPath: terrainPath,
         climbProfile: climbProfile,
+        finalSegmentProfile: finalSegmentProfile,
         hasWindsAloft: windsAloft != nil,
         fieldElevation: performance.airport?.elevation ?? .zero,
         time: weather.time,
@@ -211,6 +213,7 @@ struct GoAroundProfileView: View {
       .init(profile: .takeoff, upperBound: .time(.init(value: 2, unit: .minutes))),
       .init(profile: .enrouteObstacle(antiIce: false))
     ])
+    finalSegmentProfile = schedule.segments.last?.profile
 
     let pathGenerator = ProcedurePathGenerator(
       climbProfile: climbProfile,
