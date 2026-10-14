@@ -276,11 +276,16 @@ struct ClimbProfileView: View {
 
     guard let procedurePath else {
       terrainPath = nil
+      // A procedure climbs to its own ceiling, which may lie above every level of the profile;
+      // past the top level the profile reads as that level, so the scan stops there.
+      let highestAltitudeFt =
+        departureType == .procedure
+        ? climbProfile.dataPoints.last?.altitudeFt ?? targetAltitudeFt : targetAltitudeFt
       pathFailure = .init(
         climbProfile: climbProfile,
+        schedule: schedule,
         fromAltitudeFt: fieldElevationFt,
-        toAltitudeFt: targetAltitudeFt,
-        profile: .takeoff
+        toAltitudeFt: highestAltitudeFt
       )
       return
     }

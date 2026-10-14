@@ -243,12 +243,19 @@ struct GoAroundProfileView: View {
 
     guard let procedurePath else {
       terrainPath = nil
+      // A missed approach climbs to its own ceiling, which may lie above every level of the
+      // profile; past the top level the profile reads as that level, so the scan stops there.
+      let vectorTargetAltitudeFt = (fieldElevation + Self.vectorTargetAltitudeAFE)
+        .converted(to: .feet).value
+      let highestAltitudeFt =
+        goAroundType == .publishedMissed
+        ? climbProfile.dataPoints.last?.altitudeFt ?? vectorTargetAltitudeFt
+        : vectorTargetAltitudeFt
       pathFailure = .init(
         climbProfile: climbProfile,
+        schedule: schedule,
         fromAltitudeFt: fieldElevationFt,
-        toAltitudeFt: (fieldElevation + Self.vectorTargetAltitudeAFE).converted(to: .feet).value,
-        // The schedule's first segment, which is where a climb that cannot start fails.
-        profile: .takeoff
+        toAltitudeFt: highestAltitudeFt
       )
       return
     }

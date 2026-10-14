@@ -24,16 +24,16 @@ struct ClimbProfileGeneratorTests {
   // MARK: - Basic generation
 
   @Test
-  func `generate produces correct number of data points`() {
-    let winds = makeWindsAloft()
+  func `generate reads the charts at every forecast level and every 500 ft between`() {
     let profile = ClimbProfileGenerator.generate(
-      windsAloft: winds,
+      windsAloft: makeWindsAloft(altitudes: [0, 5000, 7250]),
       weightLb: 6000,
       aircraftType: .g1,
       seaLevelPressureInHg: 29.92,
       useRegressionModel: true
     )
-    #expect(profile.dataPoints.count == winds.count)
+    let expectedAltitudes = Array(stride(from: 0.0, through: 7000, by: 500)) + [7250]
+    #expect(profile.dataPoints.map(\.altitudeFt) == expectedAltitudes)
   }
 
   @Test
@@ -47,9 +47,9 @@ struct ClimbProfileGeneratorTests {
       seaLevelPressureInHg: 29.92,
       useRegressionModel: true
     )
-    #expect(profile.dataPoints[0].altitudeFt == 0)
-    #expect(profile.dataPoints[1].altitudeFt == 5000)
-    #expect(profile.dataPoints[2].altitudeFt == 10000)
+    let altitudes = profile.dataPoints.map(\.altitudeFt)
+    #expect(altitudes.first == 0 && altitudes.last == 10000)
+    #expect(altitudes == altitudes.sorted())
   }
 
   // MARK: - Gradient values
@@ -245,7 +245,7 @@ struct ClimbProfileGeneratorTests {
   }
 
   @Test
-  func `regression offers no takeoff or obstacle climb above their charts`() {
+  func `regression offers no takeoff or obstacle climb above their charts`() throws {
     let profile = ClimbProfileGenerator.generate(
       windsAloft: makeWindsAloft(altitudes: [5000, 20000, 30000]),
       weightLb: 5500,
@@ -254,7 +254,7 @@ struct ClimbProfileGeneratorTests {
       useRegressionModel: true
     )
 
-    let low = profile.dataPoints[0], high = profile.dataPoints[2]
+    let low = try #require(profile.dataPoints.first), high = try #require(profile.dataPoints.last)
     #expect(low.climbData(for: .takeoff).gradientFtPerNM.nominal != nil)
     #expect(low.climbData(for: .enrouteObstacle(antiIce: false)).gradientFtPerNM.nominal != nil)
     #expect(high.climbData(for: .takeoff).gradientFtPerNM.nominal == nil)
@@ -274,7 +274,6 @@ struct ClimbProfileGeneratorTests {
       useRegressionModel: false
     )
 
-    #expect(profile.dataPoints.count == winds.count)
     let g = try #require(profile.gradient(at: 5000, profile: .enroute(antiIce: false)))
     #expect(g > 0)
   }
@@ -293,6 +292,25 @@ struct ClimbProfileGeneratorTests {
     let gradient = profile.dataPoints[0].climbData(for: .enrouteObstacle(antiIce: false))
       .gradientFtPerNM
     #expect(gradient == .value(1008))
+  }
+
+  @Test
+  func `tabular profile reaches the edge of a chart below a forecast level above it`() {
+    // The obstacle chart stops at 14,000 ft; the forecast's next level is 18,000 ft.
+    let profile = ClimbProfileGenerator.generate(
+      windsAloft: [
+        .init(altitudeFt: 9000, temperatureC: 5, windDirectionDeg: 300, windSpeedKts: 31),
+        .init(altitudeFt: 12000, temperatureC: -1, windDirectionDeg: 305, windSpeedKts: 39),
+        .init(altitudeFt: 18000, temperatureC: -14, windDirectionDeg: 315, windSpeedKts: 52)
+      ],
+      weightLb: 5500,
+      aircraftType: .g2(updatedThrustSchedule: false),
+      seaLevelPressureInHg: 30.12,
+      useRegressionModel: false
+    )
+
+    #expect(profile.gradient(at: 13_750, profile: .enrouteObstacle(antiIce: false)) != nil)
+    #expect(profile.gradient(at: 14_250, profile: .enrouteObstacle(antiIce: false)) == nil)
   }
 
   // MARK: - Reasonable values

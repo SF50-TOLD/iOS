@@ -50,19 +50,21 @@ enum PathFailure {
   /// it.
   ///
   /// The profile is the thing that stops a path: the steppers give up exactly when it has no
-  /// gradient. Where it answers for the whole band, nothing about the performance data explains
-  /// the failure and the procedure itself is named instead.
+  /// gradient. Where a segment's chart runs out they carry on with a later segment's, so a climb
+  /// stalls only where the schedule's final segment has no figure, and that is the chart read
+  /// here. Where it answers for the whole band, nothing about the performance data explains the
+  /// failure and the procedure itself is named instead.
   init(
     climbProfile: ClimbProfile?,
+    schedule: ProcedurePathGenerator.ClimbSchedule,
     fromAltitudeFt: Double,
-    toAltitudeFt: Double,
-    profile: ClimbProfile.ProfileType
+    toAltitudeFt: Double
   ) {
-    guard let climbProfile,
+    guard let climbProfile, let finalSegment = schedule.segments.last,
       let gap = climbProfile.firstGradientGap(
         from: fromAltitudeFt,
         to: toAltitudeFt,
-        profile: profile
+        profile: finalSegment.profile
       )
     else {
       self = .procedure

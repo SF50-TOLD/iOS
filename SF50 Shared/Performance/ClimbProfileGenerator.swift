@@ -10,8 +10,16 @@ public enum ClimbProfileGenerator {
   /// Enroute obstacle climb speed in KIAS. Constant across all conditions.
   public static let obstacleClimbSpeedKIAS: Double = 120
 
-  /// Generates a climb profile by evaluating performance equations at each altitude
-  /// in the provided winds-aloft observations.
+  /// The spacing of the levels the charts are read at between winds-aloft levels.
+  private static let chartReadingStepFt: Double = 500
+
+  /// Generates a climb profile by evaluating performance equations at each altitude in the
+  /// provided winds-aloft observations, and every 500 ft between them.
+  ///
+  /// The profile interpolates figures between its levels, and a level the charts have no figure
+  /// for leaves the whole span beside it without one. Reading the charts at the forecast levels
+  /// alone would let a level thousands of feet above a chart's edge erase the band the chart does
+  /// cover; reading them closely puts the edge of the profile within a step of the chart's own.
   ///
   /// - Parameters:
   ///   - windsAloft: Atmospheric observations at various altitudes.
@@ -34,7 +42,7 @@ public enum ClimbProfileGenerator {
       source = TabularSource(aircraftType: aircraftType)
     }
 
-    let dataPoints = windsAloft.map { obs in
+    let dataPoints = chartReadingLevels(windsAloft).map { obs in
       makeDataPoint(obs: obs, weightLb: weightLb, source: source)
     }
 
@@ -42,6 +50,49 @@ public enum ClimbProfileGenerator {
   }
 
   // MARK: - Private
+
+  /// The winds-aloft levels, with levels between them on every multiple of 500 ft, ascending.
+  private static func chartReadingLevels(
+    _ observations: [WindsAloftObservation]
+  ) -> [WindsAloftObservation] {
+    let ascending = observations.sorted { $0.altitudeFt < $1.altitudeFt }
+    guard let lowest = ascending.first else { return [] }
+    return [lowest]
+      + zip(ascending, ascending.dropFirst()).flatMap { low, high in
+        levels(between: low, and: high) + [high]
+      }
+  }
+
+  /// The atmosphere on each multiple of 500 ft strictly between two observations.
+  private static func levels(
+    between low: WindsAloftObservation,
+    and high: WindsAloftObservation
+  ) -> [WindsAloftObservation] {
+    let firstLevelFt =
+      ((low.altitudeFt / chartReadingStepFt).rounded(.down) + 1) * chartReadingStepFt
+    return stride(from: firstLevelFt, to: high.altitudeFt, by: chartReadingStepFt).map {
+      level(at: $0, between: low, and: high)
+    }
+  }
+
+  /// The atmosphere at an altitude between two observations, read linearly between them as the
+  /// profile reads it.
+  private static func level(
+    at altitudeFt: Double,
+    between low: WindsAloftObservation,
+    and high: WindsAloftObservation
+  ) -> WindsAloftObservation {
+    let fraction = (altitudeFt - low.altitudeFt) / (high.altitudeFt - low.altitudeFt)
+    func read(_ quantity: KeyPath<WindsAloftObservation, Double>) -> Double {
+      low[keyPath: quantity] + fraction * (high[keyPath: quantity] - low[keyPath: quantity])
+    }
+    return .init(
+      altitudeFt: altitudeFt,
+      temperatureC: read(\.temperatureC),
+      windDirectionDeg: read(\.windDirectionDeg),
+      windSpeedKts: read(\.windSpeedKts)
+    )
+  }
 
   private static func makeDataPoint(
     obs: WindsAloftObservation,
