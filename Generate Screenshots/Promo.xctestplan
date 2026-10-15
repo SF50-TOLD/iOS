@@ -13,6 +13,9 @@
   },
   "testTargets" : [
     {
+      "selectedTests" : [
+        "StoreScreenshots"
+      ],
       "target" : {
         "containerPath" : "container:SF50 TOLD.xcodeproj",
         "identifier" : "0191DC0B2E9322C20099FB0E",

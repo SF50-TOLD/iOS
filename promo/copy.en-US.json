@@ -1,0 +1,10 @@
+{
+  "takeoff": "Takeoff distance and climb gradient, from the AFM.",
+  "climb": "The climb along LINDZ1, plotted over the terrain.",
+  "landing": "Landing distance and go-around climb gradient.",
+  "landing-map": "Your ground run, drawn on the runway.",
+  "takeoff-report": "Every scenario, side by side, in one report.",
+  "weather": "METAR and TAF, or the conditions you enter.",
+  "enroute-climb": "Enroute climb gradient, rate and speed.",
+  "aircraft-setup": "Set up for your G1, G2, G2+ or G3."
+}

@@ -1,0 +1,58 @@
+/* SF50 TOLD's look for promokit renders: the site's Saira display face, hull on ink, amber accents. */
+
+@font-face {
+  font-family: "Saira";
+  src: url("../docs/assets/fonts/saira-700.woff2") format("woff2");
+  font-weight: 700;
+}
+
+.promo-root {
+  --ink: #080b16;
+  --hull: #eef1f8;
+  --amber: #e18e41;
+
+  background: var(--ink);
+}
+
+/* Screenshots: a headline in the site's display face over the capture, on ink lit amber from below. */
+.promo-screenshot {
+  background:
+    radial-gradient(ellipse 90% 45% at 50% 100%, rgb(225 142 65 / 16%), transparent 70%),
+    var(--ink);
+}
+
+.promo-headline {
+  font-family: "Saira", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.08;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--hull);
+}
+
+[data-layout="phone"] .promo-headline {
+  margin: 9vh 7vw 0;
+  font-size: 7.4vw;
+}
+
+[data-layout="tablet"] .promo-headline {
+  margin: 6vh 8vw 0;
+  font-size: 5.2vw;
+}
+
+/* A phone or tablet capture is the whole screen: show it as one, running off the bottom edge. */
+[data-layout="phone"] .promo-screen,
+[data-layout="tablet"] .promo-screen {
+  flex: none;
+  width: 84vw;
+  max-width: none;
+  margin-top: 5vh;
+  border-radius: var(--screen-radius);
+  box-shadow:
+    0 0 0 1px rgb(238 241 248 / 14%),
+    0 3vw 8vw -2vw rgb(0 0 0 / 60%);
+}
+
+[data-layout="phone"] { --screen-radius: 11vw; }
+[data-layout="tablet"] { --screen-radius: 3.6vw; }

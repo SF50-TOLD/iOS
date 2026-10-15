@@ -1,15 +1,11 @@
-# Fastlane
-screenshots/
-test_output/
-*.ipa
-*.dSYM.zip
-*.mobileprovision
-
-# App Store Connect API Key
 AuthKey_*.p8
-
-# Fastlane reports
 report.xml
+test_output
+
+# promokit renders these from promo/.
+screenshots
+previews
+creative_assets
 
 # deliver's metadata download also writes these. CHANGELOG.md is the source of the release notes,
 # the review contact holds personal details, and the app has no Apple TV listing.

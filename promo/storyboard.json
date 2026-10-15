@@ -1,0 +1,45 @@
+{
+  "$schema": "./node_modules/xcuipromokit/schema/storyboard.schema.json",
+  "screenshots": [
+    {
+      "id": "climb-profile",
+      "still": "climb-profile",
+      "caption": "climb"
+    },
+    {
+      "id": "takeoff",
+      "still": "takeoff",
+      "caption": "takeoff"
+    },
+    {
+      "id": "landing-map",
+      "still": "landing-map",
+      "caption": "landing-map"
+    },
+    {
+      "id": "takeoff-report",
+      "still": "takeoff-report",
+      "caption": "takeoff-report"
+    },
+    {
+      "id": "weather",
+      "still": "weather",
+      "caption": "weather"
+    },
+    {
+      "id": "landing",
+      "still": "landing",
+      "caption": "landing"
+    },
+    {
+      "id": "enroute-climb",
+      "still": "enroute-climb",
+      "caption": "enroute-climb"
+    },
+    {
+      "id": "aircraft-setup",
+      "still": "aircraft-setup",
+      "caption": "aircraft-setup"
+    }
+  ]
+}
