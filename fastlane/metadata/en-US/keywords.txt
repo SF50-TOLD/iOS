@@ -1,0 +1,1 @@
+cirrus,visionjet,performance,calculator,climb,terrain,obstacle,runway,notam,metar,afm,aviation,pilot

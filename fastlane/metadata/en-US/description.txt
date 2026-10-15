@@ -1,0 +1,36 @@
+Know your numbers before you release the brakes. SF50 TOLD works out takeoff, climb and landing performance for the Cirrus Vision Jet straight from the AFM tables — for the runway you are actually sitting on, in the weather you are actually flying, over the terrain you actually have to clear.
+
+TAKEOFF AND LANDING
+Ground run, distance over a 50-foot obstacle, V-speeds and Vx climb gradient for takeoff. Landing distance, ground run, VREF and go-around gradient at flaps 50 or 100. Every runway at the field gets analyzed, each with the maximum weight it will take today and the reason for it. Exceed a published limit — crosswind, tailwind, max takeoff or zero-fuel weight, fuel capacity — and the app says so rather than quietly handing back a number.
+
+CLIMB AND TERRAIN
+This is the part most performance apps leave to you. SF50 TOLD builds a climb profile from winds aloft, your weight and the AFM climb tables, then flies it down the legs of your actual departure procedure or missed approach. Along that path it samples terrain and the FAA obstacle file, and shows you where the ground rises toward you.
+
+WEATHER AND NOTAMS
+METAR and TAF arrive automatically, with Apple Weather filling the gaps at fields that don’t report. Have better information? Enter the conditions yourself, and every number follows. Downloaded NOTAMs that affect the runway come first, and a runway condition report or an obstacle NOTAM can fill in your runway’s entries for you to check.
+
+SCENARIOS AND REPORTS
+Ten degrees hotter, a hundred pounds heavier, a wet runway instead of the dry one you were promised: build the scenarios your operation cares about once, and every Takeoff and Landing Report shows them beside the forecast. Share the report as a PDF.
+
+ALSO ABOARD
+• G1, G2, G2+ and G3, including the updated thrust schedule
+• Your ground run drawn on a satellite map of the actual runway
+• Separate dry and wet safety factors, plus a VREF additive
+• Enroute climb gradient, rate and speed
+• A home screen widget with runway data for your airport
+• Nearest, favorite and recent airports
+• Works without a signal: airports, terrain and obstacles live on your device
+• Free, and open source
+
+This app has not been approved by the FAA or by Cirrus Aircraft as an official source of performance information. It is your responsibility to ensure that the performance data you use is accurate for current conditions.
+
+Performance data comes from these Airplane Flight Manuals:
+
+Serials with Cirrus Perspective Touch Avionics System and FL280 Maximum Operating Altitude
+P/N 31452-001, Revision A1
+
+Serials with Cirrus Perspective Touch+ Avionics System and FL310 Maximum Operating Altitude
+P/N 31452-002, Revision A1
+
+Airplane Flight Manual Supplement for Updated Thrust Schedule
+P/N 31452-111, Revision 1

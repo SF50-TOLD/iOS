@@ -1,0 +1,1 @@
+Now flies your climb down the actual departure over terrain and obstacles, and lets a runway condition report or obstacle NOTAM fill in the runway for you.
