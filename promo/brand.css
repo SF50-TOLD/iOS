@@ -14,6 +14,29 @@
   background: var(--ink);
 }
 
+/* Preview captions: the site's headline type, hull outlined in ink to stand off the app's light UI. */
+.promo-caption {
+  padding: 0 7vw;
+  font-family: "Saira", sans-serif;
+  font-size: 8vw;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--hull);
+  -webkit-text-stroke: 0.22em var(--ink);
+  paint-order: stroke fill;
+}
+
+/* Touches: an amber ring that tightens as the finger lands and opens out as it lifts. */
+.promo-tap {
+  width: 12vmin;
+  background: none;
+  border: 0.9vmin solid var(--amber);
+  scale: calc(1.3 - 0.3 * var(--promo-tap-in) + 0.4 * var(--promo-tap-out));
+}
+
 /* Screenshots: a headline in the site's display face over the capture, on ink lit amber from below. */
 .promo-screenshot {
   background:

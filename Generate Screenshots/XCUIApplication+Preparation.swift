@@ -1,7 +1,7 @@
 import XCTest
 import XCUITestKit
 
-/// Steps that bring the app to the state the screenshots are captured in: a G2
+/// Steps that bring the app to the state the screenshots and the preview are captured in: a G2
 /// with nav data and North America terrain, flying out of and back into Aspen.
 @MainActor
 extension XCUIApplication {
@@ -20,6 +20,11 @@ extension XCUIApplication {
   static let captureLaunchArguments = [
     "UI-TESTING", "GENERATE-SCREENSHOTS", "FAVORITE-AIRPORTS=\(aspenRecordID)"
   ]
+
+  /// Sets up a G2 on the welcome screen, if it shows, and downloads nav data when offered.
+  func completeWelcome() {
+    completeWelcome {}
+  }
 
   /// Sets up a G2 on the welcome screen, if it shows, and downloads nav data when offered.
   ///

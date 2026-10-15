@@ -23,6 +23,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Capture the iPhone and iPad stills and render the App Store screenshots
 
+### ios preview
+
+```sh
+[bundle exec] fastlane ios preview
+```
+
+Record the App Store preview and render it
+
 ### ios verify
 
 ```sh
@@ -38,6 +46,14 @@ Check the rendered media against Apple's rules and the screenshots against the s
 ```
 
 Upload the rendered screenshots to App Store Connect
+
+### ios upload_preview
+
+```sh
+[bundle exec] fastlane ios upload_preview
+```
+
+Upload the rendered App Store preview to App Store Connect, replacing the ones there
 
 ### ios screenshots_and_upload
 

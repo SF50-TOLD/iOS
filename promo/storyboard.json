@@ -41,5 +41,185 @@
       "still": "aircraft-setup",
       "caption": "aircraft-setup"
     }
+  ],
+  "previews": [
+    {
+      "id": "aspen",
+      "take": "aspen",
+      "device": "iphone",
+      "taps": {
+        "before": 0.25,
+        "after": 0.3
+      },
+      "captionEntrance": {
+        "unit": "word",
+        "delay": 0.3,
+        "duration": 0.7,
+        "easing": [
+          0.25,
+          0.1,
+          0.25,
+          1
+        ],
+        "keyframes": [
+          {
+            "at": 0,
+            "opacity": 0,
+            "y": 0.3
+          },
+          {
+            "at": 1,
+            "opacity": 1,
+            "y": 0
+          }
+        ],
+        "stagger": 0
+      },
+      "scenes": [
+        {
+          "scene": "load",
+          "caption": {
+            "copy": "load",
+            "y": 0.62
+          }
+        },
+        {
+          "scene": "takeoff",
+          "transition": {
+            "type": "dissolve",
+            "duration": 0.6,
+            "easing": [
+              0.42,
+              0,
+              0.58,
+              1
+            ]
+          },
+          "caption": {
+            "copy": "takeoff",
+            "y": 0.2
+          },
+          "stretches": [
+            0,
+            {
+              "index": 1,
+              "trim": {
+                "end": 1.0
+              }
+            }
+          ]
+        },
+        {
+          "scene": "climb",
+          "transition": {
+            "type": "dissolve",
+            "duration": 0.6,
+            "easing": [
+              0.42,
+              0,
+              0.58,
+              1
+            ]
+          },
+          "caption": {
+            "copy": "climb",
+            "y": 0.2
+          },
+          "stretches": [
+            {
+              "index": 0,
+              "trim": {
+                "start": 1.2
+              }
+            },
+            {
+              "index": 1,
+              "trim": {
+                "end": 1.2
+              }
+            },
+            {
+              "index": 2,
+              "trim": {
+                "end": 3.2
+              }
+            },
+            3,
+            {
+              "index": 4,
+              "trim": {
+                "end": 0.4
+              }
+            }
+          ]
+        },
+        {
+          "scene": "landing",
+          "transition": {
+            "type": "dissolve",
+            "duration": 0.6,
+            "easing": [
+              0.42,
+              0,
+              0.58,
+              1
+            ]
+          },
+          "caption": {
+            "copy": "landing",
+            "y": 0.2
+          },
+          "stretches": [
+            {
+              "index": 0,
+              "trim": {
+                "end": 1.6
+              }
+            },
+            1,
+            {
+              "index": 2,
+              "trim": {
+                "end": 0.6
+              }
+            }
+          ]
+        },
+        {
+          "scene": "map",
+          "transition": {
+            "type": "dissolve",
+            "duration": 0.6,
+            "easing": [
+              0.42,
+              0,
+              0.58,
+              1
+            ]
+          },
+          "caption": {
+            "copy": "closing",
+            "y": 0.5
+          },
+          "zoom": {
+            "to": 1.35,
+            "x": 0.5,
+            "y": 0.5,
+            "at": 0,
+            "duration": 5.4,
+            "easing": [
+              0.4,
+              0,
+              0.6,
+              1
+            ]
+          }
+        }
+      ],
+      "poster": {
+        "scene": "takeoff",
+        "at": 3.0
+      }
+    }
   ]
 }
