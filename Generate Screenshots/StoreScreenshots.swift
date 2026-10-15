@@ -2,8 +2,8 @@ import XCTest
 import XCUIPromoKit
 import XCUITestKit
 
-/// Captures the stills `promo/storyboard.json` sets as App Store screenshots. `promokit stills`
-/// runs it; anywhere else, the test skips.
+/// Captures the stills `promo/storyboard.json` sets as App Store screenshots and cuts the
+/// creative assets from. `promokit stills` runs it; anywhere else, the test skips.
 ///
 /// A G2 out of Aspen's runway 33 and back into runway 15: the aircraft setup, the takeoff's
 /// weather, results and report, the climb along LINDZ1 over the terrain, then the landing's results
@@ -55,8 +55,8 @@ extension StoreScreenshots {
     try capture(.enrouteClimb)
   }
 
-  private func capture(_ shot: Shot) throws {
-    try PromoStill.capture(shot.rawValue, in: self)
+  private func capture(_ shot: Shot, of element: XCUIElement? = nil) throws {
+    try PromoStill.capture(shot.rawValue, of: element, in: self)
   }
 
   /// Opens the takeoff's weather from the top of the form, captures it, and goes back.
@@ -114,7 +114,8 @@ extension StoreScreenshots {
     )
   }
 
-  /// Opens the climb profile on the LINDZ departure with its weather layers, and captures it.
+  /// Opens the climb profile on the LINDZ departure with its weather layers, and captures the
+  /// screen and the terrain chart on its own.
   private func captureClimbProfile(in app: XCUIApplication) throws {
     let showClimb = app.collectionViews.firstMatch.makeVisible(
       element: app.buttons["showClimbProfileButton"]
@@ -135,6 +136,7 @@ extension StoreScreenshots {
     Thread.sleep(forTimeInterval: Self.chartSettle)
 
     try capture(.climbProfile)
+    try capture(.climbChart, of: chart)
     app.goBack()
   }
 
@@ -152,13 +154,14 @@ extension StoreScreenshots {
     app.goBack()
   }
 
-  /// The stills `promo/storyboard.json` captions.
+  /// The stills `promo/storyboard.json` captions and the creative assets crop.
   private enum Shot: String {
     case aircraftSetup = "aircraft-setup"
     case weather
     case takeoff
     case takeoffReport = "takeoff-report"
     case climbProfile = "climb-profile"
+    case climbChart = "climb-chart"
     case landing
     case landingMap = "landing-map"
     case enrouteClimb = "enroute-climb"

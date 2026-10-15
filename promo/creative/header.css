@@ -1,0 +1,42 @@
+/* Laid out on Apple's 3840×1646 header template, whose art safe area is 1646×661 at (1097, 493). */
+.climb {
+  height: 62%;
+}
+
+.copy {
+  position: absolute;
+  left: 1097px;
+  top: 493px;
+  width: 860px;
+  height: 661px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 36px;
+}
+
+.eyebrow {
+  font-size: 34px;
+}
+
+h1 {
+  font-size: 104px;
+}
+
+.climb-card {
+  left: 2420px;
+  top: 150px;
+  width: 1080px;
+}
+
+.takeoff-card {
+  left: 2040px;
+  top: 600px;
+  width: 700px;
+}
+
+.landing-card {
+  left: 3060px;
+  top: 760px;
+  width: 700px;
+}

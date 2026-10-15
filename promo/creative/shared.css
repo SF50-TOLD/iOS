@@ -1,0 +1,134 @@
+/* SF50 TOLD's creative assets: the site's faces and ink, its amber climb over a terrain profile, and the app's own result cards. */
+
+@font-face {
+  font-family: "Saira";
+  src: url("../../docs/assets/fonts/saira-700.woff2") format("woff2");
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Barlow";
+  src: url("../../docs/assets/fonts/barlow-400.woff2") format("woff2");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("../../docs/assets/fonts/plexmono-500.woff2") format("woff2");
+  font-weight: 500;
+}
+
+:root {
+  --ink: #080b16;
+  --ink-panel: #10152a;
+  --hull: #eef1f8;
+  --hull-dim: #8a93ac;
+  --amber: #e18e41;
+  --hairline-strong: rgb(238 241 248 / 18%);
+  --card: #f2f2f7;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.promo-creative {
+  overflow: hidden;
+  font-family: "Barlow", sans-serif;
+  color: var(--hull);
+  background:
+    radial-gradient(ellipse 55% 70% at 62% 42%, rgb(225 142 65 / 9%), transparent 70%),
+    var(--ink);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--amber);
+}
+
+/* The site's dashed rule, leading into the eyebrow. */
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: 3em;
+  height: 0.18em;
+  background: repeating-linear-gradient(to right, var(--amber) 0 0.6em, transparent 0.6em 1.05em);
+}
+
+h1 {
+  font-family: "Saira", sans-serif;
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* The site's motif: terrain along the foot of the canvas and the climb rising over it. */
+.climb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+.climb .terrain {
+  fill: var(--ink-panel);
+  stroke: var(--hairline-strong);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.climb .path {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 14;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* A result card: one section of the app, cut from a still, under a label naming it. */
+.card {
+  position: absolute;
+  overflow: hidden;
+  background: var(--card);
+  border-radius: 56px;
+  box-shadow:
+    0 60px 140px rgb(0 0 0 / 55%),
+    0 0 0 18px var(--ink-panel);
+}
+
+.card .label {
+  padding: 44px 56px 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-weight: 500;
+  font-size: 34px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #6b7186;
+}
+
+.card img {
+  display: block;
+  width: 100%;
+}
+
+/* Each still cut to one section: the app's grouped background left around it as a margin. */
+.takeoff-card img {
+  object-view-box: inset(1036px 28px 1092px 28px);
+}
+
+.landing-card img {
+  object-view-box: inset(882px 28px 1092px 28px);
+}
+
+.climb-card img {
+  object-view-box: inset(110px 33px 30px 165px);
+}

@@ -1,0 +1,42 @@
+/* Laid out on Apple's 3840×2560 search template, whose art safe area is 2168×1030 at (836, 765). */
+.climb {
+  height: 52%;
+}
+
+.copy {
+  position: absolute;
+  left: 836px;
+  top: 765px;
+  width: 1080px;
+  height: 1030px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 48px;
+}
+
+.eyebrow {
+  font-size: 44px;
+}
+
+h1 {
+  font-size: 138px;
+}
+
+.climb-card {
+  left: 2360px;
+  top: 360px;
+  width: 1260px;
+}
+
+.takeoff-card {
+  left: 2080px;
+  top: 1020px;
+  width: 920px;
+}
+
+.landing-card {
+  left: 3030px;
+  top: 1400px;
+  width: 780px;
+}

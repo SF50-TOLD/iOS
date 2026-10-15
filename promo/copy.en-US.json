@@ -8,5 +8,10 @@
   "takeoff-report": "Every scenario, side by side, in one report.",
   "weather": "METAR and TAF, or the conditions you enter.",
   "enroute-climb": "Enroute climb gradient, rate and speed.",
-  "aircraft-setup": "Set up for your G1, G2, G2+ or G3."
+  "aircraft-setup": "Set up for your G1, G2, G2+ or G3.",
+  "creative-eyebrow": "SF50 Vision Jet",
+  "creative-headline": "Takeoff, climb and landing performance from the AFM.",
+  "card-takeoff": "Takeoff · ASE 33",
+  "card-climb": "Climb · LINDZ1",
+  "card-landing": "Landing · ASE 15"
 }
