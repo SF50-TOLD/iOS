@@ -1,5 +1,5 @@
 {
-  "originHash" : "23716db62c6f3d50ca74c24efa54f0d451671422910308f62f2ae200b6c04480",
+  "originHash" : "25fbb7757aea80af769e5972f4a123dab59a29ac87cef9a50a5bfe9c30045567",
   "pins" : [
     {
       "identity" : "buildablemacro",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/MeasurementKit",
       "state" : {
-        "branch" : "main",
-        "revision" : "4cbbf90e0bea53a86017222447e679d038a7aaef"
+        "revision" : "f147f2972093c0b877d0f4eac57c1da26a148f6a",
+        "version" : "1.2.0"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SF50-TOLD/NavData",
       "state" : {
-        "branch" : "main",
-        "revision" : "f8ee8289b1a6697181b25d6ae77417b9367525b7"
+        "revision" : "684eebb6816dae0fe3a517e3cb7e449eb35c2e90",
+        "version" : "1.0.1"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SF50-TOLD/NavDataDistribution",
       "state" : {
-        "branch" : "main",
-        "revision" : "b071c9b9da2d5eb345442af6bc85f957ac7cb642"
+        "revision" : "ae4d7ada80d43cb1a60da4f3d250c31c6ff8d991",
+        "version" : "2.0.0"
       }
     },
     {
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/StreamingCSV",
       "state" : {
-        "branch" : "main",
-        "revision" : "df1a7898e56cd0f257e5b7ffbe7b7866922e6a86"
+        "revision" : "f240a8d5e3f5522dd78e1057f684bb176481f310",
+        "version" : "3.0.0"
       }
     },
     {
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/StreamingLZMA",
       "state" : {
-        "branch" : "main",
-        "revision" : "748c91c912b4e5f7727ee299e49827d124d0a231"
+        "revision" : "fefce35fabfa54282849f2ca1f62a3c2526334ce",
+        "version" : "2.1.0"
       }
     },
     {
@@ -177,8 +177,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftCIFP.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "89e43822b187c08f181586d95d7bd9e69fbe6d88"
+        "revision" : "d57301f98db1b850b9c57d823c7f7dcf996fc730",
+        "version" : "3.0.0"
       }
     },
     {
@@ -186,8 +186,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftDOF.git",
       "state" : {
-        "branch" : "main",
-        "revision" : "5630d134e371347c5302f0d0b17440103dbacbf8"
+        "revision" : "26e42501eadbc12d63d4c1f41f2bf8a157f51a85",
+        "version" : "3.0.0"
       }
     },
     {
@@ -195,8 +195,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftMETAR",
       "state" : {
-        "branch" : "main",
-        "revision" : "0e7d39936dd0d4c8b3c4f78d09e1a908648fc647"
+        "revision" : "649e70912e0c1cc21c275545bd26af126bd79326",
+        "version" : "5.0.0"
       }
     },
     {
@@ -204,8 +204,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/SwiftNASR",
       "state" : {
-        "branch" : "main",
-        "revision" : "43793427d3ff4cac842981405a38aad62bb15e57"
+        "revision" : "a4d56cc686e148460a200eeff5751c2beed36847",
+        "version" : "5.0.0"
       }
     },
     {
@@ -213,8 +213,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/riscfuture/swiftr2",
       "state" : {
-        "branch" : "main",
-        "revision" : "6595082e5aca345c029ef8cfcc1e8edb100a884b"
+        "revision" : "b2ae13ef2b02915766190c301c7d3c51dc6a5234",
+        "version" : "2.0.0"
       }
     },
     {
@@ -240,8 +240,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/XCUITestKit",
       "state" : {
-        "branch" : "main",
-        "revision" : "b76d0fc269f04019767530b0180671738128fe7e"
+        "revision" : "efeb5ce59b772645279891ba83d4c8c9873c5e77",
+        "version" : "1.2.0"
       }
     },
     {

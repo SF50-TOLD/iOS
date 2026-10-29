@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   release:
-    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@1.0.0
+    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@1.2.0
     with:
       # Required by ios-release.yml, which deliberately defaults no runner so a runner-image
       # bump stays each app's own decision.
