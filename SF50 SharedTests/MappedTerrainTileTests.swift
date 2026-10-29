@@ -16,7 +16,17 @@ struct `Terrain file reading` {
 
     #expect(tile.reader.elevation(at: 37.99, longitude: -121.99) == 100)
     #expect(tile.reader.elevation(at: 37.5, longitude: -121.5) == 500)
-    #expect(tile.reader.elevation(at: 37.99, longitude: -121.0) == -5)
+    #expect(tile.reader.elevation(at: 37.0, longitude: -121.99) == -5)
+  }
+
+  @Test(arguments: [TerrainFileFixture.Version.uncompressed, .compressed])
+  func `reads a whole-degree coordinate from the tile that begins there`(
+    version: TerrainFileFixture.Version
+  ) throws {
+    let tile = try TerrainFileFixture.write(version: version)
+    defer { tile.remove() }
+
+    #expect(tile.reader.elevation(at: 37.5, longitude: -122.0) == 400)
   }
 
   @Test(arguments: [TerrainFileFixture.Version.uncompressed, .compressed])
@@ -26,7 +36,7 @@ struct `Terrain file reading` {
     let tile = try TerrainFileFixture.write(version: version)
     defer { tile.remove() }
 
-    #expect(tile.reader.elevation(at: 37.0, longitude: -121.0) == nil)
+    #expect(tile.reader.elevation(at: 37.0, longitude: -121.5) == nil)
     #expect(tile.reader.elevation(at: 40.5, longitude: -121.5) == nil)
   }
 
@@ -46,9 +56,9 @@ struct `Terrain file reading` {
 struct TerrainFileFixture {
   /// Rows run north to south, columns west to east.
   private static let samples: [Int16] = [
-    100, 200, -5,
+    100, 200, 300,
     400, 500, 600,
-    700, 800, .min
+    -5, .min, 900
   ]
   private static let resolution: UInt16 = 3,
     tileLatitude: Int16 = 37,

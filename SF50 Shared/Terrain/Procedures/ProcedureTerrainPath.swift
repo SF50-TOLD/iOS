@@ -14,7 +14,6 @@ public struct ProcedureTerrainPath: Sendable {
   public let points: [Point]
 
   /// True when terrain elevation data is available for every point along the path.
-  /// After ocean-fill in the generator, remaining nils indicate undownloaded regions.
   public var terrainDataAvailable: Bool {
     !points.contains { $0.terrainElevationFt == nil }
   }

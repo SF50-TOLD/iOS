@@ -270,14 +270,16 @@ final class MappedTerrainTile: Sendable {
   // MARK: - Private Helpers
 
   /// Finds the tile entry containing the given coordinate.
+  ///
+  /// Tiles are keyed by their southwest corner, so a whole-degree coordinate belongs to the tile
+  /// that begins there.
   private func tileEntry(
     for latitude: Double,
     longitude: Double
   ) -> (entry: TileIndexEntry, latOffset: Double, lonOffset: Double)? {
-    let tileLat = Int16(latitude >= 0 ? latitude : latitude - 1),
-      tileLon = Int16(longitude >= 0 ? longitude : longitude - 1)
-
-    guard let entry = tileIndex.first(where: { $0.latitude == tileLat && $0.longitude == tileLon })
+    guard let tileLat = Int16(exactly: latitude.rounded(.down)),
+      let tileLon = Int16(exactly: longitude.rounded(.down)),
+      let entry = tileIndex.first(where: { $0.latitude == tileLat && $0.longitude == tileLon })
     else {
       return nil
     }

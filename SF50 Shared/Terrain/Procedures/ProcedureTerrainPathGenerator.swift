@@ -57,6 +57,21 @@ public struct ProcedureTerrainPathGenerator {
     return bestIndex
   }
 
+  /// The terrain elevation at a coordinate, in feet, or `nil` when it is unknown.
+  ///
+  /// Terrain regions cover every tile with land, so a coordinate outside all of them is open sea.
+  /// Inside a region, the reader's answer is the only one: a region that is not loaded, a void
+  /// sample or an unreadable tile leaves the elevation unknown.
+  private static func terrainElevationFt(
+    at coordinate: CLLocationCoordinate2D,
+    reader: ElevationReader
+  ) -> Double? {
+    if let elevation = reader.elevation(at: coordinate) {
+      return elevation.converted(to: .feet).value
+    }
+    return TerrainRegion.containing(coordinate: coordinate).isEmpty ? 0 : nil
+  }
+
   /// Computes the path bearing at a given point index using neighboring points.
   private static func pathBearing(
     at index: Int,
@@ -133,8 +148,7 @@ public struct ProcedureTerrainPathGenerator {
               (.init(value: halfCorridorNM, unit: .nauticalMiles), perpRight)
             ]
 
-          var maxTerrainFt: Double?
-          for offset in sampleOffsets {
+          let elevationsFt = sampleOffsets.map { offset in
             let sampleCoord: CLLocationCoordinate2D
             if offset.distance.value == 0 {
               sampleCoord = point.coordinate
@@ -145,27 +159,10 @@ public struct ProcedureTerrainPathGenerator {
                 bearing: offset.bearing
               )
             }
-
-            if let elevation = reader.elevation(at: sampleCoord) {
-              let elevFt = elevation.converted(to: .feet).value
-              if let current = maxTerrainFt {
-                maxTerrainFt = max(current, elevFt)
-              } else {
-                maxTerrainFt = elevFt
-              }
-            }
+            return Self.terrainElevationFt(at: sampleCoord, reader: reader)
           }
-
-          // Ocean-fill: if terrain is still nil, check whether this point is over open ocean
-          // (outside all TerrainRegion bounding boxes) or within a loaded region's ocean gap.
-          // In either case the true elevation is 0 (sea level). Remaining nils indicate
-          // undownloaded regions.
-          if maxTerrainFt == nil {
-            let regions = TerrainRegion.containing(coordinate: point.coordinate)
-            if regions.isEmpty || regions.contains(where: { reader.loadedRegions.contains($0) }) {
-              maxTerrainFt = 0
-            }
-          }
+          let maxTerrainFt =
+            elevationsFt.contains(nil) ? nil : elevationsFt.compactMap(\.self).max()
 
           return (
             i,

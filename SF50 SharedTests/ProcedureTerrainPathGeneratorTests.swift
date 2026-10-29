@@ -241,6 +241,20 @@ struct ProcedureTerrainPathGeneratorTests {
     )
   }
 
+  /// A two-point path flown due east along a parallel inside the terrain fixture's tile.
+  private func eastboundPath(atLatitude latitude: Double) -> ProcedurePath {
+    let points = [-121.8, -121.7].enumerated().map { index, longitude in
+      ProcedurePath.Point(
+        coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
+        distanceNM: Double(index) * 4.8,
+        altitudeFt: 5000,
+        altitudeRestriction: nil,
+        fixName: nil
+      )
+    }
+    return ProcedurePath(points: points)
+  }
+
   // MARK: - Empty Path
 
   @Test
@@ -355,6 +369,32 @@ struct ProcedureTerrainPathGeneratorTests {
 
     for point in result.points {
       #expect(point.terrainElevationFt == nil)
+    }
+  }
+
+  // MARK: - Terrain (Region Loaded)
+
+  /// The fixture tile's void sample spoils interpolation across its southern half, so an eastbound
+  /// path at 37.501°N has its northern corridor samples but not its southern ones.
+  @Test(arguments: zip([37.75, 37.501, 37.25], [true, false, false]))
+  func `terrain is known only where every corridor sample is`(
+    latitude: Double,
+    known: Bool
+  ) async throws {
+    let container = try makeModelContainer()
+    let tile = try TerrainFileFixture.write(version: .compressed)
+    defer { tile.remove() }
+    let terrainService = TerrainService()
+    try await terrainService.loadRegion(.northAmerica, from: tile.url)
+
+    let generator = ProcedureTerrainPathGenerator(
+      modelContainer: container,
+      terrainService: terrainService
+    )
+    let result = await generator.generate(from: eastboundPath(atLatitude: latitude))
+
+    for point in result.points {
+      #expect((point.terrainElevationFt != nil) == known)
     }
   }
 

@@ -64,7 +64,7 @@ Each `ProcedureTerrainPath/Point` extends the flight path with two optional fiel
 
 Terrain and obstacle data may not cover the entire path. Two computed properties summarize coverage:
 
-- `ProcedureTerrainPath/terrainDataAvailable` — `true` when every point has a terrain elevation. Points over ocean are filled to sea level automatically; points within an unloaded terrain region remain `nil`.
+- `ProcedureTerrainPath/terrainDataAvailable` — `true` when every point has a terrain elevation. A point's elevation is `nil` unless every corridor sample has one: a sample outside every terrain region is open sea and reads as sea level, while a sample in an unloaded region, on a void, or in an unreadable tile is unknown.
 - `ProcedureTerrainPath/obstacleDataAvailable` — `true` when the entire path falls within the FAA Digital Obstacle File survey area, as determined by `ObstacleSurveyRegion`.
 
 ## Complete Example

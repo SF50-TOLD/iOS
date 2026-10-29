@@ -134,12 +134,8 @@ public actor TerrainService {
 public struct ElevationReader: Sendable {
   private let tiles: [TerrainRegion: MappedTerrainTile]
 
-  /// The set of terrain regions available in this snapshot.
-  public let loadedRegions: Set<TerrainRegion>
-
   init(tiles: [TerrainRegion: MappedTerrainTile]) {
     self.tiles = tiles
-    self.loadedRegions = Set(tiles.keys)
   }
 
   /// Returns the terrain elevation at a coordinate.
