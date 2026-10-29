@@ -113,26 +113,32 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
           // Aleutian Islands (past date line)
           .init(minLat: 50, maxLat: 56, minLon: 170, maxLon: 180),
           .init(minLat: 50, maxLat: 84, minLon: -130, maxLon: -50),  // Arctic Canada
-          .init(minLat: 10, maxLat: 28, minLon: -90, maxLon: -60)  // Caribbean
+          .init(minLat: 10, maxLat: 28, minLon: -90, maxLon: -60),  // Caribbean
+          .init(minLat: 5, maxLat: 6, minLon: -88, maxLon: -87)  // Cocos Island
         ]
       case .southAmerica:
         [
           .init(minLat: -56, maxLat: 7, minLon: -82, maxLon: -34),  // Main continent
-          .init(minLat: -4, maxLat: 2, minLon: -92, maxLon: -89),  // Galapagos
-          .init(minLat: -5, maxLat: 0, minLon: -35, maxLon: -30)  // Fernando de Noronha
+          .init(minLat: -57, maxLat: -56, minLon: -69, maxLon: -68),  // Diego Ramírez Islands
+          .init(minLat: -4, maxLat: 2, minLon: -93, maxLon: -89),  // Galapagos
+          .init(minLat: -5, maxLat: 0, minLon: -35, maxLon: -30),  // Fernando de Noronha
+          .init(minLat: -21, maxLat: -20, minLon: -30, maxLon: -28),  // Trindade and Martim Vaz
+          .init(minLat: -60, maxLat: -56, minLon: -29, maxLon: -26)  // South Sandwich Islands
         ]
       case .europe:
         [
           .init(minLat: 35, maxLat: 72, minLon: -10, maxLon: 60),  // Continental Europe
           .init(minLat: 63, maxLat: 67, minLon: -25, maxLon: -13),  // Iceland
           .init(minLat: 59, maxLat: 84, minLon: -74, maxLon: -10),  // Greenland
+          .init(minLat: 81, maxLat: 82, minLon: -10, maxLon: -8),  // Northeast Greenland
           .init(minLat: 74, maxLat: 82, minLon: 10, maxLon: 35),  // Svalbard
           .init(minLat: 49, maxLat: 61, minLon: -11, maxLon: 2)  // UK/Ireland
         ]
       case .asia:
         [
           .init(minLat: -10, maxLat: 55, minLon: 60, maxLon: 180),  // East/SE/South Asia
-          .init(minLat: 55, maxLat: 82, minLon: 45, maxLon: 180)  // Siberia/Arctic Russia
+          .init(minLat: 55, maxLat: 82, minLon: 45, maxLon: 180),  // Siberia/Arctic Russia
+          .init(minLat: 80, maxLat: 82, minLon: 35, maxLon: 45)  // Franz Josef Land
         ]
       case .middleEast:
         [
@@ -141,7 +147,10 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
         ]
       case .africa:
         [
-          .init(minLat: -35, maxLat: 38, minLon: -18, maxLon: 52)  // Continental Africa
+          .init(minLat: -35, maxLat: 38, minLon: -18, maxLon: 52),  // Continental Africa
+          .init(minLat: -38, maxLat: -37, minLon: -13, maxLon: -12),  // Tristan da Cunha
+          .init(minLat: -41, maxLat: -40, minLon: -11, maxLon: -9),  // Gough Island
+          .init(minLat: -55, maxLat: -54, minLon: 3, maxLon: 4)  // Bouvet Island
         ]
       case .australia:
         [
@@ -154,7 +163,15 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
           .init(minLat: -30, maxLat: -28, minLon: 167, maxLon: 169),  // Norfolk Island
           .init(minLat: -23, maxLat: -19, minLon: 163, maxLon: 170),  // New Caledonia
           .init(minLat: -23, maxLat: -10, minLon: 163, maxLon: 172),  // Vanuatu
-          .init(minLat: -12, maxLat: -10, minLon: 159, maxLon: 166)  // Solomon Islands
+          .init(minLat: -12, maxLat: -10, minLon: 159, maxLon: 166),  // Solomon Islands
+          .init(minLat: -24, maxLat: -17, minLon: 154, maxLon: 156),  // Coral Sea Islands
+          .init(minLat: -22, maxLat: -19, minLon: 158, maxLon: 160),  // Chesterfield Islands
+          .init(minLat: -19, maxLat: -17, minLon: 162, maxLon: 163),  // Entrecasteaux Reefs
+          .init(minLat: -23, maxLat: -22, minLon: 172, maxLon: 173),  // Matthew and Hunter
+          .init(minLat: -51, maxLat: -48, minLon: 165, maxLon: 167),  // Auckland, Snares
+          .init(minLat: -50, maxLat: -47, minLon: 178, maxLon: 180),  // Antipodes, Bounty
+          .init(minLat: -53, maxLat: -52, minLon: 168, maxLon: 170),  // Campbell Island
+          .init(minLat: -56, maxLat: -54, minLon: 158, maxLon: 159)  // Macquarie Island
         ]
       case .oceania:
         [
@@ -170,11 +187,23 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
           .init(minLat: -45, maxLat: -29, minLon: -180, maxLon: -175),
           .init(minLat: -5, maxLat: 6, minLon: -173, maxLon: -157),  // Kiribati
           .init(minLat: 27, maxLat: 30, minLon: -178, maxLon: -176),  // Midway
-          .init(minLat: 5, maxLat: 7, minLon: -163, maxLon: -161)  // Palmyra
+          .init(minLat: 5, maxLat: 7, minLon: -163, maxLon: -161),  // Palmyra
+          .init(minLat: 24, maxLat: 29, minLon: -180, maxLon: -167),  // NW Hawaiian Islands
+          .init(minLat: 16, maxLat: 17, minLon: -170, maxLon: -169),  // Johnston Atoll
+          .init(minLat: 0, maxLat: 1, minLon: -177, maxLon: -176),  // Howland, Baker
+          .init(minLat: -9, maxLat: -8, minLon: -173, maxLon: -172),  // Tokelau
+          .init(minLat: -5, maxLat: -3, minLon: -175, maxLon: -174),  // Phoenix Islands
+          .init(minLat: -9, maxLat: -8, minLon: -159, maxLon: -157),  // Penrhyn
+          .init(minLat: -6, maxLat: -3, minLon: -156, maxLon: -154),  // Southern Line Islands
+          .init(minLat: -8, maxLat: -7, minLon: -141, maxLon: -140),  // Northern Marquesas
+          .init(minLat: -26, maxLat: -23, minLon: -131, maxLon: -128),  // Pitcairn Islands
+          .init(minLat: -25, maxLat: -24, minLon: -125, maxLon: -124),  // Ducie Island
+          .init(minLat: -27, maxLat: -26, minLon: -106, maxLon: -105),  // Salas y Gómez
+          .init(minLat: -11, maxLat: -10, minLon: 179, maxLon: 180)  // Southern Tuvalu
         ]
       case .midAtlantic:
         [
-          .init(minLat: 36, maxLat: 40, minLon: -32, maxLon: -25),  // Azores
+          .init(minLat: 36, maxLat: 40, minLon: -32, maxLon: -24),  // Azores
           .init(minLat: 14, maxLat: 18, minLon: -26, maxLon: -22),  // Cabo Verde
           .init(minLat: 27, maxLat: 30, minLon: -19, maxLon: -13),  // Canary Islands
           .init(minLat: 32, maxLat: 34, minLon: -18, maxLon: -15)  // Madeira
@@ -185,7 +214,13 @@ public enum TerrainRegion: String, CaseIterable, Identifiable, Sendable, Codable
           .init(minLat: -21, maxLat: -19, minLon: 57, maxLon: 64),  // Mauritius
           .init(minLat: -22, maxLat: -20, minLon: 55, maxLon: 56),  // Reunion
           .init(minLat: -1, maxLat: 8, minLon: 72, maxLon: 74),  // Maldives
-          .init(minLat: -16, maxLat: -15, minLon: 54, maxLon: 55)  // Tromelin
+          .init(minLat: -16, maxLat: -15, minLon: 54, maxLon: 55),  // Tromelin
+          .init(minLat: -17, maxLat: -16, minLon: 59, maxLon: 60),  // Cargados Carajos
+          .init(minLat: -39, maxLat: -37, minLon: 77, maxLon: 78),  // Amsterdam, Saint-Paul
+          .init(minLat: -47, maxLat: -46, minLon: 37, maxLon: 39),  // Prince Edward Islands
+          .init(minLat: -47, maxLat: -45, minLon: 50, maxLon: 53),  // Crozet Islands
+          .init(minLat: -51, maxLat: -48, minLon: 68, maxLon: 71),  // Kerguelen Islands
+          .init(minLat: -54, maxLat: -52, minLon: 72, maxLon: 74)  // Heard and McDonald Islands
         ]
       case .antarctica:
         [
@@ -304,14 +339,11 @@ public struct TerrainBoundingBox: Sendable, Codable, Equatable {
   }
 
   /// Checks if this bounding box contains the given coordinate.
+  ///
+  /// The box spans whole one-degree tiles, so it holds its south and west edges but not its north
+  /// and east ones, which belong to the tiles beyond.
   public func contains(latitude: Double, longitude: Double) -> Bool {
-    let lat = Int(latitude.rounded(.towardZero)),
-      lon = Int(longitude.rounded(.towardZero))
-
-    // Handle special case for negative coordinates
-    let latCheck = (latitude >= 0 ? lat : lat - 1),
-      lonCheck = (longitude >= 0 ? lon : lon - 1)
-
-    return latCheck >= minLat && latCheck < maxLat && lonCheck >= minLon && lonCheck < maxLon
+    (Double(minLat)..<Double(maxLat)).contains(latitude)
+      && (Double(minLon)..<Double(maxLon)).contains(longitude)
   }
 }

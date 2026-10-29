@@ -9,6 +9,7 @@ enum SRTMProcessorError: LocalizedError {
   case tilesFailed(region: String, count: Int)
   case compressionFailed(any Error)
   case missingRegions([TerrainRegion])
+  case landOutsideRegions([TileCoordinates])
 
   var errorDescription: String? {
     String(localized: "Terrain processing failed.")
@@ -35,6 +36,12 @@ enum SRTMProcessorError: LocalizedError {
         return String(
           localized:
             "Cannot generate manifest: Missing payloads for regions: \(names, format: .list(type: .and)). Copy existing .srtm files to the output directory or select these regions for processing."
+        )
+      case .landOutsideRegions(let tiles):
+        let names = tiles.map(\.copernicusName)
+        return String(
+          localized:
+            "Copernicus publishes land outside every terrain region, which the app would read as open sea: \(names, format: .list(type: .and))."
         )
     }
   }
@@ -316,7 +323,11 @@ actor SRTMProcessor {
     await reportProgress(.pending)
 
     if !regions.isEmpty {
-      let catalog = try await CopernicusTileCatalog.load(using: urlSession)
+      let catalog = try await CopernicusTileCatalog.load(using: urlSession),
+        uncoveredLand = catalog.landOutsideEveryRegion()
+      guard uncoveredLand.isEmpty else {
+        throw SRTMProcessorError.landOutsideRegions(uncoveredLand)
+      }
       for region in regions {
         try Task.checkCancellation()
         try await processRegion(region, catalog: catalog)

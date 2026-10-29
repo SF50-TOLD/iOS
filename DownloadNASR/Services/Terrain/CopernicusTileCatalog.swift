@@ -1,4 +1,5 @@
 import Foundation
+import SF50_Shared
 
 /// Errors that can occur while reading the Copernicus DEM tile lists.
 enum CopernicusTileCatalogError: LocalizedError {
@@ -49,6 +50,17 @@ struct CopernicusTileCatalog: Sendable {
   }
 
   // MARK: - Instance Methods
+
+  /// Published tiles that lie outside every terrain region, south to north then west to east.
+  ///
+  /// The app reads a coordinate outside every region as open sea, which holds only while every
+  /// tile with land in it belongs to some region.
+  func landOutsideEveryRegion() -> [TileCoordinates] {
+    let landTiles = publishedTiles.values.reduce(into: Set()) { $0.formUnion($1) },
+      regionTiles = Set(TerrainRegion.allCases.flatMap(\.tileCoordinates))
+    return landTiles.subtracting(regionTiles)
+      .sorted { ($0.latitude, $0.longitude) < ($1.latitude, $1.longitude) }
+  }
 
   /// Where to read the tile whose southwest corner is `tile`.
   func source(for tile: TileCoordinates) -> TileSource {

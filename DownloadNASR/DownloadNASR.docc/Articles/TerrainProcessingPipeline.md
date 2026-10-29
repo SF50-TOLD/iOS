@@ -18,6 +18,8 @@ Terrain is the surface an aircraft can hit: the water surface over the sea and l
 - **GLO-90** (3 arc-seconds, ~90 m), `https://copernicus-dem-90m.s3.amazonaws.com`, for the tiles withheld from GLO-30's public release (Armenia and Azerbaijan). GLO-90 is published for every GLO-30 tile as well.
 - **Open sea**: a tile neither product publishes contains no land, so it is written as sea level throughout, not left out. A tile left out of a payload reads as "no data".
 
+The app reads a coordinate outside every `TerrainRegion` as open sea, so every tile either product publishes must lie inside some region. Processing stops before building anything if one does not, and names the tiles a region needs to grow to cover.
+
 Heights are relative to the EGM2008 geoid, and include buildings and vegetation, both of which an aircraft can hit.
 
 ### GeoTIFF Format

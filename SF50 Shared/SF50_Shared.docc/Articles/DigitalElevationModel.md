@@ -88,18 +88,18 @@ Terrain data is organized into 11 downloadable regions:
 | Region | Code | Coverage |
 |--------|------|----------|
 | North America | `na` | Continental US, Canada, Mexico, Caribbean, Alaska |
-| South America | `sa` | South America, Galapagos |
+| South America | `sa` | South America, Galapagos, South Sandwich Islands |
 | Europe | `eu` | Europe, UK, Iceland, Greenland, Svalbard |
-| Asia | `as` | East/Southeast/South Asia, Siberia |
+| Asia | `as` | East/Southeast/South Asia, Siberia, Franz Josef Land |
 | Middle East | `me` | Arabian Peninsula, Turkey, Iran |
-| Africa | `af` | Continental Africa |
-| Australia | `au` | Australia, New Zealand, Papua New Guinea, Pacific islands |
-| Oceania | `oc` | Hawaii, French Polynesia, Micronesia |
+| Africa | `af` | Continental Africa, Tristan da Cunha, Bouvet Island |
+| Australia | `au` | Australia, New Zealand and its subantarctic islands, Papua New Guinea, Pacific islands |
+| Oceania | `oc` | Hawaii, French Polynesia, Pitcairn Islands, Micronesia |
 | Mid-Atlantic | `ma` | Azores, Canary Islands, Cabo Verde, Madeira |
-| Indian Ocean | `io` | Seychelles, Mauritius, Maldives |
+| Indian Ocean | `io` | Seychelles, Mauritius, Maldives, Kerguelen, Heard Island |
 | Antarctica | `aq` | Antarctic continent |
 
-Use ``TerrainRegion/containing(latitude:longitude:)`` to find which regions contain a given coordinate. Multiple regions may overlap at boundaries.
+Use ``TerrainRegion/containing(latitude:longitude:)`` to find which regions contain a given coordinate. Multiple regions may overlap at boundaries. Every tile with land in it lies inside some region, so a coordinate outside all of them is open sea.
 
 ## Architecture
 
