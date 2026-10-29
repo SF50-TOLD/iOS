@@ -127,13 +127,13 @@ Resolve the next build number and write it where CI can read it
 
 Archive one platform and upload it to App Store Connect (CI)
 
-### ios ci_verify_release_notes
+### ios ci_verify_release
 
 ```sh
-[bundle exec] fastlane ios ci_verify_release_notes
+[bundle exec] fastlane ios ci_verify_release
 ```
 
-Refuse to start a release whose notes are missing, empty, or too long (CI)
+Refuse to start a release that isn't the project's version, isn't on main or a release branch, or whose notes are missing, empty, or too long (CI)
 
 ### ios ci_finish_release
 

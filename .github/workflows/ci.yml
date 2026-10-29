@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "release/**"]
   # Any base branch: a stacked pull request targets the layer below it, not main.
   pull_request:
   workflow_dispatch:

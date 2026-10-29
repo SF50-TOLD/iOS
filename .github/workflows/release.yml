@@ -37,10 +37,11 @@ jobs:
       platforms: '["iOS"]'
       version: ${{ inputs.version || github.ref_name }}
       certificates-repo: RISCfuture/certificates
-      # Checked before the build number is resolved, on a runner with no credentials, so a missing
-      # changelog section costs seconds rather than the whole archive — by then a build has reached
-      # App Store Connect and neither that upload nor the tag can be taken back.
-      verify-lane: ci_verify_release_notes
+      # Checked before the build number is resolved, on a runner with no credentials, so a tag that
+      # disagrees with the project's version, a commit on no release branch, or a missing changelog
+      # section costs seconds rather than the whole archive — by then a build has reached App Store
+      # Connect and neither that upload nor the tag can be taken back.
+      verify-lane: ci_verify_release
       finish-lane: ci_finish_release
       # DownloadNASR/Credentials.xcconfig is deliberately absent: it belongs to the DownloadNASR
       # macOS tool target, which the SF50 TOLD scheme does not build.
