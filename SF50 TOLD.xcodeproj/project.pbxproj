@@ -1885,7 +1885,7 @@
 			repositoryURL = "https://github.com/SF50-TOLD/NavData";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.1;
+				minimumVersion = 2.0.0;
 			};
 		};
 		5F0A0E1000000000000000A1 /* XCRemoteSwiftPackageReference "XCUIPromoKit" */ = {
@@ -1911,7 +1911,7 @@
 			repositoryURL = "https://github.com/SF50-TOLD/NavDataDistribution";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.0;
+				minimumVersion = 3.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

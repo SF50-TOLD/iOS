@@ -37,6 +37,13 @@ public actor NavDataStoreWriter {
 
   private var navaidLookup: [String: Navaid] = [:]
 
+  /// The sources of an airport in a file that predates ``AirportDataCodable/AirportCodable/sources``,
+  /// from its single, inconsistently spelled data source.
+  private static func legacySources(_ dataSource: String) -> [AirportDataSource] {
+    dataSource.caseInsensitiveCompare(AirportDataSource.NASR.rawValue) == .orderedSame
+      ? [.NASR] : [.ourAirports]
+  }
+
   /// Writes an entire dataset, reporting how far through it has got.
   ///
   /// Progress is pushed into a stream rather than handed to a callback, because a callback would
@@ -174,7 +181,6 @@ public actor NavDataStoreWriter {
   }
 
   private func addAirport(_ airport: AirportDataCodable.AirportCodable) -> Int {
-    let dataSource = DataSource(rawValue: airport.dataSource) ?? .NASR
     let timeZone = airport.timeZone.flatMap { TimeZone(identifier: $0) }
 
     let record = Airport(
@@ -183,7 +189,8 @@ public actor NavDataStoreWriter {
       ICAO_ID: airport.ICAO_ID,
       name: airport.name,
       city: airport.city,
-      dataSource: dataSource,
+      sources: airport.sources ?? Self.legacySources(airport.dataSource),
+      countryCode: airport.countryCode,
       latitude: .init(value: airport.latitude, unit: .degrees),
       longitude: .init(value: airport.longitude, unit: .degrees),
       elevation: .init(value: airport.elevation, unit: .meters),
@@ -235,6 +242,10 @@ public actor NavDataStoreWriter {
     modelContext.insert(record)
     for runway in runwayMap.values {
       modelContext.insert(runway)
+    }
+    for alias in airport.aliases ?? [] {
+      modelContext.insert(AirportAlias(alias: alias, airport: record))
+      insertedRows += 1
     }
 
     // Set reciprocal runway names

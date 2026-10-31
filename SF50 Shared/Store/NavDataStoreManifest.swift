@@ -1,4 +1,5 @@
 public import Foundation
+public import NavData
 
 /// Describes one cycle's prebuilt nav-data store.
 ///
@@ -43,6 +44,13 @@ public struct NavDataStoreManifest: Codable, Sendable {
   /// Optional because a manifest published before this was carried has none to give.
   public let ourAirportsLastUpdated: Date?
 
+  /// The sources beyond NASR, CIFP, DOF, and OurAirports folded into this dataset, with the
+  /// attribution each requires.
+  ///
+  /// Like ``ourAirportsLastUpdated``, this has to survive the trip through a prebuilt store.
+  /// Optional because a manifest published before this was carried has none to give.
+  public let supplementarySources: [AirportDataCodable.SupplementarySource]?
+
   /// Whether this cycle's data is in force right now.
   public var isEffective: Bool { isEffective(at: .now) }
 
@@ -66,6 +74,7 @@ public struct NavDataStoreManifest: Codable, Sendable {
   ///   - store: The compressed store.
   ///   - counts: What the store holds.
   ///   - ourAirportsLastUpdated: When this dataset's OurAirports data was last processed.
+  ///   - supplementarySources: The dataset's sources beyond NASR, CIFP, DOF, and OurAirports.
   public init(
     cycle: String,
     effective: Date,
@@ -74,7 +83,8 @@ public struct NavDataStoreManifest: Codable, Sendable {
     schemaVersion: Int,
     store: Asset,
     counts: Counts,
-    ourAirportsLastUpdated: Date?
+    ourAirportsLastUpdated: Date?,
+    supplementarySources: [AirportDataCodable.SupplementarySource]? = nil
   ) {
     self.cycle = cycle
     self.effective = effective
@@ -84,6 +94,7 @@ public struct NavDataStoreManifest: Codable, Sendable {
     self.store = store
     self.counts = counts
     self.ourAirportsLastUpdated = ourAirportsLastUpdated
+    self.supplementarySources = supplementarySources
   }
 
   /// Whether this cycle's data is in force at a given moment.

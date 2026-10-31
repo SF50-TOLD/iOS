@@ -13,6 +13,13 @@ one of the two places.
 These notes are read by pilots deciding whether to update, so they describe what
 changed in the cockpit rather than what changed in the code.
 
+## 4.0.1
+
+- When an airport’s identifier changes in an airport data update, your
+  favorites, recents and selected airports follow it. About lists every source
+  the airport data comes from, and for airports drawn from openflightmaps, the
+  runway picker offers to report a data error to them.
+
 ## 4.0
 
 - This version requires iOS 27. If your iPad is still on iOS 26, the App Store

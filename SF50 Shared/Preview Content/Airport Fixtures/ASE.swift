@@ -10,7 +10,7 @@ extension AirportBuilder {
       ICAO_ID: "KASE",
       name: "Aspen-Pitkin County/Sardy Field",
       city: "Aspen",
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: .init(value: 39.2218783, unit: .degrees),
       longitude: .init(value: -106.8682333, unit: .degrees),
       elevation: .init(value: 7838, unit: .feet),

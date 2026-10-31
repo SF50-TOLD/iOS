@@ -11,6 +11,9 @@ struct AboutView: View {
   @Default(.ourAirportsLastUpdated)
   private var ourAirportsLastUpdated
 
+  @Default(.supplementarySources)
+  private var supplementarySources
+
   private var nasrCycle: Cycle? {
     cycles.first { $0.dataSource == .nasr }
   }
@@ -59,11 +62,22 @@ struct AboutView: View {
         }
 
         Section("Navigation Data") {
-          CycleRow(label: "NASR Cycle", cycle: nasrCycle)
-          CycleRow(label: "CIFP Cycle", cycle: cifpCycle)
-          CycleRow(label: "DOF Cycle", cycle: dofCycle)
+          CycleRow(
+            label: "NASR Cycle",
+            caption: "National Airspace System Resources (FAA)",
+            cycle: nasrCycle
+          )
+          CycleRow(
+            label: "CIFP Cycle",
+            caption: "Coded Instrument Flight Procedures (FAA)",
+            cycle: cifpCycle
+          )
+          CycleRow(label: "DOF Cycle", caption: "Digital Obstacle File (FAA)", cycle: dofCycle)
 
-          LabeledContent("OurAirports Data") {
+          CaptionedRow(
+            title: Text("OurAirports Data"),
+            caption: Text("Community-maintained airport database")
+          ) {
             if let ourAirportsLastUpdated {
               Text(ourAirportsLastUpdated, format: .dateTime.day().month().year())
                 .bold()
@@ -75,10 +89,21 @@ struct AboutView: View {
             }
           }
 
-          LabeledContent("Terrain Data") {
+          CaptionedRow(
+            title: Text("Terrain Data"),
+            caption: Text("Shuttle Radar Topography Mission (NASA)")
+          ) {
             Text(terrainGeneratedAt, format: .dateTime.day().month().year())
               .bold()
               .foregroundStyle(.primary)
+          }
+        }
+
+        if !supplementarySources.isEmpty {
+          Section("Additional Data Sources") {
+            ForEach(supplementarySources, id: \.name) { source in
+              SupplementarySourceRow(source: source)
+            }
           }
         }
 
@@ -152,7 +177,8 @@ struct AboutView: View {
 }
 
 private struct CycleRow: View {
-  let label: String
+  let label: LocalizedStringKey
+  let caption: LocalizedStringKey
   let cycle: Cycle?
 
   private var state: State {
@@ -167,7 +193,7 @@ private struct CycleRow: View {
   }
 
   var body: some View {
-    LabeledContent(label) {
+    CaptionedRow(title: Text(label), caption: Text(caption)) {
       if let cycle {
         VStack(alignment: .trailing) {
           Text(cycle.name)
@@ -225,6 +251,18 @@ private struct CycleRow: View {
     helper.insertExpiredCycle(.cifp, name: "AIRAC 2513")
     helper.insertFutureCycle(.dof, name: "20260215")
     Defaults[.ourAirportsLastUpdated] = nil
+    Defaults[.supplementarySources] = []
+    return AboutView()
+  }
+}
+
+#Preview("With Additional Sources") {
+  PreviewView { helper in
+    helper.insertCurrentCycle(.nasr, name: "2026-10-29")
+    helper.insertCurrentCycle(.cifp, name: "AIRAC 2611")
+    helper.insertCurrentCycle(.dof, name: "20261027")
+    Defaults[.ourAirportsLastUpdated] = .now
+    Defaults[.supplementarySources] = PreviewHelper.supplementarySources
     return AboutView()
   }
 }

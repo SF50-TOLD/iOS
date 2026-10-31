@@ -39,7 +39,7 @@ enum Helper {
       ICAO_ID: "TEST",
       name: "Test Airport",
       city: "Test City",
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: Measurement(value: 0, unit: .degrees),
       longitude: Measurement(value: 0, unit: .degrees),
       elevation: Measurement(value: elevation, unit: .feet),

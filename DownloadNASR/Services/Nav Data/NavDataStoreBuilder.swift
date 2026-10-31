@@ -70,6 +70,7 @@ struct NavDataStoreBuilder {
         cycles: data.cycles,
         counts: counts,
         ourAirportsLastUpdated: data.ourAirportsLastUpdated,
+        supplementarySources: data.supplementarySources,
         outputLocation: outputLocation
       )
     )
@@ -149,6 +150,7 @@ struct NavDataStoreBuilder {
     cycles: AirportDataCodable.DataCycles,
     counts: NavDataStoreManifest.Counts,
     ourAirportsLastUpdated: Date?,
+    supplementarySources: [AirportDataCodable.SupplementarySource]?,
     outputLocation: URL
   ) throws -> URL {
     let payload = try Data(contentsOf: store, options: .mappedIfSafe)
@@ -167,7 +169,8 @@ struct NavDataStoreBuilder {
         sha256: digest
       ),
       counts: counts,
-      ourAirportsLastUpdated: ourAirportsLastUpdated
+      ourAirportsLastUpdated: ourAirportsLastUpdated,
+      supplementarySources: supplementarySources
     )
 
     let url = outputLocation.appending(path: "\(cycle).json")

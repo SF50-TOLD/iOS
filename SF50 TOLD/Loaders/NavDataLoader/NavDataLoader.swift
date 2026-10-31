@@ -220,7 +220,8 @@ actor NavDataLoader {
     state = .finished
     return LoadResult(
       cycles: nasr.cycles,
-      ourAirportsLastUpdated: nasr.ourAirportsLastUpdated
+      ourAirportsLastUpdated: nasr.ourAirportsLastUpdated,
+      supplementarySources: nasr.supplementarySources ?? []
     )
   }
 
@@ -326,5 +327,7 @@ actor NavDataLoader {
     let cycles: AirportDataCodable.DataCycles
     /// Date when OurAirports data was last updated.
     let ourAirportsLastUpdated: Date?
+    /// Sources beyond NASR, CIFP, DOF, and OurAirports, with their attributions.
+    let supplementarySources: [AirportDataCodable.SupplementarySource]
   }
 }
