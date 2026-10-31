@@ -16,6 +16,7 @@ public enum NavDataSchema {
   /// Every model describing downloaded navigation data.
   public static let models: [any PersistentModel.Type] = [
     Airport.self,
+    AirportAlias.self,
     Runway.self,
     Obstacle.self,
     Navaid.self,

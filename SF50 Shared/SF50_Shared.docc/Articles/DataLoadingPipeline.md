@@ -10,12 +10,17 @@ provides reactive state updates.
 
 ## Airport Data Sources
 
-Airport data originates from two complementary sources:
+Airport data is resolved from several sources into one record per airport, each value
+taken from the highest-priority source that has it:
 
 - **NASR**: Official FAA source with declared distances (TORA, TODA, LDA, etc.)
+- **National AIP data sets** (NATS, LFV): official data for their countries
+- **open flightmaps**: Community-maintained data for Europe and southern Africa
 - **OurAirports**: Community-maintained with broader international coverage
 
-The ``Airport/dataSource`` property indicates which source provided each airport.
+The ``Airport/sources`` property lists the sources behind each airport, highest priority
+first. An airport's ``Airport/recordID`` is its most authoritative identifier, and its
+``Airport/aliases`` name the identifiers earlier datasets used for it.
 
 ## Loading with SwiftData
 

@@ -19,7 +19,7 @@ struct `Airport Search` {
       ICAO_ID: ICAO_ID,
       name: name,
       city: city,
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: .init(value: 37, unit: .degrees),
       longitude: .init(value: -122, unit: .degrees),
       elevation: .init(value: 0, unit: .feet),

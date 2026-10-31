@@ -11,7 +11,7 @@ Types for representing airports, runways, navaids, instrument procedures, and th
 ### Airports
 
 - ``Airport``
-- ``DataSource``
+- ``AirportAlias``
 
 ### Runways
 

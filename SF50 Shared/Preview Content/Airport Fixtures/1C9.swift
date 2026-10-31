@@ -8,7 +8,7 @@ extension AirportBuilder {
       ICAO_ID: nil,
       name: "Frazier Lake Airpark",
       city: "Hollister",
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: .init(value: 36.9528333, unit: .degrees),
       longitude: .init(value: -121.4626389, unit: .degrees),
       elevation: .init(value: 152, unit: .feet),

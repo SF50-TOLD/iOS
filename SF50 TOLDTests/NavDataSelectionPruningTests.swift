@@ -19,7 +19,7 @@ import Testing
 @MainActor
 struct `Selection Pruning on Install` {
   private static let carriedAirport = "CARRIED", retiredAirport = "RETIRED",
-    selectedRunway = "18"
+    renamedAirport = "FORMERLY-CARRIED", selectedRunway = "18"
 
   /// The generation the app's container reads: the dataset being replaced.
   private static let supersededGeneration = 1
@@ -31,7 +31,7 @@ struct `Selection Pruning on Install` {
       ICAO_ID: nil,
       name: "Test Airport",
       city: nil,
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: .init(value: 0, unit: .degrees),
       longitude: .init(value: 0, unit: .degrees),
       elevation: .init(value: 0, unit: .feet),
@@ -61,13 +61,16 @@ struct `Selection Pruning on Install` {
     _ body: (ModelContainer, Int) throws -> Void
   ) throws {
     let selections = LegSelections.current(),
+      favorites = Defaults[.favoriteAirports], recents = Defaults[.recentAirports],
       generation = NavDataStoreInstaller(layout: .appGroup).reserveGeneration()
     defer {
       selections.restore()
+      Defaults[.favoriteAirports] = favorites
+      Defaults[.recentAirports] = recents
       StoreLayout.removeStore(at: StoreLayout.appGroup.navStoreURL(generation: generation))
     }
 
-    try write(carriedAirport, toGeneration: generation)
+    try write(carriedAirport, aliases: [renamedAirport], toGeneration: generation)
     Defaults[.takeoffAirport] = takeoff
     Defaults[.landingAirport] = landing
     Defaults[.takeoffRunway] = selectedRunway
@@ -90,11 +93,19 @@ struct `Selection Pruning on Install` {
     return context.container
   }
 
-  private static func write(_ recordID: String, toGeneration generation: Int) throws {
+  private static func write(
+    _ recordID: String,
+    aliases: [String],
+    toGeneration generation: Int
+  ) throws {
     let context = ModelContext(
       try AppStore.makeWritableContainer(layout: .appGroup, generation: generation)
     )
-    context.insert(airport(recordID: recordID))
+    let airport = airport(recordID: recordID)
+    context.insert(airport)
+    for alias in aliases {
+      context.insert(AirportAlias(alias: alias, airport: airport))
+    }
     try context.save()
   }
 
@@ -140,6 +151,27 @@ struct `Selection Pruning on Install` {
       #expect(Defaults[.takeoffRunway] == Self.selectedRunway)
       #expect(Defaults[.landingAirport] == Self.carriedAirport)
       #expect(Defaults[.landingRunway] == Self.selectedRunway)
+    }
+  }
+
+  @Test
+  func `points stored airports at the key the incoming dataset uses`() throws {
+    try Self.withInstalledGeneration(
+      takeoff: Self.renamedAirport,
+      landing: Self.carriedAirport
+    ) { container, generation in
+      Defaults[.favoriteAirports] = [Self.renamedAirport]
+      Defaults[.recentAirports] = [Self.renamedAirport, Self.carriedAirport]
+
+      NavDataUpdater.remapStoredAirports(toGeneration: generation, container: container)
+      NavDataUpdater.clearSelectionsMissing(fromGeneration: generation, container: container)
+
+      #expect(Defaults[.takeoffAirport] == Self.carriedAirport)
+      // The incoming dataset's airport has no runway 18, so the runway chosen on it is forgotten.
+      #expect(Defaults[.takeoffRunway] == nil)
+      #expect(Defaults[.landingRunway] == Self.selectedRunway)
+      #expect(Defaults[.favoriteAirports] == [Self.carriedAirport])
+      #expect(Defaults[.recentAirports] == [Self.carriedAirport])
     }
   }
 
