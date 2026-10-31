@@ -1,10 +1,42 @@
 import CoreLocation
 import Defaults
 public import Foundation
+public import NavData
 public import SwiftData
 public import WeatherKit
 
 public final class PreviewHelper: Sendable {
+  /// Supplementary data sources as a dataset might carry them.
+  public static let supplementarySources: [AirportDataCodable.SupplementarySource] = [
+    .init(
+      name: "open flightmaps",
+      source: .openFlightmaps,
+      edition: "AIRAC 2611",
+      retrieved: .now,
+      attribution: "Contains data from the open flightmaps database.",
+      licenseURL: URL(string: "https://www.openflightmaps.org/about/"),
+      feedbackURL: URL(string: "https://gitlab.com/openflightmaps/region-issues")
+    ),
+    .init(
+      name: "NATS",
+      source: .NATS,
+      edition: "20261029",
+      retrieved: .now,
+      attribution: "Contains UK AIP and obstacle data published by NATS.",
+      licenseURL: nil,
+      feedbackURL: nil
+    ),
+    .init(
+      name: "FOCA",
+      source: nil,
+      edition: "2026-10-31",
+      retrieved: .now,
+      attribution: "Contains obstacle data from the Swiss Federal Office of Civil Aviation.",
+      licenseURL: nil,
+      feedbackURL: nil
+    )
+  ]
+
   public let container: ModelContainer
 
   @MainActor public var mainContext: ModelContext { container.mainContext }

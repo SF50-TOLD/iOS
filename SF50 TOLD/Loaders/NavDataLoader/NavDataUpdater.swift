@@ -173,6 +173,7 @@ final class NavDataUpdater {
       continuation.finish()
       try Self.install(generation: generation, container: container)
       Defaults[.ourAirportsLastUpdated] = manifest.ourAirportsLastUpdated
+      Defaults[.supplementarySources] = manifest.supplementarySources ?? []
       Defaults[.schemaVersion] = latestSchemaVersion
       state = .finished
       Self.logger.notice(
@@ -210,6 +211,7 @@ final class NavDataUpdater {
       let result = try await loader.load()
       try Self.install(generation: generation, container: container)
       Defaults[.ourAirportsLastUpdated] = result.ourAirportsLastUpdated
+      Defaults[.supplementarySources] = result.supplementarySources
       Defaults[.schemaVersion] = latestSchemaVersion
       state = .finished
       transaction.finish()
@@ -284,6 +286,7 @@ extension NavDataUpdater {
   private static func install(generation: Int, container: ModelContainer) throws {
     try installer.install(generation: generation)
     clearNOTAMs(in: container)
+    remapStoredAirports(toGeneration: generation, container: container)
     clearSelectionsMissing(fromGeneration: generation, container: container)
     // The app watches the active generation and reopens its own store; doing it here as well would
     // race that, and leave the container the views hold pointing at the older file.
@@ -313,6 +316,28 @@ extension NavDataUpdater {
       operation.clearSelection()
       logger.notice(
         "Cleared the \(operation.rawValue, privacy: .public) airport, absent from the new dataset"
+      )
+    }
+  }
+
+  /// Points the favorite, recent, and selected airports at the keys the incoming dataset uses.
+  ///
+  /// A dataset can key an airport differently from the one before it; its aliases name the
+  /// earlier keys. Remapping runs before missing selections are cleared, so a selection that only
+  /// changed key is kept.
+  ///
+  /// - Parameters:
+  ///   - generation: The generation being installed.
+  ///   - container: The container the app reads its stores through.
+  static func remapStoredAirports(toGeneration generation: Int, container: ModelContainer) {
+    guard let context = navDataContext(forGeneration: generation, container: container) else {
+      return
+    }
+    do {
+      try StoredAirportIdentifiers.remap(in: context)
+    } catch {
+      logger.error(
+        "Kept the stored airport identifiers as they were: \(wholeOf(error), privacy: .public)"
       )
     }
   }

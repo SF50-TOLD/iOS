@@ -10,7 +10,7 @@ extension AirportBuilder {
       ICAO_ID: "KSQL",
       name: "San Carlos Airport",
       city: "San Carlos",
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: .init(value: 37.5118611, unit: .degrees),
       longitude: .init(value: -122.2495311, unit: .degrees),
       elevation: .init(value: 5.5, unit: .feet),

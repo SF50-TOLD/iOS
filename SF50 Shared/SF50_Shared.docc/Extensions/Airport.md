@@ -5,6 +5,7 @@
 ### Identification
 
 - ``recordID``
+- ``aliases``
 - ``locationID``
 - ``ICAO_ID``
 - ``displayID``
@@ -29,4 +30,8 @@
 - ``runways``
 - ``departureProcedures``
 - ``approachProcedures``
-- ``dataSource``
+
+### Sources
+
+- ``sources``
+- ``countryCode``

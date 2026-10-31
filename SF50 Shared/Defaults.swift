@@ -1,5 +1,6 @@
 public import Defaults
 public import Foundation
+public import NavData
 public import SwiftData
 
 // MARK: - Defaults
@@ -10,9 +11,10 @@ nonisolated(unsafe) private let sharedGroupDefaults = UserDefaults(
   suiteName: "group.codes.tim.TOLD"
 )!
 private var groupDefaults: UserDefaults { unsafe sharedGroupDefaults }
-public let latestSchemaVersion = 8
+public let latestSchemaVersion = 9
 
 extension TerrainRegion: Defaults.Serializable {}
+extension AirportDataCodable.SupplementarySource: @retroactive Defaults.Serializable {}
 
 extension TerrainRegion {
   /// Regions the pilot has asked for, as the app and its extensions share them.
@@ -142,6 +144,14 @@ extension Defaults.Keys {
   )
   public static let landingRunway = Key<String?>(
     "SF50/3/landingRunway",
+    suite: groupDefaults
+  )
+
+  /// The sources beyond NASR, CIFP, DOF, and OurAirports in the installed dataset, with the
+  /// attribution each requires
+  public static let supplementarySources = Key<[AirportDataCodable.SupplementarySource]>(
+    "TOLD/4/supplementarySources",
+    default: [],
     suite: groupDefaults
   )
 
@@ -468,14 +478,20 @@ extension UnitPressure: Defaults.Serializable {
 
 extension PersistentIdentifier: Defaults.Serializable {}
 
+/// The airport an identifier names: its ``Airport/recordID``, or one of its ``Airport/aliases``
+/// when the identifier was stored from an earlier dataset.
 public func findAirport(for airportID: String?, in context: ModelContext) throws -> Airport? {
   guard let airportID else { return nil }
   let airportFetchDescriptor = FetchDescriptor<Airport>(
     predicate: #Predicate { $0.recordID == airportID }
   )
   let airports = try context.fetch(airportFetchDescriptor)
-  guard airports.count == 1 else { return nil }
-  return airports.first
+  if airports.count == 1 { return airports.first }
+
+  let aliasFetchDescriptor = FetchDescriptor<AirportAlias>(
+    predicate: #Predicate { $0.alias == airportID }
+  )
+  return try context.fetch(aliasFetchDescriptor).first?.airport
 }
 
 public func findAirportAndRunway(airportID: String?, runwayID: String?, in context: ModelContext)

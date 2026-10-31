@@ -15,7 +15,7 @@ struct `Store Schema` {
   /// part of the published contract rather than an implementation detail. Pinning it here turns an
   /// accidental model edit into a failing test rather than a store the app quietly migrates.
   private static let navDataFingerprint =
-    "d46f345bdc1174823b0a2de34bc754d1af5e3c5416d560feb27102856e25c323"
+    "237b7d36b8da3d49ba90b06e8e09f20bbc2bb5ca8582bf2531448006c0e6e0fd"
 
   @Test("the two stores declare no model in common")
   func storesAreDisjoint() {

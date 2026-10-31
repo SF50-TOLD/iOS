@@ -16,7 +16,7 @@ struct `Runway Snapshot Distances` {
       ICAO_ID: nil,
       name: "Test Airport",
       city: nil,
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: .init(value: 0, unit: .degrees),
       longitude: .init(value: 0, unit: .degrees),
       elevation: .init(value: 0, unit: .feet),

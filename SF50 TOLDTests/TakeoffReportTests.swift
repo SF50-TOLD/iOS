@@ -27,7 +27,7 @@ struct `Takeoff Report` {
       ICAO_ID: "KTST",
       name: "Test Airport",
       city: "Test City",
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: .init(value: 37, unit: .degrees),
       longitude: .init(value: -122, unit: .degrees),
       elevation: .init(value: 0, unit: .feet),

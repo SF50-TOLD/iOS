@@ -10,7 +10,7 @@ extension AirportBuilder {
       ICAO_ID: "KOAK",
       name: "San Francisco Bay Area Metropolitan Oakland International Airport",
       city: "Oakland",
-      dataSource: .NASR,
+      sources: [.NASR],
       latitude: .init(value: 37.7212614, unit: .degrees),
       longitude: .init(value: -122.2211506, unit: .degrees),
       elevation: .init(value: 9, unit: .feet),

@@ -1,29 +1,20 @@
 public import CoreLocation
 public import Foundation
+public import NavData
 public import SwiftData
-
-/// The source of airport data.
-///
-/// Airport data can be sourced from official FAA databases (NASR) or from
-/// the community-maintained OurAirports dataset for international coverage.
-public enum DataSource: String, Codable {
-  /// National Airspace System Resources (FAA)
-  case NASR = "NASR"
-  /// OurAirports open data
-  case ourAirports = "OurAirports"
-}
 
 /// An airport with associated runways and location data.
 ///
 /// ``Airport`` represents an aerodrome with its associated metadata including
 /// location, elevation, magnetic variation, and runways. Airport data is
-/// persisted using SwiftData and can be sourced from NASR or OurAirports.
+/// persisted using SwiftData and resolved from every source that describes it (see
+/// ``sources``).
 @Model
 public final class Airport {
   /// Composite index accelerating nearest-airport bounding-box queries on latitude/longitude.
   #Index<Airport>([\._latitude, \._longitude])
 
-  /// Unique identifier for SwiftData persistence
+  /// Unique, stable identifier, such as `FAA:04508.*A` or `ICAO:EDDM`
   @Attribute(.unique)
   public var recordID: String
 
@@ -39,8 +30,10 @@ public final class Airport {
   /// City where airport is located
   public var city: String?
 
-  /// Source of airport data (NASR or OurAirports)
-  public var dataSource: DataSource
+  /// ISO 3166-1 alpha-2 country code, if known
+  public var countryCode: String?
+
+  var _sources: [String]  // AirportDataSource raw values, highest priority first
 
   var _latitude: Double  // decimal degrees
   var _longitude: Double  // decimal degrees
@@ -55,6 +48,16 @@ public final class Airport {
   /// All procedures (departures and approaches) available at this airport
   @Relationship(deleteRule: .cascade)
   public var procedures: [Procedure]
+
+  /// The identifiers this airport has had or is known by besides ``recordID``
+  @Relationship(deleteRule: .cascade, inverse: \AirportAlias.airport)
+  public var aliases: [AirportAlias]
+
+  /// The sources that contributed to this airport, highest priority first
+  public var sources: [AirportDataSource] {
+    get { _sources.map(AirportDataSource.init) }
+    set { _sources = newValue.map(\.rawValue) }
+  }
 
   /// Departure procedures available at this airport
   public var departureProcedures: [Procedure] {
@@ -115,9 +118,10 @@ public final class Airport {
     )
   }
 
-  /// Display identifier (prefers ICAO for OurAirports, locationID for NASR)
+  /// Display identifier: the FAA identifier for NASR airports, otherwise the ICAO identifier
+  /// where there is one
   public var displayID: String {
-    if dataSource == .NASR {
+    if sources.first == .NASR {
       return locationID
     }
     return ICAO_ID ?? locationID
@@ -132,7 +136,8 @@ public final class Airport {
    *   - ICAO_ID: ICAO identifier if available (e.g., "KJFK").
    *   - name: Full airport name.
    *   - city: City where the airport is located.
-   *   - dataSource: Whether data is from NASR or OurAirports.
+   *   - sources: The sources that contributed, highest priority first.
+   *   - countryCode: ISO 3166-1 alpha-2 country code, if known.
    *   - latitude: Airport latitude.
    *   - longitude: Airport longitude.
    *   - elevation: Field elevation above sea level.
@@ -145,7 +150,8 @@ public final class Airport {
     ICAO_ID: String?,
     name: String,
     city: String?,
-    dataSource: DataSource,
+    sources: [AirportDataSource],
+    countryCode: String? = nil,
     latitude: Measurement<UnitAngle>,
     longitude: Measurement<UnitAngle>,
     elevation: Measurement<UnitLength>,
@@ -157,7 +163,8 @@ public final class Airport {
     self.ICAO_ID = ICAO_ID
     self.name = name
     self.city = city
-    self.dataSource = dataSource
+    _sources = sources.map(\.rawValue)
+    self.countryCode = countryCode
     _latitude = latitude.converted(to: .degrees).value
     _longitude = longitude.converted(to: .degrees).value
     _elevation = elevation.converted(to: .meters).value
@@ -165,5 +172,6 @@ public final class Airport {
     _timeZone = timeZone?.identifier
     self.runways = []
     self.procedures = []
+    self.aliases = []
   }
 }
