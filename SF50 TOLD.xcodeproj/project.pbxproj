@@ -1789,7 +1789,7 @@
 			repositoryURL = "https://github.com/RISCfuture/SwiftNASR";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.0.0;
+				minimumVersion = 5.0.1;
 			};
 		};
 		01714C7E2F234A7E003DADCF /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
@@ -1877,7 +1877,7 @@
 			repositoryURL = "https://github.com/apple/swift-log.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.15.1;
+				minimumVersion = 1.16.2;
 			};
 		};
 		2B974702697D0A548EC62991 /* XCRemoteSwiftPackageReference "NavData" */ = {
@@ -1901,7 +1901,7 @@
 			repositoryURL = "https://github.com/getsentry/sentry-cocoa/";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 9.28.0;
+				minimumVersion = 9.32.0;
 			};
 			traits = (
 			);
