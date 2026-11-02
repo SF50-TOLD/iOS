@@ -38,16 +38,14 @@ struct DataStatusButton: View {
     Button {
       showingSheet = true
     } label: {
-      Image(
-        systemName: hasIssue
+      Label(
+        hasIssue
+          ? String(localized: "Incomplete data") : String(localized: "Up-to-date data"),
+        systemImage: hasIssue
           ? "exclamationmark.triangle.fill"
           : "checkmark.circle"
       )
       .foregroundStyle(hasIssue ? .yellow : .gray)
-      .accessibilityLabel(
-        hasIssue
-          ? String(localized: "Incomplete data") : String(localized: "Up-to-date data")
-      )
       .contentTransition(.symbolEffect)
       .animation(.snappy, value: hasIssue)
     }
@@ -81,10 +79,11 @@ struct DataStatusButton: View {
         .navigationTitle("Data Status")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-          ToolbarItem(placement: .confirmationAction) {
-            Button("Done") { showingSheet = false }
+          ToolbarItem(placement: .cancellationAction) {
+            Button(role: .close) { showingSheet = false }
           }
         }
+        .modifier(HorizontalToolbar())
       }
       .presentationDetents([.medium])
     }
@@ -107,6 +106,18 @@ struct DataStatusButton: View {
   }
 
   // MARK: - Subtypes
+
+  /// Keeps the sheet's toolbar horizontal: its only control is Close, which doesn't warrant
+  /// giving up the sheet's width to a vertical bar.
+  private struct HorizontalToolbar: ViewModifier {
+    func body(content: Content) -> some View {
+      if #available(iOS 27.1, *) {
+        content.toolbarVerticalBehavior(.disabled)
+      } else {
+        content
+      }
+    }
+  }
 
   private struct ExpiringStatusRow: View {
     let label: String
