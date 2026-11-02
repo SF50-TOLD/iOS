@@ -22,8 +22,8 @@ final class ReportViewerPage: BasePage {
   }
 
   func dismiss() {
-    let doneButton = app.buttons["Done"]
-    XCTAssertTrue(doneButton.exists, "Done button should be present in report viewer")
-    forceTap(doneButton)
+    let closeButton = app.buttons["closeReportButton"]
+    XCTAssertTrue(closeButton.exists, "Close button should be present in report viewer")
+    forceTap(closeButton)
   }
 }
