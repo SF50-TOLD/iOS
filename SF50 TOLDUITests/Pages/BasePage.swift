@@ -88,8 +88,10 @@ class BasePage {
     return nil
   }
 
+  /// Taps the back button, which the iPhone Duo's outer display moves out of the navigation bar
+  /// and into a rail beside the content.
   func tapBackButton() {
-    let button = app.navigationBars.buttons.element(boundBy: 0)
+    let button = app.buttons["BackButton"].firstMatch
     _ = button.waitUntilHittable()
     forceTap(button)
   }
