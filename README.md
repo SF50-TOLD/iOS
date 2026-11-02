@@ -6,205 +6,133 @@
 [![Platform](https://img.shields.io/badge/platform-iOS-lightgrey.svg)](https://developer.apple.com/ios/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A comprehensive Takeoff and Landing Data (TOLD) calculator for the Cirrus SF50 Vision Jet, supporting G1 through G3 models.
+A Takeoff and Landing Data (TOLD) calculator for the Cirrus SF50 Vision Jet, G1
+through G3.
 
 ## ⚠️ Disclaimer
 
-This app has not been approved by the FAA or by Cirrus Aircraft as an official source of performance information. Always verify performance information with official sources when using this app.
+This app has not been approved by the FAA or by Cirrus Aircraft as an official
+source of performance information. Always verify performance information with
+official sources when using this app.
 
 ## Features
 
-### Performance Calculations
+### Performance
 
-- **Takeoff Performance**: Calculate ground run, takeoff distance over 50ft obstacle, and Vx climb gradient
-- **Landing Performance**: Calculate landing distance, ground run, VREF, and go-around climb gradient
-- **Multi-Model Support**: G1, G2, G2+, and G3 models
-- **Safety Factors**: Configurable safety factor for conservative performance calculations
+- **Takeoff**: ground run, distance over a 50 ft obstacle, and climb gradient
+- **Landing**: landing distance, ground run, VREF, and go-around climb gradient
+- **Climb**: en route climb speed, rate and gradient
+- **Climb and go-around profiles**: the predicted climb along a departure or
+  missed-approach procedure, plotted against terrain and obstacles
+- **Models**: G1, G2, G2+ and G3, with the updated thrust schedule; tabular AFM
+  data or regression models
+- **Margins**: separate safety factors for dry and contaminated runways, and a
+  VREF additive
+- **Reports**: Takeoff and Landing Reports (TLRs) to view and share
 
-### Airport & Weather Data
+### Airports, weather and NOTAMs
 
-- **Airport Database**: Integrated FAA NASR data for US airports
-- **OurAirports Data**: International airport coverage with runway information
-- **Live Weather**: Fetch METAR/TAF data automatically or input custom conditions
-- **Location-Based Search**: Find nearby airports using device location
-- **Favorites & Recents**: Quick access to frequently used airports
+- **Airports**: FAA NASR, national AIP data sets, open flightmaps and
+  OurAirports, merged into one record per airport and updated each cycle, in the
+  background while charging
+- **Weather**: METAR, TAF and winds aloft from the NWS, filled in from Open-Meteo
+  and Apple WeatherKit, or entered by hand
+- **NOTAMs**: downloaded NOTAMs sorted by their likely effect on performance;
+  runway condition reports and obstacle NOTAMs can fill in contamination,
+  displaced thresholds and obstacles
+- **Terrain**: downloadable Copernicus DEM regions, delivered as Background
+  Assets packs
 
-### Advanced Features
+### Elsewhere
 
-- **NOTAM Support**: Account for runway contamination, obstacles, and displaced thresholds
-- **Widget Support**: Home screen widget displaying selected airport runway data
-- **Timezone Support**: View times in UTC or airport local time
-- **Custom Fuel Density**: Adjust for actual fuel density variations
+- **Widget**: runway data for the selected airport
+- **Shortcuts**: runway numbers through App Intents
+- **Units and time**: configurable units, UTC or airport local time
 
-## Technical Overview
+## Project
 
-### Architecture
+| Target or directory | Contents |
+|---|---|
+| `SF50 TOLD/` | The iOS app: SwiftUI views, data loaders, TLR generation, App Intents |
+| `SF50 Shared/` | Framework shared with the widget: models, performance models and AFM data, weather, NOTAMs, terrain, SwiftData stores |
+| `SF50 Runways/` | The widget extension |
+| `TerrainAssets/` | The Background Assets downloader extension for terrain regions |
+| `NOTAMParsing/` | Local package that parses NOTAM text |
+| `DownloadNASR/` | macOS tool that builds nav data and terrain regions |
+| `SF50 SharedTests/`, `SF50 TOLDTests/` | Unit tests (Swift Testing) |
+| `SF50 TOLDUITests/` | UI tests |
+| `Generate Screenshots/`, `promo/` | App Store screenshots, preview and creative assets |
+| `fastlane/` | Release, metadata and promo lanes |
 
-#### Technology Stack
+Each target has a DocC catalog (`*.docc`) describing its architecture: the
+performance pipeline, data loading, weather, terrain and climb analysis, and
+the terrain file format.
 
-- **Framework**: SwiftUI + Swift 6.0
-- **Data Persistence**: SwiftData for local storage
-- **Shared Data**: App Groups for widget communication
-- **Settings Management**: Defaults library for type-safe UserDefaults
-- **Error Monitoring**: BugSnag for crash reporting and performance monitoring
+Related repositories:
 
-#### Project Structure
+- [NavDataDistribution](https://github.com/SF50-TOLD/NavDataDistribution)
+  generates the per-cycle airport, procedure and obstacle data the app
+  downloads.
+- [Data-Extraction](https://github.com/SF50-TOLD/Data-Extraction) extracts the
+  AFM tables and fits the regression models in `SF50 Shared/Data/`.
 
-```text
-SF50 TOLD/
-├── SF50 TOLD/                  # Main iOS app target
-│   ├── SF50_TOLDApp.swift      # App entry point & initialization
-│   ├── Views/                  # SwiftUI views
-│   │   ├── ContentView.swift   # Main tab view container
-│   │   ├── Performance/        # Takeoff/Landing calculation views
-│   │   ├── Pickers/            # Airport, runway, weather pickers
-│   │   ├── Settings/           # App settings & configuration
-│   │   ├── Loading/            # Airport data loading UI
-│   │   └── TLR/                # Takeoff/Landing Report generation
-│   ├── Loaders/                # Airport data loading logic
-│   └── TLR/                    # HTML report generation
-├── SF50 Shared/                # Shared business logic
-│   ├── Models/                 # SwiftData models (Airport, Runway, NOTAM)
-│   ├── Performance/            # Performance calculation engines
-│   │   ├── Models/             # G1 & G2+ performance models
-│   │   └── ViewModel/          # Takeoff/Landing view models
-│   ├── Weather/                # METAR/TAF parsing
-│   ├── NearestAirport/         # Location-based airport search
-│   └── Defaults.swift          # Shared settings definitions
-├── SF50 Runways/               # Widget extension
-├── SF50 SharedTests/           # Unit tests
-└── SF50 TOLDUITests/           # UI tests
-```
+### Performance data
 
-### Key Components
-
-#### 1. Performance Models
-
-Two calculation approaches are implemented:
-
-- **Tabular Model** (`DataTable.swift`): Multi-dimensional interpolation of official AFM tables
-- **Regression Model**: Polynomial regression models
-
-Performance data is sourced from:
+The tabular model interpolates the AFM tables and reports N/A outside them; the
+regression model may extrapolate where that is sensible. Data comes from:
 
 - G1: P/N 31452-001 Rev A1
-- G2–G3: P/N 31452-002 Rev 2
-- Updated Thrust Schedule: P/N 31452-111 Rev 1
+- G2–G3: P/N 31452-002 Rev A1
+- Updated thrust schedule: P/N 31452-111 Rev 1
 
-#### 2. Data Layer
+## Development
 
-- **SwiftData Models**: `Airport`, `Runway`, `NOTAM`
-- **Persistence**: Group container (`group.codes.tim.TOLD`) for widget sharing
-- **Schema Versioning**: Currently on schema v3 with migration support
+### Requirements
 
-#### 3. Airport Data Loading
+- Xcode 27.0 or later (iOS 27.0 deployment target; macOS 27.0 for DownloadNASR)
+- Swift 6 language mode
+- Ruby and Bundler for fastlane
+- pnpm for the promo media
 
-- **NASR Integration**: Downloads and parses FAA's 28-day NASR cycle
-- **OurAirports**: CSV parsing for international airports
-- **Background Loading**: Asynchronous download with progress tracking
-- **User Consent**: Required before downloading large datasets
+### Setup
 
-#### 4. Weather Integration
+Copy `SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig.template` to
+`NOTAMAPIConfig.xcconfig` and fill in the NOTAM API token and Open-Meteo key.
+DownloadNASR reads `DownloadNASR/Credentials.xcconfig`, from its template.
 
-- **METAR/TAF Parsing**: Custom XML parser for NOAA Aviation Weather Service
-- **Manual Entry**: Full manual weather input with validation
-- **Cached Results**: Weather data cached to reduce API calls
+Builds and tests need code signing: the app and widget share data through the
+`group.codes.tim.TOLD` app group, and WeatherKit needs its entitlement.
 
-#### 5. Widget Extension
-
-- **WidgetKit**: Lock screen and home screen widgets
-- **Shared ModelContainer**: Reads from app group container
-- **Auto-Refresh**: Updates when selected airport changes
-
-### Performance Calculation Flow
-
-1. **Input Collection**: User selects airport, runway, enters weight/fuel
-2. **Weather Data**: Fetch live METAR or accept manual input
-3. **Density Altitude**: Calculate from field elevation, temperature, altimeter
-4. **Wind Components**: Decompose wind into headwind/crosswind
-5. **Table Lookup**: Interpolate base performance from AFM tables
-6. **Adjustments**: Apply corrections for:
-   - Slope
-   - Tailwind
-   - Anti-ice
-   - Runway contamination (wet/icy)
-7. **Safety Factor**: Multiply by user-configured factor (default: 1.0)
-8. **Results Display**: Show distances, speeds, climb gradients
+Dependencies are managed with Swift Package Manager.
 
 ### Testing
 
-#### Unit Tests
+The unit tests run from the `SF50 Shared Unit Tests` test plan and the UI tests
+from `SF50 TOLD UI Tests`. The UI tests launch the app with `UI-TESTING`, which
+erases its settings, scenarios, NOTAMs and nav data, so don't run them on a
+device whose data you want to keep.
 
-- `DataTableTests`: Multi-dimensional interpolation validation
-- `TabularPerformanceModelTests`: G1/G2+ model accuracy
-- `RegressionPerformanceModelTests`: Regression model validation
-- `METARXMLParserTests`: Weather parsing edge cases
+### CI
 
-#### UI Tests
+- **CI** builds and runs the unit and UI tests on iPhone and iPad for pushes to
+  `main` and `release/**` and for every pull request.
+- **Linters** runs `swiftlint --strict` and `swift format lint --strict`.
+- **Periphery** checks for unused code.
+- **Promo** checks the promo copy and storyboard.
+- **Publish Nav Data Store** builds each cycle's SwiftData airport store on a
+  Mac and publishes it for the app to download.
 
-- End-to-end takeoff/landing calculation flows
-- Airport search and selection
-- Weather input validation
-- Performance regression tests against known values
+### Releases
 
-### Build & Release
+`CHANGELOG.md` is the App Store release notes: each `## <version>` heading
+matches a tag. Pushing a tag runs the Release workflow, which checks the tag
+against the project's version and the changelog, archives the app with the next
+build number from App Store Connect, and uploads it with the changelog's notes.
 
-#### CI/CD
-
-- **GitHub Actions**: Automated testing on push/PR
-- **Linters**: SwiftLint + swift format
-- **Test Plans**: Separate unit and UI test plans
-
-#### Fastlane
+### Promo media
 
 [XCUIPromoKit](https://github.com/RISCfuture/XCUIPromoKit) captures and renders
 the listing's media from `promo/`: run `pnpm install` there once, then
 `fastlane screenshots`, `fastlane preview` or `fastlane creative_assets`. They
-build with Xcode 27.1 or later, which the iPhone Duo simulator needs; set
-`DUO_XCODE` in `fastlane/.env` if it isn't the release candidate in
-`/Applications`. `promo/storyboard.json` and `promo/brand.css` set how they
-look.
-
-### Development Setup
-
-#### Prerequisites
-
-- Xcode 27.0+
-- iOS 27.0+ deployment target (macOS 27.0+ for DownloadNASR)
-- Swift 6 language mode
-- Ruby + Bundler (for Fastlane)
-
-#### Dependencies
-
-Managed via Swift Package Manager:
-
-- **Bugsnag**: Error monitoring
-- **BugsnagPerformance**: Performance monitoring
-- **Defaults**: Type-safe UserDefaults wrapper
-- **SwiftNASR**: NASR data parsing
-- **ZIPFoundation**: NASR archive extraction
-- **swift-collections**: OrderedDictionary for NOTAM ordering
-
-### Data Files
-
-Located in `Data/`:
-
-- **AFM Tables**: CSV files containing official performance tables
-- **make-tables/**: Python scripts to convert AFM PDFs to CSV
-- **make-regressions/**: Python scripts to generate regression coefficients
-
-### Configuration
-
-#### Settings (Defaults)
-
-- `emptyWeight`: Aircraft empty weight
-- `fuelDensity`: Jet-A density (lb/gal)
-- `safetyFactor`: Multiplier for conservative calculations
-- `updatedThrustSchedule`: Toggle G2+ thrust schedule
-- `useRegressionModel`: Enable experimental regression models
-
-#### Environment
-
-- `UI-TESTING` launch argument: Resets app state for UI tests
-- Group container: `group.codes.tim.TOLD`
-- WeatherKit entitlement required for weather data
+build with the selected Xcode, which must be 27.1 or later for the iPhone Duo
+simulator. `promo/storyboard.json` and `promo/brand.css` set how they look.
