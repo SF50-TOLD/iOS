@@ -9,13 +9,14 @@ name: Publish Nav Data Store
 # it. Generation stays where it is, on Linux, in the NavDataDistribution repository — SwiftData does
 # not exist there, which is the whole reason this job runs on macOS.
 #
-# Idempotent: a cycle whose manifest is already published is skipped, so running daily costs a couple
+# Idempotent: a cycle whose manifest is already published is skipped, so each scheduled run costs a couple
 # of HTTP requests until there is something new to do.
 
 on:
   schedule:
-    # An hour after NavDataDistribution publishes, so the release is there to transcode.
-    - cron: "0 10 * * *"
+    # Wednesdays and Thursdays, an hour after NavDataDistribution publishes, so the release is
+    # there to transcode.
+    - cron: "0 10 * * 3,4"
   workflow_dispatch:
     inputs:
       cycle:
