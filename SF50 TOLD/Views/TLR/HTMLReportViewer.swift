@@ -19,13 +19,14 @@ struct HTMLReportViewer: View {
         .navigationTitle(reportTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-          ToolbarItem(placement: .navigationBarLeading) {
-            Button("Done") {
+          ToolbarItem(placement: .cancellationAction) {
+            Button(role: .close) {
               dismiss()
             }
+            .accessibilityIdentifier("closeReportButton")
           }
 
-          ToolbarItem(placement: .navigationBarTrailing) {
+          ToolbarItem(placement: .primaryAction) {
             shareButton
           }
         }
@@ -43,20 +44,19 @@ struct HTMLReportViewer: View {
         item: shared,
         preview: SharePreview(shared.documentTitle, image: thumbnail(of: shared.pdf))
       ) {
-        shareIcon
+        shareLabel
       }
     } else {
       Button {
       } label: {
-        shareIcon
+        shareLabel
       }
       .disabled(true)
     }
   }
 
-  private var shareIcon: some View {
-    Image(systemName: "square.and.arrow.up")
-      .accessibilityLabel("Share Report")
+  private var shareLabel: some View {
+    Label("Share Report", systemImage: "square.and.arrow.up")
   }
 
   /// Drives the navigation to completion. The report is self-contained, carrying its styling

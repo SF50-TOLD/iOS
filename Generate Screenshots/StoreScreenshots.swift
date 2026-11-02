@@ -105,9 +105,9 @@ extension StoreScreenshots {
     )
     try capture(.takeoffReport)
 
-    // The report's web view swallows a swipe down, so the sheet is closed through its Done button.
-    let doneButton = app.buttons["Done"].firstMatch
-    if doneButton.waitForExistence(timeout: 5) { doneButton.forceTap() }
+    // The report's web view swallows a swipe down, so the sheet is closed through its Close button.
+    let closeButton = app.buttons["closeReportButton"].firstMatch
+    if closeButton.waitForExistence(timeout: 5) { closeButton.forceTap() }
     XCTAssertTrue(
       app.webViews.firstMatch.waitForNonExistence(timeout: 10),
       "Takeoff report should close"
