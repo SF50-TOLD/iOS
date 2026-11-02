@@ -112,7 +112,7 @@ extension XCUIApplication {
   ///
   /// - Parameter runway: The runway to select, such as `"33"`.
   func selectAspen(runway: String) {
-    let airportSelector = collectionViews.firstMatch.makeVisible(
+    let airportSelector = performanceInputs.makeVisible(
       element: buttons["airportSelector"]
     )
     XCTAssertNotNil(airportSelector, "Airport selector should be accessible")
@@ -128,7 +128,7 @@ extension XCUIApplication {
     XCTAssertTrue(airportRow.waitForExistence(timeout: 10), "ASE favorite should appear")
     airportRow.tap()
 
-    let runwaySelector = collectionViews.firstMatch.makeVisible(
+    let runwaySelector = performanceInputs.makeVisible(
       element: buttons["runwaySelector"]
     )
     XCTAssertNotNil(runwaySelector, "Runway selector should be accessible")
