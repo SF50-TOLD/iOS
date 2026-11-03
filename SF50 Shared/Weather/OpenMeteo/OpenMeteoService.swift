@@ -217,7 +217,7 @@ public actor OpenMeteoService {
       return response
     } catch {
       // A cancelled fetch says nothing about whether the service can be reached.
-      if !WeatherLoader.isNetworkCancellation(error) { remember(.failure(error), for: key) }
+      if !error.isNetworkCancellation { remember(.failure(error), for: key) }
       throw error
     }
   }

@@ -231,7 +231,7 @@ public actor PathAtmosphereLoader: PathAtmosphereLoading {
       if let failure = error as? Failure {
         self = failure
       } else {
-        self = WeatherLoader.isTransientNetworkError(error) ? .offline : .unavailable
+        self = error.isTransientNetworkError ? .offline : .unavailable
       }
     }
   }

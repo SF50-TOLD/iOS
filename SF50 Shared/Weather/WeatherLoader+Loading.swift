@@ -5,30 +5,6 @@ import Sentry
 import SwiftMETAR
 
 extension WeatherLoader {
-  static let transientURLErrorCodes: Set<URLError.Code> = [
-    .cancelled,
-    .cannotFindHost,
-    .notConnectedToInternet,
-    .networkConnectionLost,
-    .timedOut,
-    .dnsLookupFailed,
-    .cannotConnectToHost,
-    .internationalRoamingOff,
-    .dataNotAllowed,
-    .secureConnectionFailed
-  ]
-
-  static func isNetworkCancellation(_ error: some Swift.Error) -> Bool {
-    if error is CancellationError { return true }
-    if let urlError = error as? URLError, urlError.code == .cancelled { return true }
-    return false
-  }
-
-  static func isTransientNetworkError(_ error: some Swift.Error) -> Bool {
-    guard let urlError = error as? URLError else { return false }
-    return transientURLErrorCodes.contains(urlError.code)
-  }
-
   /// Whether `error` is Aviation Weather failing on its own end rather than a defect here.
   ///
   /// Its CDN intermittently answers `5xx`, and a cache file being regenerated is served
@@ -48,7 +24,7 @@ extension WeatherLoader {
   /// failing on its own end are all outside this app's control. Those are logged and
   /// surfaced to the pilot, who decides whether to retry.
   static func shouldReport(_ error: some Swift.Error) -> Bool {
-    !isNetworkCancellation(error) && !isTransientNetworkError(error)
+    !error.isNetworkCancellation && !error.isTransientNetworkError
       && !isUpstreamServerFailure(error)
   }
 
@@ -64,7 +40,7 @@ extension WeatherLoader {
     airport: String? = nil
   ) {
     // A load cancelled by moving on to another airport is routine and not worth a line.
-    guard !isNetworkCancellation(error) else { return }
+    guard !error.isNetworkCancellation else { return }
 
     guard shouldReport(error) else {
       logger.info(
@@ -160,7 +136,7 @@ extension WeatherLoader {
       observations = .value(newMETARs)
     } catch {
       // Don't update observations if cancelled
-      guard !Self.isNetworkCancellation(error) else { return }
+      guard !error.isNetworkCancellation else { return }
       Self.recordLoadFailure(error, dataType: "metar")
       observations = .error(error)
     }
@@ -239,7 +215,7 @@ extension WeatherLoader {
       forecasts = .value(newTAFs)
     } catch {
       // Don't update forecasts if cancelled
-      guard !Self.isNetworkCancellation(error) else { return }
+      guard !error.isNetworkCancellation else { return }
       Self.recordLoadFailure(error, dataType: "taf")
       forecasts = .error(error)
     }
@@ -265,7 +241,7 @@ extension WeatherLoader {
     guard !Task.isCancelled else { return }
 
     // A bulletin cancelled on its own is spurious rather than superseded: drop it and keep the rest.
-    let failures = results.compactMap(\.failure).filter { !Self.isNetworkCancellation($0) }
+    let failures = results.compactMap(\.failure).filter { !$0.isNetworkCancellation }
     for failure in failures {
       Self.recordLoadFailure(failure, dataType: "windsAloft")
     }

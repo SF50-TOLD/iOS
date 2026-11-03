@@ -575,9 +575,9 @@ final class TerrainDataLoader: ObservableObject {
     try await manager.ensureLocalAvailability(of: pack, requireLatestVersion: true)
   }
 
-  /// Reports a terrain failure to Sentry unless it is one the user caused and can fix.
+  /// Reports a terrain failure to Sentry if it points at a defect in this app.
   private func report(_ error: any Error, for region: TerrainRegion, operation: String) {
-    guard (error as? TerrainDataLoaderError)?.isReportable ?? true else { return }
+    guard TerrainDataLoaderError.isReportable(error) else { return }
     SentrySDK.capture(error: error) { scope in
       scope.setTag(value: region.rawValue, key: "terrain.region")
       scope.setTag(value: operation, key: "terrain.operation")
@@ -663,17 +663,6 @@ enum TerrainDataLoaderError: LocalizedError {
   case payloadDamaged(TerrainRegion)
   case payloadUnreadable(TerrainRegion)
 
-  /// Whether this error should be reported to Sentry.
-  ///
-  /// User-side conditions like running out of disk space are not actionable
-  /// for the developer and are filtered out at the capture sites.
-  var isReportable: Bool {
-    switch self {
-      case .outOfDiskSpace: false
-      default: true
-    }
-  }
-
   var errorDescription: String? {
     String(localized: "Terrain data couldn’t be loaded.")
   }
@@ -712,6 +701,19 @@ enum TerrainDataLoaderError: LocalizedError {
         String(localized: "Tap “Re-download” to replace it.")
       case .payloadUnreadable:
         String(localized: "Try again in a moment.")
+    }
+  }
+
+  /// Whether a terrain failure points at a defect in this app, and so belongs in Sentry.
+  ///
+  /// A cancelled download, a network the pilot has no coverage on, and running out of disk
+  /// space are all outside this app's control. The system cancels its own asset-pack
+  /// downloads whenever it reschedules them.
+  static func isReportable(_ error: any Error) -> Bool {
+    switch error {
+      case Self.outOfDiskSpace: false
+      case let error where error.isNetworkCancellation || error.isTransientNetworkError: false
+      default: true
     }
   }
 }
