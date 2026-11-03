@@ -176,7 +176,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
         try await loader.downloadRegion(region)
         downloadState = .idle
       } catch {
-        if (error as? TerrainDataLoaderError)?.isReportable ?? true {
+        if TerrainDataLoaderError.isReportable(error) {
           SentrySDK.capture(error: error) { scope in
             scope.setTag(value: region.rawValue, key: "terrain.region")
             scope.setTag(value: "download", key: "terrain.operation")
@@ -204,7 +204,7 @@ final class TerrainDataLoaderViewModel: ObservableObject, WithIdentifiableError 
         try await loader.downloadRegion(region)
         downloadState = .idle
       } catch {
-        if (error as? TerrainDataLoaderError)?.isReportable ?? true {
+        if TerrainDataLoaderError.isReportable(error) {
           SentrySDK.capture(error: error) { scope in
             scope.setTag(value: region.rawValue, key: "terrain.region")
             scope.setTag(value: "redownload", key: "terrain.operation")
