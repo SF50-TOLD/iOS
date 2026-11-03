@@ -707,7 +707,7 @@ extension SF50_TOLDUITests {
     let baselineDistance = takeoff.distanceValue
 
     // Scroll up to reach the payload field at the top of the form
-    let collectionView = takeoff.app.collectionViews.firstMatch
+    let collectionView = takeoff.app.performanceInputs
     for _ in 0..<6 {
       if takeoff.payloadField.isVisible { break }
       let start = collectionView.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))

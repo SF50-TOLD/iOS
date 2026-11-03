@@ -19,6 +19,9 @@ changed in the cockpit rather than what changed in the code.
   favorites, recents and selected airports follow it. About lists every source
   the airport data comes from, and for airports drawn from openflightmaps, the
   runway picker offers to report a data error to them.
+- On iPad and on iPhone Duo’s inner display, Takeoff and Landing show your
+  inputs and the results side by side, so you can see what a change does to the
+  numbers without scrolling.
 
 ## 4.0
 
