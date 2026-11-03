@@ -29,7 +29,8 @@ jobs:
       ui-matrix: |
         {"include":[
           {"ios-label":"latest","runner":"xcode-27","device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"},
-          {"ios-label":"latest","runner":"xcode-27","device":"iPad Pro 13-inch (M5)","device-type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB","os-version":"","xcode-version":"latest-stable"}
+          {"ios-label":"latest","runner":"xcode-27","device":"iPad Pro 13-inch (M5)","device-type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB","os-version":"","xcode-version":"latest-stable"},
+          {"ios-label":"latest","runner":"xcode-27","device":"iPhone Duo","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-Duo","os-version":"","xcode-version":"latest-stable"}
         ]}
       secret-file-path: "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig"
       secret-file-template: |
