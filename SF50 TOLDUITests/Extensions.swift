@@ -74,3 +74,19 @@ extension XCUIApplication {
     return descendants(matching: .any).matching(predicate).firstMatch
   }
 }
+
+@MainActor
+extension XCUIApplication {
+  /// The form holding a performance screen's inputs. Where inputs and results share one form,
+  /// that form.
+  var performanceInputs: XCUIElement { performanceForm("performanceInputs") }
+
+  /// The form holding a performance screen's results. Where inputs and results share one form,
+  /// that form.
+  var performanceResults: XCUIElement { performanceForm("performanceResults") }
+
+  private func performanceForm(_ identifier: String) -> XCUIElement {
+    let form = collectionViews[identifier]
+    return form.exists ? form : collectionViews.firstMatch
+  }
+}

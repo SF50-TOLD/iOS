@@ -62,7 +62,7 @@ extension StoreScreenshots {
   /// Opens the takeoff's weather from the top of the form, captures it, and goes back.
   private func captureWeather(in app: XCUIApplication) throws {
     app.scrollToTop()
-    let weatherSelector = app.collectionViews.firstMatch.makeVisible(
+    let weatherSelector = app.performanceInputs.makeVisible(
       element: app.buttons["weatherSelector"]
     )
     XCTAssertNotNil(weatherSelector, "Weather selector should be reachable")
@@ -87,14 +87,14 @@ extension StoreScreenshots {
     through lastResult: String,
     in app: XCUIApplication
   ) throws {
-    let result = app.collectionViews.firstMatch.makeVisible(element: app.staticTexts[lastResult])
+    let result = app.performanceResults.makeVisible(element: app.staticTexts[lastResult])
     XCTAssertNotNil(result, "\(lastResult) should be reachable")
     try capture(shot)
   }
 
   /// Presents the takeoff report, captures it once its web view shows text, and dismisses it.
   private func captureTakeoffReport(in app: XCUIApplication) throws {
-    let reportButton = app.collectionViews.firstMatch.makeVisible(
+    let reportButton = app.performanceResults.makeVisible(
       element: app.buttons["generateTakeoffReportButton"]
     )
     XCTAssertNotNil(reportButton, "Generate takeoff report button should be reachable")
@@ -117,7 +117,7 @@ extension StoreScreenshots {
   /// Opens the climb profile on the LINDZ departure with its weather layers, and captures the
   /// screen and the terrain chart on its own.
   private func captureClimbProfile(in app: XCUIApplication) throws {
-    let showClimb = app.collectionViews.firstMatch.makeVisible(
+    let showClimb = app.performanceResults.makeVisible(
       element: app.buttons["showClimbProfileButton"]
     )
     XCTAssertNotNil(showClimb, "Show Climb should be reachable")
@@ -142,7 +142,7 @@ extension StoreScreenshots {
 
   /// Shows the landing's ground run on a satellite map of the runway, captures it, and goes back.
   private func captureLandingMap(in app: XCUIApplication) throws {
-    let showMap = app.collectionViews.firstMatch.makeVisible(
+    let showMap = app.performanceResults.makeVisible(
       element: app.buttons["showLandingMapButton"]
     )
     XCTAssertNotNil(showMap, "Show landing map should be reachable")

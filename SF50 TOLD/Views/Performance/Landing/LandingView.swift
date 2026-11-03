@@ -12,11 +12,13 @@ struct LandingView: View {
   var body: some View {
     NavigationStack {
       if performance != nil && weather != nil {
-        Form {
+        PerformanceLayout {
           LandingPerformanceView()
+        } results: {
           LandingResultsView()
-          LandingReportsView()
-        }.navigationTitle("Landing")
+          Section { LandingReportsView() }
+        }
+        .navigationTitle("Landing")
       } else {
         ProgressView()
           .controlSize(.extraLarge)
