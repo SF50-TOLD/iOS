@@ -12,11 +12,13 @@ struct TakeoffView: View {
   var body: some View {
     NavigationStack {
       if performance != nil && weather != nil {
-        Form {
+        PerformanceLayout {
           TakeoffPerformanceView()
+        } results: {
           TakeoffResultsView()
-          TakeoffReportsView()
-        }.navigationTitle("Takeoff")
+          Section { TakeoffReportsView() }
+        }
+        .navigationTitle("Takeoff")
       } else {
         ProgressView()
           .controlSize(.extraLarge)

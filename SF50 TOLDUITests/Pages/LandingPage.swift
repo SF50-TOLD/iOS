@@ -70,7 +70,7 @@ final class LandingPage: BasePage {
   func selectFlaps(_ flapSetting: String) {
     let resultValue = app.staticTexts["landingDistanceValue"]
     let previousDistance = scrollToElement(resultValue)?.label ?? ""
-    app.collectionViews.firstMatch.swipeDown()
+    app.performanceInputs.swipeDown()
     let button = scrollToElement(flapsButton)
     XCTAssertNotNil(button, "Flaps button should exist")
     let option = app.buttons[flapSetting]
