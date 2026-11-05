@@ -2,7 +2,6 @@ import Foundation
 import Synchronization
 import os
 
-// periphery:ignore:parameters isolation
 /// Retries an async operation with exponential backoff.
 ///
 /// `CancellationError` and `URLError.cancelled` always rethrow immediately.
@@ -42,7 +41,6 @@ func withRetry<T>(
   fatalError("Retry loop exited without returning or throwing")
 }
 
-// periphery:ignore:parameters isolation
 /// Downloads a file to disk, reporting the transfer's progress, retrying transient
 /// failures, and resuming where a failed attempt left off.
 ///
