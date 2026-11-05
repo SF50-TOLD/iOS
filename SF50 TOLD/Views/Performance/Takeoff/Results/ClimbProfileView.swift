@@ -325,7 +325,7 @@ struct ClimbProfileView: View {
 
     switch firstSegment {
       case .enroute:
-        // [takeoff until 35'AFE, enrouteObstacle until 600'AFE, enroute]
+        // [takeoff until 50'AFE, enrouteObstacle until 600'AFE, enroute]
         let antiIce = firstSegmentAntiIce
         segments = [
           Segment(
@@ -339,7 +339,7 @@ struct ClimbProfileView: View {
           Segment(profile: .enroute(antiIce: antiIce))
         ]
       case .enrouteObstacle:
-        // [takeoff until 35'AFE, enrouteObstacle]
+        // [takeoff until 50'AFE, enrouteObstacle]
         let antiIce = firstSegmentAntiIce
         segments = [
           Segment(
