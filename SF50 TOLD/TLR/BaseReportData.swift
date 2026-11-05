@@ -83,10 +83,8 @@ class BaseReportData<PerformanceType, ScenarioType> {
     fatalError("Subclasses must override calculatePerformance(for:conditions:config:)")
   }
 
-  /// Determines maximum weight and limiting factor for a runway. Override in subclass.
-  func determineMaxWeight(runway _: RunwayInput) throws -> (
-    Measurement<UnitMass>, LimitingFactor
-  ) {
+  /// Searches for the maximum weight and what limits it for a runway. Override in subclass.
+  func determineMaxWeight(runway _: RunwayInput) throws -> LimitSearchResult<UnitMass> {
     fatalError("Subclasses must override determineMaxWeight(runway:)")
   }
 
@@ -110,11 +108,12 @@ class BaseReportData<PerformanceType, ScenarioType> {
   /// Generates max weight analysis for all runways.
   func generateRunwayInfo() throws -> [RunwayInput: RunwayInfo] {
     try input.airport.runways.sorted().reduce(into: [:]) { dict, runway in
-      let (maxWeight, limitingFactor) = try determineMaxWeight(runway: runway)
+      let result = try determineMaxWeight(runway: runway)
 
       dict[runway] = .init(
-        maxWeight: maxWeight,
-        limitingFactor: limitingFactor,
+        maxWeight: result.limit,
+        limitingFactor: .init(result.bindingConstraint),
+        limitIsOffscale: result.reliesOnOffscaleData,
         contamination: runway.notam?.contamination
       )
     }
@@ -147,24 +146,5 @@ class BaseReportData<PerformanceType, ScenarioType> {
       )
       runways[runway] = performance
     }
-  }
-
-  // MARK: - Max Weight
-
-  /**
-   * The maximum weight a limit search found, and the factor it reports.
-   *
-   * A search that finds no weight the runway allows reports the empty weight, rounded up to the
-   * search's increment.
-   *
-   * - Parameter result: The package's limit search result.
-   * - Returns: The maximum weight and the factor limiting it.
-   */
-  func maxWeight(from result: LimitSearchResult<UnitMass>) -> (
-    Measurement<UnitMass>, LimitingFactor
-  ) {
-    let increment = PerformanceCalculator.weightSearchIncrement,
-      lowestSearchedWeight = (input.emptyWeight / increment).rounded(.up) * increment
-    return (result.limit ?? lowestSearchedWeight, LimitingFactor(result.bindingConstraint))
   }
 }
