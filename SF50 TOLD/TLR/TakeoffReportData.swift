@@ -67,16 +67,12 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
     )
   }
 
-  override func determineMaxWeight(runway: RunwayInput) throws -> (
-    Measurement<UnitMass>, LimitingFactor
-  ) {
-    maxWeight(
-      from: try calculator.maxTakeoffWeight(
-        conditions: input.conditions,
-        runway: runway,
-        minimumWeight: input.emptyWeight,
-        safetyFactor: input.safetyFactor
-      )
+  override func determineMaxWeight(runway: RunwayInput) throws -> LimitSearchResult<UnitMass> {
+    try calculator.maxTakeoffWeight(
+      conditions: input.conditions,
+      runway: runway,
+      minimumWeight: input.emptyWeight,
+      safetyFactor: input.safetyFactor
     )
   }
 

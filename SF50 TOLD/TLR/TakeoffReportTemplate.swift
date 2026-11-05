@@ -70,15 +70,15 @@ class TakeoffReportTemplate: BaseReportTemplate<
       .init(heading: "RWY", width: 4, alignment: .leading),
       .init(heading: "TODA", width: 7),
       .init(heading: "MTOW", width: 7),
-      .init(heading: "LIM", width: 5, alignment: .leading)
+      .init(heading: "LIM", width: 10, alignment: .leading)
     ]
   }
 
   override func runwayCells(for runway: RunwayInput, _ info: RunwayInfo) -> [String] {
     [
       whole(runway.availableTakeoffDistance.converted(to: runwayLengthUnit).value),
-      whole(info.maxWeight.converted(to: weightUnit).value),
-      textLimitingFactor(info.limitingFactor)
+      textMaxWeight(info),
+      textLimit(info)
     ]
   }
 
@@ -169,7 +169,7 @@ class TakeoffReportTemplate: BaseReportTemplate<
               runwayInput.availableTakeoffDistance.converted(to: runwayLengthUnit)
                 .formatted(.length)
             )
-            Td(info.maxWeight.converted(to: weightUnit).formatted(.weight))
+            Td(format(maxWeight: info))
             Td(info.limitingFactor.rawValue)
           }
         }

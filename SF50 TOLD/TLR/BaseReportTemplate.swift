@@ -423,6 +423,17 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
     return figure + [Br(), Span(qualifier).class("clamped")]
   }
 
+  /// A runway's maximum weight, `N/A` where no weight is allowed, and qualified as offscale where
+  /// the limit rests on figures the AFM tables do not cover.
+  func format(maxWeight info: RunwayInfo) -> [Tag] {
+    guard let maxWeight = info.maxWeight else {
+      return [Span(String(localized: "N/A")).class("invalid")]
+    }
+    let figure: [Tag] = [Text(maxWeight.converted(to: weightUnit).formatted(.weight))]
+    guard info.limitIsOffscale else { return figure }
+    return figure + [Br(), Span(String(localized: "offscale")).class("clamped")]
+  }
+
   func format<T>(value: Value<T>?, formatter: (T) -> [Tag]) -> [Tag] {
     guard let value else {
       return [Span(String(localized: "-")).class("not-available")]

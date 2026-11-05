@@ -93,27 +93,32 @@ struct PerformanceInput {
 ///
 /// ## Cases
 ///
-/// - ``AFM``: Limited by Aircraft Flight Manual charts
+/// - ``AFM``: Limited by Aircraft Flight Manual charts or the structural maximum weight
 /// - ``field``: Limited by the declared distance available
 /// - ``obstacle``: Limited by obstacle clearance requirements
 /// - ``climb``: Limited by climb gradient requirements
+/// - ``wind``: The tailwind exceeds the AFM's limit
+/// - ``elevation``: The airport elevation lies outside the range the AFM approves
+/// - ``temperature``: The temperature lies outside the AFM's operating range
 enum LimitingFactor: String, Codable, Sendable {
   case AFM = "AFM"
   case field = "FLD"
   case obstacle = "OBS"
   case climb = "CLB"
+  case wind = "WND"
+  case elevation = "ELEV"
+  case temperature = "TEMP"
 
   /// The factor a limit search's binding constraint is reported as.
-  ///
-  /// The structural maximum weight and the AFM's wind, elevation and temperature limitations are
-  /// all limits the AFM sets, so they report as ``AFM``.
   init(_ constraint: BindingConstraint) {
     switch constraint {
       case .fieldLength: self = .field
       case .obstacleClearance: self = .obstacle
       case .goAroundClimbGradient: self = .climb
-      case .AFMData, .structuralLimit, .temperatureLimit, .windLimit, .elevationLimit:
-        self = .AFM
+      case .AFMData, .structuralLimit: self = .AFM
+      case .windLimit: self = .wind
+      case .elevationLimit: self = .elevation
+      case .temperatureLimit: self = .temperature
     }
   }
 }
@@ -135,11 +140,15 @@ struct AircraftInfo {
 /// ``RunwayInfo`` captures the maximum weight that can be used for a runway
 /// along with what factor limits that weight.
 struct RunwayInfo: Sendable {
-  /// Maximum allowable weight for this runway under current conditions.
-  let maxWeight: Measurement<UnitMass>
+  /// Maximum allowable weight for this runway under current conditions, or `nil` where no
+  /// weight is allowed.
+  let maxWeight: Measurement<UnitMass>?
 
-  /// What limits the maximum weight (AFM, field length, obstacle, climb).
+  /// What limits the maximum weight (AFM, field length, obstacle, climb, or an operating limit).
   let limitingFactor: LimitingFactor
+
+  /// Whether the maximum weight rests on figures the AFM tables do not cover.
+  let limitIsOffscale: Bool
 
   /// Current runway contamination from NOTAM, if any.
   let contamination: Contamination?

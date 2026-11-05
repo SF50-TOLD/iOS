@@ -19,7 +19,10 @@ struct `Takeoff Report` {
     takeoffRun: Measurement<UnitLength>? = nil,
     takeoffDistance: Measurement<UnitLength>? = nil,
     obstacle: (height: Measurement<UnitLength>, distance: Measurement<UnitLength>)? = nil,
-    useRegressionModel: Bool = false
+    useRegressionModel: Bool = false,
+    windDirection: Measurement<UnitAngle> = .init(value: 360, unit: .degrees),
+    windSpeed: Measurement<UnitSpeed> = .init(value: 10, unit: .knots),
+    temperature: Measurement<UnitTemperature> = .init(value: 15, unit: .celsius)
   ) -> PerformanceInput {
     let airport = Airport(
       recordID: "TEST",
@@ -58,9 +61,9 @@ struct `Takeoff Report` {
       airport: .init(from: airport, notams: notam.map { [runways[0].name: $0] } ?? [:]),
       runway: .init(from: runways[0], airport: airport, notam: notam),
       conditions: .init(
-        windDirection: .init(value: 360, unit: .degrees),
-        windSpeed: .init(value: 10, unit: .knots),
-        temperature: .init(value: 15, unit: .celsius),
+        windDirection: windDirection,
+        windSpeed: windSpeed,
+        temperature: temperature,
         seaLevelPressure: .init(value: 29.92, unit: .inchesOfMercury)
       ),
       weight: .init(value: 5500, unit: .pounds),
@@ -237,6 +240,43 @@ struct `Takeoff Report` {
       unobstructed != .obstacle,
       "The same runway without the obstacle is not obstacle-limited"
     )
+  }
+
+  /// A tailwind past the AFM's limit rules out every weight, and a report that printed one anyway
+  /// would show a weight the search never verified.
+  @Test
+  func `reports no maximum weight where the tailwind exceeds the AFM limit`() throws {
+    let
+      input = Self.performanceInput(
+        windDirection: .init(value: 180, unit: .degrees),
+        windSpeed: .init(value: 15, unit: .knots)
+      ),
+      info = try #require(Self.analysis(of: input).runwayInfo[input.runway]),
+      report = try generateTakeoffReport(
+        input: input,
+        scenarios: [PerformanceScenario(name: "Forecast Conditions")]
+      )
+
+    #expect(info.maxWeight == nil, "No weight is allowed past the tailwind limit")
+    #expect(info.limitingFactor == .wind)
+    #expect(report.textReport.contains("N/A WND"), "The text report should print N/A and WND")
+    #expect(report.html.contains("WND"), "The HTML report should name the wind limit")
+  }
+
+  /// The performance figures beside the maximum weight say when the AFM never covered the
+  /// conditions, and the maximum weight has to say so too.
+  @Test
+  func `marks a maximum weight that rests on conditions colder than the tables cover`() throws {
+    let input = Self.performanceInput(temperature: .init(value: -30, unit: .celsius)),
+      info = try #require(Self.analysis(of: input).runwayInfo[input.runway]),
+      report = try generateTakeoffReport(
+        input: input,
+        scenarios: [PerformanceScenario(name: "Forecast Conditions")]
+      )
+
+    #expect(info.limitIsOffscale)
+    #expect(report.textReport.contains("OFFSC"))
+    #expect(report.html.contains("offscale"))
   }
 
   /// A shared file should identify the operation it describes rather than be one of many

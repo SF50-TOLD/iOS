@@ -242,7 +242,22 @@ extension BaseReportTemplate {
       case .field: "FL"
       case .obstacle: "O"
       case .climb: "C"
+      case .wind: "WND"
+      case .elevation: "ELEV"
+      case .temperature: "TEMP"
     }
+  }
+
+  /// A runway's maximum weight, or `N/A` where no weight is allowed.
+  func textMaxWeight(_ info: RunwayInfo) -> String {
+    info.maxWeight.map { whole($0.converted(to: weightUnit).value) } ?? "N/A"
+  }
+
+  /// What limits a runway's maximum weight, followed by `OFFSC` where the limit rests on figures
+  /// the AFM tables do not cover.
+  func textLimit(_ info: RunwayInfo) -> String {
+    let factor = textLimitingFactor(info.limitingFactor)
+    return info.limitIsOffscale ? "\(factor) OFFSC" : factor
   }
 
   /// Flap settings as fixed codes. The app's own names are translated, and this report is not.

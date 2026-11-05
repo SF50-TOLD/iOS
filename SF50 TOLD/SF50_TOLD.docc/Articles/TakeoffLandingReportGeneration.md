@@ -76,15 +76,19 @@ Both subclasses call the SF50Performance package's limit searches,
 `PerformanceCalculator.maxTakeoffWeight` and `maxLandingWeight`, which bisect
 in 50 lb steps from the empty weight to the structural maximum and check:
 
-1. The AFM's wind and airport elevation limitations
+1. The AFM's wind, airport elevation and temperature limitations
 2. AFM chart limits (a figure the tables give)
 3. Available runway length
 4. Operation-specific constraints (obstacle clearance from the 50 ft screen,
    or the go-around climb gradient)
 
-``BaseReportData/maxWeight(from:)`` turns the search's binding constraint into
-a ``LimitingFactor``, and reports the empty weight, rounded up to 50 lb, when
-no weight satisfies every constraint.
+``BaseReportData/generateRunwayInfo()`` turns the search's binding constraint
+into a ``LimitingFactor``. Wind, elevation and temperature report as `WND`,
+`ELEV` and `TEMP`; `AFM` is reserved for a missing chart figure and the
+structural maximum weight. When no weight satisfies every constraint, the
+maximum weight is `nil` and the report prints `N/A` with the factor that ruled
+every weight out. When the limit rests on clamped figures, the report marks it
+`offscale`, as it does a distance.
 
 ## Usage Example
 

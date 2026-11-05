@@ -24,8 +24,8 @@ The ``generate()`` method orchestrates the calculation pipeline:
 Each subclass's ``determineMaxWeight(runway:)`` runs the SF50Performance
 package's limit search, which finds the highest weight that satisfies every
 constraint (AFM limitations and chart limits, runway length, obstacle or climb
-requirements). ``maxWeight(from:)`` turns its result into the weight and
-``LimitingFactor`` the report shows.
+requirements). ``generateRunwayInfo()`` turns its result into the weight, the
+``LimitingFactor`` and the offscale marker the report shows.
 
 ## Topics
 
@@ -42,7 +42,3 @@ requirements). ``maxWeight(from:)`` turns its result into the weight and
 - ``calculatePerformance(for:conditions:config:)``
 - ``determineMaxWeight(runway:)``
 - ``createScenario(name:runways:)``
-
-### Maximum Weight
-
-- ``maxWeight(from:)``
