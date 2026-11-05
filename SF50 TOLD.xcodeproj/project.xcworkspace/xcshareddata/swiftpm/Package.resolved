@@ -1,5 +1,5 @@
 {
-  "originHash" : "c11087216def8eeac5aacba37734341da2352917dfb875053d2dd7adc57654ab",
+  "originHash" : "ed3dd881a37c301e94c19f94c3d2100496c7f2662bb9b00540aa4314c59c3f8a",
   "pins" : [
     {
       "identity" : "buildablemacro",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/MeasurementKit",
       "state" : {
-        "revision" : "f147f2972093c0b877d0f4eac57c1da26a148f6a",
-        "version" : "1.2.0"
+        "revision" : "20c908d2ccefc152dfdc646f9b71b10e8f635822",
+        "version" : "1.2.1"
       }
     },
     {
@@ -62,6 +62,15 @@
       "state" : {
         "revision" : "4e1e4ba9ce329f91ad6bfb63bab6da576a3f348c",
         "version" : "9.32.0"
+      }
+    },
+    {
+      "identity" : "sf50-performance",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SF50-TOLD/SF50-Performance.git",
+      "state" : {
+        "revision" : "49cdd9111fbc7dffbec6bbf8f9411b8c82aee679",
+        "version" : "1.0.0"
       }
     },
     {

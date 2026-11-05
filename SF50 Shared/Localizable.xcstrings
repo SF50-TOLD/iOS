@@ -30,29 +30,13 @@
     "A winds aloft forecast didn’t say when it applies." : {
 
     },
-    "AC 91-79B landing distance factors are applied. The configured safety factor is not applied to RwyCC landing distances." : {
-
-    },
     "Africa" : {
 
     },
     "Airport" : {
 
     },
-    "Airport elevation of %@ is outside the AFM’s %@ to %@ limits." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Airport elevation of %1$@ is outside the AFM’s %2$@ to %3$@ limits."
-          }
-        }
-      }
-    },
     "Antarctica" : {
-
-    },
-    "Apple Weather" : {
 
     },
     "Asia" : {
@@ -76,32 +60,10 @@
     "Configuration not authorized" : {
 
     },
-    "Contaminated runway performance data is considered supplemental and is not FAA approved." : {
-
-    },
-    "Contamination" : {
-
-    },
     "Couldn’t open the navigation data." : {
 
     },
     "Couldn’t use the navigation data that was downloaded." : {
-
-    },
-    "Crosswind of %@ exceeds the %@ limit." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Crosswind of %1$@ exceeds the %2$@ limit."
-          }
-        }
-      }
-    },
-    "Data table couldn’t be loaded." : {
-
-    },
-    "Downhill — %@" : {
 
     },
     "Download terrain data for this region in Settings." : {
@@ -118,16 +80,6 @@
     },
     "Dry Snow" : {
       "comment" : "A runway condition."
-    },
-    "Equation type mismatch: expected %@, got %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Equation type mismatch: expected %1$@, got %2$@."
-          }
-        }
-      }
     },
     "Error" : {
 
@@ -165,26 +117,10 @@
     "Flight Phase" : {
 
     },
-    "Fuel quantity of %@ exceeds the %@ usable capacity." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Fuel quantity of %1$@ exceeds the %2$@ usable capacity."
-          }
-        }
-      }
-    },
     "Generation %@ has no database on disk." : {
 
     },
-    "Go-around climb gradient requirement is not met." : {
-
-    },
     "headwind" : {
-
-    },
-    "Headwind — %@" : {
 
     },
     "Headwind %@" : {
@@ -196,19 +132,6 @@
     "Landing" : {
 
     },
-    "Landing distance of %@ exceeds the available %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Landing distance of %1$@ exceeds the available %2$@."
-          }
-        }
-      }
-    },
-    "Landing distances include an AC 91-79B §5.2.2 adjustment for the VREF additive. This is an approximation." : {
-
-    },
     "left crosswind" : {
 
     },
@@ -216,9 +139,6 @@
 
     },
     "Middle East" : {
-
-    },
-    "Missing %@ equation definition." : {
 
     },
     "N/A" : {
@@ -246,9 +166,6 @@
     "North America" : {
 
     },
-    "NWS" : {
-
-    },
     "Oceania" : {
 
     },
@@ -269,22 +186,10 @@
     "Open SF50 TOLD and let it finish loading airport data." : {
 
     },
-    "Open-Meteo" : {
-
-    },
     "Preview Failed" : {
 
     },
     "Received HTTP response %lld." : {
-
-    },
-    "Regression equation couldn’t be loaded." : {
-
-    },
-    "Required climb gradient may exceed actual climb performance." : {
-
-    },
-    "Required input variable “%@” is missing." : {
 
     },
     "right crosswind" : {
@@ -296,12 +201,6 @@
     "RwyCC %@" : {
       "comment" : "A runway condition. The argument is the runway condition code, 1 through 6."
     },
-    "Safety Factor — %@" : {
-
-    },
-    "Schema version “%@” is not supported." : {
-
-    },
     "Slush/Wet Snow %@" : {
       "comment" : "A runway condition. The argument is the depth of the slush or wet snow, in inches."
     },
@@ -311,47 +210,14 @@
     "tailwind" : {
 
     },
-    "Tailwind — %@" : {
-
-    },
     "Tailwind %@" : {
 
-    },
-    "Tailwind of %@ exceeds the %@ limit." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Tailwind of %1$@ exceeds the %2$@ limit."
-          }
-        }
-      }
     },
     "Takeoff" : {
 
     },
     "Takeoff and landing numbers couldn’t be calculated" : {
 
-    },
-    "Takeoff distance of %@ exceeds the available %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Takeoff distance of %1$@ exceeds the available %2$@."
-          }
-        }
-      }
-    },
-    "Takeoff run of %@ exceeds the available %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Takeoff run of %1$@ exceeds the available %2$@."
-          }
-        }
-      }
     },
     "Terrain data couldn’t be loaded." : {
 
@@ -371,25 +237,10 @@
     "The downloaded database contained no airports." : {
 
     },
-    "The file data could not be decoded as UTF-8." : {
-
-    },
-    "The file data could not be decoded." : {
-
-    },
     "The forecast service couldn’t answer." : {
 
     },
     "The forecast service couldn’t be reached." : {
-
-    },
-    "The input values are above the maximums specified in the AFM table. Proceed with extreme caution." : {
-
-    },
-    "The input values are below the minimums specified in the AFM table." : {
-
-    },
-    "The JSON schema is invalid: %@" : {
 
     },
     "The terrain file “%@” is invalid or corrupted." : {
@@ -416,15 +267,6 @@
     "Try re-downloading weather data later, or manually enter weather." : {
 
     },
-    "Unpaved Surface" : {
-
-    },
-    "Uphill — %@" : {
-
-    },
-    "VREF — %@" : {
-
-    },
     "Water/Slush %@" : {
       "comment" : "A runway condition. The argument is the depth of the water or slush, in inches."
     },
@@ -434,31 +276,11 @@
     "Weather layers couldn’t be loaded" : {
 
     },
-    "Weight of %@ exceeds the %@ maximum." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Weight of %1$@ exceeds the %2$@ maximum."
-          }
-        }
-      }
-    },
     "Wet Runway" : {
       "comment" : "A runway condition."
     },
     "Wind along course under 5 knots" : {
 
-    },
-    "Zero-fuel weight of %@ exceeds the %@ maximum." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Zero-fuel weight of %1$@ exceeds the %2$@ maximum."
-          }
-        }
-      }
     }
   },
   "version" : "1.1"

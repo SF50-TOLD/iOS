@@ -12,18 +12,14 @@ import SF50_Shared
 ///
 /// ## Weight Determination
 ///
-/// The ``determineMaxWeight(runway:)`` method uses binary search to find the highest
-/// weight that satisfies:
+/// The ``determineMaxWeight(runway:)`` method uses the package's limit search to find the
+/// highest weight that satisfies:
 /// 1. AFM performance chart limits
 /// 2. Landing distance available
 /// 3. Go-around climb gradient requirements
 class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerformanceScenario> {
 
   // MARK: - Template Method Overrides
-
-  override func maxWeight() -> Measurement<UnitMass> {
-    input.aircraftType.limitations.maxLandingWeight
-  }
 
   override func createScenario(name: String, runways: [RunwayInput: LandingRunwayPerformance])
     -> LandingPerformanceScenario
@@ -36,18 +32,11 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
     conditions: Conditions,
     config: Configuration
   ) throws -> LandingRunwayPerformance {
-    let perfModel = performance.createPerformanceModel(
+    let report = try calculator.landing(
       conditions: conditions,
       configuration: config,
       runway: runway,
-      notam: runway.notam,
-      useRegressionModel: input.useRegressionModel,
-      aircraftType: input.aircraftType
-    )
-    let report = try performance.calculateLanding(
-      for: perfModel,
-      safetyFactor: input.safetyFactor,
-      VREFAdditiveKts: input.VREFAdditiveKts
+      safetyFactor: input.safetyFactor
     )
 
     let available = runway.availableLandingDistance
@@ -86,51 +75,14 @@ class LandingReportData: BaseReportData<LandingRunwayPerformance, LandingPerform
   override func determineMaxWeight(runway: RunwayInput) throws -> (
     Measurement<UnitMass>, LimitingFactor
   ) {
-    let result = try binarySearchMaxWeight(
-      runway: runway,
-      min: input.emptyWeight,
-      max: maxWeight()
-    ) { weight -> (valid: Bool, factor: LimitingFactor) in
-      let config = Configuration(
-        weight: weight,
-        flapSetting: input.flapSetting
-      )
-
-      let model = performance.createPerformanceModel(
+    maxWeight(
+      from: try calculator.maxLandingWeight(
         conditions: input.conditions,
-        configuration: config,
         runway: runway,
-        notam: runway.notam,
-        useRegressionModel: input.useRegressionModel,
-        aircraftType: input.aircraftType
+        flapSetting: input.flapSetting.performanceFlapSetting,
+        minimumWeight: input.emptyWeight,
+        safetyFactor: input.safetyFactor
       )
-      let report = try performance.calculateLanding(
-        for: model,
-        safetyFactor: input.safetyFactor,
-        VREFAdditiveKts: input.VREFAdditiveKts
-      )
-
-      // Check AFM limits. A clamped distance still answers the question — it is the AFM's own
-      // figure for conditions milder than the ones asked for — but a refusal carrying no figure
-      // leaves the weight untestable.
-      guard let dist = report.results.landingDistance.nominalOrClamped else {
-        return (false, .AFM)
-      }
-      if dist > runway.availableLandingDistance {
-        return (false, .field)
-      }
-
-      // Check go-around climb gradient requirement
-      guard let meetsReq = report.results.meetsGoAroundClimbGradient.nominalOrClamped else {
-        return (false, .AFM)
-      }
-      if !meetsReq {
-        return (false, .climb)
-      }
-
-      return (true, .AFM)
-    }
-
-    return (result.weight, result.limitingFactor ?? .AFM)
+    )
   }
 }

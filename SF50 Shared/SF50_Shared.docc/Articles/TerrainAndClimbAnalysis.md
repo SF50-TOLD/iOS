@@ -35,5 +35,5 @@ Terrain elevation queries, climb profile generation, and obstacle clearance anal
 
 ### Obstacles
 
-- ``Obstacle``
+- ``Obstacle-class``
 - ``ObstacleSurveyRegion``

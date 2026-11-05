@@ -54,7 +54,7 @@ struct PerformanceInput {
 
   /// Configuration object for performance model calculations.
   var configuration: Configuration {
-    Configuration(weight: weight, flapSetting: flapSetting)
+    Configuration(weight: weight, flapSetting: flapSetting.performanceFlapSetting)
   }
 
   init(
@@ -102,6 +102,20 @@ enum LimitingFactor: String, Codable, Sendable {
   case field = "FLD"
   case obstacle = "OBS"
   case climb = "CLB"
+
+  /// The factor a limit search's binding constraint is reported as.
+  ///
+  /// The structural maximum weight and the AFM's wind, elevation and temperature limitations are
+  /// all limits the AFM sets, so they report as ``AFM``.
+  init(_ constraint: BindingConstraint) {
+    switch constraint {
+      case .fieldLength: self = .field
+      case .obstacleClearance: self = .obstacle
+      case .goAroundClimbGradient: self = .climb
+      case .AFMData, .structuralLimit, .temperatureLimit, .windLimit, .elevationLimit:
+        self = .AFM
+    }
+  }
 }
 
 /// Aircraft identification information for TLR report display.

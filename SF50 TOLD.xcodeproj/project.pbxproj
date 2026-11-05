@@ -58,6 +58,7 @@
 		5F0A0E1000000000000000A3 /* XCUIPromoKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5F0A0E1000000000000000A2 /* XCUIPromoKit */; };
 		01EB070B2FCA2D22007C3D1E /* XCUITestKit in Frameworks */ = {isa = PBXBuildFile; productRef = 01EB070A2FCA2D22007C3D1E /* XCUITestKit */; };
 		0DFF3139357E79F8F862DECF /* NavDataGeneration in Frameworks */ = {isa = PBXBuildFile; productRef = 0968DA50D02C96F6AF47A0CC /* NavDataGeneration */; };
+		5F50A0000000000000000003 /* SF50Performance in Frameworks */ = {isa = PBXBuildFile; productRef = 5F50A0000000000000000002 /* SF50Performance */; };
 		4E07A3D10000000000000003 /* NOTAMParsing in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D10000000000000002 /* NOTAMParsing */; };
 		4E07A3D1000000000000000D /* NOTAMParsing in Frameworks */ = {isa = PBXBuildFile; productRef = 4E07A3D1000000000000000C /* NOTAMParsing */; };
 		94CC1E014886B23174174CD9 /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 02BD3D6AFE77DA2CAC646D3B /* Algorithms */; };
@@ -322,6 +323,7 @@
 				01AC00202FE0000000000020 /* MeasurementKit in Frameworks */,
 				018ED7A62F345C2000D084B4 /* SwiftMETAR in Frameworks */,
 				4E07A3D10000000000000003 /* NOTAMParsing in Frameworks */,
+				5F50A0000000000000000003 /* SF50Performance in Frameworks */,
 				01D0DC672F2720E400856DB4 /* SwiftNASR in Frameworks */,
 				C56FF4A70BD4DDF42C6DCBAA /* NavData in Frameworks */,
 				012B1E6C2DE2F463000D9ADC /* Logging in Frameworks */,
@@ -518,6 +520,7 @@
 				01A1014E2E93C12E0032AB29 /* Gzip */,
 				018ED7A52F345C2000D084B4 /* SwiftMETAR */,
 				4E07A3D10000000000000002 /* NOTAMParsing */,
+				5F50A0000000000000000002 /* SF50Performance */,
 				EEB6B6DD4229EEB6363A2AA1 /* NavData */,
 				02BD3D6AFE77DA2CAC646D3B /* Algorithms */,
 			);
@@ -788,6 +791,7 @@
 				2B974702697D0A548EC62991 /* XCRemoteSwiftPackageReference "NavData" */,
 				C9DFF1CEEDEBFDC2A78EDDB0 /* XCRemoteSwiftPackageReference "NavDataDistribution" */,
 				5F0A0E1000000000000000A1 /* XCRemoteSwiftPackageReference "XCUIPromoKit" */,
+				5F50A0000000000000000001 /* XCRemoteSwiftPackageReference "SF50-Performance" */,
 				4E07A3D10000000000000001 /* XCLocalSwiftPackageReference "NOTAMParsing" */,
 			);
 			preferredProjectObjectVersion = 100;
@@ -1861,7 +1865,7 @@
 			repositoryURL = "https://github.com/RISCfuture/MeasurementKit";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.2.0;
+				minimumVersion = 1.2.1;
 			};
 		};
 		01BEBCB62E8A401100631DE6 /* XCRemoteSwiftPackageReference "swift-html" */ = {
@@ -1894,6 +1898,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.0.0;
+			};
+		};
+		5F50A0000000000000000001 /* XCRemoteSwiftPackageReference "SF50-Performance" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SF50-TOLD/SF50-Performance.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.0;
 			};
 		};
 		A0265BD12B874F4A917707F3 /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
@@ -2094,6 +2106,11 @@
 		4E07A3D1000000000000000C /* NOTAMParsing */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = NOTAMParsing;
+		};
+		5F50A0000000000000000002 /* SF50Performance */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5F50A0000000000000000001 /* XCRemoteSwiftPackageReference "SF50-Performance" */;
+			productName = SF50Performance;
 		};
 		602F51ECCC3348DE83D26B3E /* Sentry */ = {
 			isa = XCSwiftPackageProductDependency;

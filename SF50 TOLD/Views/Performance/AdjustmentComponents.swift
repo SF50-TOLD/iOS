@@ -110,7 +110,7 @@ private struct NoteRow: View {
       Image(systemName: note.severity == .warning ? "exclamationmark.triangle" : "info.circle")
         .accessibilityLabel(note.severity == .warning ? "Warning" : "Info")
         .foregroundStyle(note.severity == .warning ? .red : .secondary)
-      Text(note.localizedDescription)
+      Text(note.preferredDescription)
         .foregroundStyle(note.severity == .warning ? .red : .secondary)
     }
     .font(.subheadline)

@@ -52,7 +52,7 @@ public final class RunwayPerformanceService {
       airportRecordID: airport.recordID,
       airportName: airport.name,
       airportDisplayID: airport.displayID,
-      operation: operation,
+      operation: operation.performanceOperation,
       runways: runways,
       conditions: conditions,
       results: conditions.map {
@@ -121,56 +121,55 @@ extension RunwayPerformanceService {
     let
       configuration = Configuration(
         weight: weight(for: operation),
-        flapSetting: operation == .takeoff ? .flaps50 : flapSetting
+        flapSetting: operation == .takeoff ? .flaps50 : flapSetting.performanceFlapSetting
       ),
-      useRegressionModel = Defaults[.useRegressionModel],
-      aircraftType = Defaults.Keys.aircraftType,
-      VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value
+      calculator = PerformanceCalculator(settings: Defaults.Keys.performanceSettings)
 
     let notams = NOTAMStore(context: modelContext).notams(at: airport)
     return airport.runways.reduce(into: [:]) { results, runway in
       let input = RunwayInput(from: runway, airport: airport, notam: notams[runway.name])
-      let model = calculationService.createPerformanceModel(
+      results[runway.name] = performance(
+        on: input,
         conditions: conditions,
         configuration: configuration,
-        runway: input,
-        notam: input.notam,
-        useRegressionModel: useRegressionModel,
-        aircraftType: aircraftType
-      )
-      results[runway.name] = performance(
-        from: model,
         operation: operation,
-        contamination: input.notam?.contamination,
-        VREFAdditiveKts: VREFAdditiveKts
+        calculator: calculator
       )
     }
   }
 
   private func performance(
-    from model: any PerformanceModel,
+    on runway: RunwayInput,
+    conditions: Conditions,
+    configuration: Configuration,
     operation: Operation,
-    contamination: Contamination?,
-    VREFAdditiveKts: Double
+    calculator: PerformanceCalculator
   ) -> RunwayPerformance {
     do {
+      let model = try calculator.model(
+        conditions: conditions,
+        configuration: configuration,
+        runway: runway
+      )
       switch operation {
         case .takeoff:
           let report = try calculationService.calculateTakeoff(
             for: model,
-            safetyFactor: Defaults[.safetyFactorDry]
+            safetyFactor: calculator.settings.safetyFactorDry
           )
           return .init(takeoff: report.results)
         case .landing:
           let report = try calculationService.calculateLanding(
             for: model,
-            safetyFactor: Defaults.Keys.landingSafetyFactor(for: contamination),
-            VREFAdditiveKts: VREFAdditiveKts
+            safetyFactor: calculator.settings.landingSafetyFactor(
+              for: runway.notam?.contamination
+            ),
+            VREFAdditiveKts: calculator.settings.VREFAdditiveKts
           )
           return .init(landing: report.results)
       }
     } catch {
-      return .init(invalidFor: operation)
+      return .init(invalidFor: operation.performanceOperation)
     }
   }
 

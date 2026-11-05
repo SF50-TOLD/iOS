@@ -315,16 +315,20 @@ extension Measurement where UnitType == UnitLength {
 struct ClimbProfileWindClampingTests {
 
   /// A profile whose lowest reported wind stands at 3,000 ft, as an FAA bulletin's does.
-  private let profile = ClimbProfileGenerator.generate(
-    windsAloft: [
-      .init(altitudeFt: 3000, temperatureC: 10, windDirectionDeg: 270, windSpeedKts: 25),
-      .init(altitudeFt: 6000, temperatureC: 4, windDirectionDeg: 280, windSpeedKts: 35)
-    ],
-    weightLb: 5500,
-    aircraftType: .g2(updatedThrustSchedule: true),
-    seaLevelPressureInHg: 29.92,
-    useRegressionModel: true
-  )
+  private let profile: ClimbProfile
+
+  init() throws {
+    profile = try ClimbProfileGenerator.generate(
+      windsAloft: [
+        .init(altitudeFt: 3000, temperatureC: 10, windDirectionDeg: 270, windSpeedKts: 25),
+        .init(altitudeFt: 6000, temperatureC: 4, windDirectionDeg: 280, windSpeedKts: 35)
+      ],
+      weightLb: 5500,
+      aircraftType: .g2(updatedThrustSchedule: true),
+      seaLevelPressureInHg: 29.92,
+      useRegressionModel: true
+    )
+  }
 
   @Test
   func `carries the lowest reported wind down to the ground rather than fading to calm`() throws {

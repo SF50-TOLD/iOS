@@ -2,6 +2,7 @@ import Defaults
 public import Foundation
 public import MeasurementKit
 public import Observation
+import Sentry
 public import SwiftData
 
 /// View model for en route climb performance calculations.
@@ -198,25 +199,19 @@ public final class ClimbPerformanceViewModel {
       airportVariation: Measurement(value: 0, unit: UnitAngle.degrees)
     )
 
-    // Initialize the appropriate model
-    let aircraftType = Defaults.Keys.aircraftType
     let m: any PerformanceModel
-    if Defaults[.useRegressionModel] {
-      m = RegressionPerformanceModel(
+    do {
+      m = try PerformanceCalculator(settings: Defaults.Keys.performanceSettings).model(
         conditions: conditions,
         configuration: configuration,
-        runway: dummyRunway,
-        notam: nil,
-        aircraftType: aircraftType
+        runway: dummyRunway
       )
-    } else {
-      m = TabularPerformanceModel(
-        conditions: conditions,
-        configuration: configuration,
-        runway: dummyRunway,
-        notam: nil,
-        aircraftType: aircraftType
-      )
+    } catch {
+      SentrySDK.capture(error: error)
+      climbSpeed = .invalid
+      climbRate = .invalid
+      climbGradient = .invalid
+      return
     }
     climbSpeed = m.enrouteClimbSpeedKIAS.map { value, uncertainty in
       (

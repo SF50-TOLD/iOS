@@ -505,20 +505,17 @@ public func findAirportAndRunway(airportID: String?, runwayID: String?, in conte
   return (airport, runway)
 }
 
-// MARK: - Landing Safety Factor
+// MARK: - Performance Settings
 
 extension Defaults.Keys {
-  /// The configured safety factor for a landing on a runway in the given condition.
-  ///
-  /// A RwyCC landing distance factor already carries the AC 91-79B margin, so it takes none. A wet
-  /// runway takes the dry factor: its distance already carries the AFM's 15% wet increase, and the
-  /// AFM's factored wet distance is that times the dry 1.67. Water, slush and snow take the
-  /// contaminated factor.
-  public static func landingSafetyFactor(for contamination: Contamination?) -> Double {
-    switch contamination {
-      case .rwyCC: 1.0
-      case .wetRunway, nil: Defaults[.safetyFactorDry]
-      case .some: Defaults[.safetyFactorContaminated]
-    }
+  /// The engine settings the pilot has chosen, as the performance models take them.
+  public static var performanceSettings: PerformanceSettings {
+    .init(
+      aircraftType: aircraftType,
+      modelKind: Defaults[.useRegressionModel] ? .regression : .tabular,
+      safetyFactorDry: Defaults[.safetyFactorDry],
+      safetyFactorContaminated: Defaults[.safetyFactorContaminated],
+      VREFAdditive: Defaults[.VREFAdditive]
+    )
   }
 }

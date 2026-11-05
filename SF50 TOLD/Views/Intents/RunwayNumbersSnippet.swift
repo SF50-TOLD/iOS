@@ -23,13 +23,13 @@ struct RunwayNumbersSnippet: View {
   private var speedUnit
 
   private var availableDistance: Measurement<UnitLength> {
-    runway.availableDistance(for: operation)
+    runway.availableDistance(for: operation.performanceOperation)
   }
 
   /// The ground run has to fit the run available, which is a shorter figure than the distance
   /// available wherever a runway has a clearway.
   private var availableRun: Measurement<UnitLength> {
-    runway.availableRun(for: operation)
+    runway.availableRun(for: operation.performanceOperation)
   }
 
   var body: some View {

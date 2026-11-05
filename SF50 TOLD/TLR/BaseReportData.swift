@@ -13,7 +13,6 @@ import SF50_Shared
 /// ## Template Methods
 ///
 /// Subclasses must override:
-/// - ``maxWeight()``: Returns the maximum allowable weight
 /// - ``calculatePerformance(for:conditions:config:)``: Calculates performance for one runway
 /// - ``determineMaxWeight(runway:)``: Finds maximum weight for a runway
 /// - ``createScenario(name:runways:)``: Creates a typed scenario from results
@@ -33,8 +32,22 @@ class BaseReportData<PerformanceType, ScenarioType> {
   /// Input configuration for the report.
   let input: PerformanceInput
 
-  /// Service for performing calculations.
+  /// Service that turns a performance model into a report.
   let performance: DefaultPerformanceCalculationService
+
+  /// Calculator carrying the report's model choice, aircraft type and VREF additive.
+  ///
+  /// It carries no safety factors of its own: every calculation passes the report's single
+  /// ``PerformanceInput/safetyFactor``.
+  var calculator: PerformanceCalculator {
+    .init(
+      settings: .init(
+        aircraftType: input.aircraftType,
+        modelKind: input.useRegressionModel ? .regression : .tabular,
+        VREFAdditive: .init(value: input.VREFAdditiveKts, unit: .knots)
+      )
+    )
+  }
 
   /// Scenarios to calculate performance for.
   let scenarios: [PerformanceScenario]
@@ -80,12 +93,6 @@ class BaseReportData<PerformanceType, ScenarioType> {
   /// Creates a typed scenario from runway results. Override in subclass.
   func createScenario(name _: String, runways _: [RunwayInput: PerformanceType]) -> ScenarioType {
     fatalError("Subclasses must override createScenario(name:runways:)")
-  }
-
-  // periphery:ignore - abstract template method; required for the live `override`s in the subclasses
-  /// Returns the maximum allowable weight. Override in subclass.
-  func maxWeight() -> Measurement<UnitMass> {
-    fatalError("Subclasses must override maxWeight()")
   }
 
   // swiftlint:enable unavailable_function
@@ -142,45 +149,22 @@ class BaseReportData<PerformanceType, ScenarioType> {
     }
   }
 
-  // MARK: - Binary Search for Max Weight
+  // MARK: - Max Weight
 
   /**
-   * Performs binary search to find maximum valid weight.
+   * The maximum weight a limit search found, and the factor it reports.
    *
-   * - Parameters:
-   *   - runway: The runway to use.
-   *   - min: Minimum weight to consider.
-   *   - max: Maximum weight to consider.
-   *   - increment: Weight increment for search (default 50 lbs).
-   *   - isValid: Closure that tests if a weight is valid and returns limiting factor.
-   * - Returns: Tuple of maximum valid weight and limiting factor.
+   * A search that finds no weight the runway allows reports the empty weight, rounded up to the
+   * search's increment.
+   *
+   * - Parameter result: The package's limit search result.
+   * - Returns: The maximum weight and the factor limiting it.
    */
-  func binarySearchMaxWeight(
-    runway _: RunwayInput,
-    min: Measurement<UnitMass>,
-    max: Measurement<UnitMass>,
-    increment: Measurement<UnitMass> = .init(value: 50, unit: .pounds),
-    isValid: (Measurement<UnitMass>) throws -> (valid: Bool, factor: LimitingFactor)
-  ) rethrows -> (weight: Measurement<UnitMass>, limitingFactor: LimitingFactor?) {
-    var low = (min / increment).rounded(.up) * increment
-    var high = (max / increment).rounded(.down) * increment
-    var bestValue = low
-    var limitingFactor: LimitingFactor?
-
-    while low <= high {
-      let weight = ((low + high) / 2 / increment).rounded() * increment
-
-      let result = try isValid(weight)
-
-      if result.valid {
-        bestValue = weight
-        low = weight + increment
-      } else {
-        limitingFactor = result.factor
-        high = weight - increment
-      }
-    }
-
-    return (bestValue, limitingFactor)
+  func maxWeight(from result: LimitSearchResult<UnitMass>) -> (
+    Measurement<UnitMass>, LimitingFactor
+  ) {
+    let increment = PerformanceCalculator.weightSearchIncrement,
+      lowestSearchedWeight = (input.emptyWeight / increment).rounded(.up) * increment
+    return (result.limit ?? lowestSearchedWeight, LimitingFactor(result.bindingConstraint))
   }
 }

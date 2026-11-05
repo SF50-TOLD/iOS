@@ -52,7 +52,7 @@ struct RunwayWidgetEntry: TimelineEntry, Sendable {
   ///   - performance: The calculated airport performance.
   init(date: Date, performance: AirportPerformance) {
     self.date = date
-    operation = performance.operation
+    operation = Operation(performance.operation)
     airportName = performance.airportName
     runways = performance.runways
     conditions = performance.conditions
@@ -106,7 +106,7 @@ extension RunwayWidgetEntry {
         airportRecordID: airport.recordID,
         airportName: airport.name,
         airportDisplayID: airport.displayID,
-        operation: operation,
+        operation: operation.performanceOperation,
         runways: airport.runways.map { RunwaySnapshot(from: $0, notam: nil) },
         conditions: sampleConditions,
         results: airport.runways.reduce(into: [:]) { results, runway in

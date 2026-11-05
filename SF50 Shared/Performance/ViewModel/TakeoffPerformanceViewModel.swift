@@ -18,11 +18,9 @@ public import SwiftData
 ///
 /// ## Required Climb Gradient
 ///
-/// When a NOTAM specifies obstacles off the departure end, the view model
-/// calculates ``requiredClimbGradient`` to clear the obstacle based on:
-/// - Distance from runway end to obstacle
-/// - Obstacle height above runway
-/// - Computed liftoff point (takeoff run)
+/// When a NOTAM specifies an obstacle off the departure end, ``climbRequirement`` gives what
+/// clearing it takes: the gradient from the end of the takeoff distance, where the aircraft crosses
+/// the 50 ft screen, to the obstacle's height.
 ///
 /// ## NOTAM Display
 ///
@@ -58,19 +56,25 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
   /// Number of downloaded NOTAMs from the API
   public var downloadedNOTAMCount: Int { downloadedNOTAMs.count }
 
-  public var requiredClimbGradient: Measurement<UnitSlope>? {
-    guard let takeoffRun = takeoffRun.nominalOrClamped,
+  /// What clearing the NOTAMed obstacle requires of the takeoff climb, or `nil` where there is no
+  /// obstacle or no takeoff distance to measure from.
+  public var climbRequirement: ClimbRequirement? {
+    guard let takeoffDistance = takeoffDistance.nominalOrClamped,
       let availableTakeoffRun,
-      let obstacleHeight = notam?.obstacleHeight,
-      let obstacleDistance = notam?.obstacleDistance,
-      obstacleHeight.value > 0
+      let obstacle = notam.flatMap({ NOTAMInput(from: $0).obstacle })
     else { return nil }
 
-    let distanceFromRunwayStart = obstacleDistance + availableTakeoffRun
-    let distanceFromLiftoffPoint = distanceFromRunwayStart - takeoffRun
+    return obstacle.climbRequirement(
+      takeoffDistance: takeoffDistance,
+      availableTakeoffRun: availableTakeoffRun
+    )
+  }
 
-    let slope = (obstacleHeight / distanceFromLiftoffPoint)
-    return .init(value: slope, unit: .ratio)
+  /// The climb gradient needed to clear the NOTAMed obstacle, or `nil` where clearing it needs no
+  /// particular gradient or no gradient can.
+  public var requiredClimbGradient: Measurement<UnitSlope>? {
+    guard case .gradient(let required) = climbRequirement else { return nil }
+    return required
   }
 
   public var offscaleLow: Bool {
@@ -145,7 +149,7 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
       takeoffDistance = report.results.takeoffDistance
       takeoffClimbGradient = report.results.takeoffClimbGradient
       takeoffClimbRate = report.results.takeoffClimbRate
-      notes = generateNotes()
+      notes = noteInputs.map { PerformanceNotes.takeoffNotes(for: report, inputs: $0) } ?? []
     } catch {
       SentrySDK.logger.error(
         "Unexpected takeoff calculation error: \(error.localizedDescription)",
@@ -158,42 +162,5 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
       takeoffReport = nil
       notes = []
     }
-  }
-
-  // MARK: Notes
-
-  private func generateNotes() -> [PerformanceNote] {
-    var notes: [PerformanceNote] = []
-
-    // Offscale warnings
-    if offscaleHigh { notes.append(.offscaleHigh) }
-    if offscaleLow { notes.append(.offscaleLow) }
-
-    // Input-validation notes
-    notes += generateInputNotes(for: .takeoff)
-
-    // Distance exceedances
-    if let available = availableTakeoffRun,
-      let run = takeoffRun.nominal, run > available
-    {
-      notes.append(.takeoffRunExceedsAvailable(required: run, available: available))
-    }
-    if let available = availableTakeoffDistance,
-      let dist = takeoffDistance.nominal, dist > available
-    {
-      notes.append(.takeoffDistanceExceedsAvailable(required: dist, available: available))
-    }
-
-    // Climb gradient
-    if let required = requiredClimbGradient {
-      notes.append(
-        .insufficientClimbGradient(
-          required: required,
-          actual: takeoffClimbGradient
-        )
-      )
-    }
-
-    return notes
   }
 }

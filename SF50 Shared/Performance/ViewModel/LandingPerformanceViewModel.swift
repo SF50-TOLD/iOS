@@ -116,19 +116,18 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
     }
 
     do {
-      let safetyFactor = Defaults.Keys.landingSafetyFactor(for: notam?.contamination)
-      let VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value
+      let settings = Defaults.Keys.performanceSettings
       let report = try calculationService.calculateLanding(
         for: model,
-        safetyFactor: safetyFactor,
-        VREFAdditiveKts: VREFAdditiveKts
+        safetyFactor: settings.landingSafetyFactor(for: notam?.contamination),
+        VREFAdditiveKts: settings.VREFAdditiveKts
       )
       landingReport = report
       Vref = report.results.Vref
       landingRun = report.results.landingRun
       landingDistance = report.results.landingDistance
       meetsGoAroundClimbGradient = report.results.meetsGoAroundClimbGradient
-      notes = generateNotes(VREFAdditiveKts: VREFAdditiveKts)
+      notes = noteInputs.map { PerformanceNotes.landingNotes(for: report, inputs: $0) } ?? []
     } catch {
       SentrySDK.logger.error(
         "Unexpected landing calculation error: \(error.localizedDescription)",
@@ -141,32 +140,5 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
       landingReport = nil
       notes = []
     }
-  }
-
-  // MARK: Notes
-
-  private func generateNotes(VREFAdditiveKts: Double) -> [PerformanceNote] {
-    var notes: [PerformanceNote] = []
-
-    // Offscale warnings
-    if offscaleHigh { notes.append(.offscaleHigh) }
-    if offscaleLow { notes.append(.offscaleLow) }
-
-    // Input-validation notes
-    notes += generateInputNotes(for: .landing, VREFAdditiveKts: VREFAdditiveKts)
-
-    // Distance exceedance
-    if let available = availableLandingDistance,
-      let dist = landingDistance.nominal, dist > available
-    {
-      notes.append(.landingDistanceExceedsAvailable(required: dist, available: available))
-    }
-
-    // Go-around climb gradient
-    if let meets = meetsGoAroundClimbGradient.nominalOrClamped, !meets {
-      notes.append(.doesNotMeetGoAroundGradient)
-    }
-
-    return notes
   }
 }

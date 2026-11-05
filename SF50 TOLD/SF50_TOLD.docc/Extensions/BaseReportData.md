@@ -19,12 +19,13 @@ The ``generate()`` method orchestrates the calculation pipeline:
 
 3. **Return Output**: Package results into ``ReportOutput``
 
-## Binary Search
+## Maximum Weight
 
-The ``binarySearchMaxWeight(runway:min:max:increment:isValid:)`` method finds
-the maximum valid weight using binary search. Starting from the maximum
-possible weight, it narrows down to the highest weight that satisfies all
-constraints (AFM limits, runway length, obstacle/climb requirements).
+Each subclass's ``determineMaxWeight(runway:)`` runs the SF50Performance
+package's limit search, which finds the highest weight that satisfies every
+constraint (AFM limitations and chart limits, runway length, obstacle or climb
+requirements). ``maxWeight(from:)`` turns its result into the weight and
+``LimitingFactor`` the report shows.
 
 ## Topics
 
@@ -38,11 +39,10 @@ constraints (AFM limits, runway length, obstacle/climb requirements).
 ### Template Methods
 
 - ``operation()``
-- ``maxWeight()``
 - ``calculatePerformance(for:conditions:config:)``
 - ``determineMaxWeight(runway:)``
 - ``createScenario(name:runways:)``
 
-### Weight Search
+### Maximum Weight
 
-- ``binarySearchMaxWeight(runway:min:max:increment:isValid:)``
+- ``maxWeight(from:)``
