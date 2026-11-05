@@ -165,7 +165,7 @@ The service returns ``TakeoffReport`` or ``LandingReport``, each containing:
 - **Results** (``TakeoffResults`` or ``LandingResults``) — final performance values
   converted to `Measurement` types with units
 - **Ground run breakdown** — ``DistanceBreakdown`` for the run distance
-- **Distance breakdown** — ``DistanceBreakdown`` for the total distance (to 35 ft AGL
+- **Distance breakdown** — ``DistanceBreakdown`` for the total distance (to 50 ft AGL
   for takeoff, from 50 ft AGL for landing)
 
 ## Using the Service

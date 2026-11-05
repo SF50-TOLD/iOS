@@ -9,9 +9,9 @@ public struct ProcedurePathGenerator {
   static let groundStepNM: Double = 0.1
   static let maxSteps: Int = 1000
 
-  /// Screen height (35 ft AFE) — the altitude above field elevation at which
-  /// the aircraft is considered airborne for obstacle/terrain evaluation.
-  public static let screenHeight = Measurement(value: 35, unit: UnitLength.feet)
+  /// Screen height (50 ft AFE) — the altitude above field elevation at which the AFM takeoff
+  /// distance ends, and the aircraft is considered airborne for obstacle/terrain evaluation.
+  public static let screenHeight = SF50Performance.Obstacle.screenHeight
 
   /// Default altitude ceiling above field elevation when no restrictions exist.
   private static let defaultCeilingAboveFieldFt: Double = 2000
