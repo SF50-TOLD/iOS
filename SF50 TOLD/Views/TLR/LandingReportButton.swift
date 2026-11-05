@@ -93,7 +93,7 @@ struct LandingReportButton: View {
           VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value,
           date = weather.time
 
-        let safetyFactor = Defaults.Keys.landingSafetyFactor(
+        let safetyFactor = Defaults.Keys.performanceSettings.landingSafetyFactor(
           for: runwaySnapshot.notam?.contamination
         )
 

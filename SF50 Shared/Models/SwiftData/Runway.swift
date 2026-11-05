@@ -65,7 +65,7 @@ public final class Runway {
     _surfaceType.flatMap(SurfaceType.init(rawValue:))
   }
 
-  /// Runway surface type, substituting ``SurfaceType/paved`` — the surface nearly every runway
+  /// Runway surface type, substituting `paved` — the surface nearly every runway
   /// has — for a surface the source data never established. Read ``recordedSurfaceType`` instead
   /// where stating an unrecorded surface would mislead.
   public var surfaceType: SurfaceType {

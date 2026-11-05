@@ -15,3 +15,13 @@ extension Runway {
     }
   }
 }
+
+extension ComparisonResult {
+  fileprivate var inverted: Self {
+    switch self {
+      case .orderedAscending: .orderedDescending
+      case .orderedDescending: .orderedAscending
+      case .orderedSame: .orderedSame
+    }
+  }
+}

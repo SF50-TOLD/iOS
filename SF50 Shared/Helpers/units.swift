@@ -41,3 +41,17 @@ extension Measurement where UnitType == UnitAngle {
 extension Measurement where UnitType == UnitSlope {
   public var asGradient: Self { converted(to: .feetPerNauticalMile) }
 }
+
+extension DisplayUnits {
+  /// The units the pilot has chosen in Settings.
+  public static var preferred: Self {
+    .init(
+      weight: Defaults[.weightUnit],
+      fuel: Defaults[.fuelVolumeUnit],
+      length: Defaults[.runwayLengthUnit],
+      height: Defaults[.heightUnit],
+      speed: Defaults[.speedUnit],
+      temperature: Defaults[.temperatureUnit]
+    )
+  }
+}

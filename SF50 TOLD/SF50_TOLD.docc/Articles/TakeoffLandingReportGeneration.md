@@ -56,7 +56,6 @@ class BaseReportData<PerformanceType, ScenarioType> {
 
     // Template methods (overridden by subclasses)
     func operation() -> Operation { fatalError() }
-    func maxWeight() -> Measurement<UnitMass> { fatalError() }
     func calculatePerformance(for:conditions:config:) throws -> PerformanceType { fatalError() }
     func determineMaxWeight(runway:) throws -> (Measurement<UnitMass>, LimitingFactor) { fatalError() }
     func createScenario(name:runways:) -> ScenarioType { fatalError() }
@@ -73,21 +72,19 @@ class BaseReportData<PerformanceType, ScenarioType> {
 
 ## Max Weight Determination
 
-Both subclasses use binary search to find the maximum weight that satisfies
-all constraints. The search increments by 50 pounds and checks:
+Both subclasses call the SF50Performance package's limit searches,
+`PerformanceCalculator.maxTakeoffWeight` and `maxLandingWeight`, which bisect
+in 50 lb steps from the empty weight to the structural maximum and check:
 
-1. AFM chart limits (offscale high/low)
-2. Available runway length
-3. Operation-specific constraints (obstacle clearance or go-around)
+1. The AFM's wind and airport elevation limitations
+2. AFM chart limits (a figure the tables give)
+3. Available runway length
+4. Operation-specific constraints (obstacle clearance from the 50 ft screen,
+   or the go-around climb gradient)
 
-```swift
-func binarySearchMaxWeight(
-    runway: RunwayInput,
-    min: Measurement<UnitMass>,
-    max: Measurement<UnitMass>,
-    isValid: (Measurement<UnitMass>) throws -> (valid: Bool, factor: LimitingFactor)
-) rethrows -> (weight: Measurement<UnitMass>, limitingFactor: LimitingFactor?)
-```
+``BaseReportData/maxWeight(from:)`` turns the search's binding constraint into
+a ``LimitingFactor``, and reports the empty weight, rounded up to 50 lb, when
+no weight satisfies every constraint.
 
 ## Usage Example
 

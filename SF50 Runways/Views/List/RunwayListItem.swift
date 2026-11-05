@@ -13,7 +13,7 @@ struct RunwayListItem: View {
   private var runwayLengthUnit
 
   private var availableDistance: Measurement<UnitLength> {
-    runway.availableDistance(for: operation)
+    runway.availableDistance(for: operation.performanceOperation)
   }
 
   var body: some View {

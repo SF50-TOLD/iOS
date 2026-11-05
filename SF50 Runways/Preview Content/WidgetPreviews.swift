@@ -109,7 +109,7 @@ extension PreviewEntries {
         airportRecordID: airport.recordID,
         airportName: airport.name,
         airportDisplayID: airport.displayID,
-        operation: operation,
+        operation: operation.performanceOperation,
         runways: airport.runways.map { RunwaySnapshot(from: $0, notam: nil) },
         conditions: conditions,
         results: results

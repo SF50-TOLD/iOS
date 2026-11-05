@@ -19,7 +19,7 @@ struct RunwayGridItem: View {
   @ViewBuilder private var mark: some View {
     switch performance?.distance {
       case .value(let measurement), .valueWithUncertainty(let measurement, _):
-        if measurement > runway.availableDistance(for: operation) {
+        if measurement > runway.availableDistance(for: operation.performanceOperation) {
           Image(systemName: "x.circle.fill")
             .foregroundColor(.red)
             .accessibilityLabel(insufficientLabel)

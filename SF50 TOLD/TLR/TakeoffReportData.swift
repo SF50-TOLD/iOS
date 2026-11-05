@@ -11,18 +11,14 @@ import SF50_Shared
 ///
 /// ## Weight Determination
 ///
-/// The ``determineMaxWeight(runway:)`` method uses binary search to find the highest
-/// weight that satisfies:
+/// The ``determineMaxWeight(runway:)`` method uses the package's limit search to find the
+/// highest weight that satisfies:
 /// 1. AFM performance chart limits
-/// 2. Takeoff distance available
-/// 3. Obstacle clearance (if NOTAM specifies obstacles)
+/// 2. Takeoff run and distance available
+/// 3. Obstacle clearance from the 50 ft screen (if a NOTAM specifies an obstacle)
 class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerformanceScenario> {
 
   // MARK: - Template Method Overrides
-
-  override func maxWeight() -> Measurement<UnitMass> {
-    input.aircraftType.limitations.maxTakeoffWeight
-  }
 
   override func createScenario(name: String, runways: [RunwayInput: TakeoffRunwayPerformance])
     -> TakeoffPerformanceScenario
@@ -35,13 +31,10 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
     conditions: Conditions,
     config: Configuration
   ) throws -> TakeoffRunwayPerformance {
-    let perfModel = performance.createPerformanceModel(
+    let perfModel = try calculator.model(
       conditions: conditions,
       configuration: config,
-      runway: runway,
-      notam: runway.notam,
-      useRegressionModel: input.useRegressionModel,
-      aircraftType: input.aircraftType
+      runway: runway
     )
     let report = try performance.calculateTakeoff(
       for: perfModel,
@@ -77,91 +70,17 @@ class TakeoffReportData: BaseReportData<TakeoffRunwayPerformance, TakeoffPerform
   override func determineMaxWeight(runway: RunwayInput) throws -> (
     Measurement<UnitMass>, LimitingFactor
   ) {
-    let result = try binarySearchMaxWeight(
-      runway: runway,
-      min: input.emptyWeight,
-      max: maxWeight()
-    ) { weight -> (valid: Bool, factor: LimitingFactor) in
-      let config = Configuration(
-        weight: weight,
-        flapSetting: input.flapSetting
-      )
-
-      let model = performance.createPerformanceModel(
+    maxWeight(
+      from: try calculator.maxTakeoffWeight(
         conditions: input.conditions,
-        configuration: config,
         runway: runway,
-        notam: runway.notam,
-        useRegressionModel: input.useRegressionModel,
-        aircraftType: input.aircraftType
-      )
-      let report = try performance.calculateTakeoff(
-        for: model,
+        minimumWeight: input.emptyWeight,
         safetyFactor: input.safetyFactor
       )
-
-      // Check AFM limits. A clamped distance still answers the question — it is the AFM's own
-      // figure for conditions milder than the ones asked for, so it errs long — but a refusal
-      // carrying no figure leaves the weight untestable.
-      if report.results.takeoffDistance.nominalOrClamped == nil {
-        return (false, .AFM)
-      }
-      if !fitsRunway(report.results, on: runway) {
-        return (false, .field)
-      }
-
-      // Check obstacle clearance if NOTAM present
-      if let obstacleHeight = runway.notam?.obstacleHeight,
-        let obstacleDistance = runway.notam?.obstacleDistance,
-        let takeoffRun = report.results.takeoffRun.nominalOrClamped
-      {
-        let distanceFromRunwayStart =
-          obstacleDistance + (runway.notam?.takeoffDistanceShortening ?? .zero)
-        let distanceFromLiftoff = distanceFromRunwayStart - takeoffRun
-
-        if distanceFromLiftoff > .zero {
-          let requiredGradient = obstacleHeight / distanceFromLiftoff
-
-          guard let climbGradient = report.results.takeoffClimbGradient.nominalOrClamped else {
-            // Nothing to clear the obstacle with, so nothing to publish this weight on.
-            return (false, .AFM)
-          }
-          // Compared as ratios rather than as measurements: the gradient is made in the framework
-          // and the requirement here, and `UnitSlope` is loaded once per image, so the two carry
-          // unit objects that compare unequal even though they are the same unit.
-          if climbGradient.converted(to: .ratio).value < requiredGradient {
-            return (false, .obstacle)
-          }
-        }
-      }
-
-      return (true, .AFM)
-    }
-
-    return (result.weight, result.limitingFactor ?? .AFM)
+    )
   }
 
   // MARK: - Runway Fit
-
-  /// Whether both takeoff distances fit what the runway declares.
-  ///
-  /// The ground run has to fit the takeoff run and the total distance the takeoff distance, which
-  /// differ wherever a runway has a clearway: measuring the run against the longer of the two
-  /// would pass a takeoff that lifts off beyond the end of the pavement.
-  ///
-  /// A distance the AFM cannot give is no verdict on the runway; the AFM checks answer for it.
-  private func fitsRunway(_ results: TakeoffResults, on runway: RunwayInput) -> Bool {
-    fits(results.takeoffRun, within: runway.availableTakeoffRun)
-      && fits(results.takeoffDistance, within: runway.availableTakeoffDistance)
-  }
-
-  private func fits(
-    _ distance: Value<Measurement<UnitLength>>,
-    within available: Measurement<UnitLength>
-  ) -> Bool {
-    guard let distance = distance.nominal else { return true }
-    return distance <= available
-  }
 
   /// Whether a calculated distance is known and leaves the runway it was measured against.
   private func hasMargin(_ distance: Value<PerformanceDistance>) -> Bool {

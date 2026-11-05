@@ -16,7 +16,7 @@ Types for representing airports, runways, navaids, instrument procedures, and th
 ### Runways
 
 - ``Runway``
-- ``SurfaceType``
+- ``SurfaceType-typealias``
 
 ### Navaids
 

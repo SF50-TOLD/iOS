@@ -122,7 +122,27 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   // MARK: - Computed Properties
 
   internal var configuration: Configuration {
-    .init(weight: weight, flapSetting: flapSetting)
+    .init(weight: weight, flapSetting: flapSetting.performanceFlapSetting)
+  }
+
+  /// The selected runway as the performance models take it, or `nil` until one is selected.
+  internal var runwayInput: RunwayInput? {
+    guard let runway, let airport else { return nil }
+    return RunwayInput(from: runway, airport: airport, notam: notam)
+  }
+
+  /// What the notes for the current calculation are checked against, or `nil` until a runway is
+  /// selected.
+  internal var noteInputs: PerformanceNoteInputs? {
+    guard let runwayInput else { return nil }
+    return .init(
+      settings: Defaults.Keys.performanceSettings,
+      configuration: configuration,
+      runway: runwayInput,
+      conditions: conditions,
+      zeroFuelWeight: Defaults[.emptyWeight] + Defaults[.payload],
+      fuel: Defaults[fuelDefaultsKey]
+    )
   }
 
   // MARK: - Abstract Properties (must be overridden)
@@ -459,113 +479,19 @@ open class BasePerformanceViewModel: WithIdentifiableError {
   // MARK: - Model Initialization
 
   internal func initializeModel() -> (any PerformanceModel)? {
-    guard let runway, let airport else { return nil }
+    guard let runwayInput else { return nil }
 
-    let runwaySnapshot = RunwayInput(from: runway, airport: airport, notam: notam),
-      notamInput = notam.map { NOTAMInput(from: $0) },
-      aircraftType = Defaults.Keys.aircraftType
-
-    return if Defaults[.useRegressionModel] {
-      RegressionPerformanceModel(
+    do {
+      return try PerformanceCalculator(settings: Defaults.Keys.performanceSettings).model(
         conditions: conditions,
         configuration: configuration,
-        runway: runwaySnapshot,
-        notam: notamInput,
-        aircraftType: aircraftType
+        runway: runwayInput
       )
-    } else {
-      TabularPerformanceModel(
-        conditions: conditions,
-        configuration: configuration,
-        runway: runwaySnapshot,
-        notam: notamInput,
-        aircraftType: aircraftType
-      )
+    } catch {
+      SentrySDK.capture(error: error)
+      self.error = error
+      return nil
     }
-  }
-
-  // MARK: - Input-Validation Notes
-
-  /// Generates notes for input-validation issues common to both takeoff and landing.
-  ///
-  /// Checks wind exceedances (crosswind, tailwind), weight/fuel limits, contamination,
-  /// and VREF additive applicability. Subclass view models call this, then append their
-  /// own result-dependent notes.
-  public func generateInputNotes(
-    for operation: Operation,
-    VREFAdditiveKts: Double = 0
-  ) -> [PerformanceNote] {
-    var notes: [PerformanceNote] = []
-    let limits = Defaults.Keys.aircraftType.limitations
-
-    // Wind exceedances
-    // An unreported wind comes back calm from both components, which exceeds no limit.
-    if let runway {
-      let crosswindLimit: Measurement<UnitSpeed> =
-        flapSetting == .flaps100
-        ? limits.maxCrosswind_flaps100 : limits.maxCrosswind_flaps50
-
-      let crosswind = runway.crosswind(conditions: conditions).magnitude
-      if crosswind > crosswindLimit {
-        notes.append(.crosswindExceedance(crosswind: crosswind, limit: crosswindLimit))
-      }
-
-      let headwind = runway.headwind(conditions: conditions)
-      if headwind < .zero {
-        let tailwind = headwind.magnitude
-        if tailwind > limits.maxTailwind {
-          notes.append(
-            .tailwindExceedance(tailwind: tailwind, limit: limits.maxTailwind)
-          )
-        }
-      }
-    }
-
-    // Airport elevation, which bounds only the tables; the regression may extrapolate past it
-    if !Defaults[.useRegressionModel], let runway {
-      let elevation = runway.elevationOrAirportElevation,
-        approvedElevations = limits.minAirportElevation...limits.maxAirportElevation
-      if !approvedElevations.contains(elevation) {
-        notes.append(
-          .airportElevationOutsideLimits(elevation: elevation, limits: approvedElevations)
-        )
-      }
-    }
-
-    // Weight exceedances
-    let maxWeight =
-      operation == .takeoff
-      ? limits.maxTakeoffWeight : limits.maxLandingWeight
-    if weight > maxWeight {
-      notes.append(.weightAboveMax(weight: weight, limit: maxWeight))
-    }
-    let zeroFuelWeight = Defaults[.emptyWeight] + Defaults[.payload]
-    if zeroFuelWeight > limits.maxZeroFuelWeight {
-      notes.append(
-        .zeroFuelWeightExceeded(weight: zeroFuelWeight, limit: limits.maxZeroFuelWeight)
-      )
-    }
-    let fuel = Defaults[fuelDefaultsKey]
-    if fuel > limits.maxFuel {
-      notes.append(.fuelExceedsCapacity(fuel: fuel, limit: limits.maxFuel))
-    }
-
-    // Contamination notes (landing only)
-    if operation == .landing, let contamination = notam?.contamination {
-      if case .rwyCC = contamination {
-        if Defaults[.safetyFactorDry] != 1.0 || Defaults[.safetyFactorContaminated] != 1.0 {
-          notes.append(.rwyCCSafetyFactorNotApplied)
-        }
-      }
-      if contamination != .wetRunway { notes.append(.contaminationSupplemental) }
-    }
-
-    // VREF additive note
-    if VREFAdditiveKts > 0 {
-      notes.append(.VREFAdditiveApproximate)
-    }
-
-    return notes
   }
 
   // MARK: - Abstract Methods (must be overridden)

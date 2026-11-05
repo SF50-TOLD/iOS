@@ -216,9 +216,10 @@ struct `Takeoff Report` {
   func `limits weight by an obstacle under either performance model`(
     useRegressionModel: Bool
   ) throws {
+    // Needs about 1,400 ft/NM from the 50 ft screen, which the climb meets only at light weights.
     let obstacle = (
-      height: Measurement(value: 200, unit: UnitLength.feet),
-      distance: Measurement(value: 3000, unit: UnitLength.feet)
+      height: Measurement(value: 800, unit: UnitLength.feet),
+      distance: Measurement(value: 1000, unit: UnitLength.feet)
     )
 
     let limitedByObstacle = try Self.limitingFactor(

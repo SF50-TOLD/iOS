@@ -3,6 +3,7 @@ import Defaults
 import MeasurementKit
 import MeasurementKitUI
 import SF50_Shared
+import Sentry
 import SwiftData
 import SwiftUI
 
@@ -199,13 +200,21 @@ struct GoAroundProfileView: View {
       .converted(to: .inchesOfMercury).value
       ?? standardSeaLevelPressure.converted(to: .inchesOfMercury).value
 
-    let climbProfile = ClimbProfileGenerator.generate(
-      windsAloft: windsAloftObs,
-      weightLb: performance.weight.converted(to: .pounds).value,
-      aircraftType: aircraftType,
-      seaLevelPressureInHg: slpInHg,
-      useRegressionModel: useRegressionModel
-    )
+    let climbProfile: ClimbProfile
+    do {
+      climbProfile = try ClimbProfileGenerator.generate(
+        windsAloft: windsAloftObs,
+        weightLb: performance.weight.converted(to: .pounds).value,
+        aircraftType: aircraftType,
+        seaLevelPressureInHg: slpInHg,
+        useRegressionModel: useRegressionModel
+      )
+    } catch {
+      SentrySDK.capture(error: error)
+      terrainPath = nil
+      self.climbProfile = nil
+      return
+    }
     self.climbProfile = climbProfile
 
     // Fixed schedule for go-around: TO 2min → Enroute Obstacle

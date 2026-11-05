@@ -1,4 +1,4 @@
-# ``SF50_Shared/Obstacle``
+# ``SF50_Shared/Obstacle-class``
 
 ## Topics
 

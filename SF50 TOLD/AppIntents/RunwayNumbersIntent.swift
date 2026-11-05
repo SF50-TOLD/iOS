@@ -168,7 +168,7 @@ extension RunwayNumbersIntent {
     )
     entity.groundRun = result?.groundRun.nominal
     entity.distance = result?.distance.nominal
-    entity.availableDistance = snapshot.availableDistance(for: operation)
+    entity.availableDistance = snapshot.availableDistance(for: operation.performanceOperation)
     entity.climbGradientFtNM =
       result?.climbGradient?.nominal?
       .converted(to: .feetPerNauticalMile).value
@@ -183,7 +183,9 @@ extension RunwayNumbersIntent {
   /// without looking at the screen.
   private func dialog(for snapshot: RunwaySnapshot, result: RunwayPerformance?) -> String {
     let unit = Defaults[.runwayLengthUnit],
-      available = snapshot.availableDistance(for: operation).converted(to: unit)
+      available = snapshot.availableDistance(for: operation.performanceOperation).converted(
+        to: unit
+      )
 
     guard let required = result?.distance.nominal?.converted(to: unit) else {
       return String(

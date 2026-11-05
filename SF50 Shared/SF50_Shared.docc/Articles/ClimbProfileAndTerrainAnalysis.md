@@ -113,5 +113,5 @@ for point in terrainPath.points {
 - ``ProcedureTerrainPathGenerator``
 - ``ProcedureTerrainPath``
 - ``ObstacleSurveyRegion``
-- ``Obstacle``
+- ``Obstacle-class``
 - <doc:DigitalElevationModel>

@@ -220,7 +220,7 @@ public actor NavDataStoreWriter {
         takeoffRun: runwayData.takeoffRun.map { .init(value: $0, unit: .meters) },
         takeoffDistance: runwayData.takeoffDistance.map { .init(value: $0, unit: .meters) },
         landingDistance: runwayData.landingDistance.map { .init(value: $0, unit: .meters) },
-        surfaceType: runwayData.decodedSurfaceType,
+        surfaceType: SurfaceType(runwayData.decodedSurfaceType),
         thresholdCoordinate: thresholdCoordinate,
         thresholdCrossingHeight: runwayData.thresholdCrossingHeight.map {
           .init(value: $0, unit: .meters)
