@@ -15,6 +15,34 @@ changed in the cockpit rather than what changed in the code.
 
 ## 4.0.1
 
+- Takeoff and landing distances are read from the AFM tables at pressure
+  altitude, worked out from the field elevation and your altimeter setting,
+  rather than at field elevation. With a low altimeter setting the distances
+  are longer than before, and with a high one shorter. Without an altimeter
+  setting, the field elevation is used and the performance screens say so;
+  takeoff and landing reports show the standard 29.92 inHg, which is the same
+  thing.
+- The climb and terrain profiles start the climb at 50 feet above the field,
+  where the AFM’s takeoff distance ends, rather than at 35 feet.
+- The climb gradient needed to clear a NOTAMed obstacle is worked out from the
+  point where the takeoff reaches 50 feet, over the runway remaining plus the
+  obstacle’s distance beyond the departure end. Takeoff reports had left the
+  runway length out, and asked for far more climb than an obstacle needs.
+- Takeoff and landing reports now stop the maximum weight search at the AFM’s
+  tailwind, crosswind, airport elevation and temperature limits. A runway where
+  one is exceeded shows N/A as its maximum weight, with WND, ELEV or TEMP as
+  the limit, rather than a weight the search never checked. A maximum weight
+  that rests on conditions colder or hotter than the AFM tables cover is marked
+  offscale, as the distances beside it are.
+- Takeoff and landing reports count a distance read from the nearest edge of
+  the AFM tables as the AFM’s figure when they check it against the runway, so
+  a clamped distance that does not fit limits the weight.
+- New notes appear on the takeoff screen when an obstacle stands within the
+  takeoff distance, which no climb can clear, and when the temperature is
+  outside the AFM’s limits. The climb gradient note appears only when the climb
+  falls short of what an obstacle requires, and a note says when the pressure
+  altitude was taken from the field elevation.
+
 - When an airport’s identifier changes in an airport data update, your
   favorites, recents and selected airports follow it. About lists every source
   the airport data comes from, and for airports drawn from openflightmaps, the
