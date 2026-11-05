@@ -15,13 +15,19 @@ struct VxClimbView: View {
     return v + x
   }
 
-  private var requiredClimbGradientIfNotMet: Measurement<UnitSlope>? {
-    guard let takeoffClimbGradient = performance.takeoffClimbGradient.nominalOrClamped,
-      let requiredClimbGradient = performance.requiredClimbGradient
+  private var unmetClimbRequirement: ClimbRequirement? {
+    guard let requirement = performance.climbRequirement,
+      !requirement.isMet(by: performance.takeoffClimbGradient.nominalOrClamped)
     else {
       return nil
     }
-    return takeoffClimbGradient < requiredClimbGradient ? performance.requiredClimbGradient : nil
+    return requirement
+  }
+
+  private var obstacleWithinTakeoffDistanceDescription: String? {
+    performance.notes.first {
+      if case .obstacleWithinTakeoffDistance = $0 { true } else { false }
+    }?.preferredDescription
   }
 
   private var sufficientRunway: Bool {
@@ -51,14 +57,11 @@ struct VxClimbView: View {
       }
     )
 
-    if sufficientRunway, let requiredClimbGradientIfNotMet {
+    if sufficientRunway, let unmetClimbRequirement {
       HStack {
-        Label(
-          "A climb gradient of \(requiredClimbGradientIfNotMet.asGradient, format: .gradient) is required.",
-          systemImage: "exclamationmark.triangle"
-        )
-        .font(.subheadline)
-        .foregroundColor(.red)
+        climbWarning(for: unmetClimbRequirement)
+          .font(.subheadline)
+          .foregroundColor(.red)
       }
     }
 
@@ -78,6 +81,23 @@ struct VxClimbView: View {
         Text("\(vxText) Climb Rate")
       }
     )
+  }
+
+  @ViewBuilder
+  private func climbWarning(for requirement: ClimbRequirement) -> some View {
+    switch requirement {
+      case .gradient(let required):
+        Label(
+          "A climb gradient of \(required.asGradient, format: .gradient) is required.",
+          systemImage: "exclamationmark.triangle"
+        )
+      case .unclearable:
+        if let obstacleWithinTakeoffDistanceDescription {
+          Label(obstacleWithinTakeoffDistanceDescription, systemImage: "exclamationmark.triangle")
+        }
+      case .none:
+        EmptyView()
+    }
   }
 }
 
@@ -119,6 +139,19 @@ struct VxClimbView: View {
       VxClimbView()
     }
     .environment(performance)
+  }
+}
+
+#Preview("Unclearable") {
+  PreviewView(insert: .KSQL) { preview in
+    let runway = try preview.load(airportID: "SQL", runway: "30")!
+    preview.setTakeoff(runway: runway)
+    try preview.addNOTAM(to: runway, obstacleHeight: 200, obstacleDistance: 0.01)
+
+    return List {
+      VxClimbView()
+    }
+    .environment(TakeoffPerformanceViewModel(container: preview.container))
   }
 }
 
