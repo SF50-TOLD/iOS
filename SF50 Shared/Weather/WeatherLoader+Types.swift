@@ -24,26 +24,17 @@ extension WeatherLoader {
       underlyingError: any Swift.Error
     )
 
-    /// Failed to decode data as UTF-8 text.
-    case invalidTextEncoding(url: URL)
-
     /// The response didn't match the shape the service documents.
     case decodingFailed(url: URL, underlyingError: any Swift.Error)
 
     /// The service rejected the request and said why.
     case serviceError(url: URL, reason: String)
-
-    /// A winds aloft bulletin's valid time or use period couldn't be resolved to a date.
-    case unresolvableForecastPeriod(url: URL)
   }
 
   /// Key identifying a weather data request by airport and time.
   public struct Key: Hashable, Sendable {
     /// Weather station identifier (typically ICAO code).
     let id: String
-
-    /// Winds aloft station identifier (FAA location ID).
-    let windsAloftID: String
 
     /// Geographic location for WeatherKit requests.
     let location: CLLocation
@@ -60,7 +51,6 @@ extension WeatherLoader {
     ///   - time: The time for which conditions are needed.
     public init(airport: Airport, time: Date) {
       id = airport.weatherID
-      windsAloftID = airport.locationID
       location = airport.location
       self.time = time
     }
@@ -83,34 +73,6 @@ extension WeatherLoader {
   struct Forecast {
     let conditions: [Conditions]
     let raw: String
-  }
-
-  /// An area the NWS publishes winds aloft bulletins for.
-  ///
-  /// Each area is a separate product covering a disjoint set of forecast locations, so all of them
-  /// are needed to serve the whole country. Hawaii and the Pacific forecast extra levels below
-  /// 3,000 feet and stop at 24,000 rather than 39,000.
-  enum WindsAloftRegion: String, CaseIterable, Sendable {
-    case CONUS = "all"
-    case alaska
-    case hawaii
-    case pacific = "other_pac"
-  }
-
-  /// The outcome of loading a single winds aloft bulletin.
-  enum BulletinResult: Sendable {
-    case success(WindsAloftBulletin)
-    case failure(any Swift.Error)
-
-    var bulletin: WindsAloftBulletin? {
-      guard case .success(let bulletin) = self else { return nil }
-      return bulletin
-    }
-
-    var failure: (any Swift.Error)? {
-      guard case .failure(let error) = self else { return nil }
-      return error
-    }
   }
 }
 

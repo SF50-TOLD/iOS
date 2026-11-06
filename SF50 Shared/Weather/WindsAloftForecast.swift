@@ -1,81 +1,35 @@
 public import Foundation
 
-/// Winds aloft for one station, together with the forecast period it was taken from.
+/// Winds aloft over an airport, together with the forecast hour they were taken from.
 ///
-/// The NWS publishes three winds aloft bulletins per issuance — 6-, 12-, and 24-hour forecasts —
-/// each with the period it is meant to be used for. ``WindsAloftForecast`` pairs the station data
-/// served for a requested time with that provenance, so a climb profile can show which forecast it
-/// was built from.
+/// The winds come from Open-Meteo's pressure levels, and each forecast hour applies to that hour
+/// alone. ``WindsAloftForecast`` pairs the levels served for a requested time with the hour they
+/// belong to, so a climb profile can show which forecast it was built from.
 ///
 /// ## Usage
 ///
 /// ```swift
 /// for await forecast in await loader.streamWindsAloft(for: key) {
 ///     if let forecast = forecast.value ?? nil {
-///         print("Valid at \(forecast.validAt): \(forecast.data.entries.count) levels")
+///         print("Valid \(forecast.validPeriod): \(forecast.data.entries.count) levels")
 ///     }
 /// }
 /// ```
 public struct WindsAloftForecast: Sendable, Hashable {
 
-  /// The time the forecast is valid at.
-  public let validAt: Date
-
-  /// The period the NWS publishes this forecast for.
-  public let usePeriod: DateInterval
-
-  /// Where the wind and temperature data came from.
-  public let source: Source
+  /// The period the forecast applies to.
+  public let validPeriod: DateInterval
 
   /// The wind and temperature data.
   public let data: WindsAloftData
 
-  /// Creates a forecast from wind data and the period it came from.
+  /// Creates a forecast from wind data and the period it applies to.
   ///
   /// - Parameters:
-  ///   - validAt: The time the forecast is valid at.
-  ///   - usePeriod: The period the forecast is published for.
-  ///   - source: Where the data came from.
+  ///   - validPeriod: The period the forecast applies to.
   ///   - data: The wind and temperature data.
-  public init(
-    validAt: Date,
-    usePeriod: DateInterval,
-    source: Source,
-    data: WindsAloftData
-  ) {
-    self.validAt = validAt
-    self.usePeriod = usePeriod
-    self.source = source
+  public init(validPeriod: DateInterval, data: WindsAloftData) {
+    self.validPeriod = validPeriod
     self.data = data
-  }
-
-  /// Where a forecast’s winds came from.
-  ///
-  /// The NWS publishes forecasts for 233 locations, so most airports have no forecast of their own
-  /// and are flown on one interpolated from the stations around them. Beyond the reach of those
-  /// bulletins — outside the regions they cover, or past the day they forecast for — the winds come
-  /// from a model instead. Which of the three a profile was built from is worth telling the pilot.
-  public enum Source: Sendable, Hashable {
-
-    /// Reported at a station serving the airport.
-    case station(String)
-
-    /// Interpolated between the reporting stations nearest the airport.
-    case interpolated
-
-    /// Taken from Open-Meteo's pressure levels, where the NWS publishes nothing.
-    case openMeteo
-
-    /// The service the forecast came from, with Open-Meteo linked as its licence requires.
-    ///
-    /// The station's own identifier is left out: it is a VOR or an oceanic grid point as often as
-    /// an airport, and naming it would say less than the publisher does.
-    public var attributedDescription: AttributedString {
-      switch self {
-        case .station: .init(String(localized: "FAA", bundle: .sharedFramework))
-        case .interpolated: .init(String(localized: "FAA (Interpolated)", bundle: .sharedFramework))
-        case .openMeteo: WeatherProviders.openMeteoCredit
-      }
-    }
   }
 }

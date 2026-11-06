@@ -53,8 +53,6 @@ struct DataStatusButton: View {
       NavigationStack {
         List {
           Section("Weather Data") {
-            // Named for the data rather than its publisher: the NWS is only one of the services
-            // it can come from, and the row's status says which answered.
             ForecastStatusRow(
               label: String(localized: "Winds Aloft"),
               forecast: windsAloft,
@@ -151,10 +149,9 @@ struct DataStatusButton: View {
   /// cycle.
   ///
   /// A forecast either covers the planned time or it doesn’t, so the row says only that. Which
-  /// service supplied it, the time it is valid at, and the period it is published for are all
-  /// details the pilot can disclose, and too long to spell out in the row itself. A bulletin that
-  /// failed to download — which a retry may well fix — is set apart from a time and place no
-  /// service has a forecast for.
+  /// service supplied it and the period it applies to are details the pilot can disclose, and too
+  /// long to spell out in the row itself. A forecast that failed to download — which a retry may
+  /// well fix — is set apart from a time the forecast doesn’t reach.
   private struct ForecastStatusRow: View {
     let label: String
     let forecast: Loadable<WindsAloftForecast?>
@@ -162,12 +159,6 @@ struct DataStatusButton: View {
 
     /// Formatted here rather than interpolated into `Text`, which resolves a format style
     /// against the environment’s time zone instead of the one the style carries.
-    private var timeStyle: Date.FormatStyle {
-      var style = Date.FormatStyle(date: .abbreviated, time: .shortened)
-      style.timeZone = timeZone
-      return style
-    }
-
     private var periodStyle: Date.IntervalFormatStyle {
       var style = Date.IntervalFormatStyle(date: .abbreviated, time: .shortened)
       style.timeZone = timeZone
@@ -179,13 +170,12 @@ struct DataStatusButton: View {
         case .value(let forecast?):
           DisclosureGroup {
             LabeledContent("Source") {
-              Text(forecast.source.attributedDescription)
+              Text(WeatherProviders.openMeteoCredit)
             }
-            LabeledContent("Valid At") {
-              Text(forecast.validAt.formatted(timeStyle))
-            }
-            LabeledContent("For Use") {
-              Text((forecast.usePeriod.start..<forecast.usePeriod.end).formatted(periodStyle))
+            LabeledContent("Valid") {
+              Text(
+                (forecast.validPeriod.start..<forecast.validPeriod.end).formatted(periodStyle)
+              )
             }
           } label: {
             summary(String(localized: "Valid"), systemImage: "checkmark.circle.fill")
@@ -296,46 +286,6 @@ struct DataStatusButton: View {
               terrainDataCorrupted: true,
               obstacleDataAvailable: true,
               windsAloft: .value(.preview),
-              showingSheet: true
-            )
-          }
-        }
-    }
-  }
-}
-
-#Preview("Winds Aloft Interpolated") {
-  PreviewView { helper in
-    helper.insertCurrentCycle(.cifp, name: "AIRAC 2601")
-    helper.insertCurrentCycle(.dof, name: "20260101")
-    return NavigationStack {
-      Text("Climb Profile")
-        .toolbar {
-          ToolbarItem(placement: .topBarTrailing) {
-            DataStatusButton(
-              terrainDataAvailable: true,
-              obstacleDataAvailable: true,
-              windsAloft: .value(.previewInterpolated),
-              showingSheet: true
-            )
-          }
-        }
-    }
-  }
-}
-
-#Preview("Winds Aloft Modeled") {
-  PreviewView { helper in
-    helper.insertCurrentCycle(.cifp, name: "AIRAC 2601")
-    helper.insertCurrentCycle(.dof, name: "20260101")
-    return NavigationStack {
-      Text("Climb Profile")
-        .toolbar {
-          ToolbarItem(placement: .topBarTrailing) {
-            DataStatusButton(
-              terrainDataAvailable: true,
-              obstacleDataAvailable: true,
-              windsAloft: .value(.previewModeled),
               showingSheet: true
             )
           }

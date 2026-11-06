@@ -17,7 +17,6 @@
 - ``latitude``
 - ``longitude``
 - ``elevation``
-- ``coordinate``
 - ``location``
 - ``timeZone``
 

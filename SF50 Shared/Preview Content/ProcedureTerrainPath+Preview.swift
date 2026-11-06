@@ -125,8 +125,8 @@ extension ClimbProfile {
 
   /// A sample climb profile flown on ``WindsAloftForecast/preview``'s winds.
   ///
-  /// Its lowest reported level stands at 3,000 ft, as an FAA bulletin's does, so a preview shows the
-  /// wind being carried down to the ground below it.
+  /// Its lowest reported level stands at 3,000 ft, so a preview shows the wind being carried down to
+  /// the ground below it.
   public static var preview: Self {
     // swiftlint:disable:next force_try
     try! ClimbProfileGenerator.generate(

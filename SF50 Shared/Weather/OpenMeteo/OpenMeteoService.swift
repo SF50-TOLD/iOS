@@ -6,7 +6,7 @@ import Logging
  * Actor that fetches forecasts from [Open-Meteo](https://open-meteo.com).
  *
  * Open-Meteo forecasts anywhere on earth, which is what makes it useful here: it fills the values
- * an aviation report leaves unreported, and supplies winds aloft where the NWS publishes none.
+ * an aviation report leaves unreported, and supplies winds aloft.
  *
  * ## Configuration
  *
@@ -37,8 +37,8 @@ public actor OpenMeteoService {
 
   /// How many days of hourly forecast to request.
   ///
-  /// The response runs from 00:00Z today, so this reaches at least two days ahead — past the TAF
-  /// horizon and past the day the winds aloft bulletins forecast for.
+  /// The response runs from 00:00Z today, so this reaches at least two days ahead, past the TAF
+  /// horizon.
   private static let forecastDays = 3
 
   private static let secondsPerHour: TimeInterval = 3600,
@@ -303,10 +303,10 @@ public actor OpenMeteoService {
       url: baseURL.appending(path: "v1/forecast"),
       resolvingAgainstBaseURL: false
     )!
-    let hour = time.startOfHour,
-      window = Self.forecastWindow
-    let startHour = max(hour.addingTimeInterval(-Self.hourSlack), window.lowerBound),
-      endHour = min(hour.addingTimeInterval(Self.hourSlack), window.upperBound)
+    let hour = time.startOfHour
+    let window = Self.forecastWindow
+    let startHour = max(hour.addingTimeInterval(-Self.hourSlack), window.lowerBound)
+    let endHour = min(hour.addingTimeInterval(Self.hourSlack), window.upperBound)
     components.queryItems = [
       .init(
         name: "latitude",

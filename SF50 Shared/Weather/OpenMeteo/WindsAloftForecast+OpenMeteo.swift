@@ -8,9 +8,6 @@ extension WindsAloftForecast {
   /// model's own terrain are dropped: the model extrapolates them rather than forecasting them, and
   /// a climb profile clamps to its lowest level anyway, so the ground is still covered.
   ///
-  /// Unlike an NWS bulletin, which is published for a period hours wide, an Open-Meteo hour applies
-  /// to that hour alone.
-  ///
   /// - Parameters:
   ///   - openMeteo: The forecast to read.
   ///   - time: The time winds aloft are needed for.
@@ -23,12 +20,7 @@ extension WindsAloftForecast {
       .sorted { $0.altitude < $1.altitude }
     guard !entries.isEmpty else { return nil }
 
-    self.init(
-      validAt: hour.interval.start,
-      usePeriod: hour.interval,
-      source: .openMeteo,
-      data: .init(entries: entries)
-    )
+    self.init(validPeriod: hour.interval, data: .init(entries: entries))
   }
 }
 

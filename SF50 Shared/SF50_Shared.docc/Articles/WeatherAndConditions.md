@@ -79,9 +79,9 @@ Conditions provides computed values for performance calculations:
 
 ## Winds Aloft, Up and Down
 
-A winds aloft forecast reports at levels that begin some way above the ground — 3,000 feet MSL for
-an FAA bulletin, and the lowest pressure level above the model's own terrain for Open-Meteo. How the
-gap between that lowest level and the runway is filled is deliberately asymmetric:
+A winds aloft forecast reports at levels that begin some way above the ground: the lowest pressure
+level above the model's own terrain. How the gap between that lowest level and the runway is filled
+is deliberately asymmetric:
 
 - **Downwards, the lowest reported level is carried to the surface.** ``ClimbProfile`` clamps its
   interpolation at both ends, so a departure levelling at 2,000 feet AFE is flown on the 3,000-foot
@@ -109,7 +109,7 @@ that number away exactly when it is all there is.
 A *downloaded* surface temperature gets no such licence. It is an observation of the surface, it
 stays at the surface, and the levels above it are standard — because wherever a report can be
 downloaded, a forecast covering those levels can be too, and that forecast is what the app uses.
-A forecast always wins: an entered temperature never displaces one, and levels a bulletin reports no
+A forecast always wins: an entered temperature never displaces one, and levels a forecast reports no
 temperature for fall back to standard rather than to the surface.
 
 Wind is not in this exception, whatever the source. Pressure needs no exception: an altimeter setting

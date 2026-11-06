@@ -102,14 +102,6 @@ public final class Airport {
     set { _timeZone = newValue?.identifier }
   }
 
-  /// CoreLocation coordinate for the airport
-  public var coordinate: CLLocationCoordinate2D {
-    .init(
-      latitude: latitude.converted(to: .degrees).value,
-      longitude: longitude.converted(to: .degrees).value
-    )
-  }
-
   /// CoreLocation location object for the airport
   public var location: CLLocation {
     .init(

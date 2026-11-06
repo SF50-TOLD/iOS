@@ -15,6 +15,9 @@ changed in the cockpit rather than what changed in the code.
 
 ## 4.0.1
 
+- Winds aloft come from the Open-Meteo forecast model everywhere. The National
+  Weather Service stopped publishing its winds aloft forecasts on November 3,
+  and since then the climb and terrain profiles have had no winds aloft.
 - Takeoff and landing distances are read from the AFM tables at pressure
   altitude, worked out from the field elevation and your altimeter setting,
   rather than at field elevation. With a low altimeter setting the distances

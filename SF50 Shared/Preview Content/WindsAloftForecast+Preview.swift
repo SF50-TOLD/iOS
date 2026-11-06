@@ -2,29 +2,12 @@ import Foundation
 
 extension WindsAloftForecast {
 
-  /// A sample forecast covering the current time, shaped like a 6-hour NWS bulletin.
-  public static var preview: Self { preview(source: .station("SFO")) }
-
-  /// A sample forecast interpolated between stations, as most airports get.
-  public static var previewInterpolated: Self { preview(source: .interpolated) }
-
-  /// A sample forecast from Open-Meteo, as airports beyond the NWS bulletins get.
-  ///
-  /// A model hour applies to that hour alone, unlike a bulletin published for a period hours wide.
-  public static var previewModeled: Self {
-    let validAt = Date.now.addingTimeInterval(3 * 3600)
-    return preview(source: .openMeteo, usePeriod: .init(start: validAt, duration: 3600))
-  }
-
-  private static func preview(source: Source, usePeriod: DateInterval? = nil) -> Self {
-    let validAt = Date.now.addingTimeInterval(3 * 3600)
-    return .init(
-      validAt: usePeriod?.start ?? validAt,
-      usePeriod: usePeriod
-        ?? .init(start: validAt.addingTimeInterval(-4 * 3600), duration: 7 * 3600),
-      source: source,
+  /// A sample forecast for the hour starting three hours from now.
+  public static var preview: Self {
+    .init(
+      validPeriod: .init(start: Date.now.addingTimeInterval(3 * 3600), duration: 3600),
       data: .init(
-        // Veering and strengthening with height, as a bulletin's levels usually do, and carried
+        // Veering and strengthening with height, as winds aloft usually do, and carried
         // high enough that a departure from a mountain field still has barbs that vary.
         entries: [
           .init(altitudeFt: 3000, windDirectionDeg: 280, windSpeedKts: 18, temperatureC: nil),

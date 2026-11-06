@@ -27,9 +27,6 @@
         }
       }
     },
-    "A winds aloft forecast didn’t say when it applies." : {
-
-    },
     "Africa" : {
 
     },
@@ -69,9 +66,6 @@
     "Download terrain data for this region in Settings." : {
 
     },
-    "Downloaded weather data had an invalid text encoding." : {
-
-    },
     "Downloaded weather data was corrupted or incomplete." : {
 
     },
@@ -85,12 +79,6 @@
 
     },
     "Europe" : {
-
-    },
-    "FAA" : {
-
-    },
-    "FAA (Interpolated)" : {
 
     },
     "Failed to read terrain file: %@" : {

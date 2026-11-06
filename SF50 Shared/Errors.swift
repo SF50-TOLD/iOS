@@ -46,16 +46,6 @@ extension WeatherLoader.Errors: LocalizedError {
           localized: "Downloaded weather data was corrupted or incomplete.",
           bundle: .sharedFramework
         )
-      case .invalidTextEncoding:
-        String(
-          localized: "Downloaded weather data had an invalid text encoding.",
-          bundle: .sharedFramework
-        )
-      case .unresolvableForecastPeriod:
-        String(
-          localized: "A winds aloft forecast didn’t say when it applies.",
-          bundle: .sharedFramework
-        )
       case .decodingFailed:
         String(
           localized: "Downloaded weather data wasn’t in the expected format.",

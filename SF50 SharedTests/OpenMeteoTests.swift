@@ -150,14 +150,12 @@ struct OpenMeteoWindsAloftTests {
   }
 
   @Test
-  func `applies to the single hour it was forecast for, and says where it came from`() throws {
+  func `applies to the single hour it was forecast for`() throws {
     let forecast = try #require(
       WindsAloftForecast(openMeteo: try Forecast.response, at: Forecast.firstHour)
     )
 
-    #expect(forecast.source == .openMeteo)
-    #expect(forecast.validAt == Forecast.firstHour)
-    #expect(forecast.usePeriod == .init(start: Forecast.firstHour, duration: 3600))
+    #expect(forecast.validPeriod == .init(start: Forecast.firstHour, duration: 3600))
   }
 
   @Test

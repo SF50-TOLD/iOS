@@ -34,8 +34,7 @@ public protocol WeatherLoaderProtocol: Actor {
   /// Creates a stream of winds aloft data updates.
   /// - Parameter key: Identifies the airport and time to monitor.
   /// - Returns: Async stream yielding winds aloft data as it becomes available.
-  ///   Returns `nil` for airports without a winds aloft reporting station, and for times no
-  ///   loaded forecast period covers.
+  ///   Returns `nil` for times the forecast doesn't reach.
   func streamWindsAloft(for key: WeatherLoader.Key) async
     -> AsyncStream<Loadable<WindsAloftForecast?>>
 }
@@ -43,16 +42,16 @@ public protocol WeatherLoaderProtocol: Actor {
 /**
  * Actor responsible for loading and caching weather data from multiple sources.
  *
- * ``WeatherLoader`` downloads METAR observations, TAF forecasts and winds aloft bulletins from
- * Aviation Weather (aviationweather.gov) and supplements them with forecast model data. It provides
- * reactive streams of weather conditions that update when new data is loaded.
+ * ``WeatherLoader`` downloads METAR observations and TAF forecasts from Aviation Weather
+ * (aviationweather.gov), supplements them with forecast model data, and takes winds aloft from
+ * Open-Meteo. It provides reactive streams of weather conditions that update when new data is
+ * loaded.
  *
  * ## Data Sources
  *
  * Weather data is combined from, in order of authority:
- * - **Aviation Weather**: METAR observations, TAF forecasts and winds aloft bulletins
- * - **Open-Meteo**: A forecast model, which fills gaps in aviation data and covers the places and
- *   times the NWS publishes no winds aloft for
+ * - **Aviation Weather**: METAR observations and TAF forecasts
+ * - **Open-Meteo**: A forecast model, which fills gaps in aviation data and supplies winds aloft
  * - **WeatherKit**: Current conditions and hourly forecasts, where Open-Meteo couldn't answer
  *
  * ## Time-Based Conditions
@@ -67,6 +66,7 @@ public protocol WeatherLoaderProtocol: Actor {
  * - ``streamConditions(for:)`` - Complete ``Conditions`` objects
  * - ``streamMETAR(for:)`` - Raw METAR text
  * - ``streamTAF(for:)`` - Raw TAF text
+ * - ``streamWindsAloft(for:)`` - Winds aloft forecasts
  */
 public actor WeatherLoader: WeatherLoaderProtocol {
   /// Shared singleton instance for app-wide weather loading.
@@ -80,8 +80,6 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   static let TAFsURL = URL(
     string: "https://aviationweather.gov/data/cache/tafs.cache.xml.gz"
   )!
-  /// The forecast periods, in hours, the NWS publishes a low-level winds aloft bulletin for.
-  static let windsAloftForecastHours = [6, 12, 24]
   static let logger = Logger(label: "codes.tim.SF50-TOLD.WeatherLoader")
   static let weatherService = WeatherService()
 
@@ -91,14 +89,6 @@ public actor WeatherLoader: WeatherLoaderProtocol {
   var forecasts: Loadable<[String: Forecast]> = .notLoaded {
     didSet { Task { await notifySubscribers() } }
   }
-  var windsAloft: Loadable<[WindsAloftBulletin]> = .notLoaded {
-    didSet { Task { await notifySubscribers() } }
-  }
-  /// Why part of the last winds aloft load failed, when the rest of it succeeded.
-  ///
-  /// The bulletins that did arrive are still published, so the failure is only visible to a pilot
-  /// in the part of the country the missing ones cover; see ``windsAloftForecast(for:)``.
-  var windsAloftPartialFailure: (any Error)?
   var lastLoaded: Date?
   var conditionsSubscribers = [
     UUID: (Key, AsyncStream<Loadable<Conditions>>.Continuation)
@@ -114,18 +104,6 @@ public actor WeatherLoader: WeatherLoaderProtocol {
 
   private init() {}
 
-  /// The Aviation Weather URL for a low-level winds aloft bulletin.
-  /// - Parameters:
-  ///   - forecastHour: The forecast period, in hours; see ``windsAloftForecastHours``.
-  ///   - region: The area the bulletin covers.
-  /// - Returns: The URL of that region's bulletin for that period.
-  static func windsAloftURL(forecastHour: Int, region: WindsAloftRegion) -> URL {
-    .init(
-      string: "https://aviationweather.gov/api/data/windtemp?level=low"
-        + "&fcst=\(unsafe String(format: "%02d", forecastHour))&region=\(region.rawValue)&layout=on"
-    )!
-  }
-
   public func load(force: Bool = false) async {
     if !force, let lastLoaded, lastLoaded.timeIntervalSinceNow > -Self.reloadInterval {
       return
@@ -138,7 +116,6 @@ public actor WeatherLoader: WeatherLoaderProtocol {
       await PathAtmosphereLoader.shared.invalidateCache()
       await loadMETARs()
       await loadTAFs()
-      await loadWindsAloft()
     }
     await loadingTask?.value
     lastLoaded = .now

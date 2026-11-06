@@ -5,7 +5,7 @@ import Testing
 @testable import SF50_Shared
 
 /// The climb profile reads a winds aloft forecast's levels as observations, and a level the
-/// bulletin reports no temperature for falls back to the standard atmosphere.
+/// forecast reports no temperature for falls back to the standard atmosphere.
 struct WindsAloftForecastColumnTests {
 
   private static let fieldElevation = Measurement(value: 0, unit: UnitLength.feet)
@@ -32,7 +32,7 @@ struct WindsAloftForecastColumnTests {
 
     #expect(column.count == forecastTemperatures.count)
     for (observation, forecast) in zip(column, forecastTemperatures) {
-      // Levels the bulletin reports no temperature for fall back to standard, not to the entered
+      // Levels the forecast reports no temperature for fall back to standard, not to the entered
       // surface reading.
       let expected = forecast ?? isaTemperature(altitudeFt: observation.altitudeFt)
       #expect(observation.temperatureC.isApproximatelyEqual(to: expected, absoluteTolerance: 0.01))

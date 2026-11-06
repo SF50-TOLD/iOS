@@ -11,7 +11,6 @@ Location services, geographic calculations, custom measurement units, state mana
 - ``LocationAvailability``
 - ``NearestAirportViewModel``
 - ``NearbyFinder``
-- ``Locatable``
 
 ### Geographic Calculations
 
