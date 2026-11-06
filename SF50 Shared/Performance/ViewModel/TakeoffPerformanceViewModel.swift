@@ -77,20 +77,6 @@ public final class TakeoffPerformanceViewModel: BasePerformanceViewModel {
     return required
   }
 
-  public var offscaleLow: Bool {
-    let valuesOffscaleLow =
-      takeoffRun.isOffscaleLow || takeoffDistance.isOffscaleLow
-      || takeoffClimbRate.isOffscaleLow || takeoffClimbGradient.isOffscaleLow
-    return valuesOffscaleLow || (model?.takeoffInputsOffscaleLow ?? false)
-  }
-
-  public var offscaleHigh: Bool {
-    let valuesOffscaleHigh =
-      takeoffRun.isOffscaleHigh || takeoffDistance.isOffscaleHigh
-      || takeoffClimbRate.isOffscaleHigh || takeoffClimbGradient.isOffscaleHigh
-    return valuesOffscaleHigh || (model?.takeoffInputsOffscaleHigh ?? false)
-  }
-
   public var availableTakeoffRun: Measurement<UnitLength>? {
     runway?.availableTakeoffRun(notamedBy: notam)
   }

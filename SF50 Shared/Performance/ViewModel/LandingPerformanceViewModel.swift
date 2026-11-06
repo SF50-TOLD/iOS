@@ -54,18 +54,6 @@ public final class LandingPerformanceViewModel: BasePerformanceViewModel {
   /// Number of downloaded NOTAMs from the API
   public var downloadedNOTAMCount: Int { downloadedNOTAMs.count }
 
-  public var offscaleLow: Bool {
-    let valuesOffscaleLow =
-      Vref.isOffscaleLow || landingRun.isOffscaleLow || landingDistance.isOffscaleLow
-    return valuesOffscaleLow || (model?.landingInputsOffscaleLow ?? false)
-  }
-
-  public var offscaleHigh: Bool {
-    let valuesOffscaleHigh =
-      Vref.isOffscaleHigh || landingRun.isOffscaleHigh || landingDistance.isOffscaleHigh
-    return valuesOffscaleHigh || (model?.landingInputsOffscaleHigh ?? false)
-  }
-
   /// Landing distance available on the selected runway, less any NOTAMed shortening, or `nil`
   /// until a runway is selected.
   ///

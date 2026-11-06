@@ -92,7 +92,6 @@ public final class ClimbPerformanceViewModel {
 
   // MARK: Private
 
-  private var model: (any PerformanceModel)?
   private var cancellables: Set<Task<Void, Never>> = []
 
   // MARK: Initialization

@@ -9,23 +9,12 @@ public import MeasurementKit
 /// These extensions provide semantic unit conversion methods that respect user preferences
 /// stored in Defaults. Each method returns the measurement converted to the appropriate
 /// unit based on user settings.
-extension Measurement where UnitType == UnitMass {
-  /// Converts to user's preferred weight unit.
-  public var asWeight: Self { converted(to: Defaults[.weightUnit]) }
-}
-
-extension Measurement where UnitType == UnitVolume {
-  public var asFuel: Self { converted(to: Defaults[.fuelVolumeUnit]) }
-}
-
 extension Measurement where UnitType == UnitLength {
-  public var asLength: Self { converted(to: Defaults[.runwayLengthUnit]) }
-
   /// Converts to the user's preferred height unit.
   ///
-  /// Distinct from ``asLength`` because the two answer different questions: a runway is measured
-  /// along the ground and an altitude above it, and Settings keeps a preference for each. A
-  /// pilot reading runway lengths in feet may still want altitudes in metres.
+  /// Settings keeps separate preferences for runway lengths and heights: a runway is measured
+  /// along the ground and an altitude above it, and a pilot reading runway lengths in feet may
+  /// still want altitudes in metres.
   public var asHeight: Self { converted(to: Defaults[.heightUnit]) }
 }
 
