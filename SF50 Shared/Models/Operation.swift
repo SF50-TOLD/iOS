@@ -12,7 +12,7 @@ public enum Operation: String, CaseIterable, Codable, Sendable {
   case landing
 
   /// The same leg, as the performance models take it.
-  public var performanceOperation: SF50Performance.Operation {
+  public var performanceOperation: AircraftPerformance.Operation {
     switch self {
       case .takeoff: .takeoff
       case .landing: .landing
@@ -20,7 +20,7 @@ public enum Operation: String, CaseIterable, Codable, Sendable {
   }
 
   /// The leg the performance models' operation names.
-  public init(_ operation: SF50Performance.Operation) {
+  public init(_ operation: AircraftPerformance.Operation) {
     switch operation {
       case .takeoff: self = .takeoff
       case .landing: self = .landing

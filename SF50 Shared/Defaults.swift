@@ -78,19 +78,21 @@ extension Defaults.Keys {
     default: false,
     suite: groupDefaults
   )
-  public static let aircraftTypeSetting = Key<AircraftTypeSetting?>(
+  public static let sf50Generation = Key<SF50Generation?>(
     "SF50/3/aircraftType",
     suite: groupDefaults
   )
 
-  /// Constructs the full `AircraftType` from stored settings.
+  /// Constructs the full `Aircraft` from stored settings.
   ///
-  /// This combines `aircraftTypeSetting` and `updatedThrustSchedule` into a single
-  /// `AircraftType` value. For G2, the thrust schedule state is embedded in the enum case.
-  public static var aircraftType: AircraftType {
-    .init(
-      setting: Defaults[.aircraftTypeSetting],
-      updatedThrustSchedule: Defaults[.updatedThrustSchedule]
+  /// This combines `sf50Generation` and `updatedThrustSchedule` into a single
+  /// `Aircraft` value. For a G2, the thrust schedule state is embedded in the variant.
+  public static var aircraft: Aircraft {
+    .sf50(
+      .init(
+        generation: Defaults[.sf50Generation],
+        updatedThrustSchedule: Defaults[.updatedThrustSchedule]
+      )
     )
   }
 
@@ -511,7 +513,7 @@ extension Defaults.Keys {
   /// The engine settings the pilot has chosen, as the performance models take them.
   public static var performanceSettings: PerformanceSettings {
     .init(
-      aircraftType: aircraftType,
+      aircraft: aircraft,
       modelKind: Defaults[.useRegressionModel] ? .regression : .tabular,
       safetyFactorDry: Defaults[.safetyFactorDry],
       safetyFactorContaminated: Defaults[.safetyFactorContaminated],

@@ -22,7 +22,7 @@
 
 - ``safetyFactor``
 - ``useRegressionModel``
-- ``aircraftType``
+- ``aircraft``
 
 ### Derived Values
 

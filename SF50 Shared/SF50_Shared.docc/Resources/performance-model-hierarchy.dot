@@ -44,12 +44,12 @@ digraph PerformanceModelHierarchy {
 
     // Concrete models
     tabular [
-        label="<<final class>>\nTabularPerformanceModel\n\nbaseValue(for:)\nadjustmentMultiplier(for:target:)\n[parameterized by aircraftType]"
+        label="<<final class>>\nTabularPerformanceModel\n\nbaseValue(for:)\nadjustmentMultiplier(for:target:)\n[parameterized by aircraft]"
         fillcolor="#d4edda"
         color="#28a745"
     ]
     regression [
-        label="<<final class>>\nRegressionPerformanceModel\n\nbaseValue(for:)\nadjustmentMultiplier(for:target:)\n[parameterized by aircraftType]"
+        label="<<final class>>\nRegressionPerformanceModel\n\nbaseValue(for:)\nadjustmentMultiplier(for:target:)\n[parameterized by aircraft]"
         fillcolor="#e8daef"
         color="#8e44ad"
     ]

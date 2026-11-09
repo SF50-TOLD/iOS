@@ -8,7 +8,7 @@
 
 ### Creating Models
 
-- ``createPerformanceModel(conditions:configuration:runway:notam:useRegressionModel:aircraftType:)``
+- ``createPerformanceModel(conditions:configuration:runway:notam:useRegressionModel:aircraft:)``
 
 ### Calculating Performance
 
