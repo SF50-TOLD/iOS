@@ -8,13 +8,13 @@ Aircraft type, weight and flap settings, operational limits, and user-defined wh
 
 - ``Configuration``
 - ``FlapSetting-5jlke``
-- ``AircraftType``
+- ``Aircraft``
+- ``SF50Variant``
+- ``SF50Generation``
 
 ### Structural Limits
 
-- ``Limitations``
-- ``LimitationsG1``
-- ``LimitationsG2``
+- ``AircraftLimitations``
 
 ### Scenarios
 

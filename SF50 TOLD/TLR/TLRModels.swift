@@ -33,7 +33,7 @@ struct PerformanceInput {
   let useRegressionModel: Bool
 
   /// Aircraft type (G1, G2, G2+, or G3).
-  let aircraftType: AircraftType
+  let aircraft: Aircraft
 
   /// Aircraft empty weight for max weight calculations.
   let emptyWeight: Measurement<UnitMass>
@@ -47,7 +47,7 @@ struct PerformanceInput {
   /// Aggregated aircraft info for display.
   var aircraftInfo: AircraftInfo {
     AircraftInfo(
-      aircraftType: aircraftType,
+      aircraft: aircraft,
       emptyWeight: emptyWeight
     )
   }
@@ -65,7 +65,7 @@ struct PerformanceInput {
     flapSetting: FlapSetting,
     safetyFactor: Double,
     useRegressionModel: Bool,
-    aircraftType: AircraftType,
+    aircraft: Aircraft,
     emptyWeight: Measurement<UnitMass>,
     VREFAdditiveKts: Double = 0,
     date: Date
@@ -77,7 +77,7 @@ struct PerformanceInput {
     self.flapSetting = flapSetting
     self.safetyFactor = safetyFactor
     self.useRegressionModel = useRegressionModel
-    self.aircraftType = aircraftType
+    self.aircraft = aircraft
     self.emptyWeight = emptyWeight
     self.VREFAdditiveKts = VREFAdditiveKts
     self.date = date
@@ -128,8 +128,8 @@ enum LimitingFactor: String, Codable, Sendable {
 /// ``AircraftInfo`` provides displayable aircraft information derived from
 /// configuration settings.
 struct AircraftInfo {
-  /// The aircraft type (G1, G2, G2+, or G3).
-  let aircraftType: AircraftType
+  /// The aircraft (G1, G2, G2+, or G3).
+  let aircraft: Aircraft
 
   /// Basic empty weight used for max weight calculations.
   let emptyWeight: Measurement<UnitMass>

@@ -14,8 +14,8 @@ struct RunwayRow: View {
   var conditions: Conditions
   var flapSetting: FlapSetting?
 
-  @Environment(\.aircraftType)
-  private var aircraftType
+  @Environment(\.aircraft)
+  private var aircraft
 
   @Environment(\.operation)
   private var operation
@@ -26,15 +26,16 @@ struct RunwayRow: View {
   @Default(.speedUnit)
   private var speedUnit
 
-  private var limitations: any Limitations.Type {
-    aircraftType.limitations
+  private var limitations: AircraftLimitations {
+    aircraft.limitations
   }
 
   private var crosswindLimit: Measurement<UnitSpeed>? {
-    switch flapSetting {
-      case .flapsUp, .flapsUpIce, nil: nil
-      case .flaps50, .flaps50Ice: limitations.maxCrosswind_flaps50
-      case .flaps100: limitations.maxCrosswind_flaps100
+    guard let flapSetting else { return nil }
+    return switch flapSetting {
+      case .flapsUp, .flapsUpIce: nil
+      case .flaps50, .flaps50Ice, .flaps100:
+        limitations.maxCrosswind(for: flapSetting.performanceFlapSetting)
     }
   }
 

@@ -509,7 +509,8 @@ class BaseReportTemplate<PerformanceType, ScenarioType> {
 
 extension AircraftInfo {
   var model: String {
-    switch aircraftType {
+    guard case .sf50(let variant) = aircraft else { return String(localized: "SF50") }
+    return switch variant {
       case .g1: String(localized: "SF50 G1")
       case .g2: String(localized: "SF50 G2")
       case .g2Plus: String(localized: "SF50 G2+")

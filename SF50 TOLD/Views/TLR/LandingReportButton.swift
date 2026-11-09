@@ -88,7 +88,7 @@ struct LandingReportButton: View {
           weight = performance.weight,
           flapSetting = performance.flapSetting,
           useRegressionModel = Defaults[.useRegressionModel],
-          aircraftType = Defaults.Keys.aircraftType,
+          aircraft = Defaults.Keys.aircraft,
           emptyWeight = Defaults[.emptyWeight],
           VREFAdditiveKts = Defaults[.VREFAdditive].converted(to: .knots).value,
           date = weather.time
@@ -106,7 +106,7 @@ struct LandingReportButton: View {
           flapSetting: flapSetting,
           safetyFactor: safetyFactor,
           useRegressionModel: useRegressionModel,
-          aircraftType: aircraftType,
+          aircraft: aircraft,
           emptyWeight: emptyWeight,
           VREFAdditiveKts: VREFAdditiveKts,
           date: date

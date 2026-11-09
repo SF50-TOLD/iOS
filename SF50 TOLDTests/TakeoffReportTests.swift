@@ -70,7 +70,7 @@ struct `Takeoff Report` {
       flapSetting: .flaps50,
       safetyFactor: 1.0,
       useRegressionModel: useRegressionModel,
-      aircraftType: .g1,
+      aircraft: .sf50(.g1),
       emptyWeight: .init(value: 3550, unit: .pounds),
       date: .now
     )

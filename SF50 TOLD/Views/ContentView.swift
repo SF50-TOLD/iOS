@@ -8,8 +8,8 @@ struct ContentView: View {
   @Default(.initialSetupComplete)
   private var initialSetupComplete
 
-  @Default(.aircraftTypeSetting)
-  private var aircraftTypeSetting
+  @Default(.sf50Generation)
+  private var sf50Generation
 
   @State private var tab = 1
   @State private var loader: NavDataLoaderViewModel?
@@ -18,7 +18,7 @@ struct ContentView: View {
   private var context
 
   var body: some View {
-    AircraftTypeProvider {
+    AircraftProvider {
       content
     }
     .onAppear {
@@ -31,7 +31,7 @@ struct ContentView: View {
   }
 
   @ViewBuilder private var content: some View {
-    if !initialSetupComplete || aircraftTypeSetting == nil {
+    if !initialSetupComplete || sf50Generation == nil {
       WelcomeView()
     } else if loader?.showLoader != false {
       if let loader {

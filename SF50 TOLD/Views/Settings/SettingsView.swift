@@ -7,8 +7,8 @@ struct SettingsView: View {
   private static let defaultSafetyFactorDry = 1.67
   private static let defaultSafetyFactorContaminated = 1.92
 
-  @Default(.aircraftTypeSetting)
-  private var aircraftTypeSetting
+  @Default(.sf50Generation)
+  private var sf50Generation
 
   @Default(.updatedThrustSchedule)
   private var updatedThrustSchedule
@@ -46,15 +46,15 @@ struct SettingsView: View {
     NavigationStack {
       Form {
         Section("Aircraft") {
-          Picker("Aircraft Model", selection: aircraftTypeSettingBinding) {
-            Text("G1").tag(AircraftTypeSetting.g1)
-            Text("G2").tag(AircraftTypeSetting.g2)
-            Text("G2+").tag(AircraftTypeSetting.g2Plus)
-            Text("G3").tag(AircraftTypeSetting.g3)
+          Picker("Aircraft Model", selection: sf50GenerationBinding) {
+            Text("G1").tag(SF50Generation.g1)
+            Text("G2").tag(SF50Generation.g2)
+            Text("G2+").tag(SF50Generation.g2Plus)
+            Text("G3").tag(SF50Generation.g3)
           }
           .accessibilityIdentifier("aircraftTypePicker")
 
-          if aircraftTypeSetting == .g2 {
+          if sf50Generation == .g2 {
             VStack(alignment: .leading) {
               Toggle("Use Updated Thrust Schedule", isOn: $updatedThrustSchedule)
                 .accessibilityIdentifier("updatedThrustScheduleToggle")
@@ -160,11 +160,11 @@ struct SettingsView: View {
     }
   }
 
-  private var aircraftTypeSettingBinding: Binding<AircraftTypeSetting> {
+  private var sf50GenerationBinding: Binding<SF50Generation> {
     Binding(
-      get: { aircraftTypeSetting ?? .g2 },
+      get: { sf50Generation ?? .g2 },
       set: { newValue in
-        aircraftTypeSetting = newValue
+        sf50Generation = newValue
         switch newValue {
           case .g1: updatedThrustSchedule = false
           case .g2: break  // Keep current updatedThrustSchedule setting

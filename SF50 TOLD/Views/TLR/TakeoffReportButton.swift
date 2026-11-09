@@ -89,7 +89,7 @@ struct TakeoffReportButton: View {
           flapSetting = performance.flapSetting,
           safetyFactor = Defaults[.safetyFactorDry],
           useRegressionModel = Defaults[.useRegressionModel],
-          aircraftType = Defaults.Keys.aircraftType,
+          aircraft = Defaults.Keys.aircraft,
           emptyWeight = Defaults[.emptyWeight],
           date = weather.time
 
@@ -102,7 +102,7 @@ struct TakeoffReportButton: View {
           flapSetting: flapSetting,
           safetyFactor: safetyFactor,
           useRegressionModel: useRegressionModel,
-          aircraftType: aircraftType,
+          aircraft: aircraft,
           emptyWeight: emptyWeight,
           date: date
         )

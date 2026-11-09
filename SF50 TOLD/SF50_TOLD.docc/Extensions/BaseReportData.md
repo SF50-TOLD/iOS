@@ -21,7 +21,7 @@ The ``generate()`` method orchestrates the calculation pipeline:
 
 ## Maximum Weight
 
-Each subclass's ``determineMaxWeight(runway:)`` runs the SF50Performance
+Each subclass's ``determineMaxWeight(runway:)`` runs the AircraftPerformance
 package's limit search, which finds the highest weight that satisfies every
 constraint (AFM limitations and chart limits, runway length, obstacle or climb
 requirements). ``generateRunwayInfo()`` turns its result into the weight, the

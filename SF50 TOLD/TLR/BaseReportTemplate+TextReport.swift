@@ -225,7 +225,8 @@ extension BaseReportTemplate {
 
   /// The aircraft model as a fixed code. The app's own name is translated, and this is not.
   func textModel() -> String {
-    switch input.aircraftType {
+    guard case .sf50(let variant) = input.aircraft else { return "SF50" }
+    return switch variant {
       case .g1: "SF50 G1"
       case .g2: "SF50 G2"
       case .g2Plus: "SF50 G2+"

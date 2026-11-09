@@ -74,7 +74,7 @@ Terrain and obstacle data may not cover the entire path. Two computed properties
 let climbProfile = ClimbProfileGenerator.generate(
     windsAloft: observations,
     weightLb: 6000,
-    aircraftType: .g2Plus,
+    aircraft: .sf50(.g2Plus),
     seaLevelPressureInHg: 29.92,
     useRegressionModel: true
 )

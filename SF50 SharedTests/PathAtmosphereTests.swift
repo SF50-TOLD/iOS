@@ -324,7 +324,7 @@ struct ClimbProfileWindClampingTests {
         .init(altitudeFt: 6000, temperatureC: 4, windDirectionDeg: 280, windSpeedKts: 35)
       ],
       weightLb: 5500,
-      aircraftType: .g2(updatedThrustSchedule: true),
+      aircraft: .sf50(.g2(updatedThrustSchedule: true)),
       seaLevelPressureInHg: 29.92,
       useRegressionModel: true
     )
