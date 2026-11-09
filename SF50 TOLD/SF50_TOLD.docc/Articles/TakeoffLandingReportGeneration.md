@@ -72,7 +72,7 @@ class BaseReportData<PerformanceType, ScenarioType> {
 
 ## Max Weight Determination
 
-Both subclasses call the SF50Performance package's limit searches,
+Both subclasses call the AircraftPerformance package's limit searches,
 `PerformanceCalculator.maxTakeoffWeight` and `maxLandingWeight`, which bisect
 in 50 lb steps from the empty weight to the structural maximum and check:
 
@@ -102,7 +102,7 @@ let input = PerformanceInput(
     flapSetting: .flaps50,
     safetyFactor: 1.0,
     useRegressionModel: true,
-    aircraftType: .g2Plus,
+    aircraft: .sf50(.g2Plus),
     emptyWeight: emptyWeight,
     date: Date()
 )

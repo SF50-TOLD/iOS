@@ -4,8 +4,8 @@ import SF50_Shared
 import SwiftUI
 
 struct WelcomeView: View {
-  @Default(.aircraftTypeSetting)
-  private var aircraftTypeSetting
+  @Default(.sf50Generation)
+  private var sf50Generation
 
   @Default(.updatedThrustSchedule)
   private var updatedThrustSchedule
@@ -16,7 +16,7 @@ struct WelcomeView: View {
   @Default(.emptyWeight)
   private var emptyWeight
 
-  @State private var selectedType: AircraftTypeSetting = .g2
+  @State private var selectedType: SF50Generation = .g2
   @State private var g2UseUpdatedThrustSchedule = false
   @State private var showForm = false
   @State private var formOpacity = 0.0
@@ -48,10 +48,10 @@ struct WelcomeView: View {
         Form {
           Section {
             Picker("Model", selection: $selectedType) {
-              Text("G1").tag(AircraftTypeSetting.g1)
-              Text("G2").tag(AircraftTypeSetting.g2)
-              Text("G2+").tag(AircraftTypeSetting.g2Plus)
-              Text("G3").tag(AircraftTypeSetting.g3)
+              Text("G1").tag(SF50Generation.g1)
+              Text("G2").tag(SF50Generation.g2)
+              Text("G2+").tag(SF50Generation.g2Plus)
+              Text("G3").tag(SF50Generation.g3)
             }
             .pickerStyle(.segmented)
             .accessibilityIdentifier("modelPicker")
@@ -87,7 +87,7 @@ struct WelcomeView: View {
         Spacer()
 
         Button("Continue") {
-          aircraftTypeSetting = selectedType
+          sf50Generation = selectedType
           switch selectedType {
             case .g1: updatedThrustSchedule = false
             case .g2: updatedThrustSchedule = g2UseUpdatedThrustSchedule

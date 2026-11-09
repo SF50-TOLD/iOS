@@ -42,7 +42,7 @@ class BaseReportData<PerformanceType, ScenarioType> {
   var calculator: PerformanceCalculator {
     .init(
       settings: .init(
-        aircraftType: input.aircraftType,
+        aircraft: input.aircraft,
         modelKind: input.useRegressionModel ? .regression : .tabular,
         VREFAdditive: .init(value: input.VREFAdditiveKts, unit: .knots)
       )

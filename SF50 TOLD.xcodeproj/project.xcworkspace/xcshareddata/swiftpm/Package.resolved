@@ -1,5 +1,5 @@
 {
-  "originHash" : "ed3dd881a37c301e94c19f94c3d2100496c7f2662bb9b00540aa4314c59c3f8a",
+  "originHash" : "34525bd496e974f1f173fd2f03d89eb1f4677c4d879519301a43be7a961cf383",
   "pins" : [
     {
       "identity" : "buildablemacro",
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SF50-TOLD/SF50-Performance.git",
       "state" : {
-        "revision" : "49cdd9111fbc7dffbec6bbf8f9411b8c82aee679",
-        "version" : "1.0.0"
+        "revision" : "3bcfefc39f85796b575a270e3e2867e650e0e872",
+        "version" : "2.0.0"
       }
     },
     {

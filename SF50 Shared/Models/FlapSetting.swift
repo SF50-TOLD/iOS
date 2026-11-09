@@ -21,7 +21,7 @@ public enum FlapSetting: String, CaseIterable, Sendable {
   case flaps100
 
   /// The same setting, as the performance models take it.
-  public var performanceFlapSetting: SF50Performance.FlapSetting {
+  public var performanceFlapSetting: AircraftPerformance.FlapSetting {
     switch self {
       case .flapsUp: .flapsUp
       case .flapsUpIce: .flapsUpIce

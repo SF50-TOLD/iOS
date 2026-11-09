@@ -136,7 +136,7 @@ extension ClimbProfile {
         fieldElevation: .init(value: 0, unit: .feet)
       ),
       weightLb: 5500,
-      aircraftType: .g2(updatedThrustSchedule: true),
+      aircraft: .sf50(.g2(updatedThrustSchedule: true)),
       seaLevelPressureInHg: 29.92,
       useRegressionModel: true
     )

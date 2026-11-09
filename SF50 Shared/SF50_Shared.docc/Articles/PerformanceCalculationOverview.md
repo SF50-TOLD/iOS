@@ -31,7 +31,7 @@ Four input types capture the conditions of the calculation:
 
 ### 2. Model Selection
 
-``DefaultPerformanceCalculationService/createPerformanceModel(conditions:configuration:runway:notam:useRegressionModel:aircraftType:)``
+``DefaultPerformanceCalculationService/createPerformanceModel(conditions:configuration:runway:notam:useRegressionModel:aircraft:)``
 selects a concrete ``PerformanceModel`` based on the user's aircraft generation and
 model preference (tabular or regression).
 
@@ -42,7 +42,7 @@ model preference (tabular or regression).
 1. **Base value** — ``BasePerformanceModel/baseValue(for:)`` returns the unadjusted
    distance from regression equations or AFM table interpolation, depending on the
    concrete model.
-2. **Adjustment selection** — ``PerformanceAdjustmentGenerator`` inspects the current
+2. **Adjustment selection** — `PerformanceAdjustmentGenerator` inspects the current
    conditions and returns an ordered list of ``AdjustmentKind`` values applicable to the
    ``DistanceTarget``.
 3. **Adjustment application** — For each kind, ``BasePerformanceModel/applyAdjustment(_:to:target:)``
@@ -53,7 +53,7 @@ an audit trail from the base distance to the final adjusted value.
 
 #### Adjustment Order
 
-``PerformanceAdjustmentGenerator`` enforces a fixed order. Not every adjustment applies
+`PerformanceAdjustmentGenerator` enforces a fixed order. Not every adjustment applies
 to every target:
 
 | Adjustment | Takeoff Run | Takeoff Distance | Landing Run | Landing Distance |
@@ -101,14 +101,14 @@ identical across all aircraft types and do not belong in the model-specific code
 
 `TabularPerformanceModel` interpolates directly from digitized AFM performance charts.
 It inherits from ``BasePerformanceModel`` and looks up values using multi-dimensional
-table interpolation (weight, temperature, altitude). The `aircraftType` parameter
+table interpolation (weight, temperature, altitude). The `aircraft` parameter
 drives which data files are loaded.
 
 ### Regression Models
 
 `RegressionPerformanceModel` uses curve-fitted polynomial equations derived from the
 same AFM data. It produces smoother results across the input domain and carries
-uncertainty estimates. The `aircraftType` parameter selects the JSON equation files,
+uncertainty estimates. The `aircraft` parameter selects the JSON equation files,
 which contain all variant-specific coefficients and adjustment factors.
 
 ## Distance Breakdown
@@ -179,7 +179,7 @@ let model = service.createPerformanceModel(
     runway: runway,
     notam: notam,
     useRegressionModel: true,
-    aircraftType: .g2Plus
+    aircraft: .sf50(.g2Plus)
 )
 
 let takeoff = try service.calculateTakeoff(for: model, safetyFactor: 1.25)
@@ -199,7 +199,6 @@ for adjustment in landing.distanceBreakdown.adjustments {
 - ``DefaultPerformanceCalculationService``
 - ``PerformanceModel``
 - ``BasePerformanceModel``
-- ``PerformanceAdjustmentGenerator``
 - ``AdjustmentKind``
 - ``PerformanceAdjustment``
 - ``DistanceBreakdown``

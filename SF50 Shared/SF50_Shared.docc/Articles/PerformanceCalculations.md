@@ -20,7 +20,6 @@ Takeoff and landing performance computation using AFM data, with auditable adjus
 
 ### Adjustments
 
-- ``PerformanceAdjustmentGenerator``
 - ``AdjustmentKind``
 - ``DistanceTarget``
 - ``PerformanceAdjustment``

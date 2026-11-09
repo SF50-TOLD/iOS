@@ -8,8 +8,8 @@ struct ClimbConfigView: View {
   @Environment(ClimbPerformanceViewModel.self)
   private var performance
 
-  @Environment(\.aircraftType)
-  private var aircraftType
+  @Environment(\.aircraft)
+  private var aircraft
 
   @Default(.fuelVolumeUnit)
   private var fuelVolumeUnit
@@ -20,8 +20,8 @@ struct ClimbConfigView: View {
   @Default(.temperatureUnit)
   private var temperatureUnit
 
-  private var limitations: any Limitations.Type {
-    aircraftType.limitations
+  private var limitations: AircraftLimitations {
+    aircraft.limitations
   }
 
   private var fuelStep: Measurement<UnitVolume> {

@@ -23,8 +23,8 @@ struct ClimbProfileView: View {
   @Environment(\.modelContext)
   private var modelContext
 
-  @Environment(\.aircraftType)
-  private var aircraftType
+  @Environment(\.aircraft)
+  private var aircraft
 
   @Default(.useRegressionModel)
   private var useRegressionModel
@@ -174,7 +174,7 @@ struct ClimbProfileView: View {
         ?? standardSeaLevelPressure.converted(to: .inchesOfMercury).value,
       surfaceTemperatureC: performance.conditions.temperature?.converted(to: .celsius).value,
       conditionsSource: performance.conditions.source,
-      aircraftType: aircraftType,
+      aircraft: aircraft,
       useRegressionModel: useRegressionModel,
       firstSegment: firstSegment,
       firstSegmentAntiIce: firstSegmentAntiIce,
@@ -226,7 +226,7 @@ struct ClimbProfileView: View {
       climbProfile = try ClimbProfileGenerator.generate(
         windsAloft: windsAloftObs,
         weightLb: performance.weight.converted(to: .pounds).value,
-        aircraftType: aircraftType,
+        aircraft: aircraft,
         seaLevelPressureInHg: slpInHg,
         useRegressionModel: useRegressionModel
       )
@@ -395,7 +395,7 @@ struct ClimbProfileView: View {
     /// Entered weather is carried up the synthesized column and downloaded weather is not, so the
     /// same reading gives a different climb depending on who said it.
     let conditionsSource: Conditions.Source
-    let aircraftType: AircraftType
+    let aircraft: Aircraft
     let useRegressionModel: Bool
     let firstSegment: FirstSegment
     let firstSegmentAntiIce: Bool

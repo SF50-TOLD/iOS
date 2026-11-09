@@ -146,7 +146,7 @@ public final class ClimbPerformanceViewModel {
     addTask(
       Task { [weak self] in
         for await _ in Defaults.updates(
-          .aircraftTypeSetting,
+          .sf50Generation,
           .updatedThrustSchedule,
           .useRegressionModel
         ) {
