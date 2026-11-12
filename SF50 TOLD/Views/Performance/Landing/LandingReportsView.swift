@@ -42,6 +42,7 @@ struct LandingReportsView: View {
     }
     .environment(LandingPerformanceViewModel(container: helper.container))
     .environment(WeatherViewModel(operation: .landing, container: helper.container))
+    .environment(ReportPresentation())
   }
 }
 
@@ -54,5 +55,6 @@ struct LandingReportsView: View {
     }
     .environment(LandingPerformanceViewModel(container: helper.container))
     .environment(WeatherViewModel(operation: .landing, container: helper.container))
+    .environment(ReportPresentation())
   }
 }

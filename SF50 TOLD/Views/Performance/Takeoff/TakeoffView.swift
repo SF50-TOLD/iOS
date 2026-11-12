@@ -8,6 +8,7 @@ struct TakeoffView: View {
 
   @State private var performance: TakeoffPerformanceViewModel?
   @State private var weather: WeatherViewModel?
+  @State private var reports = ReportPresentation()
 
   var body: some View {
     NavigationStack {
@@ -28,6 +29,7 @@ struct TakeoffView: View {
     .environment(performance)
     .environment(weather)
     .environment(\.operation, .takeoff)
+    .presentingReports(reports, titled: "Takeoff Report")
     .withErrorSheet(state: performance)
     .onAppear {
       if performance == nil {

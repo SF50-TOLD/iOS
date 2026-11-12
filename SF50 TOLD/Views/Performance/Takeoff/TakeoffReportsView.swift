@@ -42,6 +42,7 @@ struct TakeoffReportsView: View {
     }
     .environment(TakeoffPerformanceViewModel(container: helper.container))
     .environment(WeatherViewModel(operation: .takeoff, container: helper.container))
+    .environment(ReportPresentation())
   }
 }
 
@@ -54,5 +55,6 @@ struct TakeoffReportsView: View {
     }
     .environment(TakeoffPerformanceViewModel(container: helper.container))
     .environment(WeatherViewModel(operation: .takeoff, container: helper.container))
+    .environment(ReportPresentation())
   }
 }
