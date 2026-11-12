@@ -8,6 +8,7 @@ struct LandingView: View {
 
   @State private var performance: LandingPerformanceViewModel?
   @State private var weather: WeatherViewModel?
+  @State private var reports = ReportPresentation()
 
   var body: some View {
     NavigationStack {
@@ -28,6 +29,7 @@ struct LandingView: View {
     .environment(performance)
     .environment(weather)
     .environment(\.operation, .landing)
+    .presentingReports(reports, titled: "Landing Report")
     .withErrorSheet(state: performance)
     .onAppear {
       if performance == nil {

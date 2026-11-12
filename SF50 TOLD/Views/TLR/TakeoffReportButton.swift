@@ -4,11 +4,6 @@ import Sentry
 import SwiftData
 import SwiftUI
 
-private struct IdentifiableReport: Identifiable {
-  let id = UUID()
-  let report: Report
-}
-
 struct TakeoffReportButton: View {
   @Environment(TakeoffPerformanceViewModel.self)
   private var performance
@@ -17,9 +12,8 @@ struct TakeoffReportButton: View {
   @Environment(\.modelContext)
   private var modelContext
 
-  @State private var reportToShow: IdentifiableReport?
-  @State private var isGenerating = false
-  @State private var error: (any Error)?
+  @Environment(ReportPresentation.self)
+  private var presentation
 
   private var container: ModelContainer {
     modelContext.container
@@ -30,7 +24,7 @@ struct TakeoffReportButton: View {
       generateReport()
     } label: {
       HStack {
-        if isGenerating {
+        if presentation.isGenerating {
           ProgressView()
             .controlSize(.small)
           Text("Generating…")
@@ -41,21 +35,7 @@ struct TakeoffReportButton: View {
       }
     }
     .accessibilityIdentifier("generateTakeoffReportButton")
-    .disabled(!canGenerateReport || isGenerating)
-    .sheet(item: $reportToShow) { shown in
-      HTMLReportViewer(
-        report: shown.report,
-        reportTitle: "Takeoff Report"
-      )
-    }
-    .sheet(
-      item: Binding(
-        get: { error.map { IdentifiableError(error: $0) } },
-        set: { _ in error = nil }
-      )
-    ) { identifiableError in
-      ErrorSheet(error: identifiableError.error)
-    }
+    .disabled(!canGenerateReport || presentation.isGenerating)
   }
 
   private var canGenerateReport: Bool {
@@ -69,7 +49,7 @@ struct TakeoffReportButton: View {
       return
     }
 
-    isGenerating = true
+    presentation.isGenerating = true
 
     Task {
       do {
@@ -109,14 +89,14 @@ struct TakeoffReportButton: View {
         let generatedReport = try generateTakeoffReport(input: input, scenarios: scenarios)
 
         await MainActor.run {
-          reportToShow = IdentifiableReport(report: generatedReport)
-          isGenerating = false
+          presentation.report = IdentifiableReport(report: generatedReport)
+          presentation.isGenerating = false
         }
       } catch {
         SentrySDK.capture(error: error)
         await MainActor.run {
-          self.error = error
-          isGenerating = false
+          presentation.error = IdentifiableError(error: error)
+          presentation.isGenerating = false
         }
       }
     }
