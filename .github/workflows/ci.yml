@@ -14,8 +14,13 @@ concurrency:
 # The runner label tracks the Xcode major version, not the OS: GitHub moved the Xcode 27 image from
 # macOS 26 to macOS 27 under this same label. Nothing here should be pinned to an OS assumption.
 jobs:
+  route:
+    uses: RISCfuture/ci-workflows/.github/workflows/minerva-route.yml@1.1.0
+    permissions:
+      contents: read
   ci:
-    uses: RISCfuture/XCUITestKit/.github/workflows/ios-ci.yml@1.2.1
+    needs: route
+    uses: RISCfuture/XCUITestKit/.github/workflows/ios-ci.yml@1.3.0
     with:
       scheme: "SF50 TOLD"
       unit-test-plan: "SF50 Shared Unit Tests"
@@ -24,13 +29,13 @@ jobs:
       test-execution-time-allowance: 900
       build-matrix: |
         {"include":[
-          {"ios-label":"latest","runner":"xcode-27","device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"}
+          {"ios-label":"latest","runner":${{ needs.route.outputs.xcode-27 }},"device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"}
         ]}
       ui-matrix: |
         {"include":[
-          {"ios-label":"latest","runner":"xcode-27","device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"},
-          {"ios-label":"latest","runner":"xcode-27","device":"iPad Pro 13-inch (M5)","device-type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB","os-version":"","xcode-version":"latest-stable"},
-          {"ios-label":"latest","runner":"xcode-27","device":"iPhone Duo","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-Duo","os-version":"","xcode-version":"latest-stable"}
+          {"ios-label":"latest","runner":${{ needs.route.outputs.xcode-27 }},"device":"iPhone 17 Pro","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro","os-version":"","xcode-version":"latest-stable"},
+          {"ios-label":"latest","runner":${{ needs.route.outputs.xcode-27 }},"device":"iPad Pro 13-inch (M5)","device-type":"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB","os-version":"","xcode-version":"latest-stable"},
+          {"ios-label":"latest","runner":${{ needs.route.outputs.xcode-27 }},"device":"iPhone Duo","device-type":"com.apple.CoreSimulator.SimDeviceType.iPhone-Duo","os-version":"","xcode-version":"latest-stable"}
         ]}
       secret-file-path: "SF50 TOLD/NOTAM/NOTAMAPIConfig.xcconfig"
       secret-file-template: |
@@ -42,7 +47,8 @@ jobs:
 
   docs:
     name: Build Documentation
-    runs-on: xcode-27
+    needs: route
+    runs-on: ${{ fromJSON(needs.route.outputs.xcode-27) }}
     steps:
       - uses: actions/checkout@v7.0.1
       - name: Generate NOTAM API config

@@ -31,9 +31,15 @@ permissions:
   contents: read
 
 jobs:
+  route:
+    uses: RISCfuture/ci-workflows/.github/workflows/minerva-route.yml@1.1.0
+    permissions:
+      contents: read
+
   publish:
     name: Build and publish the store
-    runs-on: xcode-27
+    needs: route
+    runs-on: ${{ fromJSON(needs.route.outputs.macos-27) }}
     steps:
       - uses: actions/checkout@v7.0.1
 
