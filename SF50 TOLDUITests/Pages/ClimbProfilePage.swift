@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 final class ClimbProfilePage: ProfilePage {
 
@@ -9,7 +10,7 @@ final class ClimbProfilePage: ProfilePage {
     guard openWeatherMenu("weatherLayerPicker") else { return }
 
     let option = app.buttons[layer].firstMatch
-    XCTAssertTrue(option.waitForExistence(timeout: 5), "“\(layer)” should be offered")
+    XCTAssertTrue(option.wait(timeout: 5), "“\(layer)” should be offered")
     forceTap(option)
   }
 
@@ -19,7 +20,7 @@ final class ClimbProfilePage: ProfilePage {
 
     let segment = isOn ? "On" : "Off"
     let option = app.buttons[segment].firstMatch
-    XCTAssertTrue(option.waitForExistence(timeout: 5), "“\(segment)” should be offered")
+    XCTAssertTrue(option.wait(timeout: 5), "“\(segment)” should be offered")
     forceTap(option)
   }
 }

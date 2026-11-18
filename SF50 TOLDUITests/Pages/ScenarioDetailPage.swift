@@ -74,6 +74,6 @@ final class ScenarioDetailPage: BasePage {
   func goBack() {
     dismissKeyboard()
     tapBackButton()
-    _ = app.navigationBars["Scenarios"].waitForExistence(timeout: 3)
+    _ = app.navigationBars["Scenarios"].wait(timeout: 3)
   }
 }

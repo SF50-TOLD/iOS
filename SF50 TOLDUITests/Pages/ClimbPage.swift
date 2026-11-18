@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 final class ClimbPage: BasePage {
 
@@ -22,7 +23,7 @@ final class ClimbPage: BasePage {
   // MARK: - Actions
 
   func adjustFuel(to normalizedPosition: CGFloat) {
-    XCTAssertTrue(fuelSlider.waitForExistence(timeout: 2), "Fuel slider should exist")
+    XCTAssertTrue(fuelSlider.wait(timeout: 2), "Fuel slider should exist")
     fuelSlider.adjust(toNormalizedSliderPosition: normalizedPosition)
   }
 

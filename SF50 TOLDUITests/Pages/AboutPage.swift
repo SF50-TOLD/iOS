@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 final class AboutPage: BasePage {
 
@@ -25,6 +26,6 @@ final class AboutPage: BasePage {
         scrollAttempts += 1
       }
     }
-    return disclaimer.waitForExistence(timeout: 2)
+    return disclaimer.wait(timeout: 2)
   }
 }

@@ -7,11 +7,11 @@ final class LoadingConsentPage: BasePage {
   var deferButton: XCUIElement { app.buttons["deferDataButton"] }
 
   func isDisplayed() -> Bool {
-    downloadButton.waitForExistence(timeout: 5)
+    downloadButton.wait(timeout: 5)
   }
 
   func deferUntilLater() -> TabBarPage {
-    XCTAssertTrue(deferButton.waitForExistence(timeout: 5), "Defer button should exist")
+    XCTAssertTrue(deferButton.wait(timeout: 5), "Defer button should exist")
     tapAndEnsureNavigation(
       element: deferButton,
       expectedElement: app.textFields["payloadField"].firstMatch

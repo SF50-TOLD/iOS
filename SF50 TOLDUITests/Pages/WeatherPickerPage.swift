@@ -20,10 +20,10 @@ final class WeatherPickerPage: BasePage {
   func dismissInProgressLoad() {
     if windDirectionField.exists { return }
     let cancelButton = app.buttons["cancelWeatherUpdateButton"]
-    if cancelButton.waitForExistence(timeout: ScaledTimeouts.scaled(3)) {
+    if cancelButton.wait(timeout: ScaledTimeouts.scaled(3)) {
       cancelButton.forceTap()
     }
-    _ = windDirectionField.waitForExistence(timeout: ScaledTimeouts.scaled(10))
+    _ = windDirectionField.wait(timeout: ScaledTimeouts.scaled(10))
   }
 
   func setWindDirection(_ value: String) {

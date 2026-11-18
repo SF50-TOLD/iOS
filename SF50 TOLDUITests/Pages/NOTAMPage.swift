@@ -17,7 +17,7 @@ final class NOTAMPage: BasePage {
   // MARK: - Runway Shortening
 
   func setRunwayShortening(_ value: String) {
-    XCTAssertTrue(distanceField.waitForExistence(timeout: 2), "Distance field should exist")
+    XCTAssertTrue(distanceField.wait(timeout: 2), "Distance field should exist")
     distanceField.enter(value, app: app)
     dismissKeyboard()
   }
@@ -26,7 +26,7 @@ final class NOTAMPage: BasePage {
 
   func setObstacleHeight(_ value: String) {
     XCTAssertTrue(
-      obstacleHeightField.waitForExistence(timeout: 2),
+      obstacleHeightField.wait(timeout: 2),
       "Obstacle height field should exist"
     )
     obstacleHeightField.enter(value, app: app)
@@ -34,7 +34,7 @@ final class NOTAMPage: BasePage {
 
   func setObstacleDistance(_ value: String) {
     XCTAssertTrue(
-      obstacleDistanceField.waitForExistence(timeout: 2),
+      obstacleDistanceField.wait(timeout: 2),
       "Obstacle distance field should exist"
     )
     obstacleDistanceField.enter(value, app: app)
@@ -43,7 +43,7 @@ final class NOTAMPage: BasePage {
   // MARK: - Contamination (Landing)
 
   func selectContamination(_ type: String) {
-    if contaminationTypePicker.waitForExistence(timeout: 2) {
+    if contaminationTypePicker.wait(timeout: 2) {
       ensureHittable(contaminationTypePicker)
       let option = app.buttons[type]
       // Opening the picker is a single tap that iPad/Liquid Glass can drop,
@@ -61,7 +61,7 @@ final class NOTAMPage: BasePage {
   }
 
   func adjustContaminationDepth(to normalizedPosition: CGFloat) {
-    if contaminationDepthSlider.waitForExistence(timeout: 2) {
+    if contaminationDepthSlider.wait(timeout: 2) {
       contaminationDepthSlider.adjust(toNormalizedSliderPosition: normalizedPosition)
     }
   }
@@ -71,7 +71,7 @@ final class NOTAMPage: BasePage {
   /// Fills the editor in from the first downloaded NOTAM that can fill it.
   func fillFromFirstProposal() {
     XCTAssertTrue(
-      fillFromNOTAMButton.waitForExistence(timeout: 5),
+      fillFromNOTAMButton.wait(timeout: 5),
       "A downloaded NOTAM should offer to fill the editor in"
     )
     ensureHittable(fillFromNOTAMButton)
@@ -82,7 +82,7 @@ final class NOTAMPage: BasePage {
 
   func clearAllNOTAMs() {
     let clearButton = app.buttons["clearNOTAMsButton"]
-    XCTAssertTrue(clearButton.waitForExistence(timeout: 2), "Clear NOTAMs button should exist")
+    XCTAssertTrue(clearButton.wait(timeout: 2), "Clear NOTAMs button should exist")
     ensureHittable(clearButton)
     forceTap(clearButton)
   }

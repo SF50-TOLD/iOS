@@ -20,13 +20,17 @@ final class SettingsPage: BasePage {
   }
   var useDefaultFactorsButton: XCUIElement { app.buttons["useDefaultFactorsButton"] }
   var isThrustScheduleToggleVisible: Bool {
-    thrustScheduleToggle.waitForExistence(timeout: 1)
+    thrustScheduleToggle.wait(timeout: 1)
+  }
+  /// Whether the thrust schedule toggle is gone, allowing for one still on its way out.
+  var isThrustScheduleToggleHidden: Bool {
+    !thrustScheduleToggle.exists || thrustScheduleToggle.waitForNonExistence(timeout: 1)
   }
 
   // MARK: - Actions
 
   func selectAircraftModel(_ model: String) {
-    XCTAssertTrue(aircraftTypePicker.waitForExistence(timeout: 2), "Aircraft picker should exist")
+    XCTAssertTrue(aircraftTypePicker.wait(timeout: 2), "Aircraft picker should exist")
     ensureHittable(aircraftTypePicker)
     let option = app.buttons[model]
     // Opening the picker is a single tap that iPad/Liquid Glass can drop;
@@ -40,13 +44,13 @@ final class SettingsPage: BasePage {
   }
 
   func setEmptyWeight(_ weight: String) {
-    XCTAssertTrue(weightField.waitForExistence(timeout: 2), "Weight field should exist")
+    XCTAssertTrue(weightField.wait(timeout: 2), "Weight field should exist")
     weightField.enter(weight, app: app)
   }
 
   func setSafetyFactorDry(_ value: String) {
     XCTAssertTrue(
-      safetyFactorDryField.waitForExistence(timeout: 2),
+      safetyFactorDryField.wait(timeout: 2),
       "Safety factor dry field should exist"
     )
     safetyFactorDryField.enter(value, app: app)
@@ -64,7 +68,7 @@ final class SettingsPage: BasePage {
     for _ in 0..<4 {
       if menuItem.exists || button.exists || popUpButton.exists { break }
       forceTap(toggle!)
-      _ = menuItem.waitForExistence(timeout: 1)
+      _ = menuItem.wait(timeout: 1)
     }
     let option = [menuItem, button, popUpButton].first(where: \.exists)
     XCTAssertNotNil(
@@ -77,7 +81,7 @@ final class SettingsPage: BasePage {
   func selectTimeZone(_ zone: String) {
     revealTimeZonePicker()
     XCTAssertTrue(
-      timeZoneDisplayPicker.waitForExistence(timeout: 2),
+      timeZoneDisplayPicker.wait(timeout: 2),
       "Time zone picker should exist"
     )
     ensureHittable(timeZoneDisplayPicker)
@@ -103,7 +107,7 @@ final class SettingsPage: BasePage {
       let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.7))
       let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
       start.press(forDuration: 0.1, thenDragTo: end)
-      _ = timeZoneDisplayPicker.waitForExistence(timeout: 0.6)
+      _ = timeZoneDisplayPicker.wait(timeout: 0.6)
     }
   }
 
