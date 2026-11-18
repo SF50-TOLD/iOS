@@ -1,42 +1,52 @@
 import SF50_Shared
 import SwiftUI
 
-/// Lays out a performance screen's inputs and results: as two forms at regular width, and as one
-/// form, inputs first, at compact width.
+/// Lays out a performance screen's inputs and results: as two forms side by side at regular width
+/// in a space wider than tall, and otherwise as one form, inputs first.
 ///
-/// At regular width the inputs and results sit side by side, or stacked where the space is
-/// taller than wide, so the results stay in view while an input is changed. On iPhone Duo's inner
-/// display the split follows the fold.
+/// Side by side, the results stay in view while an input is changed. On iPhone Duo's inner display
+/// the split follows the fold.
 struct PerformanceLayout<Inputs: View, Results: View>: View {
-  /// The share of the height the inputs take when the forms are stacked, enough for every input
-  /// on a 13-inch iPad in portrait while iPhone Duo's inner display still shows every result.
-  private static var stackedInputsShare: CGFloat { 0.62 }
-
   @Environment(\.horizontalSizeClass)
   private var horizontalSizeClass
+
+  @State private var measuredWidth: CGFloat?
+  @State private var isWiderThanTall = false
 
   @ViewBuilder let inputs: () -> Inputs
   @ViewBuilder let results: () -> Results
 
+  private var canSplit: Bool { horizontalSizeClass == .regular && isWiderThanTall }
+
   var body: some View {
-    if #available(iOS 27.1, *), horizontalSizeClass == .regular {
-      ArrangementView {
-        Form { inputs() }
-          .accessibilityIdentifier("performanceInputs")
-          .modifier(SeamMargin(edge: .trailing))
-      } secondary: {
-        Form { results() }
-          .accessibilityIdentifier("performanceResults")
-          .modifier(SeamMargin(edge: .leading))
-      }
-      .arrangementViewStyle(.split)
-      .splitArrangementLayoutRatio(idealVertical: Self.stackedInputsShare)
-    } else {
-      Form {
-        inputs()
-        results()
+    Group {
+      if #available(iOS 27.1, *), canSplit {
+        ArrangementView {
+          Form { inputs() }
+            .accessibilityIdentifier("performanceInputs")
+            .modifier(SeamMargin(edge: .trailing))
+        } secondary: {
+          Form { results() }
+            .accessibilityIdentifier("performanceResults")
+            .modifier(SeamMargin(edge: .leading))
+        }
+        .arrangementViewStyle(.split)
+      } else {
+        Form {
+          inputs()
+          results()
+        }
       }
     }
+    .onGeometryChange(for: CGSize.self, of: \.size, action: measureShape)
+  }
+
+  /// Takes the space's shape when its width changes, which a rotation, an unfold or a window resize
+  /// does and the software keyboard, taking only height, does not.
+  private func measureShape(_ size: CGSize) {
+    guard size.width != measuredWidth else { return }
+    measuredWidth = size.width
+    isWiderThanTall = size.width > size.height
   }
 }
 
