@@ -39,7 +39,7 @@ class BasePage {
   @discardableResult
   func scrollToElement(_ element: XCUIElement) -> XCUIElement? {
     // If already visible, return immediately
-    if element.waitForExistence(timeout: 5) && element.isVisible {
+    if element.wait(timeout: 5) && element.isVisible {
       ensureHittable(element)
       return element
     }
@@ -61,7 +61,7 @@ class BasePage {
       // side of the current position is reached.
       for direction in [(from: 0.8, to: 0.2), (from: 0.2, to: 0.8)] {
         for _ in 0..<12 {
-          if element.waitForExistence(timeout: 0.3) && element.isVisible {
+          if element.exists && element.isVisible {
             ensureHittable(element)
             return element
           }
@@ -103,6 +103,7 @@ class BasePage {
     for _ in 0..<attempts {
       if element.isSelected { return }
       forceTap(element)
+      if element.isSelected { return }
       _ = XCTWaiter().wait(
         for: [
           XCTNSPredicateExpectation(

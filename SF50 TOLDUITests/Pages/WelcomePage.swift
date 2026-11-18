@@ -8,9 +8,11 @@ final class WelcomePage: BasePage {
   var continueButton: XCUIElement { app.buttons["continueButton"] }
   var thrustScheduleToggle: XCUIElement { app.switches["updatedThrustScheduleToggle"] }
 
+  /// Defers the nav-data loader if it is up. The loader and the welcome screen take each other's
+  /// place, so a welcome screen already showing means there is no loader to wait for.
   func handleDatabaseLoaderIfNeeded() {
     let deferButton = app.buttons["deferDataButton"]
-    if deferButton.waitForExistence(timeout: 2) {
+    if !continueButton.exists, deferButton.wait(timeout: 2) {
       forceTap(deferButton)
     }
   }
@@ -19,25 +21,25 @@ final class WelcomePage: BasePage {
 
   func waitForReady() {
     XCTAssertTrue(
-      continueButton.waitForExistence(timeout: 5),
+      continueButton.wait(timeout: 5),
       "Welcome screen should be fully loaded"
     )
   }
 
   func selectModel(_ model: String) {
     XCTAssertTrue(
-      modelPicker.waitForExistence(timeout: 5),
+      modelPicker.wait(timeout: 5),
       "Model picker should be accessible"
     )
     let button = modelPicker.buttons[model]
-    XCTAssertTrue(button.waitForExistence(timeout: 2), "\(model) button should exist in picker")
+    XCTAssertTrue(button.wait(timeout: 2), "\(model) button should exist in picker")
     ensureHittable(button)
     tapUntilSelected(button)
   }
 
   func setEmptyWeight(_ weight: String) {
     XCTAssertTrue(
-      emptyWeightField.waitForExistence(timeout: 2),
+      emptyWeightField.wait(timeout: 2),
       "Empty weight field should be accessible"
     )
     emptyWeightField.enter(weight, app: app)
@@ -45,7 +47,7 @@ final class WelcomePage: BasePage {
 
   func toggleThrustSchedule() {
     XCTAssertTrue(
-      thrustScheduleToggle.waitForExistence(timeout: 2),
+      thrustScheduleToggle.wait(timeout: 2),
       "Thrust schedule toggle should exist"
     )
     ensureHittable(thrustScheduleToggle)
@@ -58,7 +60,7 @@ final class WelcomePage: BasePage {
       app.swipeDown()
     }
     XCTAssertTrue(
-      continueButton.waitForExistence(timeout: 5),
+      continueButton.wait(timeout: 5),
       "Continue button should be tappable"
     )
     ensureHittable(continueButton)
@@ -67,14 +69,16 @@ final class WelcomePage: BasePage {
       expectedElement: app.textFields["payloadField"].firstMatch
     )
 
-    // If the data loader appears after setup, defer it
+    // If the data loader appears after setup, defer it. It takes the tab view's place, so it
+    // cannot be up while the payload field is.
+    let payloadField = app.textFields["payloadField"].firstMatch
     let deferButton = app.buttons["deferDataButton"]
-    if deferButton.waitForExistence(timeout: 3) {
+    if !payloadField.exists, deferButton.wait(timeout: 3) {
       forceTap(deferButton)
     }
 
     XCTAssertTrue(
-      app.textFields["payloadField"].firstMatch.waitForExistence(timeout: 10),
+      payloadField.wait(timeout: 10),
       "Payload field should appear after setup"
     )
     return TabBarPage(app: app)
@@ -87,7 +91,7 @@ final class WelcomePage: BasePage {
       app.swipeDown()
     }
     XCTAssertTrue(
-      continueButton.waitForExistence(timeout: 5),
+      continueButton.wait(timeout: 5),
       "Continue button should be tappable"
     )
     ensureHittable(continueButton)

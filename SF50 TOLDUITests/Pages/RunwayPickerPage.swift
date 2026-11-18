@@ -1,11 +1,12 @@
 import XCTest
+import XCUITestKit
 
 final class RunwayPickerPage: BasePage {
 
   func selectRunway(_ runway: String) {
     let row = app.buttons["runwayRow-\(runway)"].firstMatch
     XCTAssertTrue(
-      row.waitForExistence(timeout: 2),
+      row.wait(timeout: 2),
       "Runway \(runway) should appear"
     )
     forceTap(row)

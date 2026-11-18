@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 /// What the climb and go-around profile screens share: the same chart, plotted from the same
 /// pipeline, behind the same weather controls.
@@ -6,7 +7,7 @@ class ProfilePage: BasePage {
 
   func isChartVisible(timeout: TimeInterval = 30) -> Bool {
     let chart = app.descendants(matching: .any)["terrainProfileChart"]
-    return chart.waitForExistence(timeout: timeout)
+    return chart.wait(timeout: timeout)
   }
 
   /// Opens one of the chart's weather pull-downs.

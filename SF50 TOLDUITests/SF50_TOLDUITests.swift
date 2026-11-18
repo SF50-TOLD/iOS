@@ -32,7 +32,7 @@ extension SF50_TOLDUITests {
       // Performance computed but went offscale — still validates the navigation flow
       let offscale = takeoff.app.staticTexts["Offscale high"]
       XCTAssertTrue(
-        offscale.waitForExistence(timeout: 3),
+        offscale.wait(timeout: 3),
         "Ground run should have a value or show offscale"
       )
     }
@@ -75,8 +75,8 @@ extension SF50_TOLDUITests {
 
     await scenarios.deleteScenario("Hot Day Test")
 
-    XCTAssertFalse(
-      scenarios.scenarioExists("Hot Day Test"),
+    XCTAssertTrue(
+      scenarios.scenarioIsGone("Hot Day Test"),
       "Deleted scenario should not appear in list"
     )
   }
@@ -92,7 +92,7 @@ extension SF50_TOLDUITests {
     picker.dismissKeyboard()
 
     XCTAssertTrue(
-      picker.app.buttons["airportRow-SQL"].firstMatch.waitForExistence(timeout: 3),
+      picker.app.buttons["airportRow-SQL"].firstMatch.wait(timeout: 3),
       "SQL should appear in search results"
     )
 
@@ -102,7 +102,7 @@ extension SF50_TOLDUITests {
     let alreadyFavorited = picker.isAirportVisible("SQL")
     picker.search(for: "SQL")
     picker.dismissKeyboard()
-    _ = picker.app.buttons["airportRow-SQL"].firstMatch.waitForExistence(timeout: 2)
+    _ = picker.app.buttons["airportRow-SQL"].firstMatch.wait(timeout: 2)
 
     if alreadyFavorited {
       picker.toggleFavorite(for: "SQL")
@@ -139,7 +139,7 @@ extension SF50_TOLDUITests {
     notams.adjustContaminationDepth(to: 0.25)
     notams.goBack()
 
-    _ = landing.app.staticTexts["landingDistanceValue"].waitForExistence(timeout: 5)
+    _ = landing.app.staticTexts["landingDistanceValue"].wait(timeout: 5)
     let contaminatedDistance = landing.landingDistanceValue
 
     if let baselineDistance, let contaminatedDistance {
@@ -200,7 +200,7 @@ extension SF50_TOLDUITests {
     climb.adjustISADeviation(to: 0.5)
 
     XCTAssertTrue(
-      climb.speedValue.waitForExistence(timeout: 2),
+      climb.speedValue.wait(timeout: 2),
       "Climb speed value should be displayed"
     )
     XCTAssertTrue(climb.rateValue.exists, "Climb rate value should be displayed")
@@ -241,7 +241,7 @@ extension SF50_TOLDUITests {
 
     let profile = takeoff.openClimbProfile()
     XCTAssertTrue(
-      takeoff.app.navigationBars["Climb Profile"].waitForExistence(timeout: 5),
+      takeoff.app.navigationBars["Climb Profile"].wait(timeout: 5),
       "Climb Profile nav bar should appear"
     )
     XCTAssertTrue(profile.isChartVisible(), "Terrain profile chart should appear")
@@ -324,7 +324,7 @@ extension SF50_TOLDUITests {
 
     let profile = landing.openGoAroundProfile()
     XCTAssertTrue(
-      landing.app.navigationBars["Go-Around Profile"].waitForExistence(timeout: 5),
+      landing.app.navigationBars["Go-Around Profile"].wait(timeout: 5),
       "Go-Around Profile nav bar should appear"
     )
     XCTAssertTrue(profile.isChartVisible(), "Terrain profile chart should appear")
@@ -338,7 +338,7 @@ extension SF50_TOLDUITests {
     welcome.handleDatabaseLoaderIfNeeded()
 
     XCTAssertTrue(
-      welcome.continueButton.waitForExistence(timeout: 5),
+      welcome.continueButton.wait(timeout: 5),
       "Continue button should appear"
     )
 
@@ -353,7 +353,7 @@ extension SF50_TOLDUITests {
 
     let settings = tabBar.goToSettings()
     XCTAssertTrue(
-      settings.app.staticTexts["Settings"].waitForExistence(timeout: 2),
+      settings.app.staticTexts["Settings"].wait(timeout: 2),
       "Should be on Settings screen"
     )
   }
@@ -370,12 +370,12 @@ extension SF50_TOLDUITests {
     let picker = takeoff.openAirportPicker()
     picker.search(for: "ASE")
 
-    if takeoff.app.buttons["airportRow-ASE"].firstMatch.waitForExistence(timeout: 3) {
+    if takeoff.app.buttons["airportRow-ASE"].firstMatch.wait(timeout: 3) {
       picker.selectAirport("ASE")
 
       let runwayPicker = takeoff.openRunwayPicker()
       let firstRunway = takeoff.app.buttons["runwayRow-15"].firstMatch
-      if firstRunway.waitForExistence(timeout: 2) {
+      if firstRunway.wait(timeout: 2) {
         runwayPicker.selectRunway("15")
       }
 
@@ -411,7 +411,7 @@ extension SF50_TOLDUITests {
     let about = tabBar.goToAbout()
 
     XCTAssertTrue(
-      about.app.navigationBars["About"].waitForExistence(timeout: 2),
+      about.app.navigationBars["About"].wait(timeout: 2),
       "About nav bar should appear"
     )
     XCTAssertTrue(about.hasAircraftDescription(), "Aircraft description should be displayed")
@@ -429,7 +429,7 @@ extension SF50_TOLDUITests {
 
     let adjustments = takeoff.openAdjustments()
     XCTAssertTrue(
-      takeoff.app.navigationBars["Takeoff Adjustments"].waitForExistence(timeout: 5),
+      takeoff.app.navigationBars["Takeoff Adjustments"].wait(timeout: 5),
       "Takeoff Adjustments nav bar should appear"
     )
     XCTAssertTrue(adjustments.hasGroundRunSection())
@@ -445,7 +445,7 @@ extension SF50_TOLDUITests {
 
     let adjustments = landing.openAdjustments()
     XCTAssertTrue(
-      landing.app.navigationBars["Landing Adjustments"].waitForExistence(timeout: 5),
+      landing.app.navigationBars["Landing Adjustments"].wait(timeout: 5),
       "Landing Adjustments nav bar should appear"
     )
     XCTAssertTrue(adjustments.hasGroundRunSection())
@@ -460,13 +460,13 @@ extension SF50_TOLDUITests {
     welcome.handleDatabaseLoaderIfNeeded()
 
     XCTAssertTrue(
-      welcome.continueButton.waitForExistence(timeout: 5),
+      welcome.continueButton.wait(timeout: 5),
       "Continue button should appear"
     )
 
     welcome.selectModel("G2")
     XCTAssertTrue(
-      welcome.thrustScheduleToggle.waitForExistence(timeout: 2),
+      welcome.thrustScheduleToggle.wait(timeout: 2),
       "Updated thrust schedule toggle should appear for G2"
     )
     welcome.toggleThrustSchedule()
@@ -476,7 +476,7 @@ extension SF50_TOLDUITests {
 
     let settings = tabBar.goToSettings()
     XCTAssertTrue(
-      settings.aircraftTypePicker.waitForExistence(timeout: 2),
+      settings.aircraftTypePicker.wait(timeout: 2),
       "Aircraft type picker should be present in Settings"
     )
   }
@@ -489,15 +489,15 @@ extension SF50_TOLDUITests {
 
     for model in ["G2+", "G3"] {
       settings.selectAircraftModel(model)
-      XCTAssertFalse(
-        settings.isThrustScheduleToggleVisible,
+      XCTAssertTrue(
+        settings.isThrustScheduleToggleHidden,
         "Thrust schedule toggle should not appear for \(model)"
       )
     }
 
     _ = tabBar.goToTakeoff()
     XCTAssertTrue(
-      tabBar.app.textFields["payloadField"].firstMatch.waitForExistence(timeout: 5),
+      tabBar.app.textFields["payloadField"].firstMatch.wait(timeout: 5),
       "Takeoff tab should render after model change"
     )
 
@@ -516,7 +516,7 @@ extension SF50_TOLDUITests {
     let settings = tabBar.goToSettings()
 
     let modelToggle = settings.selectModelToggle
-    XCTAssertTrue(modelToggle.waitForExistence(timeout: 2), "Model toggle should exist")
+    XCTAssertTrue(modelToggle.wait(timeout: 2), "Model toggle should exist")
 
     let lessThan100 = settings.app.staticTexts.matching(
       NSPredicate(format: "label CONTAINS 'less than 100 ft'")
@@ -529,21 +529,21 @@ extension SF50_TOLDUITests {
         NSPredicate(format: "label CONTAINS 'match book values exactly'")
       ).firstMatch
       XCTAssertTrue(
-        matchBookValues.waitForExistence(timeout: 2),
+        matchBookValues.wait(timeout: 2),
         "Tabular description should appear"
       )
     } else {
       settings.selectPerformanceModel("Regression")
 
       XCTAssertTrue(
-        lessThan100.waitForExistence(timeout: 2),
+        lessThan100.wait(timeout: 2),
         "Regression description should appear"
       )
     }
 
     _ = tabBar.goToTakeoff()
     XCTAssertTrue(
-      tabBar.app.textFields["payloadField"].firstMatch.waitForExistence(timeout: 5),
+      tabBar.app.textFields["payloadField"].firstMatch.wait(timeout: 5),
       "Takeoff tab should still render after performance model change"
     )
   }
@@ -556,7 +556,7 @@ extension SF50_TOLDUITests {
     let terrain = settings.openTerrain()
 
     XCTAssertTrue(
-      terrain.app.navigationBars["Terrain Data"].waitForExistence(timeout: 2),
+      terrain.app.navigationBars["Terrain Data"].wait(timeout: 2),
       "Terrain Data nav bar should appear"
     )
     XCTAssertTrue(terrain.isTotalDownloadedVisible(), "Total Downloaded label should exist")
@@ -594,7 +594,7 @@ extension SF50_TOLDUITests {
     let notams = landing.openNOTAMs()
     notams.fillFromFirstProposal()
     XCTAssertTrue(
-      notams.fillBanner.waitForExistence(timeout: 2),
+      notams.fillBanner.wait(timeout: 2),
       "The banner should say the editor was filled in"
     )
     XCTAssertTrue(notams.rwyCCSlider.exists, "The FICON report's RwyCC should be filled in")
@@ -617,7 +617,7 @@ extension SF50_TOLDUITests {
     let notams = takeoff.openNOTAMs()
     notams.fillFromFirstProposal()
     XCTAssertTrue(
-      notams.fillBanner.waitForExistence(timeout: 2),
+      notams.fillBanner.wait(timeout: 2),
       "The banner should say the editor was filled in"
     )
     let height = notams.obstacleHeightField.value as? String ?? "",
@@ -683,7 +683,7 @@ extension SF50_TOLDUITests {
     picker.search(for: "1C9")
 
     XCTAssertTrue(
-      picker.app.buttons["airportRow-1C9"].firstMatch.waitForExistence(timeout: 3),
+      picker.app.buttons["airportRow-1C9"].firstMatch.wait(timeout: 3),
       "1C9 should appear in search results"
     )
 
@@ -691,7 +691,8 @@ extension SF50_TOLDUITests {
     searchField.tap(withNumberOfTaps: 3, numberOfTouches: 1)
     searchField.typeText("ZZZZZ")
 
-    _ = picker.app.buttons["airportRow-ZZZZZ"].waitForExistence(timeout: 2)
+    let staleRow = picker.app.buttons["airportRow-1C9"].firstMatch
+    if staleRow.exists { _ = staleRow.waitForNonExistence(timeout: 2) }
 
     XCTAssertEqual(picker.airportRowCount(), 0, "No airports should match ZZZZZ")
   }
@@ -716,7 +717,7 @@ extension SF50_TOLDUITests {
     }
     takeoff.setPayload("1000")
 
-    _ = takeoff.app.staticTexts["takeoffDistanceValue"].waitForExistence(timeout: 5)
+    _ = takeoff.app.staticTexts["takeoffDistanceValue"].wait(timeout: 5)
     let heavierDistance = takeoff.distanceValue
 
     if let baselineDistance, let heavierDistance {
@@ -765,7 +766,7 @@ extension SF50_TOLDUITests {
 
     landing.setVREFAdditive("10")
 
-    _ = landing.app.staticTexts["landingDistanceValue"].waitForExistence(timeout: 5)
+    _ = landing.app.staticTexts["landingDistanceValue"].wait(timeout: 5)
     let additiveDistance = landing.landingDistanceValue
 
     if let baselineDistance, let additiveDistance {
@@ -796,7 +797,7 @@ extension SF50_TOLDUITests {
     picker.selectAirport("OAK")
 
     let dateSelector = takeoff.app.buttons["dateSelector"]
-    if dateSelector.waitForExistence(timeout: 2) {
+    if dateSelector.wait(timeout: 2) {
       XCTAssertTrue(dateSelector.exists, "Date selector should show time")
     }
 
@@ -925,7 +926,7 @@ extension SF50_TOLDUITests {
     // Reopen and verify
     let detail2 = scenarios.openScenario("Persist Test")
     XCTAssertTrue(
-      detail2.nameField.waitForExistence(timeout: 2),
+      detail2.nameField.wait(timeout: 2),
       "Name field should exist"
     )
 
@@ -1131,7 +1132,7 @@ extension SF50_TOLDUITests {
     climb.adjustAltitude(to: 0.4)
 
     XCTAssertTrue(
-      climb.rateValue.waitForExistence(timeout: 2),
+      climb.rateValue.wait(timeout: 2),
       "Climb rate should be displayed"
     )
     let baselineRate = climb.rateLabel
@@ -1144,7 +1145,7 @@ extension SF50_TOLDUITests {
 
     // On some devices ice protection may push the rate offscale (losing the
     // identifier). Either a changed value or offscale proves performance impact.
-    if climb.rateValue.waitForExistence(timeout: 3) {
+    if climb.rateValue.wait(timeout: 3) {
       let iceProtectionRate = climb.waitForLabelChange(
         climb.rateValue,
         from: baselineRate,
@@ -1178,7 +1179,7 @@ extension SF50_TOLDUITests {
     let nwsLabel = takeoff.app.staticTexts["Using downloaded weather from NWS"]
     _ = weather.scrollToElement(nwsLabel)
     XCTAssertTrue(
-      nwsLabel.waitForExistence(timeout: 5),
+      nwsLabel.wait(timeout: 5),
       "NWS weather source label should appear"
     )
 
@@ -1199,7 +1200,7 @@ extension SF50_TOLDUITests {
       NSPredicate(format: "label CONTAINS[c] 'load weather'")
     ).firstMatch
     XCTAssertTrue(
-      errorLabel.waitForExistence(timeout: 5),
+      errorLabel.wait(timeout: 5),
       "Weather error label should appear"
     )
 
@@ -1225,7 +1226,7 @@ extension SF50_TOLDUITests {
     let customLabel = takeoff.app.staticTexts["Using your custom weather"]
     _ = weather.scrollToElement(customLabel)
     XCTAssertTrue(
-      customLabel.waitForExistence(timeout: 5),
+      customLabel.wait(timeout: 5),
       "Custom weather label should appear"
     )
 
@@ -1287,7 +1288,7 @@ extension SF50_TOLDUITests {
     let tabBar = consent.deferUntilLater()
     let takeoff = tabBar.goToTakeoff()
     XCTAssertTrue(
-      takeoff.payloadField.waitForExistence(timeout: 5),
+      takeoff.payloadField.wait(timeout: 5),
       "Deferring the update should proceed into the app"
     )
   }
