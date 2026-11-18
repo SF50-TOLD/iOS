@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 final class ReportViewerPage: BasePage {
 
@@ -10,7 +11,7 @@ final class ReportViewerPage: BasePage {
   }
 
   func isDisplayed() -> Bool {
-    app.navigationBars[title].waitForExistence(timeout: 10)
+    app.navigationBars[title].wait(timeout: 10)
   }
 
   /// Whether the report itself rendered, rather than just the sheet around it.
@@ -18,7 +19,7 @@ final class ReportViewerPage: BasePage {
   /// The navigation bar appears whether or not the web view drew anything, so this looks for a
   /// heading from inside the document.
   func showsReportContent() -> Bool {
-    app.webViews.staticTexts["Available Runways"].waitForExistence(timeout: 15)
+    app.webViews.staticTexts["Available Runways"].wait(timeout: 15)
   }
 
   func dismiss() {

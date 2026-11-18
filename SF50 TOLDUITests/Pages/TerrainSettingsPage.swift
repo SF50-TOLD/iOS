@@ -1,4 +1,5 @@
 import XCTest
+import XCUITestKit
 
 final class TerrainSettingsPage: BasePage {
 
@@ -13,7 +14,7 @@ final class TerrainSettingsPage: BasePage {
         scrollAttempts += 1
       }
     }
-    return totalDownloaded.waitForExistence(timeout: 2)
+    return totalDownloaded.wait(timeout: 2)
   }
 
   func goBack() {

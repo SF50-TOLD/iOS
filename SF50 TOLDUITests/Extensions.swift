@@ -41,10 +41,9 @@ extension XCUIElement {
   /// Waits for this element to become first responder, so that typing into it lands here rather
   /// than failing in a window with no keyboard focus.
   func waitForKeyboardFocus(timeout: TimeInterval = 5) -> Bool {
-    let focused = XCTNSPredicateExpectation(
-      predicate: NSPredicate(format: "hasKeyboardFocus == true"),
-      object: self
-    )
+    let hasFocus = NSPredicate(format: "hasKeyboardFocus == true")
+    if hasFocus.evaluate(with: self) { return true }
+    let focused = XCTNSPredicateExpectation(predicate: hasFocus, object: self)
     return XCTWaiter().wait(for: [focused], timeout: ScaledTimeouts.scaled(timeout)) == .completed
   }
 }

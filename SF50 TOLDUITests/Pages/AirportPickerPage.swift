@@ -20,7 +20,7 @@ final class AirportPickerPage: BasePage {
   /// dismissing overlay, so a single `forceTap` can silently leave the previous
   /// segment showing — and consumers read the list instantly afterward.
   private func selectSegment(_ name: String) {
-    XCTAssertTrue(segmentedControl.waitForExistence(timeout: 5), "Airport picker should appear")
+    XCTAssertTrue(segmentedControl.wait(timeout: 5), "Airport picker should appear")
     let button = segmentedControl.buttons[name]
     ensureHittable(button)
     tapUntilSelected(button)
@@ -36,7 +36,7 @@ final class AirportPickerPage: BasePage {
     // Tap the search field and wait for keyboard to gain focus
     for _ in 0..<3 {
       forceTap(searchField)
-      if app.keyboards.firstMatch.waitForExistence(timeout: 2) { break }
+      if app.keyboards.firstMatch.wait(timeout: 2) { break }
     }
 
     searchField.typeText(query)
@@ -49,7 +49,7 @@ final class AirportPickerPage: BasePage {
   /// navigation-bar search button that must be tapped to expand into the field.
   private func revealSearchField() {
     let searchField = app.searchFields.firstMatch
-    if searchField.waitForExistence(timeout: 5) { return }
+    if searchField.wait(timeout: 5) { return }
 
     // Retry to absorb the slow Liquid Glass nav-bar settle under full-suite
     // load, during which the collapsed search button is briefly unhittable.
@@ -62,7 +62,7 @@ final class AirportPickerPage: BasePage {
       } else {
         app.swipeUp()
       }
-      if searchField.waitForExistence(timeout: 3) { return }
+      if searchField.wait(timeout: 3) { return }
     }
   }
 
@@ -71,7 +71,7 @@ final class AirportPickerPage: BasePage {
     let clearButton = app.searchFields.firstMatch.buttons["Clear text"]
     if clearButton.exists { forceTap(clearButton) }
     XCTAssertTrue(
-      segmentedControl.waitForExistence(timeout: 5),
+      segmentedControl.wait(timeout: 5),
       "Airport lists should return once the search is cleared"
     )
   }
@@ -79,7 +79,7 @@ final class AirportPickerPage: BasePage {
   func selectAirport(_ identifier: String) {
     let row = app.buttons["airportRow-\(identifier)"].firstMatch
     XCTAssertTrue(
-      row.waitForExistence(timeout: 3),
+      row.wait(timeout: 3),
       "\(identifier) should appear in results"
     )
     forceTap(row)

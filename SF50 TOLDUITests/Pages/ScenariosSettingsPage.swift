@@ -23,7 +23,7 @@ final class ScenariosSettingsPage: BasePage {
       addButton = app.buttons["Add Scenario"].firstMatch
     }
     XCTAssertTrue(
-      addButton.waitForExistence(timeout: 2),
+      addButton.wait(timeout: 2),
       "Add Scenario button should exist"
     )
     tapAndEnsureNavigation(
@@ -37,11 +37,11 @@ final class ScenariosSettingsPage: BasePage {
     let text = app.staticTexts[name]
 
     // Wait briefly for data to render after restore
-    if text.waitForExistence(timeout: 3) { return true }
+    if text.wait(timeout: 3) { return true }
 
     // Scroll to top before searching downward
     app.scrollToTop()
-    if text.waitForExistence(timeout: 1) { return true }
+    if text.wait(timeout: 1) { return true }
 
     var findAttempts = 0
     while !text.exists && findAttempts < 10 {
@@ -49,6 +49,15 @@ final class ScenariosSettingsPage: BasePage {
       findAttempts += 1
     }
     return text.exists
+  }
+
+  /// Whether the scenario's row has left the list, allowing for one still on its way out.
+  ///
+  /// For a row that was on screen, as one just deleted is: a row that stays keeps its place in the
+  /// hierarchy, so there is no list to search.
+  func scenarioIsGone(_ name: String) -> Bool {
+    let text = app.staticTexts[name]
+    return !text.exists || text.waitForNonExistence(timeout: 3)
   }
 
   func deleteScenario(_ name: String) async {
@@ -63,14 +72,16 @@ final class ScenariosSettingsPage: BasePage {
       let cell = app.cells.containing(.staticText, identifier: name).firstMatch
       let target = cell.exists ? cell : text
       target.swipeLeft(velocity: .fast)
-      if deleteButton.waitForExistence(timeout: 1) { break }
+      if deleteButton.wait(timeout: 1) { break }
     }
 
-    if deleteButton.waitForExistence(timeout: 2) {
+    if deleteButton.wait(timeout: 2) {
       // The Delete button (and any confirmation) disappears once the tap
       // registers; a single forceTap is intermittently dropped on iPad, so
       // retry until it's gone.
-      await deleteButton.tap(until: { deleteButton.waitForNonExistence(timeout: 2) })
+      await deleteButton.tap(until: {
+        !deleteButton.exists || deleteButton.waitForNonExistence(timeout: 2)
+      })
     }
   }
 
