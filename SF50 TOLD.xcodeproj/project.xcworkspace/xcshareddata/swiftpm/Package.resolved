@@ -1,5 +1,5 @@
 {
-  "originHash" : "34525bd496e974f1f173fd2f03d89eb1f4677c4d879519301a43be7a961cf383",
+  "originHash" : "cf98271bac939b61067fa3453d43546d77706c481f1b1f90e353b7f43ed376e7",
   "pins" : [
     {
       "identity" : "buildablemacro",
@@ -258,8 +258,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RISCfuture/XCUITestKit",
       "state" : {
-        "revision" : "f0845b227dde33207bdfa0d892d059bdfddb2fb1",
-        "version" : "1.2.1"
+        "revision" : "caf3e879ff9bb34e8351b1f90c66b232ebc48083",
+        "version" : "1.4.0"
       }
     },
     {
