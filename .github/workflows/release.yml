@@ -28,12 +28,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  route:
+    uses: RISCfuture/ci-workflows/.github/workflows/minerva-route.yml@1.1.0
+    permissions:
+      contents: read
   release:
-    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@1.2.1
+    needs: route
+    uses: RISCfuture/XCUITestKit/.github/workflows/ios-release.yml@1.3.0
     with:
       # Required by ios-release.yml, which deliberately defaults no runner so a runner-image
       # bump stays each app's own decision.
-      runner: xcode-27
+      runner: ${{ needs.route.outputs.xcode-27 }}
       platforms: '["iOS"]'
       version: ${{ inputs.version || github.ref_name }}
       certificates-repo: RISCfuture/certificates

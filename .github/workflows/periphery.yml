@@ -13,6 +13,7 @@ concurrency:
 jobs:
   periphery:
     name: Run Periphery
+    # Spotlight indexing is disabled with sudo, which Minerva does not allow.
     runs-on: xcode-27
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     permissions:
