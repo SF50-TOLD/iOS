@@ -13,6 +13,17 @@ one of the two places.
 These notes are read by pilots deciding whether to update, so they describe what
 changed in the cockpit rather than what changed in the code.
 
+## 4.0.2
+
+- Takeoff and Landing show inputs and results side by side only
+  where the screen is wider than tall: iPad in landscape and iPhone
+  Duo’s inner display. An iPad in portrait shows one form, inputs
+  first, as iPhone does.
+- A takeoff or landing report stays open when you unfold iPhone Duo
+  or resize the app’s window on iPad.
+- Stopping a navigation data update from the progress iOS shows no
+  longer closes the app.
+
 ## 4.0.1
 
 - Winds aloft come from the Open-Meteo forecast model everywhere. The National
