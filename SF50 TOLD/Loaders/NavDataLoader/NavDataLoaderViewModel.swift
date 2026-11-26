@@ -148,8 +148,9 @@ final class NavDataLoaderViewModel: WithIdentifiableError {
       title: String(localized: "Updating Navigation Data"),
       subtitle: String(localized: "Downloading")
     )
-    backgroundTask?.expirationHandler = {
-      MainActor.assumeIsolated { NavDataUpdater.shared.cancel() }
+    // The scheduler calls this on a queue of its own, not the main queue.
+    backgroundTask?.expirationHandler = { @Sendable in
+      Task { @MainActor in NavDataUpdater.shared.cancel() }
     }
     let reporting = backgroundTask.map(reportProgress(to:))
 
